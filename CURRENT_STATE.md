@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: g003_evidence_baselined
-  status: g004_contract_draft_ready
+  phase: post_g003_reference_analysis
+  status: awaiting_g005_contract_creation_authorization
 
 active_goal:
   id: null
@@ -36,10 +36,17 @@ last_completed_goal:
   architecture_review: accepted_for_next_bounded_robustness_checkpoint
 
 next_goal:
-  id: G004_DIRECT_HARNESS_ROBUSTNESS
-  status: contract_not_created_ready_for_drafting
+  id: G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY
+  status: candidate_only_contract_creation_not_authorized
   contract: null
-  candidate_scope_not_frozen: session_reconstruction_windows_cancellation_strict_consumer_cold_import
+  candidate_scope_not_frozen: bounded_real_model_direct_agentharness_completion_verification_feasibility
+
+retired_goal_candidate:
+  id: G004_DIRECT_HARNESS_ROBUSTNESS
+  status: retired_before_contract
+  contract: null
+  execution_started: false
+  reason: broad_pre_phase3_robustness_umbrella_not_supported_by_reclassified_risks
 
 completed_work:
   - original_research_context_reviewed
@@ -90,6 +97,13 @@ completed_work:
   - ADR_0003_direct_agentharness_for_bounded_robustness_accepted
   - G003_evidence_baseline_commit_authorized
   - G003_evidence_baseline_committed
+  - cc_harness_knowledge_inventory_completed
+  - harness_pattern_map_completed
+  - pinned_pi_harness_comparison_completed
+  - current_runtime_risks_reclassified
+  - reference_backed_policy_candidates_ranked
+  - broad_G004_pre_phase3_umbrella_retired_before_contract
+  - main_session_specialist_session_governance_accepted
 
 workspace:
   git_initialized: true
@@ -111,12 +125,12 @@ pi:
   source_audited: true
   source_audit_disposition: ACCEPT_FOR_DYNAMIC_VERIFICATION
   architecture_review: accepted_for_bounded_dynamic_verification
-  basis_decision: accepted_for_next_bounded_robustness_checkpoint_not_final_go
+  basis_decision: g003_mechanism_accepted_no_current_architecture_blocker_not_final_go
   high_priority_signal: post_release_agent_harness_confirmed_public_but_semantically_in_progress
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: accepted_for_next_bounded_robustness_checkpoint_not_frozen_for_V0
+  status: accepted_as_G005_real_model_feasibility_candidate_not_frozen_for_V0
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -124,11 +138,12 @@ architecture:
   pi_ai_build_boundary: standard_build_offline_retained
   live_model_data_hydration: prohibited_for_G002_retry
   g003_review: ACCEPT_G003_PASS_DIRECT_GO_GATE_WITH_NON_BLOCKING_CORRECTIONS
-  next_decision: docs/decisions/ADR-0003-direct-agentharness-for-bounded-robustness.md
+  g003_basis_decision: docs/decisions/ADR-0003-direct-agentharness-for-bounded-robustness.md
+  next_decision_material: docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md
 
 first_policy:
   candidate: Completion Verification
-  status: not_frozen
+  status: deterministic_mechanism_feasible_real_model_effect_not_verified_not_frozen
 
 implementation:
   dependencies_installed: true_in_isolated_g002_and_g003_clones
@@ -223,12 +238,49 @@ g003:
   registry_raw_response_capture_gap: retained_non_blocking
   strict_library_typecheck_risk: third_party_declarations_missing_with_skipLibCheck_false
 
+reference_analysis:
+  status: complete_accepted_for_project_control_alignment
+  task_kind: read_only_analysis_not_execution_goal
+  knowledge_root: reference/cc-harness-knowledge
+  semantic_files_read: 29
+  source_mirror: reference/src
+  source_mirror_role: implementation_detail_reference_when_notes_are_insufficient
+  architecture_blockers_found: 0
+  G004_recommendation: retire_broad_pre_phase3_umbrella
+  next_high_value_candidate: bounded_real_model_completion_verification_feasibility
+  reports:
+    decision_summary: docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md
+    risk_reclassification: docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md
+    pi_comparison: docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
+    pattern_map: docs/reports/CC_HARNESS_PATTERN_MAP.md
+    knowledge_inventory: docs/reports/CC_HARNESS_KNOWLEDGE_INVENTORY.md
+    policy_candidates: docs/reports/REFERENCE_BACKED_POLICY_CANDIDATES.md
+    closeout: docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_CLOSEOUT.md
+  risk_summary:
+    settled_cross_process_reconstruction: mature_pattern_unverified
+    crash_after_side_effect: future_reliability_case
+    registry_raw_response: provenance_debt
+    strict_typescript_consumer: known_issue
+    windows_cold_import: known_issue
+    long_running_tool_cancellation: mature_pattern_unverified
+    context_compaction: mature_pattern_unverified
+    completion_verification: current_goal_candidate
+    pi_upstream_evolution: known_issue
+    recovery_budget: mature_pattern_unverified
+
+required_reading:
+  - docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md
+  - docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md
+  - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
+
 next_checkpoint:
-  - draft_and_review_G004_goal_contract_without_execution
-  - request_explicit_user_authorization_before_G004_activation_or_execution
+  - review_this_control_plane_alignment
+  - request_explicit_user_authorization_before_creating_G005_goal_contract
+  - if_authorized_draft_G005_in_the_main_session_without_execution
 
 open_user_decisions:
-  - G004_scope_and_activation_after_contract_review
+  - authorize_or_reject_G005_goal_contract_creation
+  - later_select_provider_model_call_budget_and_fixture_during_G005_contract_review
 ```
 
 ## Current Constraints
@@ -241,16 +293,21 @@ open_user_decisions:
   architecture review.
 - Do not treat G003's fixed-task pass as Policy effectiveness, final Pi Go,
   current provider-catalog validation, or a V0 architecture freeze.
-- Do not create `.runs/g004`, execute robustness checks, begin Phase 3, create
-  a formal Workbench, adopt a fallback runtime or change the standard package
-  boundary before a reviewed G004 Goal Contract is committed and activated.
-- Carry the strict third-party declaration failure, cold-import timing anomaly
-  and raw registry-response capture gap forward as unresolved risks.
+- G004 was retired before a contract was created. Do not recreate it as a broad
+  pre-Phase-3 robustness umbrella or silently reuse its identifier.
+- G005 is a candidate only. Do not create its Goal Contract, call a real model,
+  create `.runs/g005`, begin Phase 3, adopt a fallback runtime or change the
+  standard package boundary without new explicit authorization.
+- Carry risks according to
+  `docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md`; an unverified mature
+  pattern is not an observed failure or an automatic Goal/Gate.
+- Treat `reference/cc-harness-knowledge` and `reference/src` as read-only design
+  references. Do not modify or commit them without explicit authorization.
 - Do not commit Git changes unless explicitly requested.
 
 ## Expected Next Handoff
 
-Draft and review a bounded G004 Goal Contract without executing it. Present the
-contract scope and activation decision for explicit user review. Final Pi Go,
-real-model execution, Phase 3, the V0 Version Charter, formal Workbench creation
-and architecture freeze remain unauthorized.
+Review this control-plane alignment. If separately authorized, draft—but do not
+execute—`G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY` in the main
+session. Final Pi Go, real-model execution, Phase 3, the V0 Version Charter,
+formal Workbench creation and architecture freeze remain unauthorized.
