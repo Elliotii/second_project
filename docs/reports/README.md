@@ -9,3 +9,6 @@ Goal closeouts, Spike reports, experiment reports, and version closeouts live he
 - `G002_ARCHITECTURE_REVIEW.md` — accepts the contract-compliant blocked G002
   closeout and authorizes only an integrity-pinned artifact-backed model-data
   recovery for a separately contracted retry.
+- `G003_ARCHITECTURE_REVIEW.md` — accepts `PASS_DIRECT_GO_GATE` with
+  non-blocking evidence corrections and retains Direct AgentHarness only for
+  preparation of the next bounded robustness checkpoint.

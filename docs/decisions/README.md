@@ -10,3 +10,6 @@ Accepted Architecture Decision Records live here. Research recommendations do no
 - `ADR-0002-artifact-backed-model-data-for-g002-retry.md` — preserves Pi's
   standard emitted-package build and authorizes integrity-pinned npm artifact
   data, not live catalog hydration, for one bounded G002 retry.
+- `ADR-0003-direct-agentharness-for-bounded-robustness.md` — accepts the G003
+  dynamic feasibility result and retains Direct AgentHarness for preparation
+  of one separately contracted bounded robustness checkpoint; not final Pi Go.

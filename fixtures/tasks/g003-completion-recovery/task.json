@@ -1,0 +1,6 @@
+{
+  "task_id": "g003-completion-recovery",
+  "instruction": "Use write_result to write the requested value to answer.txt, then finish.",
+  "allowed_output": "answer.txt",
+  "expected_utf8": "verified\n"
+}
