@@ -2,7 +2,7 @@
 
 ```yaml
 goal_id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-status: stage_1_activation_authorized_preconditions_pending
+status: implementation_baseline_committed_awaiting_separate_stage_2_authorization
 phase: Phase_3A_real_model_path_feasibility_clean_retry
 owner: future_dedicated_G006_execution_session
 architecture_owner: main_session
@@ -15,15 +15,20 @@ activation_authorized_by_user: 2026-07-29
 stage_1_gate_0_implementation_authorized: true
 stage_2_real_model_execution_authorized: false
 real_model_call_authorized: false
-git_commit_authorized: false
+accepted_contract_baseline_commit_authorized: consumed
+accepted_contract_baseline_commit: aa2d12f701f4cecbc963a854e00a1d5bf312d77c
+implementation_baseline_commit_authorized: consumed
+implementation_baseline_commit: resulting_HEAD_of_this_revision
+further_git_commit_authorized: false
 formal_workbench_creation_authorized: false
 pi_core_modification_authorized: false
 ```
 
 本 Goal Contract 已于 2026-07-29 被用户接受，用户随后明确授权激活 G006
-Stage 1 Gate 0。Stage 1 执行仍受全部 activation preconditions 约束；当前缺少
-明确授权的 accepted-contract baseline Git commit，因此实现和 `.runs/g006`
-创建尚未开始。Stage 2、模型调用和 Git 提交仍未授权。
+Stage 1 Gate 0。Accepted-contract baseline commit 已按用户明确授权创建，Stage
+1 随后完成实现、离线验证和 Main Session source review，外部 provider calls 为
+0，且未加载 credential。Gate 0 已通过并暂停；implementation-baseline Git
+commit 已获用户明确授权并由本 revision 创建。Stage 2 和模型调用仍未授权。
 
 ## 1. Objective
 
@@ -813,9 +818,10 @@ closeout acceptance 和与用户的主要讨论。
 
 ## 23. Current decision requested
 
-本契约已被用户接受，Stage 1 Gate 0 也已获得激活授权。当前下一步是用户
-决定是否授权提交仅包含 G006 契约、Pre-contract Research 和
-`CURRENT_STATE.md` 的 accepted-contract baseline。该提交完成且前置条件复核
-通过后，Stage 1 才可开始实现。
+本契约已被用户接受，Stage 1 Gate 0 已执行并通过 Main Session source review；
+用户也已明确授权本 revision 创建 G006 implementation-baseline commit。提交后
+必须验证 exact clean `HEAD`、未变化的 Gate 0 source digest、attempt-root absence
+和 provider calls `0`，并将绑定信息写入 ignored preflight evidence。
 
-现在不请求 Stage 2 real-model 授权，也不请求 Git commit 授权。
+当前下一项用户决定是是否单独授权 Stage 2 real-model execution。在该授权前，
+不得运行 Gate A、加载 credential、运行 driver、创建 attempt root 或调用模型。

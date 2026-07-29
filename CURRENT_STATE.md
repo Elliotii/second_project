@@ -5,12 +5,12 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: g006_stage_1_activation_preconditions
-  status: G006_stage_1_authorized_blocked_before_execution_by_missing_contract_baseline_commit_authority
+  phase: g006_reviewed_implementation_baseline_committed
+  status: G006_paused_before_stage_2_zero_model_calls
 
 active_goal:
   id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-  status: activation_preconditions_pending_contract_baseline_commit
+  status: implementation_baseline_committed_awaiting_separate_stage_2_authorization
   contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
   disposition: null
 
@@ -37,7 +37,7 @@ last_completed_goal:
 
 next_goal:
   id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-  status: active_stage_1_authorized_preconditions_pending
+  status: active_paused_before_stage_2
   contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
 
 retired_goal_candidate:
@@ -127,6 +127,18 @@ completed_work:
   - G006_goal_contract_accepted_by_user
   - G006_stage_1_Gate_0_activation_authorized_by_user
   - G006_stage_1_precondition_check_stopped_before_implementation_for_missing_contract_baseline_commit_authority
+  - G006_accepted_contract_baseline_commit_authorized_and_created
+  - G006_fresh_non_hardlinked_pi_clone_created
+  - G006_locked_dependencies_hydrated_with_scripts_disabled
+  - G006_exact_pi_ai_artifact_and_archive_boundary_reverified
+  - G006_model_data_restore_and_standard_builds_passed
+  - G006_public_emitted_import_and_strict_type_gates_passed
+  - G006_subscriber_observer_Faux_regression_passed
+  - G006_journal_v2_attribution_source_identity_and_frozen_input_regressions_passed
+  - G006_stage_1_Gate_0_source_review_passed_with_zero_external_provider_calls
+  - G006_implementation_baseline_commit_authorized_by_user
+  - G006_reviewed_implementation_baseline_committed
+  - G006_clean_HEAD_and_reviewed_source_identity_bound_with_zero_provider_calls
 
 workspace:
   git_initialized: true
@@ -176,8 +188,8 @@ first_policy:
   status: deterministic_mechanism_feasible_G005_real_model_effect_unverified_not_frozen
 
 implementation:
-  dependencies_installed: true_in_isolated_g002_g003_and_g005_clones
-  deterministic_spike_created: true_g003_and_bounded_g005_spike
+  dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
+  deterministic_spike_created: true_g003_g005_and_committed_g006_gate_0_spike
   real_model_run_completed: partial_baseline_route_only_invalid_paired_evidence
 
 g005_authorization:
@@ -253,7 +265,7 @@ g005:
 
 g006:
   id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-  status: stage_1_activation_authorized_preconditions_pending
+  status: implementation_baseline_committed_awaiting_separate_stage_2_authorization
   contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
   precontract_research: docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_PRECONTRACT_RESEARCH.md
   contract_created: true
@@ -265,20 +277,53 @@ g006:
   stage_1_gate_0_implementation_authorized: true
   stage_2_real_model_execution_authorized: false
   real_model_call_authorized: false
-  git_commit_authorized: false
-  execution_authorized: false
-  runs_directory_created: false
+  accepted_contract_baseline_commit_authorized: consumed
+  implementation_baseline_commit_authorized: consumed
+  implementation_baseline_commit: resulting_HEAD_of_this_revision
+  additional_git_commit_authorized: false
+  execution_authorized: stage_1_consumed_stage_2_false
+  runs_directory_created: true_preflight_only
   activation_preconditions:
-    root_HEAD: 2614453d1192277747d22e2c2c5acc2f7e6a0580
-    accepted_contract_baseline_commit: missing_not_authorized
-    root_contract_control_changes_uncommitted: true
+    root_HEAD: aa2d12f701f4cecbc963a854e00a1d5bf312d77c
+    accepted_contract_baseline_commit: aa2d12f701f4cecbc963a854e00a1d5bf312d77c
+    accepted_contract_baseline_commit_authorized_and_created: true
+    root_tracked_worktree_clean_at_stage_1_start: true
+    accepted_untracked_reference_tree_only: true
     pi_reference_commit_verified: 027a5847901b5dde30270abaa1041046cd2b4b55
     pi_reference_clean: true
     g006_spike_absent: true
     g006_runs_root_absent: true
     formal_workbench_absent: true
     credential_file_ignored: true
-  stage_1_execution_started: false
+  stage_1_execution_started: true
+  stage_1_execution_completed: true
+  stage_1_external_provider_calls: 0
+  stage_1_credential_loaded_or_inspected: false
+  gate_0:
+    disposition: PASS_GATE_0_IMPLEMENTATION_BASELINE_COMMITTED
+    source_file_count: 28
+    source_tree_digest: c99e84ba09318a73482a2d790e10eb63e3a2240d0b0c209a843112ff62c82af4
+    public_emitted_import: passed
+    public_emitted_types: passed
+    strict_typescript: passed
+    offline_tests: 8_passed_0_failed
+    pinned_pi_builds: passed
+    attempt_root_created: false
+    reviewed_implementation_identity_created: true_after_commit_in_ignored_preflight
+    reviewed_clean_HEAD: resulting_HEAD_of_this_revision
+    reviewed_source_digest_matches_gate_0: true
+    report: docs/reports/G006_GATE_0_IMPLEMENTATION_AND_OFFLINE_REVIEW.md
+  setup:
+    isolated_pi_root: .runs/g006/pi
+    isolated_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
+    isolated_pi_clean: true
+    non_hardlinked: true
+    artifact_archive_members: 712
+    artifact_selected_data_files: 38
+    restored_manifest_sha256: c2d89b03ccb2c095c59ead0437592b21e9676d049ad8e92ea90a466adf10b24d
+    pi_ai_check_model_data: passed
+    pi_ai_standard_build_offline: passed
+    pi_agent_core_standard_build: passed
   research_conclusion: bounded_clean_retry_is_justified_without_additional_specialist_research
   frozen_inputs:
     - same_pinned_Pi_and_public_direct_AgentHarness_route
@@ -422,6 +467,7 @@ reference_analysis:
 
 required_reading:
   - docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  - docs/reports/G006_GATE_0_IMPLEMENTATION_AND_OFFLINE_REVIEW.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_PRECONTRACT_RESEARCH.md
   - docs/reports/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_REPORT.md
   - docs/reports/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLOSEOUT.md
@@ -431,14 +477,13 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - user_decides_whether_to_authorize_the_G006_accepted_contract_baseline_commit
-  - commit_only_CURRENT_STATE_G006_contract_and_G006_precontract_research_if_authorized
-  - reverify_exact_clean_HEAD_and_all_stage_1_activation_preconditions
-  - only_then_begin_Gate_0_implementation_and_offline_setup
-  - do_not_call_a_model_before_Gate_0_review_commit_and_separate_stage_2_authorization
+  - preserve_exact_clean_reviewed_G006_implementation_HEAD_and_source_digest
+  - user_separately_decides_whether_to_authorize_Stage_2_real_model_execution
+  - before_any_model_call_recheck_current_official_DeepSeek_API_facts_and_all_Stage_2_preconditions
+  - do_not_run_Gate_A_load_credential_create_attempt_root_or_call_model_without_that_authorization
 
 open_user_decisions:
-  - authorize_or_reject_G006_accepted_contract_baseline_commit
+  - separately_authorize_or_reject_G006_Stage_2_real_model_execution
 ```
 
 ## Current Constraints
@@ -460,12 +505,13 @@ open_user_decisions:
   either during closeout review. The raw `FAIL_REAL_MODEL_ROUTE` record is
   historically preserved but its interpretation was rejected by Main Session.
 - `G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY` now
-  has a pre-contract research report and an accepted Contract. Stage 1 Gate 0
-  activation is authorized, but execution is stopped at its preconditions
-  because the accepted-contract baseline commit has not been authorized or
-  created. `.runs/g006` and G006 implementation must not be created before that
-  checkpoint passes. Stage 2 and model calls remain unauthorized. Fallback
-  runtime and package-boundary changes remain unauthorized.
+  has an accepted Contract and a completed Stage 1 Gate 0. The independent
+  G006 Spike, fresh isolated Pi setup and offline review passed with zero
+  external provider calls and no credential load. Its reviewed implementation
+  baseline is committed and bound to the exact clean `HEAD` and Gate 0 source
+  digest through ignored preflight evidence. Stage 2 and model calls remain
+  unauthorized. Fallback runtime and package-boundary changes remain
+  unauthorized.
 - Carry risks according to
   `docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md`; an unverified mature
   pattern is not an observed failure or an automatic Goal/Gate.
@@ -475,17 +521,13 @@ open_user_decisions:
 
 ## Expected Next Handoff
 
-The Main Session has completed bounded G006 pre-contract research. The user has
-accepted the
-`G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY`
-Contract and authorized Stage 1 Gate 0 activation. The activation precheck
-stopped before implementation because the accepted Contract, Pre-contract
-Research and `CURRENT_STATE.md` are uncommitted and Git commit authority is
-still false. The next action is the user's explicit decision on that bounded
-contract-baseline commit. After it passes, Stage 1 may begin and must later stop
-again for Main Session source review and an explicitly authorized
-implementation-baseline commit. Stage 2 real-model execution requires another
-separate authorization after exact clean `HEAD` verification. No G006
-implementation, `.runs/g006`, model call or Git commit has occurred. Final Pi
-Go, Completion Verification promotion, the V0 Version Charter, formal
+The Main Session has completed and reviewed G006 Stage 1 Gate 0, and the user
+authorized the reviewed implementation-baseline commit. This revision records
+that baseline; immediately after commit, the exact clean `HEAD` and unchanged
+Gate 0 source digest are bound in ignored preflight evidence with provider
+calls still at zero. No credential was loaded, no external provider was called,
+and the write-once attempt root does not exist. The next decision is a separate
+explicit Stage 2 authorization. Until then, Gate A, credential loading,
+`driver.ts`, attempt-root creation and real-model execution remain prohibited.
+Final Pi Go, Completion Verification promotion, the V0 Version Charter, formal
 Workbench creation and architecture freeze remain unauthorized.
