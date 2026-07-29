@@ -155,10 +155,16 @@ completed_work:
   - G006_closed_accepted
   - future_main_and_dedicated_goal_session_boundary_fixed
   - G006_closeout_evidence_and_control_commit_authorized_by_user
+  - project_zero_to_current_progress_conclusions_and_complete_forward_plan_created
+  - project_synthesis_commit_and_push_authorized_by_user
 
 workspace:
   git_initialized: true
   initial_commit_created: true
+  git_remote_configured: false
+  push_authorized_by_user: true
+  push_status: pending_user_remote_URL
+  project_synthesis_commit: resulting_HEAD_of_this_revision
   upstream_directory: .upstream/pi
   runs_directory: .runs
   formal_workbench_created: false
@@ -197,7 +203,7 @@ architecture:
     public_workaround: subscribe
     core_route_blocker: false
     pi_core_patch_required: false
-  next_decision_material: docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
+  next_decision_material: docs/reports/PROJECT_ZERO_TO_CURRENT_PROGRESS_CONCLUSIONS_AND_COMPLETE_FORWARD_PLAN_2026-07-30.md
 
 first_policy:
   candidate: Completion Verification
@@ -551,6 +557,7 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/PROJECT_ZERO_TO_CURRENT_PROGRESS_CONCLUSIONS_AND_COMPLETE_FORWARD_PLAN_2026-07-30.md
   - docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_CLOSEOUT.md

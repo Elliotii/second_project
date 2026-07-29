@@ -6,11 +6,18 @@ Goal closeouts, Spike reports, experiment reports, and version closeouts live he
 
 For current project-control or next-goal planning, read in this order:
 
-1. `CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md` — plain-language current
+1. `PROJECT_ZERO_TO_CURRENT_PROGRESS_CONCLUSIONS_AND_COMPLETE_FORWARD_PLAN_2026-07-30.md`
+   — current end-to-end progress, complete stage conclusions, consolidated Pi
+   understanding, and the forward plan from V0 Charter through Pilot Eval and
+   Portfolio Closeout.
+2. `G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md`
+   — accepted real-model route evidence, remaining non-claims, and the current
+   Phase 3B versus Pilot deferral decision.
+3. `CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md` — plain-language current
    decision summary, risk changes, G004 disposition, and next user decisions.
-2. `CURRENT_RUNTIME_RISK_RECLASSIFICATION.md` — authoritative current
+4. `CURRENT_RUNTIME_RISK_RECLASSIFICATION.md` — authoritative current
    classification of the ten runtime, packaging, provenance, and Policy risks.
-3. `PI_CC_HARNESS_COMPARISON_MATRIX.md` — source- and test-backed comparison of
+5. `PI_CC_HARNESS_COMPARISON_MATRIX.md` — source- and test-backed comparison of
    mature Harness patterns with the pinned Direct `pi-agent-core` path.
 
 `PROJECT_CURRENT_STATUS_AND_TECH_STACK_ALIGNMENT_2026-07-29.md` records the
