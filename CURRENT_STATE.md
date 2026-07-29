@@ -5,13 +5,13 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: post_g003_reference_analysis
-  status: awaiting_g005_contract_creation_authorization
+  phase: g005_activation
+  status: ready_for_G005_execution_handoff_after_this_revision_is_committed
 
 active_goal:
-  id: null
-  status: none
-  contract: null
+  id: G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY
+  status: activated_ready_after_reviewed_baseline_commit
+  contract: docs/goals/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY.md
   disposition: null
 
 last_executed_goal:
@@ -36,10 +36,9 @@ last_completed_goal:
   architecture_review: accepted_for_next_bounded_robustness_checkpoint
 
 next_goal:
-  id: G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY
-  status: candidate_only_contract_creation_not_authorized
+  id: null
+  status: none_while_G005_active
   contract: null
-  candidate_scope_not_frozen: bounded_real_model_direct_agentharness_completion_verification_feasibility
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -104,6 +103,13 @@ completed_work:
   - reference_backed_policy_candidates_ranked
   - broad_G004_pre_phase3_umbrella_retired_before_contract
   - main_session_specialist_session_governance_accepted
+  - G005_goal_contract_drafted_for_review
+  - G005_credential_boundary_and_safe_templates_prepared
+  - current_DeepSeek_V4_external_API_path_checked_for_contract_drafting
+  - pinned_Pi_custom_model_dispatch_path_checked_for_G005
+  - G005_goal_contract_accepted_by_user
+  - G005_activation_and_bounded_real_model_execution_authorized_by_user
+  - G005_credential_provisioning_attested_by_user_without_main_session_inspection
 
 workspace:
   git_initialized: true
@@ -149,6 +155,30 @@ implementation:
   dependencies_installed: true_in_isolated_g002_and_g003_clones
   deterministic_spike_created: true_g003_only
   real_model_run_completed: false
+
+g005_authorization:
+  goal_contract_created: true
+  goal_contract: docs/goals/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY.md
+  goal_contract_status: accepted_activation_authorized_preconditions_pending
+  contract_accepted_by_user: true
+  activation_authorized_by_user: true
+  reviewed_baseline_commit_authorized_by_user: true
+  reviewed_baseline_commit: resulting_HEAD_of_this_control_revision
+  active_goal: true
+  execution_authorized: true_after_all_activation_preconditions_pass
+  real_model_call_authorized: true_after_all_activation_preconditions_pass
+  generated_run_root_authorized: true_after_all_activation_preconditions_pass
+  real_model_access_declared_available_by_user: true
+  real_model_use_declared_permitted_by_user: true
+  credential_value_provisioned: user_attested_filled_main_session_did_not_inspect
+  local_credential_file: .env.g005
+  tracked_credential_template: .env.example
+  provider: deepseek
+  frozen_candidate_model: deepseek-v4-flash
+  frozen_candidate_thinking_level: high
+  alternate_model_fallback_authorized: false
+  pi_core_modification_authorized: false
+  formal_workbench_creation_authorized: false
 
 g002:
   contract_created: true
@@ -269,18 +299,18 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/goals/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY.md
   - docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md
   - docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - review_this_control_plane_alignment
-  - request_explicit_user_authorization_before_creating_G005_goal_contract
-  - if_authorized_draft_G005_in_the_main_session_without_execution
+  - create_the_authorized_reviewed_baseline_git_commit_for_this_revision
+  - handoff_the_activated_contract_to_a_dedicated_G005_execution_session
+  - execution_session_records_and_verifies_the_exact_clean_resulting_HEAD_before_setup
 
 open_user_decisions:
-  - authorize_or_reject_G005_goal_contract_creation
-  - later_select_provider_model_call_budget_and_fixture_during_G005_contract_review
+  - none_before_G005_execution_handoff
 ```
 
 ## Current Constraints
@@ -288,16 +318,21 @@ open_user_decisions:
 - Keep `.upstream/pi` immutable as the reference checkout.
 - Preserve `.runs/g002` and `.runs/g003` as ignored generated evidence; do not
   merge, overwrite or commit them.
-- Do not create the formal Workbench or call a real model.
+- Do not create the formal Workbench. The user accepted and activated G005 and
+  authorized its bounded real-model calls, but no setup or provider request may
+  occur until every contract activation precondition passes.
 - Do not use WSL, SDK/RPC fallback, or a Pi core patch without new evidence and
   architecture review.
 - Do not treat G003's fixed-task pass as Policy effectiveness, final Pi Go,
   current provider-catalog validation, or a V0 architecture freeze.
 - G004 was retired before a contract was created. Do not recreate it as a broad
   pre-Phase-3 robustness umbrella or silently reuse its identifier.
-- G005 is a candidate only. Do not create its Goal Contract, call a real model,
-  create `.runs/g005`, begin Phase 3, adopt a fallback runtime or change the
-  standard package boundary without new explicit authorization.
+- G005 is active with activation preconditions pending. Do not create
+  `.runs/g005`, install for it, call a model or hand off execution until the
+  reviewed contract/control files in this revision are committed under the
+  user's explicit authority. The execution session must record and verify the
+  resulting exact clean `HEAD` before setup. Fallback runtime and package-
+  boundary changes remain unauthorized.
 - Carry risks according to
   `docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md`; an unverified mature
   pattern is not an observed failure or an automatic Goal/Gate.
@@ -307,7 +342,9 @@ open_user_decisions:
 
 ## Expected Next Handoff
 
-Review this control-plane alignment. If separately authorized, draft—but do not
-execute—`G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY` in the main
-session. Final Pi Go, real-model execution, Phase 3, the V0 Version Charter,
+G005 is accepted and activated, and the reviewed-baseline Git commit for this
+revision is explicitly authorized. Create that commit, then hand the activated
+bounded contract to a dedicated G005 execution session. That session must
+record and verify the resulting exact clean `HEAD` before setup. No session may
+inspect or expose the ignored credential. Final Pi Go, the V0 Version Charter,
 formal Workbench creation and architecture freeze remain unauthorized.
