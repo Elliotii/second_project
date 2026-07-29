@@ -2,9 +2,11 @@
 
 ```yaml
 goal_id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-status: implementation_baseline_committed_awaiting_separate_stage_2_authorization
+status: closed_accepted
 phase: Phase_3A_real_model_path_feasibility_clean_retry
 owner: future_dedicated_G006_execution_session
+actual_execution_session: main_session
+execution_session_boundary_deviation: main_session_executed_instead_of_declared_dedicated_session
 architecture_owner: main_session
 created: 2026-07-29
 contract_creation_authorized_by_user: true
@@ -13,13 +15,19 @@ accepted_by_user: 2026-07-29
 activation_authorized: true
 activation_authorized_by_user: 2026-07-29
 stage_1_gate_0_implementation_authorized: true
-stage_2_real_model_execution_authorized: false
-real_model_call_authorized: false
+stage_2_real_model_execution_authorized: consumed
+real_model_call_authorized: false_after_single_attempt_consumed
 accepted_contract_baseline_commit_authorized: consumed
 accepted_contract_baseline_commit: aa2d12f701f4cecbc963a854e00a1d5bf312d77c
 implementation_baseline_commit_authorized: consumed
-implementation_baseline_commit: resulting_HEAD_of_this_revision
-further_git_commit_authorized: false
+implementation_baseline_commit: 05da78bc24d6bab92dc44ee44912a57159e45e72
+architecture_acceptance: ACCEPT_G006_PASS_REAL_MODEL_FEASIBILITY_WITH_SESSION_BOUNDARY_DEVIATION_NOTED
+architecture_accepted_by_user: 2026-07-30
+independent_session_audit: waived_by_user_for_G006
+future_execution_governance: main_session_owns_architecture_and_acceptance_dedicated_session_owns_goal_execution
+further_git_commit_authorized: consumed_by_G006_closeout_evidence_and_control_commit
+closeout_evidence_and_control_commit_authorized_by_user: 2026-07-30
+closeout_evidence_and_control_commit: resulting_HEAD_of_this_revision
 formal_workbench_creation_authorized: false
 pi_core_modification_authorized: false
 ```
@@ -28,7 +36,8 @@ pi_core_modification_authorized: false
 Stage 1 Gate 0。Accepted-contract baseline commit 已按用户明确授权创建，Stage
 1 随后完成实现、离线验证和 Main Session source review，外部 provider calls 为
 0，且未加载 credential。Gate 0 已通过并暂停；implementation-baseline Git
-commit 已获用户明确授权并由本 revision 创建。Stage 2 和模型调用仍未授权。
+commit 已获用户明确授权并创建。Stage 2 随后也被单独授权并完成唯一配对实验；
+当前 disposition 为 `PASS_REAL_MODEL_FEASIBILITY`，任何后续模型调用均未授权。
 
 ## 1. Objective
 
@@ -779,7 +788,7 @@ G006 只有在所有适用条件满足后才可关闭：
 - report、closeout 和 `CURRENT_STATE.md` 完成；
 - one required disposition selected；
 - remaining unknowns/non-claims explicit；
-- Main Session architecture acceptance remains a separate user decision。
+- Main Session/user architecture acceptance completed on 2026-07-30。
 
 ## 21. Explicitly deferred and prohibited scope expansion
 
@@ -816,12 +825,18 @@ G006 只有在所有适用条件满足后才可关闭：
 Main Session 保留架构解释、source review、commit 建议、Stage 2 授权建议、Goal
 closeout acceptance 和与用户的主要讨论。
 
-## 23. Current decision requested
+实际执行偏离了上述 owner 边界：Main Session 完成了实现、执行和首次复核。用户于
+2026-07-30 接受该偏差下的 G006 证据并免除本次额外独立 Session 审计；今后 Goal
+固定由专用 Session 执行，再由 Main Session 复核并与用户完成架构决策。
 
-本契约已被用户接受，Stage 1 Gate 0 已执行并通过 Main Session source review；
-用户也已明确授权本 revision 创建 G006 implementation-baseline commit。提交后
-必须验证 exact clean `HEAD`、未变化的 Gate 0 source digest、attempt-root absence
-和 provider calls `0`，并将绑定信息写入 ignored preflight evidence。
+## 23. Final decision and remaining decision
 
-当前下一项用户决定是是否单独授权 Stage 2 real-model execution。在该授权前，
-不得运行 Gate A、加载 credential、运行 driver、创建 attempt root 或调用模型。
+本契约已完成唯一授权的 Stage 2 配对实验。Gates A–E 全部通过，Baseline 与
+Candidate 均在首次 Verifier 通过，因此 recovery 未触发且保持 `unobserved`。
+执行报告建议接受 `PASS_REAL_MODEL_FEASIBILITY`，但不把它解释为 Policy 效果、
+最终 Pi Go 或 V0 架构冻结。
+
+用户已于 2026-07-30 接受 G006 Closeout，并随后授权提交当前报告和控制文件。
+尚未决定的是：是否要求在 V0 Version Charter 前另设一个受限 Phase 3B
+real-model recovery activation case，或将该观察延后到 Pilot Eval。不得自动创建
+新 Goal、再次调用模型或创建后续 Git commit。

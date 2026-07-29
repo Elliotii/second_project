@@ -54,6 +54,10 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - Recommend a separate specialist research session only for a concrete, bounded, context-heavy question whose answer could change an important design decision. Do not create or dispatch one without user authorization.
 - A specialist research report is advisory. The main session must check its cited source paths and symbols, compare the result with pinned Pi evidence and project scope, and accept, narrow, reject, or request revision.
 - Use specialist implementation sessions only after the main session has produced a reviewed Goal Contract and the user has explicitly authorized execution. The implementation session must not grant final Pi Go, freeze architecture, or expand scope.
+- Every execution Goal Contract must name its execution-session owner. When it names a dedicated Goal Session, approvals given in the main session authorize handoff to that Session; they do not authorize the main session to implement or execute the Goal silently.
+- The dedicated Goal Session owns the bounded implementation, commands, raw evidence, execution report, and Closeout draft. It must stop at Contract gates and return its report without making architecture acceptance decisions.
+- The main session reviews the dedicated Session's report and cited evidence, discusses material choices with the user, and owns final Goal acceptance and next-phase decisions.
+- Deviating from the declared Session owner requires explicit user direction and must be recorded in the Goal report, Closeout, and `CURRENT_STATE.md`.
 
 ## Commands and Changes
 

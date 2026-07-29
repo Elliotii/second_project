@@ -1,44 +1,44 @@
 # Current State
 
-> Updated: 2026-07-29
+> Updated: 2026-07-30
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: g006_reviewed_implementation_baseline_committed
-  status: G006_paused_before_stage_2_zero_model_calls
+  phase: g006_closed_pending_next_phase_decision
+  status: G006_PASS_REAL_MODEL_FEASIBILITY_accepted
 
 active_goal:
-  id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-  status: implementation_baseline_committed_awaiting_separate_stage_2_authorization
-  contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  id: null
+  status: none
+  contract: null
   disposition: null
 
 last_executed_goal:
-  id: G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY
-  status: closed_invalid_evidence
-  contract: docs/goals/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY.md
-  disposition: INVALID_G005_EVIDENCE
-  architecture_review: ACCEPT_INVALID_EVIDENCE_CLOSEOUT_WITH_NON_BLOCKING_CORRECTIONS_APPLIED
+  id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
+  status: closed_accepted
+  contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  disposition: PASS_REAL_MODEL_FEASIBILITY
+  architecture_review: ACCEPT_G006_PASS_REAL_MODEL_FEASIBILITY_WITH_SESSION_BOUNDARY_DEVIATION_NOTED
 
 last_closed_goal:
-  id: G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY
-  status: closed_invalid_evidence
-  contract: docs/goals/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY.md
-  disposition: INVALID_G005_EVIDENCE
-  architecture_review: ACCEPT_INVALID_EVIDENCE_CLOSEOUT_WITH_NON_BLOCKING_CORRECTIONS_APPLIED
+  id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
+  status: closed_accepted
+  contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  disposition: PASS_REAL_MODEL_FEASIBILITY
+  architecture_review: ACCEPT_G006_PASS_REAL_MODEL_FEASIBILITY_WITH_SESSION_BOUNDARY_DEVIATION_NOTED
 
 last_completed_goal:
-  id: G003_PI_DIRECT_HARNESS_GO_GATE_RETRY
-  status: complete
-  contract: docs/goals/G003_PI_DIRECT_HARNESS_GO_GATE_RETRY.md
-  disposition: PASS_DIRECT_GO_GATE
-  architecture_review: accepted_for_next_bounded_robustness_checkpoint
+  id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
+  status: closed_accepted
+  contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  disposition: PASS_REAL_MODEL_FEASIBILITY
+  architecture_review: ACCEPT_G006_PASS_REAL_MODEL_FEASIBILITY_WITH_SESSION_BOUNDARY_DEVIATION_NOTED
 
 next_goal:
-  id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-  status: active_paused_before_stage_2
-  contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  id: null
+  status: pending_next_phase_architecture_decision
+  contract: null
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -139,6 +139,22 @@ completed_work:
   - G006_implementation_baseline_commit_authorized_by_user
   - G006_reviewed_implementation_baseline_committed
   - G006_clean_HEAD_and_reviewed_source_identity_bound_with_zero_provider_calls
+  - G006_stage_2_real_model_execution_authorized_by_user
+  - G006_current_official_DeepSeek_V4_API_checkpoint_passed
+  - G006_stage_2_Gate_A_passed_with_zero_provider_calls
+  - G006_unique_write_once_paired_attempt_completed
+  - G006_baseline_real_route_settled_and_external_verifier_passed
+  - G006_candidate_real_route_settled_and_initial_external_verifier_passed
+  - G006_candidate_recovery_correctly_not_triggered
+  - G006_Gates_A_through_E_passed
+  - G006_final_secret_rescan_passed
+  - G006_execution_report_and_closeout_created
+  - G006_execution_session_boundary_deviation_recorded
+  - G006_independent_session_audit_waived_by_user
+  - G006_PASS_REAL_MODEL_FEASIBILITY_architecture_acceptance_completed
+  - G006_closed_accepted
+  - future_main_and_dedicated_goal_session_boundary_fixed
+  - G006_closeout_evidence_and_control_commit_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -165,7 +181,7 @@ pi:
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: real_model_route_partially_positive_G005_pair_invalid_not_frozen_for_V0
+  status: G006_real_model_route_accepted_valid_pair_recovery_unobserved_not_frozen_for_V0
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -181,16 +197,16 @@ architecture:
     public_workaround: subscribe
     core_route_blocker: false
     pi_core_patch_required: false
-  next_decision_material: docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md
+  next_decision_material: docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
 
 first_policy:
   candidate: Completion Verification
-  status: deterministic_mechanism_feasible_G005_real_model_effect_unverified_not_frozen
+  status: deterministic_recovery_and_real_route_feasible_real_recovery_and_policy_effect_unverified_not_frozen
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
   deterministic_spike_created: true_g003_g005_and_committed_g006_gate_0_spike
-  real_model_run_completed: partial_baseline_route_only_invalid_paired_evidence
+  real_model_run_completed: one_valid_G006_baseline_candidate_pair_both_initial_verifiers_passed
 
 g005_authorization:
   goal_contract_created: true
@@ -265,7 +281,8 @@ g005:
 
 g006:
   id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
-  status: implementation_baseline_committed_awaiting_separate_stage_2_authorization
+  status: closed_accepted
+  disposition: PASS_REAL_MODEL_FEASIBILITY
   contract: docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
   precontract_research: docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_PRECONTRACT_RESEARCH.md
   contract_created: true
@@ -275,14 +292,19 @@ g006:
   activation_authorized: true
   activation_authorized_at: 2026-07-29
   stage_1_gate_0_implementation_authorized: true
-  stage_2_real_model_execution_authorized: false
-  real_model_call_authorized: false
+  stage_2_real_model_execution_authorized: consumed
+  stage_2_authorized_at: 2026-07-29
+  real_model_call_authorized: false_after_single_attempt_consumed
   accepted_contract_baseline_commit_authorized: consumed
   implementation_baseline_commit_authorized: consumed
-  implementation_baseline_commit: resulting_HEAD_of_this_revision
-  additional_git_commit_authorized: false
-  execution_authorized: stage_1_consumed_stage_2_false
-  runs_directory_created: true_preflight_only
+  implementation_baseline_commit: 05da78bc24d6bab92dc44ee44912a57159e45e72
+  additional_git_commit_authorized: consumed_by_G006_closeout_evidence_and_control_commit
+  closeout_evidence_and_control_commit_authorized_by_user: 2026-07-30
+  closeout_evidence_and_control_commit: resulting_HEAD_of_this_revision
+  additional_model_call_authorized: false
+  additional_attempt_authorized: false
+  execution_authorized: consumed_and_execution_complete
+  runs_directory_created: true_preflight_and_attempt_001
   activation_preconditions:
     root_HEAD: aa2d12f701f4cecbc963a854e00a1d5bf312d77c
     accepted_contract_baseline_commit: aa2d12f701f4cecbc963a854e00a1d5bf312d77c
@@ -310,7 +332,7 @@ g006:
     pinned_pi_builds: passed
     attempt_root_created: false
     reviewed_implementation_identity_created: true_after_commit_in_ignored_preflight
-    reviewed_clean_HEAD: resulting_HEAD_of_this_revision
+    reviewed_clean_HEAD: 05da78bc24d6bab92dc44ee44912a57159e45e72
     reviewed_source_digest_matches_gate_0: true
     report: docs/reports/G006_GATE_0_IMPLEMENTATION_AND_OFFLINE_REVIEW.md
   setup:
@@ -324,6 +346,68 @@ g006:
     pi_ai_check_model_data: passed
     pi_ai_standard_build_offline: passed
     pi_agent_core_standard_build: passed
+  stage_2_external_API_checkpoint:
+    status: passed
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com
+    openAI_chat_completions: supported
+    thinking_high_and_tools: supported
+    reasoning_replay_after_tool_calls: required_and_preserved
+    frozen_price_matches_current_official_price: true
+    evidence: .runs/g006/preflight/stage2-external-api-checkpoint.json
+  stage_2:
+    gate_a: passed
+    gate_b: passed
+    gate_c: passed
+    gate_d: passed
+    gate_e: passed
+    attempt_root: .runs/g006/attempt-001
+    attempt_count: 1
+    model_count: 1
+    provider_requests: 8
+    goal_duration_after_first_provider_ms: 55470
+    pair_cost_usd: 0.0016993088
+    baseline:
+      provider_requests: 4
+      tool_starts: 3
+      tool_ends: 3
+      settled: 1
+      verifier_runs: 1
+      initial_verifier: passed
+      final_verifier: passed
+    candidate:
+      provider_requests: 4
+      tool_starts: 3
+      tool_ends: 3
+      settled: 1
+      verifier_runs: 1
+      initial_verifier: passed
+      final_verifier: passed
+      recovery_triggered: false
+      recovery_path: unobserved_because_initial_verifier_passed
+    evidence:
+      subscriber_response_counts_match_requests: true
+      successful_assistant_and_response_ID_counts_match_requests: true
+      session_tool_call_result_IDs_match: true
+      journal_v2_envelopes_and_sequences_valid: true
+      verifiers_after_settled: true
+      initial_pair_configuration_equivalent: true
+      reasoning_body_or_signature_persisted: false
+      driver_secret_scan_matches: 0
+      final_secret_rescan_files: 54
+      final_secret_rescan_matches: 0
+  report: docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
+  closeout: docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_CLOSEOUT.md
+  architecture_acceptance: ACCEPT_G006_PASS_REAL_MODEL_FEASIBILITY_WITH_SESSION_BOUNDARY_DEVIATION_NOTED
+  architecture_accepted_by_user: 2026-07-30
+  execution_session_governance:
+    declared_execution_owner: future_dedicated_G006_execution_session
+    actual_execution_session: main_session
+    deviation: main_session_implemented_executed_and_first_reviewed_G006
+    technical_evidence_failure_observed: false
+    review_independence_reduced: true
+    independent_session_audit: waived_by_user_for_G006
+    future_rule: main_session_owns_architecture_discussion_and_acceptance_dedicated_goal_session_owns_implementation_and_execution
   research_conclusion: bounded_clean_retry_is_justified_without_additional_specialist_research
   frozen_inputs:
     - same_pinned_Pi_and_public_direct_AgentHarness_route
@@ -346,6 +430,7 @@ g006:
     - exact_clean_HEAD_and_source_digest_are_recorded
     - user_separately_authorizes_stage_2_real_model_execution
     - one_fresh_runs_g006_attempt_and_one_symmetric_paired_attempt
+    - execution_report_closeout_and_CURRENT_STATE_are_reviewed
 
 g002:
   contract_created: true
@@ -467,6 +552,8 @@ reference_analysis:
 
 required_reading:
   - docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
+  - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
+  - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_CLOSEOUT.md
   - docs/reports/G006_GATE_0_IMPLEMENTATION_AND_OFFLINE_REVIEW.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_PRECONTRACT_RESEARCH.md
   - docs/reports/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_REPORT.md
@@ -477,13 +564,12 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - preserve_exact_clean_reviewed_G006_implementation_HEAD_and_source_digest
-  - user_separately_decides_whether_to_authorize_Stage_2_real_model_execution
-  - before_any_model_call_recheck_current_official_DeepSeek_API_facts_and_all_Stage_2_preconditions
-  - do_not_run_Gate_A_load_credential_create_attempt_root_or_call_model_without_that_authorization
+  - main_session_recommends_combined_G003_G006_mechanism_evidence_and_defers_natural_real_recovery_observation_to_Pilot_Eval
+  - user_decides_whether_to_accept_that_recommendation_before_any_V0_Version_Charter_work
+  - do_not_create_G007_freeze_V0_or_run_another_model_without_new_explicit_authority
 
 open_user_decisions:
-  - separately_authorize_or_reject_G006_Stage_2_real_model_execution
+  - choose_bounded_Phase_3B_activation_case_or_defer_real_recovery_observation_to_Pilot_Eval
 ```
 
 ## Current Constraints
@@ -505,13 +591,15 @@ open_user_decisions:
   either during closeout review. The raw `FAIL_REAL_MODEL_ROUTE` record is
   historically preserved but its interpretation was rejected by Main Session.
 - `G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY` now
-  has an accepted Contract and a completed Stage 1 Gate 0. The independent
-  G006 Spike, fresh isolated Pi setup and offline review passed with zero
-  external provider calls and no credential load. Its reviewed implementation
-  baseline is committed and bound to the exact clean `HEAD` and Gate 0 source
-  digest through ignored preflight evidence. Stage 2 and model calls remain
-  unauthorized. Fallback runtime and package-boundary changes remain
-  unauthorized.
+  is closed with accepted `PASS_REAL_MODEL_FEASIBILITY`. Both variants passed
+  their initial Verifier; Candidate recovery was correctly not triggered and
+  remains unobserved. No additional G006 model call or attempt is authorized.
+  Fallback runtime and package-boundary changes remain unauthorized.
+- G006 was implemented, executed and first-reviewed by the Main Session despite
+  the Contract naming a dedicated execution Session. The user accepted G006
+  without a retroactive independent audit. For future execution Goals, the Main
+  Session owns architecture/user decisions/final acceptance and a dedicated
+  Goal Session owns implementation/execution and reports back.
 - Carry risks according to
   `docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md`; an unverified mature
   pattern is not an observed failure or an automatic Goal/Gate.
@@ -521,13 +609,16 @@ open_user_decisions:
 
 ## Expected Next Handoff
 
-The Main Session has completed and reviewed G006 Stage 1 Gate 0, and the user
-authorized the reviewed implementation-baseline commit. This revision records
-that baseline; immediately after commit, the exact clean `HEAD` and unchanged
-Gate 0 source digest are bound in ignored preflight evidence with provider
-calls still at zero. No credential was loaded, no external provider was called,
-and the write-once attempt root does not exist. The next decision is a separate
-explicit Stage 2 authorization. Until then, Gate A, credential loading,
-`driver.ts`, attempt-root creation and real-model execution remain prohibited.
-Final Pi Go, Completion Verification promotion, the V0 Version Charter, formal
-Workbench creation and architecture freeze remain unauthorized.
+G006 is closed with user-accepted `PASS_REAL_MODEL_FEASIBILITY`. Gates A through
+E passed, the public Direct `AgentHarness` route completed both real-model coding
+cycles, and both settled-before-Verifier checks passed. Eight provider requests
+were made in total; final secret scans found no credential match. Candidate's
+first Verifier passed, so no recovery was triggered and real-model recovery
+remains unobserved. The G006 execution-session boundary deviation is recorded;
+the user waived a separate independent-session audit for this Goal and fixed a
+Main Session / dedicated Goal Session split for future execution Goals. The
+next decisions are whether to defer observed real-model recovery to Pilot Eval
+or require a bounded Phase 3B. The G006 Closeout evidence/control commit was
+separately authorized and is consumed by the revision containing this state.
+Final Pi Go, Policy promotion, formal Workbench creation and architecture
+freeze remain unauthorized.
