@@ -1,0 +1,567 @@
+manifest_status: verified_and_accepted_reference_acquisition_plan
+document_date: "2026-07-30"
+project: "Adaptive Coding Agent Harness"
+accepted_by_user: "2026-07-30"
+binding_reference_plan: "REFERENCE_ACQUISITION_PLAN.md"
+document_role:
+  - "记录已经核验的三项本地资料"
+  - "保存不同资料的来源、版本、许可证和使用边界"
+  - "规定不同资料何时本地化、服务哪个版本、允许如何复用"
+  - "防止资料研究自动变成当前实现任务"
+
+authority:
+  current_execution_authority: false
+  new_goal_authorized: false
+  repository_clone_authorized: false
+  network_access_authorized: false
+  code_change_authorized: false
+  git_commit_authorized: false
+  note: "本文件是获取与使用计划，不自动授权下载、克隆、修改源码或创建 Goal。"
+
+verified_local_inventory:
+  known_local_sources_count: 3
+  other_sources_default_status: "not_present_by_default"
+  assumptions_must_be_verified_by_codex: false
+  verified_local_sources:
+    - source_id: "pi_runtime"
+      name: "Pi"
+      source_type: "pinned_runtime"
+      status: "verified_present_clean"
+      local_path: ".upstream/pi"
+      origin: "https://github.com/earendil-works/pi.git"
+      commit: "027a5847901b5dde30270abaa1041046cd2b4b55"
+      describe: "v0.82.1-40-g027a5847"
+      package: "@earendil-works/pi-agent-core@0.82.1"
+      license: "MIT"
+      working_tree: "clean"
+      expected_role:
+        - "第二项目主 Agent Runtime"
+        - "固定源码事实源"
+        - "Agent Loop、Provider、Tool、Session 与 Runtime Event 的实现来源"
+      expected_project_phase:
+        - "current"
+        - "V0"
+        - "V1"
+        - "V2"
+        - "V3"
+      allowed_use:
+        - "read"
+        - "build"
+        - "test"
+        - "public_api_integration"
+        - "adapter_implementation"
+      default_restrictions:
+        - "默认不得修改 Pi Core"
+        - "不得把 Pi 自带能力包装成项目原创"
+        - "不得从参考文章反推 Pi 行为"
+      codex_verification_actions:
+        - "verify_actual_local_path"
+        - "verify_git_commit"
+        - "verify_git_cleanliness"
+        - "verify_package_version"
+        - "verify_license"
+        - "verify_current_adapter_import_boundary"
+        - "report_any_difference_from_G006_summary"
+      codex_may_update:
+        - "local_path"
+        - "commit_or_version"
+        - "license"
+        - "actual_status"
+        - "relevant_modules"
+      user_decision_required_if:
+        - "actual_commit_differs_from_G006_pinned_commit"
+        - "working_tree_is_not_clean"
+        - "V0_requires_pi_core_patch"
+        - "public_api_is_insufficient"
+
+    - source_id: "cc_harness_knowledge"
+      name: "cc-harness-knowledge"
+      source_type: "user_knowledge_base"
+      status: "verified_present_tracked_content_clean"
+      local_path: "reference/cc-harness-knowledge"
+      commit: "3db7929714e29785c09b478462b3a6e2bd456efd"
+      tracked_semantic_files: 29
+      remote: "none_configured"
+      repository_license: "absent"
+      usage_boundary: "user_notes_and_design_reference_not_external_code_package"
+      working_tree_note: "tracked_content_clean_with_untracked_appledouble_sidecars"
+      expected_role:
+        - "用户已经学习和整理的 Harness 设计知识"
+        - "Context、Tool、Session、Skill、Permission、Stop 与 Trace 的设计输入"
+        - "Pi 源码对照、代码审查和面试学习材料"
+      expected_project_phase:
+        - "current"
+        - "V0"
+        - "V1"
+        - "V2"
+        - "V2.5"
+        - "V3"
+      allowed_use:
+        - "read"
+        - "inventory"
+        - "design_checklist"
+        - "pattern_mapping"
+        - "candidate_skill_or_policy_input"
+      default_restrictions:
+        - "不能单独证明 Pi 当前行为"
+        - "不能自动形成 Claude Code Feature Parity 清单"
+        - "不能因为某个成熟 Harness 有某能力就自动创建 Goal"
+      codex_verification_actions:
+        - "verify_actual_local_path"
+        - "inventory_files_and_topics"
+        - "identify_duplicate_or_outdated_notes"
+        - "map_topics_to_V0_V1_V2_V3"
+        - "identify_notes_with_direct_code_counterparts"
+        - "report_missing_or_ambiguous_coverage"
+      codex_may_update:
+        - "local_path"
+        - "actual_status"
+        - "topic_inventory"
+        - "version_relevance"
+        - "recommended_reading_order"
+
+    - source_id: "claude_code_source_mirror"
+      name: "Claude Code 源码镜像"
+      source_type: "source_mirror_reference"
+      status: "verified_present_read_only_pattern_reference"
+      local_path: "reference/src"
+      vcs: "none"
+      exact_version: "unknown"
+      source_provenance: "unverified"
+      license: "unverified"
+      version_marker_note: "MACRO.VERSION_is_build_time_injected"
+      direct_copy_or_port: "prohibited_until_provenance_and_license_review"
+      expected_role:
+        - "成熟 Coding Agent Harness 的源码级参考"
+        - "与 cc-harness-knowledge 进行实现对照"
+        - "为具体模块提供移植、重写或行为仿写候选"
+      expected_project_phase:
+        - "current"
+        - "V0"
+        - "V1"
+        - "V2"
+        - "V2.5"
+      allowed_use_pending_verification:
+        - "read"
+        - "compare"
+        - "source_map"
+        - "behavioral_analysis"
+      possible_future_use_pending_license_and_source_review:
+        - "module_porting"
+        - "cross_language_rewrite"
+        - "behavioral_reimplementation"
+      default_restrictions:
+        - "不得在未核验来源和许可证前直接复制代码"
+        - "不得为了 Feature Parity 复刻完整产品"
+        - "不得让该镜像取代 Pi 主 Runtime"
+        - "不得依据镜像存在就自动把所有能力纳入路线"
+      codex_verification_actions:
+        - "verify_actual_local_path"
+        - "verify_repository_identity_and_source"
+        - "verify_commit_or_snapshot_date"
+        - "verify_license_or_usage_boundary"
+        - "identify_modules_relevant_to_current_versions"
+        - "map_relevant_modules_to_cc_harness_knowledge"
+        - "separate_publicly_reusable_patterns_from_unclear_material"
+      codex_may_update:
+        - "local_path"
+        - "source_identity"
+        - "commit_or_snapshot"
+        - "license_or_usage_boundary"
+        - "allowed_use"
+        - "relevant_modules"
+      mandatory_pause_if:
+        - "source_or_license_boundary_is_unclear_for_direct_code_reuse"
+
+codex_inventory_authority:
+  may_inspect_actual_local_reference_directories: true
+  may_add_newly_discovered_existing_sources_to_manifest: true
+  may_correct_assumed_paths_versions_and_status: true
+  may_reclassify_priority_with_reasoning: true
+  may_propose_removing_irrelevant_or_duplicate_sources: true
+  may_not:
+    - "把本地已有资料自动升级为当前实现任务"
+    - "未经用户接受直接克隆外部仓库"
+    - "未经用户接受修改或删除用户资料"
+    - "未经许可证核验直接移植代码"
+    - "用外部资料覆盖当前工程事实"
+  required_output_for_updates:
+    - "actual_inventory"
+    - "differences_from_this_initial_plan"
+    - "recommended_manifest_patch"
+    - "user_decisions_required"
+
+acquisition_principles:
+  - principle_id: "problem_before_source"
+    rule: "先明确当前或下一版本需要解决的问题，再决定是否获取资料。"
+  - principle_id: "source_is_not_goal"
+    rule: "获取仓库、论文或文章不自动创建实现 Goal。"
+  - principle_id: "pinned_and_traceable"
+    rule: "源码仓库本地化后应固定 Commit 或 Release，并记录许可证和来源。"
+  - principle_id: "bounded_research"
+    rule: "每次源码研究必须限定模块、问题、输出和停止条件。"
+  - principle_id: "reuse_is_allowed"
+    rule: "许可证允许且适配价值明确时，可以直接依赖、移植、跨语言重写或行为仿写。"
+  - principle_id: "no_originality_purity"
+    rule: "个人贡献边界用于准确归因，不用于强迫从零重复开发。"
+  - principle_id: "no_premature_platformization"
+    rule: "不得因未来 V3/V4 方向提前获取并整合大型控制平台。"
+  - principle_id: "codex_agency_with_evidence"
+    rule: "Codex 可以根据真实本地状态和源码内容调整本计划，但必须给出证据、版本关系和用户决策点。"
+
+planned_sources:
+  - source_id: "searchcli"
+    name: "SearchCLI"
+    source_type: "engineering_project"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "defer_until_specific_V0_goal_need"
+    priority: "conditional_for_V0_V1"
+    canonical_repository: "unverified"
+    license: "unverified"
+    activation_trigger: "specific_V0_goal_requires_advanced_plan_checkpoint_or_candidate_apply"
+    target_phase:
+      - "V0"
+      - "V1"
+    why_consider:
+      - "Plan 与 Dry Run"
+      - "预算预估"
+      - "Checkpoint 与 Resume"
+      - "候选生成、验证与 Apply 分离"
+      - "长任务执行与人工发布边界"
+    target_questions:
+      - "哪些 CLI、Plan、Checkpoint 模块可以直接复用或 TypeScript 重写？"
+      - "Candidate 与 Apply 的边界如何映射到 Harness Policy？"
+      - "哪些实现只适合搜索领域，不适合 Coding Agent？"
+    allowed_use_after_license_review:
+      - "read"
+      - "source_map"
+      - "direct_module_reuse"
+      - "module_porting"
+      - "cross_language_rewrite"
+      - "behavioral_reimplementation"
+    not_for:
+      - "自动采用 SPA 或种群算法"
+      - "照搬搜索领域数据模型"
+      - "阻塞 V0 Charter"
+    codex_initial_action:
+      - "当前不获取，不阻塞 V0-A"
+      - "触发后由专用研究 Session 核验 canonical URL、Commit、许可证、目标模块和停止条件"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "youtu_agent"
+    name: "Youtu-Agent"
+    source_type: "engineering_or_research_project"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "defer_until_before_V2_contract_or_V3_experience_design"
+    priority: "high_for_future"
+    target_phase:
+      - "V2"
+      - "V3"
+    why_consider:
+      - "Dataset / Environment / Rollout / Judge"
+      - "Experiment Identity"
+      - "运行结果持久化"
+      - "Experience / Practice"
+      - "Candidate Improvement"
+      - "Promotion"
+    target_questions:
+      - "哪些 Rollout 与 Environment 抽象适合 Pi / TypeScript？"
+      - "哪些模块可直接移植，哪些只保留行为合同？"
+      - "Experience 与 Promotion 如何避免与本项目现有 Artifact 重复？"
+    allowed_use_after_license_review:
+      - "read"
+      - "source_map"
+      - "direct_module_reuse"
+      - "module_porting"
+      - "cross_language_rewrite"
+      - "architecture_adaptation"
+    not_for:
+      - "阻塞 V0 或 V1"
+      - "提前建设完整 Experience 平台"
+      - "照搬与 Coding Agent 无关的训练或评测逻辑"
+    codex_initial_action:
+      - "当前仅记录为 V2/V3 前置研究候选"
+      - "在 V2 设计前提出有界源码研究任务"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "paper_scaffold_self_improvement"
+    name: "Self-Improvements in Modern Agentic Systems: A Survey"
+    source_type: "paper"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "acquire_by_version_gate_before_V2_or_V3_when_needed"
+    priority: "high"
+    target_phase:
+      - "Phase_4"
+      - "V0"
+      - "V3"
+    why_consider:
+      - "Foundation Model 与 Scaffold 分离"
+      - "稳定内核与可变组件"
+      - "Scaffold 版本化、回滚和风险"
+    preferred_local_form:
+      - "paper.pdf"
+      - "PROJECT_RELEVANCE.md"
+    allowed_use:
+      - "conceptual_framework"
+      - "design_checklist"
+      - "terminology"
+    not_for:
+      - "证明 Pi 行为"
+      - "直接导出实现架构"
+    codex_initial_action:
+      - "V0 阶段不获取"
+      - "V2/V3 具体设计问题触发时仅保存一手来源和项目映射"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "paper_long_horizon_agents"
+    name: "Towards Long-Horizon Agents: A Survey"
+    source_type: "paper"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "acquire_by_version_gate_before_V2"
+    priority: "high"
+    target_phase:
+      - "Phase_4"
+      - "V2"
+      - "V3"
+    why_consider:
+      - "H1 / H2 / H3 分层"
+      - "Harness、Session、Checkpoint 与 Experience Reuse"
+      - "跨 Session Reliability 与跨任务复用边界"
+    preferred_local_form:
+      - "paper.pdf"
+      - "PROJECT_RELEVANCE.md"
+    allowed_use:
+      - "conceptual_framework"
+      - "version_boundary_review"
+      - "risk_checklist"
+    not_for:
+      - "自动把完整 H2/H3 纳入当前版本"
+    codex_initial_action:
+      - "V0 阶段不获取"
+      - "V2 Charter 前提炼与 Recovery/long-horizon 边界直接相关的章节"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "paper_skillos"
+    name: "SkillOS: Learning Skill Curation for Self-Evolving Agents"
+    source_type: "research_paper"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "acquire_by_version_gate_before_V1_or_V3_skill_design"
+    priority: "conditional_for_V1_high_for_V3"
+    target_phase:
+      - "V3"
+    why_consider:
+      - "Executor / Curator 分离"
+      - "外部 SkillRepo"
+      - "Skill insert / update / delete"
+      - "Related Task Stream"
+    preferred_local_form:
+      - "paper.pdf"
+      - "PROJECT_RELEVANCE.md"
+    allowed_use:
+      - "design_pattern"
+      - "evaluation_design"
+      - "skill_lifecycle_reference"
+    not_for:
+      - "Curator 强化学习训练"
+      - "模型参数更新"
+      - "阻塞 V0/V1/V2"
+    source_code_acquisition:
+      default: "not_planned"
+      trigger: "发现可直接复用且许可证明确的 Skill 生命周期模块"
+    codex_initial_action:
+      - "当前只记录为 V3 论文候选"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "paper_experience_meta_evolution"
+    name: "Self-Improving Agents in the Era of Experience: A Survey of Self- to Meta-Evolution"
+    source_type: "paper"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "acquire_before_V3"
+    priority: "medium_now_high_for_V3"
+    target_phase:
+      - "V3"
+      - "V4"
+    why_consider:
+      - "Raw Trace、Diagnosis、Experience、Skill、Policy 分层"
+      - "Mutable Harness"
+      - "评估改进机制"
+    preferred_local_form:
+      - "paper.pdf"
+      - "PROJECT_RELEVANCE.md"
+    allowed_use:
+      - "conceptual_framework"
+      - "experience_schema_review"
+      - "meta_evaluation_checklist"
+    not_for:
+      - "实现完整 Meta-Evolution"
+      - "创建自动改进 Curator 的 Meta-Agent"
+    codex_initial_action:
+      - "当前仅记录为 V3/V4 前置论文"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "openharness"
+    name: "OpenHarness"
+    source_type: "engineering_project"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "conditional_acquisition"
+    priority: "conditional"
+    target_phase:
+      - "V0"
+      - "V1"
+      - "V2.5"
+    activation_triggers:
+      - "Permission Policy 成为当前 Goal"
+      - "Preflight / Dry Run 成为当前 Goal"
+      - "Hook 机制成为当前 Goal"
+      - "某个明确 Session / Context 模块需要源码对照"
+    allowed_use_after_license_review:
+      - "read"
+      - "selected_module_porting"
+      - "behavioral_reimplementation"
+    not_for:
+      - "全面 Feature Parity"
+      - "替代 Pi"
+      - "构建 Pi + OpenHarness 双 Runtime"
+    codex_initial_action:
+      - "不建议当前默认获取"
+      - "如真实本地目录中已存在，应核验但不得自动采用"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "harbor_or_terminal_bench"
+    name: "Harbor / Terminal-Bench"
+    source_type: "evaluation_framework"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "conditional_acquisition"
+    priority: "conditional"
+    target_phase:
+      - "V1"
+      - "V2"
+      - "V3"
+    activation_triggers:
+      - "任务与 Trial 数量使自研 Runner 明显重复"
+      - "需要标准 Task / Environment / Agent Adapter"
+      - "需要公开 Benchmark 兼容"
+    allowed_use_after_license_review:
+      - "read"
+      - "task_schema_adaptation"
+      - "trial_artifact_adaptation"
+      - "agent_adapter_reference"
+      - "verifier_reference"
+    not_for:
+      - "在 V0 提前引入完整 Benchmark 平台"
+      - "让 Benchmark 取代产品身份"
+    codex_initial_action:
+      - "当前不获取"
+      - "在 V1 Pilot 设计时重新评估"
+    user_decision_required_before_acquisition: true
+
+  - source_id: "awesome_indexes"
+    name: "Awesome Self-Improving / Long-Horizon Agent 索引仓库"
+    source_type: "secondary_index"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "index_only"
+    priority: "low"
+    target_phase:
+      - "research_only"
+    allowed_use:
+      - "discover_papers"
+      - "discover_projects"
+    not_for:
+      - "作为实现证据"
+      - "默认整仓本地化"
+      - "直接决定路线"
+    codex_initial_action:
+      - "仅在需要寻找特定来源时在线使用"
+
+  - source_id: "secondary_articles_and_reprints"
+    name: "腾讯文章、掘金与 OSChina 转载"
+    source_type: "secondary_article"
+    default_local_status: "not_present_by_default"
+    acquisition_status: "online_or_index_only"
+    priority: "low"
+    allowed_use:
+      - "discover_primary_sources"
+      - "Chinese_reading_aid"
+    not_for:
+      - "替代原论文"
+      - "架构权威"
+      - "实验结论"
+    codex_initial_action:
+      - "不默认本地保存"
+
+recommended_reference_structure:
+  root: "reference/"
+  note: "以下是建议结构，不代表当前本地实际存在。Codex 应基于真实仓库调整。"
+  directories:
+    - path: "reference/SOURCE_MANIFEST.yaml"
+      purpose: "实际资料清单、版本、许可证和用途"
+    - path: "reference/knowledge/cc-harness-knowledge/"
+      purpose: "用户知识库"
+    - path: "reference/upstreams/claude-code-source-mirror/"
+      purpose: "源码镜像；真实路径由 Codex 核验"
+    - path: "reference/upstreams/SearchCLI/"
+      purpose: "经用户授权后才加入"
+    - path: "reference/upstreams/Youtu-Agent/"
+      purpose: "V2/V3 前经用户授权后加入"
+    - path: "reference/papers/"
+      purpose: "核心论文 PDF 与项目相关摘要"
+    - path: "reference/analyses/"
+      purpose: "有界源码或论文适配分析"
+    - path: "reference/adaptation/ADAPTATION_CANDIDATES.md"
+      purpose: "待评估的模块移植候选"
+    - path: "reference/adaptation/PORTED_MODULES.md"
+      purpose: "已采用、移植或重写模块的来源与验证"
+    - path: "reference/adaptation/REJECTED_PATTERNS.md"
+      purpose: "不适合当前项目的模式及重新考虑条件"
+
+codex_first_pass_required_outputs:
+  - output_id: "actual_local_inventory"
+    content:
+      - "实际存在的资料和路径"
+      - "Commit、版本、许可证或来源边界"
+      - "与本文件三项假设的差异"
+      - "额外发现的现有资料"
+  - output_id: "reference_acquisition_recommendation"
+    content:
+      - "当前建议立即获取的来源"
+      - "建议推迟的来源"
+      - "每个来源服务的版本和具体问题"
+      - "预计研究或移植成本"
+      - "用户需要批准的动作"
+  - output_id: "manifest_patch_proposal"
+    content:
+      - "对本文件的建议更新"
+      - "不得直接修改用户资料"
+      - "等待用户接受后再落盘"
+  - output_id: "bounded_source_tasks"
+    content:
+      - "每个建议来源的精确研究模块"
+      - "需要回答的问题"
+      - "允许的复用方式"
+      - "停止条件"
+
+accepted_acquisition_decisions:
+  searchcli_now: false
+  core_papers_now: false
+  youtu_agent_now: false
+  openharness_now: false
+  harbor_terminal_bench_now: false
+  external_module_port_pre_authorized_now: false
+  direct_reuse_in_principle: true
+  reuse_gate:
+    - "canonical_source_verified"
+    - "commit_or_version_pinned"
+    - "license_and_notice_verified"
+    - "exact_module_or_behavior_named"
+    - "deterministic_validation_defined"
+    - "attribution_recorded"
+    - "no_large_platform_expansion"
+
+pause_conditions:
+  - "实际本地 Pi 状态与 G006 总纲不一致"
+  - "Claude Code 源码镜像来源或许可证不足以支持拟议复用"
+  - "建议获取的来源会改变 Pi 主 Runtime"
+  - "资料获取开始阻塞 V0 Charter"
+  - "为了未来 V3/V4 提前建设大型平台"
+  - "Codex 将本地已有资料自动升级为实现任务"
+  - "资料研究范围变成全面比较所有 Agent Harness"

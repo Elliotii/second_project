@@ -5,14 +5,19 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: g006_closed_pending_next_phase_decision
-  status: G006_PASS_REAL_MODEL_FEASIBILITY_accepted
+  phase: v0_a_activated_pending_dedicated_session_start
+  status: V0_A_ACCEPTED_AND_ACTIVATED_IMPLEMENTATION_NOT_STARTED
 
 active_goal:
-  id: null
-  status: none
-  contract: null
+  id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
+  status: activated_pending_dedicated_session_start
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
   disposition: null
+  contract_accepted: true
+  activation_authorized: true
+  implementation_owner: future_dedicated_goal_session
+  implementation_started: false
+  control_baseline_commit: resulting_HEAD_of_this_revision
 
 last_executed_goal:
   id: G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY
@@ -37,7 +42,7 @@ last_completed_goal:
 
 next_goal:
   id: null
-  status: pending_next_phase_architecture_decision
+  status: blocked_until_V0_A_execution_review_and_closeout
   contract: null
 
 retired_goal_candidate:
@@ -157,6 +162,12 @@ completed_work:
   - G006_closeout_evidence_and_control_commit_authorized_by_user
   - project_zero_to_current_progress_conclusions_and_complete_forward_plan_created
   - project_synthesis_commit_and_push_authorized_by_user
+  - V0_version_charter_accepted
+  - V0_control_rule_accepted
+  - V0_A_goal_contract_accepted
+  - V0_A_activation_authorized
+  - V0_A_control_baseline_commit_authorized
+  - V0_A_control_state_updated_by_main_session
 
 workspace:
   git_initialized: true
@@ -168,6 +179,9 @@ workspace:
   upstream_directory: .upstream/pi
   runs_directory: .runs
   formal_workbench_created: false
+  v0_a_control_baseline_commit: resulting_HEAD_of_this_revision
+  v0_a_control_baseline_tracked_files_clean_required: true
+  registered_untracked_reference_directory: reference/
 
 pi:
   downloaded: true
@@ -187,7 +201,7 @@ pi:
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: G006_real_model_route_accepted_valid_pair_recovery_unobserved_not_frozen_for_V0
+  status: accepted_for_V0_scope_V0_A_activated_implementation_not_started
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -207,7 +221,42 @@ architecture:
 
 first_policy:
   candidate: Completion Verification
-  status: deterministic_recovery_and_real_route_feasible_real_recovery_and_policy_effect_unverified_not_frozen
+  status: accepted_for_V0_mechanism_not_implemented_real_recovery_and_policy_effect_unverified
+
+v0:
+  charter: docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
+  charter_status: accepted
+  roadmap_reconciliation: docs/第二项目_Codex交接包_2026-07-30/ROADMAP_RECONCILIATION_REPORT.md
+  reference_acquisition_plan: docs/第二项目_Codex交接包_2026-07-30/REFERENCE_ACQUISITION_PLAN.md
+  control_rule: docs/第二项目_Codex交接包_2026-07-30/09_对接执行、文件权威与验收规则.md
+  control_rule_status: accepted
+  scoped_pi_go: accepted
+  formal_workbench_created: false
+
+v0_a:
+  goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
+  contract_status: accepted_activated_pending_implementation
+  contract_accepted: true
+  active_goal: true
+  activation_authorized: true
+  implementation_owner: future_dedicated_goal_session
+  implementation_authorized: true_for_dedicated_goal_session_only
+  implementation_started: false
+  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  control_baseline_commit: resulting_HEAD_of_this_revision
+  dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
+  dedicated_goal_session_prompt_status: pending_post_commit_generation
+  dedicated_goal_session_started: false
+  formal_workbench_creation_authorized: true_for_dedicated_goal_session_after_Gate_A
+  formal_workbench_created: false
+  dependency_installation_authorized: false
+  external_network_authorized: false
+  real_model_calls_authorized: 0
+  implementation_git_commit_authorized: false
+  pi_core_patch_authorized: false
+  private_pi_import_authorized: false
+  runs_root_creation_authorized: true_for_dedicated_goal_session_after_Gate_A
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
@@ -557,6 +606,9 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/09_对接执行、文件权威与验收规则.md
+  - docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
   - docs/reports/PROJECT_ZERO_TO_CURRENT_PROGRESS_CONCLUSIONS_AND_COMPLETE_FORWARD_PLAN_2026-07-30.md
   - docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
@@ -571,12 +623,13 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - main_session_recommends_combined_G003_G006_mechanism_evidence_and_defers_natural_real_recovery_observation_to_Pilot_Eval
-  - user_decides_whether_to_accept_that_recommendation_before_any_V0_Version_Charter_work
-  - do_not_create_G007_freeze_V0_or_run_another_model_without_new_explicit_authority
+  - create_and_verify_the_authorized_V0_A_Control_Baseline_Commit
+  - record_the_exact_Control_Baseline_Commit_SHA
+  - generate_V0_A_GOAL_SESSION_START_PROMPT_only_after_SHA_confirmation
+  - dedicated_V0_A_Goal_Session_starts_from_that_commit_and_runs_Gate_A_first
 
 open_user_decisions:
-  - choose_bounded_Phase_3B_activation_case_or_defer_real_recovery_observation_to_Pilot_Eval
+  - review_V0_A_implementation_report_closeout_and_CURRENT_STATE_UPDATE_PROPOSAL_after_dedicated_session_stops
 ```
 
 ## Current Constraints
@@ -584,13 +637,17 @@ open_user_decisions:
 - Keep `.upstream/pi` immutable as the reference checkout.
 - Preserve `.runs/g002` and `.runs/g003` as ignored generated evidence; do not
   merge, overwrite or commit them.
-- Do not create the formal Workbench. G005 is closed as invalid evidence and no
-  additional G005 model call, Verifier continuation or Candidate start is
-  authorized.
+- The Main Session must not create the formal Workbench or implement V0-A. Only
+  the dedicated V0-A Goal Session may create `workbench/` and `.runs/v0-a/`, and
+  only after it starts from the recorded clean Control Baseline Commit and Gate A
+  passes. G005 is closed as invalid evidence and no additional G005 model call,
+  Verifier continuation or Candidate start is authorized.
 - Do not use WSL, SDK/RPC fallback, or a Pi core patch without new evidence and
   architecture review.
-- Do not treat G003's fixed-task pass as Policy effectiveness, final Pi Go,
-  current provider-catalog validation, or a V0 architecture freeze.
+- Do not treat G003's fixed-task pass as Policy effectiveness or current
+  provider-catalog validation. Scoped Pi Go and the V0 architecture are now
+  frozen by the accepted V0 Charter; real recovery and Policy effectiveness
+  remain unproven.
 - G004 was retired before a contract was created. Do not recreate it as a broad
   pre-Phase-3 robustness umbrella or silently reuse its identifier.
 - Preserve `.runs/g005` raw evidence and `spikes/pi-runtime/g005/` as the
@@ -612,20 +669,16 @@ open_user_decisions:
   pattern is not an observed failure or an automatic Goal/Gate.
 - Treat `reference/cc-harness-knowledge` and `reference/src` as read-only design
   references. Do not modify or commit them without explicit authorization.
-- Do not commit Git changes unless explicitly requested.
+- The V0-A Control Baseline Commit is explicitly authorized for this revision.
+  No implementation commit or dedicated-session Git commit is authorized.
 
 ## Expected Next Handoff
 
-G006 is closed with user-accepted `PASS_REAL_MODEL_FEASIBILITY`. Gates A through
-E passed, the public Direct `AgentHarness` route completed both real-model coding
-cycles, and both settled-before-Verifier checks passed. Eight provider requests
-were made in total; final secret scans found no credential match. Candidate's
-first Verifier passed, so no recovery was triggered and real-model recovery
-remains unobserved. The G006 execution-session boundary deviation is recorded;
-the user waived a separate independent-session audit for this Goal and fixed a
-Main Session / dedicated Goal Session split for future execution Goals. The
-next decisions are whether to defer observed real-model recovery to Pilot Eval
-or require a bounded Phase 3B. The G006 Closeout evidence/control commit was
-separately authorized and is consumed by the revision containing this state.
-Final Pi Go, Policy promotion, formal Workbench creation and architecture
-freeze remain unauthorized.
+V0-A is accepted and activated, but implementation has not started. The revision
+containing this state is the authorized Control Baseline Commit and must be clean
+before handoff. After its exact SHA is confirmed, the Main Session generates the
+V0-A dedicated Goal Session start Prompt pinned to that SHA. The dedicated Session
+must run Gate A first, may implement only V0-A with Faux Provider and zero real
+model calls, may not modify or stage `CURRENT_STATE.md`, and must stop after
+submitting its Implementation Report, Closeout Draft, evidence index and
+`CURRENT_STATE_UPDATE_PROPOSAL`. V0-B remains unauthorized.
