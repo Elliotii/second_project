@@ -2,32 +2,38 @@
 
 ```yaml
 goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
-status: accepted_activated_pending_implementation
+status: closed_accepted
 version: V0_A
 date: 2026-07-30
 accepted_by_user: 2026-07-30
-execution_owner: future_dedicated_goal_session
-implementation_owner: future_dedicated_goal_session
+closed_by_user: 2026-07-31
+execution_owner: dedicated_v0_a_goal_session
+implementation_owner: dedicated_v0_a_goal_session
 main_session_owner: current_codex_main_session
-active_goal: true
-goal_activation_state: activated_pending_dedicated_session_start
+active_goal: false
+goal_activation_state: closed_accepted
 contract_accepted: true
 activation_authorized: true
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit_authorized: consumed
+control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
 dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
 formal_workbench_creation_authorized: true_for_dedicated_goal_session_after_Gate_A
-implementation_authorized: true_for_dedicated_goal_session_only
-implementation_started: false
+implementation_authorized: consumed_and_completed_by_dedicated_goal_session
+implementation_started: true
+implementation_completed: true
 dependency_installation_authorized: false
 external_network_authorized: false
 real_model_calls_authorized: 0
-git_commit_authorized: false
+git_commit_authorized: consumed_by_main_session_resulting_HEAD_of_this_revision
+implementation_baseline_commit: resulting_HEAD_of_this_revision
 pi_core_patch_authorized: false
 private_pi_import_authorized: false
+disposition: PASS_V0_A_FOUNDATION
+authoritative_run_id: run-5c0b157e-31d7-4873-95a1-fd284377ace3
+workbench_tree_digest: 4ba620c14074a4ec96989f1aa670bbad612ab5714ea102a4564813c19d743c6e
 ```
 
-> 本 Contract 已由用户接受并激活，但实现尚未开始。当前主 Session 只负责控制状态、Control Baseline Commit、SHA 核验和启动 Prompt；只有未来专用 Goal Session 可从该 Commit 开始执行 Gate A，并在 Gate A 通过后实现 V0-A。
+> 本 Contract 已完成执行、主 Session 复验、一次有界路径安全返修和用户正式验收。V0-A 以 `PASS_V0_A_FOUNDATION` 关闭；本状态不授权 V0-B、真实模型、Pi 修改或后续实现。
 
 ---
 
@@ -62,10 +68,14 @@ V0-A 不回答 Completion Policy 是否有效，也不产生 V0 完整 Outcome�
 → Contract 正式化，但仍未执行（已完成）
 → 用户单独授权 V0-A Activation 和 Control Baseline Commit（已完成）
 → 主 Session 更新 CURRENT_STATE、Contract 状态和必要控制文件（已完成）
-→ 主 Session 创建并核验干净的 Control Baseline Commit（本次授权步骤）
-→ 主 Session 记录 Baseline Commit
-→ 主 Session 生成 V0-A 专用 Goal Session 启动 Prompt
-→ 新专用 Session 从该 Commit 开始执行 Gate A
+→ 主 Session 创建并核验干净的 Control Baseline Commit（已完成）
+→ 主 Session 记录 Baseline Commit（已完成）
+→ 主 Session 生成 V0-A 专用 Goal Session 启动 Prompt（已完成）
+→ 新专用 Session 从该 Commit 开始执行 Gate A（已完成）
+→ 专用 Session 实现并提交 Report / Closeout Draft（已完成）
+→ 主 Session 复验并要求一次有界路径安全返修（已完成）
+→ 专用 Session 完成返修并生成新权威 Run（已完成）
+→ 主 Session 复验通过，用户接受并授权 Implementation Baseline Commit（已完成）
 ```
 
 绑定规则：
@@ -89,7 +99,7 @@ Contract 接受不自动授权：
 
 ### 2.2 Current stop point
 
-当前控制状态是 `accepted_activated_pending_implementation`。Control Baseline Commit 成功并确认精确 SHA 前，不得生成专用 Goal Session 启动 Prompt；专用 Session 未启动前不得执行本 Contract 的任何 Command 或 Gate。当前主 Session不得实现 V0-A。
+当前控制状态是 `closed_accepted`。V0-A 的实现、返修、Gates A–G、DoD 20/20、主 Session 复验和用户验收均已完成。主 Session仅获授权完成正式控制收口和 Implementation Baseline Commit；`active_goal` 随后保持 `null`。V0-B 仍未创建 Contract、未激活且未授权执行。
 
 ---
 

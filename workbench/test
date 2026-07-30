@@ -1,0 +1,4 @@
+import "./tests/preflight.test.ts";
+import "./tests/workspace.test.ts";
+import "./tests/tool-profile.test.ts";
+import "./tests/pi-adapter.test.ts";

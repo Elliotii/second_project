@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "v0-a-parse-duration",
+  "instruction_ref": "task.md",
+  "instruction_sha256": "22b166bda844a1a4de90d54b4fa399896ce6e418b3fd5abc094a39409bdb0f35",
+  "workspace_source_ref": "fixtures/tasks/v0-a-parse-duration",
+  "workspace_source_digest": "83e14ee6480099d479faa392fb9dc5eb1db6e5e860b93702289ef20ca2cc3e0c",
+  "writable_paths": [
+    "src/parse-duration.ts"
+  ],
+  "protected_paths": [
+    "task.md",
+    "task.json",
+    "package.json",
+    "test/public.test.ts"
+  ],
+  "tool_profile_id": "v0a_bounded_local",
+  "command_descriptors": [
+    {
+      "command_id": "test",
+      "executable": "current_node_executable",
+      "argv": [
+        "--test",
+        "test/public.test.ts"
+      ],
+      "cwd": "workspace",
+      "timeout_seconds": 15,
+      "max_combined_output_bytes": 8192
+    }
+  ]
+}
