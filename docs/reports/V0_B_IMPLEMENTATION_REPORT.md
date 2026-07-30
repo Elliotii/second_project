@@ -1,12 +1,12 @@
-# V0-B Implementation Report — Main-review correction
+# V0-B Implementation Report — Post-audit bounded correction
 
 ```yaml
 goal_id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
 contract_status_at_execution: accepted_activated_pending_implementation
 implementation_owner: dedicated_v0_b_goal_session
-report_status: corrected_pending_independent_risk_audit_and_main_review
+report_status: basic_authorization_object_micro_correction_complete_pending_main_review_and_independent_reaudit
 formal_goal_acceptance: false
-recommended_disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+recommended_disposition: PASS_V0_B_EVIDENCE_FOUNDATION_only_after_independent_reaudit_and_main_review
 control_baseline_commit: 32dc7b136053e2fdc17f294322a3cf7fef79e737
 v0_a_implementation_baseline: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
@@ -16,10 +16,66 @@ recovery_attempts: 0
 child_attempts: 0
 pi_core_patches: 0
 git_commits_created: 0
-independent_risk_audit_executed_by_this_session: false
+first_independent_risk_audit:
+  candidate_commit: 18ba8466799198b1ce3e732990a49f626fb83d48
+  recommendation: REQUEST_BOUNDED_CORRECTION
+  findings: 5
+  highest_severity: P1
+independent_reaudit_executed_by_this_session: false
 ```
 
-## 1. Corrected result
+## 0. Post-audit disposition
+
+**Fact:** The first independent audit rejected the main-review candidate's
+Gates A–H PASS and DoD 25/25 recommendation. Its immutable Candidate Commit
+`18ba8466799198b1ce3e732990a49f626fb83d48`, six fixed Runs, audit worktree,
+raw probes, and Audit Report remain unchanged.
+
+**Fact:** The user authorized a bounded correction of only
+`V0B-AUD-001` through `V0B-AUD-005`. No Contract or architecture redesign was
+required. The correction added a small shared V0-B terminal-evidence policy,
+bound scan attestations and Index completeness, enforced the final Journal
+suffix, moved wall-time usage to the post-scan endpoint with a final
+pre-marker fail-closed check, and extended only the bounded JSON/text scanner
+variants found by the audit.
+
+**Fact:** The post-audit implementation passes strict TypeScript, 66/66
+Workbench tests, the 10/10 new post-audit tests, the existing 11/11 correction
+tests, the accepted V0-A regression, and public emitted Pi import smoke.
+
+**Recommendation:** Treat this report as corrected Candidate input only.
+Independent re-audit and main Session/user acceptance are still pending.
+
+### Basic Authorization object micro-correction
+
+**Fact:** Main-session post-correction review passed `V0B-AUD-001` through
+`V0B-AUD-004` and found one residual inside `V0B-AUD-005`: the bounded
+`basic_authorization` rule rejected plain-text
+`Authorization: Basic …` but did not reject `stableJson()` representations of
+flat or nested JSON/Object headers because JSON quotes separate the key, colon,
+and value.
+
+**Fact:** The user authorized a single-point micro-correction. Only
+`workbench/src/evidence/secret-scan.ts`,
+`workbench/tests/v0b-post-audit.test.ts`, generated evidence, and reports were
+changed. The regex now admits optional JSON quotes around the bounded
+`authorization` key and Basic value while retaining a key-boundary guard.
+No JSON traversal framework or general DLP behavior was added.
+
+**Fact:** Flat and nested Basic Authorization objects now reject with exactly
+one safe metadata match (`scope_label`, `rule_id: basic_authorization`); the
+synthetic credential value is absent from scan evidence. Plain-text Basic,
+Bearer, escaped API-key, credential/reasoning controls remain rejected, while
+`authorization_required: false` remains accepted.
+
+**Fact:** After the micro-correction, strict TypeScript passes, the updated
+post-audit file passes 11/11, and the complete Workbench passes 67/67.
+
+## 1. Historical main-review corrected result
+
+> Historical record: this section describes the `18ba846…` candidate before
+> the independent audit. Its PASS/25-of-25 recommendation was denied by that
+> audit and is superseded by Sections 15–17 below.
 
 **Fact:** The first-round recommendation, Gates A–H result, DoD 25/25 result,
 42/42 test count, and first-round authoritative IDs are superseded by the
@@ -437,15 +493,22 @@ The implementation does not claim:
 
 ## 13. Source inventory and delta
 
-The corrected inventory covers 50 implementation/report files. The corrected
-delta contains 34 files relative to the exact Control Baseline. Final
+The post-audit inventory covers 52 implementation/report files. The post-audit
+delta contains 36 files relative to the exact Control Baseline. Final
 path/size/SHA-256 details are in:
 
 - `.runs/v0-b/evidence/source-inventory.json`;
 - `.runs/v0-b/evidence/source-delta.json`.
 
-The correction prompt, control documents, Pi, V0-A fixture, historical Runs,
-and `reference/` are not implementation delta.
+The two newly declared source paths are:
+
+- `workbench/src/evidence/terminal-policy.ts`;
+- `workbench/tests/v0b-post-audit.test.ts`.
+
+The post-audit correction Prompt, independent-audit Prompt/Report, audit raw
+artifacts, control documents, Pi, V0-A fixture, historical Runs, and
+`reference/` are control/audit provenance rather than Workbench Source
+Inventory.
 
 ## 14. Structured `CURRENT_STATE_UPDATE_PROPOSAL`
 
@@ -455,54 +518,95 @@ This is a proposal only. The dedicated Session did not modify
 ```yaml
 CURRENT_STATE_UPDATE_PROPOSAL:
   active_goal: V0_B
-  goal_status: corrected_execution_complete_pending_independent_risk_audit_and_main_review
-  recommended_disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+  status: basic_authorization_object_micro_correction_complete_pending_main_review_and_independent_reaudit
   formal_acceptance: false
-  implementation_owner: dedicated_v0_b_goal_session
-  correction:
-    first_round_gate_and_dod_claims: superseded
-    main_review_corrections_1_through_5: implemented_and_verified
-    independent_risk_audit: pending
-  deterministic_stage_1:
-    corrected_gates_a_through_h: recommended_pass
-    strict_typescript: passed
-    workbench_tests: 56_passed_0_failed_0_skipped
-    authoritative_run: run-dc84dc47-7fca-4e68-9118-7269e298c90f
-    counterexample_runs:
-      agent_failure: run-7da827c4-4c8f-463f-ac57-99d137ee9ea9
-      verifier_invalid: run-40360101-6ed0-4756-97ef-f63f98396bb1
-      post_persistence_corruption: run-4671912d-1e79-4eab-ad97-b54b70675147
-      persistence_operation_failure: run-82895dce-f949-4771-9eec-5e80a904ad10
-      secret_scan_rejection: run-4a0e1530-e37d-43ab-a817-2a9d2ea62ebe
-    external_provider_calls: 0
-    real_model_calls: 0
-    recovery_attempts: 0
-    child_attempts: 0
-    pi_core_patches: 0
-  proven:
-    - terminal evidence is blocked until a bounded integrated scan completes with zero matches
-    - ArtifactRefs and inspect reject linked paths, real-path escape, malformed evidence, non-files, and integrity mismatch
-    - Verifier execution uses the frozen Run-local snapshot and persists actual bounded execution metadata
-    - reasoning redaction persists bounded content-type, character, byte, and removed-signature metadata without body/signature
-    - actual evidence-mirror append failure stops before Verifier and remains incomplete rather than becoming Agent failure
-    - post-persistence corruption remains a distinct detected invalid-evidence route
-  not_proven:
-    - v0_b_specific_real_model_route
-    - completion_policy_effectiveness
-    - recovery_effect
-    - cross_process_resume
-    - crash_after_side_effect_reconciliation
-    - os_sandbox_or_network_egress_block
-    - process_tree_termination
-    - statistical_eval_validity
-  protected_state:
-    pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-    pi_core_patch_count: 0
-    control_files_modified_by_dedicated_session: false
-    git_commit_created_by_dedicated_session: false
-  next_main_session_action:
-    - bind the corrected Source Inventory, Source Delta, Run IDs, and 56-test count
-    - launch the separately authorized independent read-only risk audit
-    - reconcile the audit with this report
-    - ask the user to accept, request another bounded correction, or reject V0-B
+  first_audit_candidate: 18ba8466799198b1ce3e732990a49f626fb83d48
+  independent_reaudit: pending
+```
+
+## 15. V0B-AUD-001…005 correction matrix
+
+| Finding | Source / symbol | Regression | New evidence | Remaining limitation |
+| --- | --- | --- | --- | --- |
+| `V0B-AUD-001` | `workbench/src/evidence/terminal-policy.ts`: `terminalScanFileScopesV0B`, `secretRelevantObjectProjectionV0B`, `preterminalJournalBytesV0B`; `workbench/src/inspect-v0b.ts`: scan-policy verification | `workbench/tests/v0b-post-audit.test.ts`: required-scope omission, file/object digest forgery, duplicate/kind mismatch, terminal-label mismatch | `.runs/v0-b/evidence/basic-authorization-object-micro-correction-probe-results.json` and its three `V0B-AUD-001-*` copy paths | bounded V0-B scopes only; no signing, PKI, general tamper-proof store, or same-account syscall-race claim |
+| `V0B-AUD-002` | `terminalIndexResponsibilityV0B`, `terminalIndexItemV0B`, `validateTerminalIndexPolicyV0B`; writer and inspector both consume them | post-audit Index omission/responsibility/Tool-artifact tests | probe result `V0B-AUD-002` copy path | exact V0-B terminal set only, not a generic filesystem inventory |
+| `V0B-AUD-003` | `terminalLifecycleDataV0B`, `validateTerminalJournalSuffixV0B`; `validateJournal(..., mode: "terminal")` | swapped suffix, event-after-terminal, duplicate terminal, Outcome-projection mismatch | probe result `V0B-AUD-003` copy path | no generic workflow/schema engine |
+| `V0B-AUD-004` | `executeV0BRun`: post-scan usage refresh and pre-`terminal.json` deadline checkpoint | deterministic injected-clock crossing during scan and terminalization | `run-76ba3cab-3d2b-42a3-a65c-dc1eb0774142`, no Outcome or terminal | endpoint excludes unavoidable final marker-write latency; no real-time scheduling or process-tree cancellation |
+| `V0B-AUD-005` | `secret-scan.ts`: raw + decoded-safe JSON/JSONL scanning; quoted/unquoted Basic plus Bearer bounded variants | escaped JSON key, Basic text/file, flat/nested Basic object, Bearer tab/newline, existing and benign controls | micro-correction probe result `V0B-AUD-005` | fixed bounded ruleset, not complete DLP or secret management |
+
+The exact post-audit regression command was:
+
+```powershell
+node --test workbench/tests/v0b-post-audit.test.ts
+```
+
+Historical post-audit result before the Basic object micro-correction: exit
+`0`, 10 passed and complete Workbench 66/66. Current result: exit `0`,
+11 passed, 0 failed, 0 skipped; complete Workbench 67/67.
+
+## 16. New deterministic evidence
+
+The `run-aa71e3dc…` post-audit set remains preserved but is now
+`superseded_due_basic_authorization_object_micro_correction`. The following
+Runs are the only current micro-corrected authoritative/counterexample set.
+No earlier artifact was modified.
+
+| Role | Run ID | Result |
+| --- | --- | --- |
+| authoritative pass | `run-914dc89c-defd-4e03-ab37-7fd09230fe93` | `passed/null`, committed, integrity-valid |
+| valid Agent failure | `run-71cab6c1-146e-408e-ad6e-f3fcca69a2fb` | `failed/agent`, committed, integrity-valid |
+| invalid Verifier | `run-b39a2e08-c8b3-472f-9273-227f31d28830` | `invalid/verifier`, committed, integrity-valid |
+| post-persistence corruption | `run-fa298df7-19bc-462a-87a4-9c9bdec1dad4` | `invalid/evidence`, committed envelope, integrity-invalid |
+| persistence-operation failure | `run-95bc62c4-7bf5-4f74-bd32-ecd627fc8ee3` | incomplete; no terminal |
+| secret-scan rejection | `run-155f1cae-9ae5-4c69-a261-ef32f80d482b` | incomplete; no terminal |
+
+The authoritative Run binds Workbench tree digest
+`b8034b235acdf50630c7bebc3859f001799986333622ae0ce1b545528d3fe8d0`.
+Its external Provider/model calls, Recovery Attempts, and child Attempts are
+all zero.
+
+## 17. `INDEPENDENT_REAUDIT_INPUT`
+
+```yaml
+INDEPENDENT_REAUDIT_INPUT:
+  candidate_status: uncommitted_basic_authorization_object_micro_correction_pending_main_review
+  authoritative_run: run-914dc89c-defd-4e03-ab37-7fd09230fe93
+  probe_results: .runs/v0-b/evidence/basic-authorization-object-micro-correction-probe-results.json
+  findings:
+    V0B-AUD-001:
+      regression_command: node --test --test-name-pattern="scan policy" workbench/tests/v0b-post-audit.test.ts
+      source:
+        - workbench/src/evidence/terminal-policy.ts
+        - workbench/src/inspect-v0b.ts
+        - workbench/src/evidence/secret-scan.ts
+      evidence:
+        - .runs/v0-b/evidence/basic-authorization-object-micro-correction-probes/V0B-AUD-001-scope-omission/
+        - .runs/v0-b/evidence/basic-authorization-object-micro-correction-probes/V0B-AUD-001-file-digest-forgery/
+        - .runs/v0-b/evidence/basic-authorization-object-micro-correction-probes/V0B-AUD-001-object-digest-forgery/
+      expected: copied mutations are committed envelopes but integrity_valid=false
+    V0B-AUD-002:
+      regression_command: node --test --test-name-pattern="Index policy" workbench/tests/v0b-post-audit.test.ts
+      source:
+        - workbench/src/evidence/terminal-policy.ts
+        - workbench/src/inspect-v0b.ts
+      evidence: .runs/v0-b/evidence/basic-authorization-object-micro-correction-probes/V0B-AUD-002-index-omission/
+      expected: rebound Index omission is integrity_valid=false
+    V0B-AUD-003:
+      regression_command: node --test --test-name-pattern="terminal Journal policy" workbench/tests/v0b-post-audit.test.ts
+      source:
+        - workbench/src/evidence/terminal-policy.ts
+        - workbench/src/evidence/journal.ts
+        - workbench/src/inspect-v0b.ts
+      evidence: .runs/v0-b/evidence/basic-authorization-object-micro-correction-probes/V0B-AUD-003-terminal-order/
+      expected: rebound terminal-order mutation is integrity_valid=false
+    V0B-AUD-004:
+      regression_command: node --test --test-name-pattern="wall-time crossing" workbench/tests/v0b-post-audit.test.ts
+      source: workbench/src/run-v0b.ts
+      evidence: .runs/v0-b/runs/run-76ba3cab-3d2b-42a3-a65c-dc1eb0774142/
+      expected: outcome=null and terminal.json absent
+    V0B-AUD-005:
+      regression_command: node --test --test-name-pattern="Basic Authorization|bounded scanner" workbench/tests/v0b-post-audit.test.ts
+      source: workbench/src/evidence/secret-scan.ts
+      evidence: .runs/v0-b/evidence/basic-authorization-object-micro-correction-probe-results.json
+      expected: six audited variants including flat/nested Basic objects rejected with metadata-only matches
 ```

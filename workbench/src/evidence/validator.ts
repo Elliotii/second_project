@@ -37,7 +37,7 @@ export async function validatePreterminalEvidenceV0B(options: {
 }): Promise<EvidenceValidationV0B> {
 	const errors: string[] = [];
 	const journal = readJournal(options.journalPath);
-	errors.push(...validateJournal(journal, options.identity));
+	errors.push(...validateJournal(journal, options.identity, { mode: "preterminal" }));
 	errors.push(...validateJournalArtifactRefsV0B(options.runRoot, journal));
 	let session = { entryCount: 0, toolCallIds: [] as string[], toolResultIds: [] as string[], errors: [] as string[] };
 	try {

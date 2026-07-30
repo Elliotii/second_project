@@ -1,4 +1,4 @@
-import { lstatSync } from "node:fs";
+import { lstatSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type {
 	ArtifactRefV0B,
@@ -13,7 +13,7 @@ import type {
 	VerifierResultV0B,
 	WorkspaceRefV0B,
 } from "./contracts/v0b-types.ts";
-import { fileSha256 } from "./hash.ts";
+import { fileSha256, sha256, stableJson } from "./hash.ts";
 import {
 	isArtifactRefV0B,
 	readJsonArtifact,
@@ -22,6 +22,13 @@ import {
 	validateRunRootBoundary,
 } from "./evidence/artifacts.ts";
 import { readJournal, validateJournal } from "./evidence/journal.ts";
+import {
+	preterminalJournalBytesV0B,
+	secretRelevantObjectProjectionV0B,
+	TERMINAL_SCAN_OBJECT_SCOPES_V0B,
+	terminalScanFileScopesFromJournalV0B,
+	validateTerminalIndexPolicyV0B,
+} from "./evidence/terminal-policy.ts";
 import { reopenAndValidateEvidenceSession } from "./session/evidence-session.ts";
 
 export interface InspectResultV0B {
@@ -169,6 +176,12 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 	] as const) {
 		if (!value) errors.push(`${label} envelope is invalid`);
 	}
+	let journal: JournalEntryV0B[] = [];
+	try {
+		journal = readJournal(resolveRunRelative(runRoot, "journal/events.jsonl"));
+	} catch {
+		errors.push("Journal JSONL is malformed or unreadable");
+	}
 
 	let outcomeDigestMatches = false;
 	let indexDigestMatches = false;
@@ -192,20 +205,19 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 	}
 	if (!Array.isArray(index?.items)) errors.push("Evidence Index items are invalid");
 	const items = Array.isArray(index?.items) ? index.items : [];
+	const validIndexItems: EvidenceIndexV0B["items"] = [];
 	const seenPaths = new Set<string>();
 	for (const item of items) {
 		if (!isArtifactRefV0B(item) || !isRecord(item) || typeof item.responsibility !== "string") {
 			errors.push("Evidence Index contains an invalid item");
 			continue;
 		}
+		validIndexItems.push(item as unknown as EvidenceIndexV0B["items"][number]);
 		if (seenPaths.has(item.path)) errors.push("Evidence Index contains a duplicate path");
 		seenPaths.add(item.path);
 		errors.push(...validateArtifactRef(runRoot, item));
 	}
-	if (!seenPaths.has("outcome.json")) errors.push("Evidence Index omits Outcome");
-	if (seenPaths.has("evidence-index.json") || seenPaths.has("terminal.json")) {
-		errors.push("Evidence Index contains a digest cycle");
-	}
+	errors.push(...validateTerminalIndexPolicyV0B(validIndexItems, journal));
 
 	const scanEnvelope = terminal && isRecord(terminal.preterminal_scan) ? terminal.preterminal_scan : null;
 	const scanRef = scanEnvelope ? asArtifactRef(scanEnvelope.result_ref) : null;
@@ -228,26 +240,96 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 			scan.status !== "passed" ||
 			scan.match_count !== 0 ||
 			!Array.isArray(scan.scope_labels) ||
-			!Array.isArray(scan.scopes)
+			!Array.isArray(scan.scopes) ||
+			!Array.isArray(scan.matches) ||
+			scan.matches.length !== 0
 		) {
 			errors.push("preterminal secret scan did not prove a zero-match completion");
 		} else {
 			if (JSON.stringify(scan.scope_labels) !== JSON.stringify(scanEnvelope.scope_labels)) {
 				errors.push("terminal preterminal scan scope does not match scan evidence");
 			}
-			const mandatoryScopes = [
-				"session_evidence",
-				"journal_preterminal",
-				"pending_run_object",
-				"pending_attempt_object",
-				"workspace_object",
-				"session_ref_object",
-				"verifier_result_object",
-				"verifier_output",
-				"pending_outcome_serialization",
+			const fileScopes = terminalScanFileScopesFromJournalV0B(journal);
+			const objectValues: Record<keyof typeof TERMINAL_SCAN_OBJECT_SCOPES_V0B, unknown> = {
+				pending_run_object: runValue,
+				pending_attempt_object: attemptValue,
+				workspace_object: workspaceValue,
+				session_ref_object: sessionValue,
+				verifier_result_object: verifierValue,
+				abort_object: safeJson(runRoot, "evidence/abort.json", "abort evidence", errors),
+				pending_outcome_serialization: outcomeValue,
+				pending_terminal_journal_events: journal.slice(-2),
+			};
+			const expectedLabels = [
+				...fileScopes.map((scope) => scope.scope_label),
+				...Object.keys(TERMINAL_SCAN_OBJECT_SCOPES_V0B),
 			];
-			for (const scope of mandatoryScopes) {
-				if (!scan.scope_labels.includes(scope)) errors.push(`preterminal scan scope missing: ${scope}`);
+			if (JSON.stringify(scan.scope_labels) !== JSON.stringify(expectedLabels)) {
+				errors.push("preterminal scan scope labels do not exactly match V0-B terminal policy");
+			}
+			if (scan.scanned_file_count !== fileScopes.length || scan.scanned_object_count !== Object.keys(objectValues).length) {
+				errors.push("preterminal scan scope counts do not match V0-B terminal policy");
+			}
+			const scopesByLabel = new Map<string, SecretScanResultV0B["scopes"][number]>();
+			for (const rawScope of scan.scopes) {
+				if (
+					!isRecord(rawScope) ||
+					typeof rawScope.scope_label !== "string" ||
+					(rawScope.kind !== "file" && rawScope.kind !== "object") ||
+					typeof rawScope.sha256 !== "string" ||
+					typeof rawScope.size_bytes !== "number"
+				) {
+					errors.push("preterminal scan contains an invalid scope record");
+					continue;
+				}
+				const scope = rawScope as unknown as SecretScanResultV0B["scopes"][number];
+				if (scopesByLabel.has(scope.scope_label)) {
+					errors.push(`preterminal scan contains duplicate scope: ${scope.scope_label}`);
+				}
+				scopesByLabel.set(scope.scope_label, scope);
+				if (!expectedLabels.includes(scope.scope_label)) {
+					errors.push(`preterminal scan contains unknown scope: ${scope.scope_label}`);
+				}
+			}
+			for (const fileScope of fileScopes) {
+				const recorded = scopesByLabel.get(fileScope.scope_label);
+				if (!recorded) {
+					errors.push(`preterminal scan scope missing: ${fileScope.scope_label}`);
+					continue;
+				}
+				if (recorded.kind !== "file") {
+					errors.push(`preterminal scan scope kind mismatch: ${fileScope.scope_label}`);
+					continue;
+				}
+				try {
+					const bytes =
+						fileScope.scope_label === "journal_preterminal"
+							? Buffer.from(preterminalJournalBytesV0B(journal), "utf8")
+							: readFileSync(resolveRunRelative(runRoot, fileScope.path));
+					if (recorded.size_bytes !== bytes.length || recorded.sha256 !== sha256(bytes)) {
+						errors.push(`preterminal scan file scope digest mismatch: ${fileScope.scope_label}`);
+					}
+				} catch {
+					errors.push(`preterminal scan file scope is unreadable: ${fileScope.scope_label}`);
+				}
+			}
+			for (const [scopeLabel, value] of Object.entries(objectValues)) {
+				const recorded = scopesByLabel.get(scopeLabel);
+				if (!recorded) {
+					errors.push(`preterminal scan scope missing: ${scopeLabel}`);
+					continue;
+				}
+				if (recorded.kind !== "object") {
+					errors.push(`preterminal scan scope kind mismatch: ${scopeLabel}`);
+					continue;
+				}
+				const serialized = stableJson(secretRelevantObjectProjectionV0B(scopeLabel, value));
+				if (
+					recorded.size_bytes !== Buffer.byteLength(serialized, "utf8") ||
+					recorded.sha256 !== sha256(serialized)
+				) {
+					errors.push(`preterminal scan object scope digest mismatch: ${scopeLabel}`);
+				}
 			}
 		}
 	}
@@ -283,12 +365,6 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 		errors.push("Verifier execution evidence is invalid");
 	}
 
-	let journal: JournalEntryV0B[] = [];
-	try {
-		journal = readJournal(resolveRunRelative(runRoot, "journal/events.jsonl"));
-	} catch {
-		errors.push("Journal JSONL is malformed or unreadable");
-	}
 	const identity = {
 		run_id: runId,
 		attempt_id: typeof attempt?.attempt_id === "string" ? attempt.attempt_id : "",
@@ -296,7 +372,14 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 		workspace_id: typeof attempt?.workspace_id === "string" ? attempt.workspace_id : "",
 	};
 	if (journal.length > 0) {
-		errors.push(...validateJournal(journal, identity, { requireValidationCompleted: true, route: "settled" }));
+		errors.push(
+			...validateJournal(journal, identity, {
+				requireValidationCompleted: true,
+				route: "settled",
+				mode: "terminal",
+				outcome: outcome as unknown as OutcomeV0B,
+			}),
+		);
 		for (const entry of journal) {
 			for (const [key, value] of Object.entries(entry.data)) {
 				if (!key.endsWith("_ref")) continue;

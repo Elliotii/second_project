@@ -1,10 +1,10 @@
-# V0-B Closeout Draft — Main-review correction
+# V0-B Closeout Draft — Post-audit bounded correction
 
 ```yaml
 goal_id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
-document_status: corrected_draft_pending_independent_risk_audit_and_main_review
+document_status: basic_authorization_object_micro_correction_complete_pending_main_review_and_independent_reaudit
 formal_goal_acceptance: false
-recommended_disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+recommended_disposition: PASS_V0_B_EVIDENCE_FOUNDATION_only_after_independent_reaudit_and_main_review
 active_goal_control_state_modified: false
 git_commit_created: false
 real_model_calls: 0
@@ -17,13 +17,45 @@ pi_core_patches: 0
 ## Closeout recommendation
 
 The dedicated V0-B Session recommends
-`PASS_V0_B_EVIDENCE_FOUNDATION` only after the independently authorized
-read-only risk audit and main Session reconciliation.
+`PASS_V0_B_EVIDENCE_FOUNDATION` only after a new immutable corrected Candidate
+Commit, focused independent re-audit plus full regressions, and main
+Session/user reconciliation.
 
 This draft does not accept or close V0-B. It does not modify control state,
 authorize Stage 2, or create an implementation commit.
 
-## Main-review correction disposition
+## First independent audit and bounded correction
+
+The first independent audit of Candidate Commit
+`18ba8466799198b1ce3e732990a49f626fb83d48` returned
+`REQUEST_BOUNDED_CORRECTION` with four P1 blockers and one P2 bounded-scanner
+gap. It denied that candidate's Gates A–H PASS / DoD 25-of-25 recommendation.
+The candidate, its six Runs, raw audit probes, and Audit Report remain
+preserved.
+
+The user-authorized post-audit correction addressed only:
+
+1. scan-attestation binding;
+2. Evidence Index completeness;
+3. terminal Journal suffix/order and Outcome projection;
+4. post-scan wall-time truth plus a pre-marker deadline checkpoint;
+5. audited bounded JSON/Authorization scanner variants.
+
+No Contract revision, architecture redesign, Pi patch, real model, Recovery,
+child Attempt, transaction runtime, general DLP, or OS sandbox was added.
+
+The subsequent main-session review passed Findings 001–004 and reproduced one
+remaining Finding 005 case: flat and nested Basic Authorization objects were
+not rejected although the plain-text header was. The authorized micro-correction
+changed only the bounded scanner regex and its formal regression. It now
+rejects plain-text, flat JSON/Object, nested headers, and decoded-safe JSON
+representations while keeping matched values out of evidence and benign
+`authorization_required: false` controls accepted.
+
+## Historical main-review correction disposition
+
+> The following main-review candidate evidence is historical and superseded by
+> the post-audit evidence later in this draft.
 
 The first-round Gates A–H PASS, DoD 25/25, 42/42 test count, and first-round
 authoritative IDs are superseded. Their Run artifacts remain unchanged.
@@ -39,7 +71,7 @@ Corrections completed:
 6. truthful wall-time usage, fixed Faux hard bounds, and route-consistent abort
    evidence.
 
-## Corrected evidence
+## Historical main-review evidence
 
 | Role | Run ID | Result |
 | --- | --- | --- |
@@ -55,7 +87,7 @@ The first-round authoritative Run
 `superseded_due_main_review_evidence_and_path_correction`. Its three
 counterexamples are preserved as superseded first-round evidence.
 
-## Verification summary
+## Historical main-review verification summary
 
 ```yaml
 corrected_gate_a_through_h: recommended_pass
@@ -109,7 +141,7 @@ process-tree termination, cross-process Resume, crash reconciliation,
 exactly-once execution, real-model effectiveness, Completion Policy
 improvement, or statistical validity.
 
-## Source evidence
+## Historical main-review source evidence
 
 ```yaml
 corrected_source_inventory_files: 50
@@ -124,6 +156,80 @@ Detailed source inventory, delta, commands, and Goal evidence index:
 - `.runs/v0-b/evidence/commands-and-exit-codes.md`;
 - `.runs/v0-b/evidence/EVIDENCE_INDEX.md`.
 
+## Historical post-audit corrected evidence
+
+| Role | Run ID | Result |
+| --- | --- | --- |
+| authoritative pass | `run-aa71e3dc-1913-4d2e-aae8-86ad66c67f6a` | `passed/null`, committed, integrity-valid |
+| valid Agent failure | `run-3676b527-ecb7-4f8f-98d5-3df7f1018783` | `failed/agent`, integrity-valid |
+| invalid Verifier | `run-3a53c1b0-60f9-40b4-99a5-6890e3d5b94d` | `invalid/verifier`, integrity-valid |
+| post-persistence corruption | `run-12d367db-a5d4-44c0-adc4-6cd51ee9880f` | `invalid/evidence`, integrity-invalid |
+| persistence-operation failure | `run-fc3688c7-a904-49a6-83db-74d2408612a2` | incomplete; terminal absent |
+| secret-scan rejection | `run-6a47dd03-c533-4c45-821c-278a7e1e3d14` | incomplete; terminal absent |
+| wall-time scan crossing | `run-5146b78e-3d60-41ba-bf75-5b41e1da1582` | incomplete; Outcome and terminal absent |
+
+All earlier V0-B evidence sets remain unchanged and are
+`superseded_due_independent_audit_bounded_correction` for current Claims.
+
+```yaml
+post_audit_verification:
+  strict_typescript: passed
+  workbench_tests: 66_passed_0_failed_0_skipped
+  post_audit_tests: 10_passed_0_failed_0_skipped
+  existing_correction_tests: 11_passed_0_failed_0_skipped
+  v0_a_authoritative_run_regression: passed
+  v0_a_public_task_tests: 3_passed_0_failed_0_skipped
+  public_emitted_pi_import_smoke: passed
+  audit_mutation_copies_fail_closed: true
+  workbench_tree_digest: d8726451a2fe858296fb53bb5d86cac51ba28977f324727d7a95006c0512d6b9
+  source_inventory_files: 52
+  source_delta_files: 36
+  real_model_calls: 0
+  external_provider_calls: 0
+  recovery_attempts: 0
+  child_attempts: 0
+```
+
+The historical five-finding correction matrix and `INDEPENDENT_REAUDIT_INPUT` are
+in Sections 15–17 of `V0_B_IMPLEMENTATION_REPORT.md`. The probe-copy results
+are at
+`.runs/v0-b/evidence/post-audit-correction-probe-results.json`.
+
+The `run-aa71e3dc…` set is preserved but
+`superseded_due_basic_authorization_object_micro_correction`.
+
+## Basic Authorization object micro-corrected evidence
+
+| Role | Run ID | Result |
+| --- | --- | --- |
+| authoritative pass | `run-914dc89c-defd-4e03-ab37-7fd09230fe93` | `passed/null`, committed, integrity-valid |
+| valid Agent failure | `run-71cab6c1-146e-408e-ad6e-f3fcca69a2fb` | `failed/agent`, integrity-valid |
+| invalid Verifier | `run-b39a2e08-c8b3-472f-9273-227f31d28830` | `invalid/verifier`, integrity-valid |
+| post-persistence corruption | `run-fa298df7-19bc-462a-87a4-9c9bdec1dad4` | `invalid/evidence`, integrity-invalid |
+| persistence-operation failure | `run-95bc62c4-7bf5-4f74-bd32-ecd627fc8ee3` | incomplete; terminal absent |
+| secret-scan rejection | `run-155f1cae-9ae5-4c69-a261-ef32f80d482b` | incomplete; terminal absent |
+| wall-time scan crossing | `run-76ba3cab-3d2b-42a3-a65c-dc1eb0774142` | incomplete; Outcome/terminal absent |
+
+```yaml
+micro_correction_verification:
+  strict_typescript: passed
+  post_audit_tests: 11_passed_0_failed_0_skipped
+  complete_workbench_tests: 67_passed_0_failed_0_skipped
+  flat_basic_object: rejected_metadata_only
+  nested_basic_header_object: rejected_metadata_only
+  existing_basic_text_file: rejected_metadata_only
+  benign_authorization_required_control: passed
+  workbench_tree_digest: b8034b235acdf50630c7bebc3859f001799986333622ae0ce1b545528d3fe8d0
+  real_model_calls: 0
+  external_provider_calls: 0
+  recovery_attempts: 0
+  child_attempts: 0
+```
+
+Current probe-copy result:
+
+- `.runs/v0-b/evidence/basic-authorization-object-micro-correction-probe-results.json`
+
 ## Remaining unverified
 
 - V0-B-specific real-model observe-only route;
@@ -137,9 +243,16 @@ Detailed source inventory, delta, commands, and Goal evidence index:
 
 ## `CURRENT_STATE_UPDATE_PROPOSAL`
 
-Use the structured corrected proposal in
-`docs/reports/V0_B_IMPLEMENTATION_REPORT.md`. The dedicated Session has not
-applied it.
+The dedicated Session has not applied this proposal:
+
+```yaml
+CURRENT_STATE_UPDATE_PROPOSAL:
+  active_goal: V0_B
+  status: basic_authorization_object_micro_correction_complete_pending_main_review_and_independent_reaudit
+  formal_acceptance: false
+  first_audit_candidate: 18ba8466799198b1ce3e732990a49f626fb83d48
+  independent_reaudit: pending
+```
 
 ## Required next action
 
@@ -147,15 +260,14 @@ applied it.
 next_action:
   owner: current_codex_main_session
   steps:
-    - verify corrected root/Pi identity and source scope
-    - bind corrected inventory, delta, six Run IDs, and 56-test count
-    - start the separately authorized independent read-only risk audit
-    - reconcile audit findings with implementation evidence
-    - request user acceptance, another bounded correction, or rejection
+    - review the five-finding correction matrix and source/evidence boundaries
+    - authorize and create an immutable corrected Candidate Audit Baseline Commit
+    - launch a focused independent re-audit plus full regressions
+    - reconcile the re-audit before requesting V0-B acceptance
 ```
 
 ## Stop point
 
-The bounded correction is complete. Stop now. Do not modify control state,
-create a commit, execute Stage 2, start the audit from this Session, or enter
-the next Goal.
+The post-audit bounded correction is complete. Stop now. Do not modify control
+state, create a commit, execute Stage 2, run the independent re-audit from this
+Session, accept V0-B, or enter the next Goal.

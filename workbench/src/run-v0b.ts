@@ -5,7 +5,6 @@ import {
 	type ArtifactRefV0B,
 	type AttemptRecordV0B,
 	type BudgetSnapshotV0B,
-	type EvidenceIndexItemV0B,
 	type EvidenceIndexV0B,
 	type OutcomeV0B,
 	type RunRecordV0B,
@@ -18,6 +17,11 @@ import { preflightV0B, type V0BPreflightPlan } from "./contracts/preflight-v0b.t
 import { artifactRef, writeOnceBytes, writeOnceJson } from "./evidence/artifacts.ts";
 import { JournalWriterV0B, readJournal, validateJournal } from "./evidence/journal.ts";
 import { scanPreterminalEvidenceV0B } from "./evidence/secret-scan.ts";
+import {
+	terminalIndexItemV0B,
+	terminalLifecycleDataV0B,
+	terminalScanFileScopesV0B,
+} from "./evidence/terminal-policy.ts";
 import { validatePreterminalEvidenceV0B } from "./evidence/validator.ts";
 import { digestObject, stableJson, treeDigest, treeInventory } from "./hash.ts";
 import { buildOutcomeV0B } from "./outcome/builder.ts";
@@ -68,13 +72,16 @@ function portable(value: string): string {
 	return value.split(sep).join("/");
 }
 
-function budget(task: { verifier_command: { timeout_ms: number; output_limit_bytes: number } }): BudgetSnapshotV0B {
+function budget(
+	task: { verifier_command: { timeout_ms: number; output_limit_bytes: number } },
+	wallTimeLimitMs = WALL_TIME_LIMIT_MS,
+): BudgetSnapshotV0B {
 	return {
 		provider_request_limit: PROVIDER_REQUEST_LIMIT,
 		provider_request_usage: 0,
 		tool_call_limit: TOOL_CALL_LIMIT,
 		tool_call_usage: 0,
-		wall_time_limit_ms: WALL_TIME_LIMIT_MS,
+		wall_time_limit_ms: wallTimeLimitMs,
 		wall_time_usage_ms: 0,
 		token_limit: "not_applicable",
 		token_usage: "unknown",
@@ -84,10 +91,6 @@ function budget(task: { verifier_command: { timeout_ms: number; output_limit_byt
 		verifier_output_limit_bytes: task.verifier_command.output_limit_bytes,
 		external_provider_calls: 0,
 	};
-}
-
-function responsibility(ref: ArtifactRefV0B, label: string): EvidenceIndexItemV0B {
-	return { ...ref, responsibility: label };
 }
 
 function verifierFaultForScenario(
@@ -189,8 +192,12 @@ export async function executeV0BRun(options: {
 	taskPath?: string;
 	strategyPath?: string;
 	scenario: V0BRunScenario;
+	testOnlyWallClock?: () => number;
+	testOnlyWallTimeLimitMs?: number;
 }): Promise<V0BRunResult> {
-	const started = Date.now();
+	const wallClock = options.testOnlyWallClock ?? Date.now;
+	const started = wallClock();
+	const wallTimeLimitMs = options.testOnlyWallTimeLimitMs ?? WALL_TIME_LIMIT_MS;
 	const preflight = preflightV0B({
 		projectRoot: options.projectRoot,
 		taskPath: options.taskPath,
@@ -328,10 +335,10 @@ export async function executeV0BRun(options: {
 			preflight.task.tool_profile_id,
 		);
 		const sessionRefArtifact = writeOnceJson(runRoot, "evidence/session-ref.json", sessionRef);
-		const finalBudget = budget(preflight.task);
+		const finalBudget = budget(preflight.task, wallTimeLimitMs);
 		finalBudget.provider_request_usage = error.progress.provider_request_events;
 		finalBudget.tool_call_usage = error.progress.tool_call_events;
-		finalBudget.wall_time_usage_ms = Date.now() - started;
+		finalBudget.wall_time_usage_ms = wallClock() - started;
 		const run: RunRecordV0B = {
 			schema_version: 1,
 			run_id: runId,
@@ -367,7 +374,7 @@ export async function executeV0BRun(options: {
 			started_at: createdAt,
 			settled_at: null,
 			terminal_reason: "evidence_persistence_operation_failed",
-			budget_allocation: budget(preflight.task),
+			budget_allocation: budget(preflight.task, wallTimeLimitMs),
 			budget_usage: finalBudget,
 		};
 		const abortEvidence = {
@@ -542,15 +549,15 @@ export async function executeV0BRun(options: {
 		checked_artifact_count: validation.checked_artifact_count,
 	});
 
-	const finalBudget = budget(preflight.task);
+	const finalBudget = budget(preflight.task, wallTimeLimitMs);
 	finalBudget.provider_request_usage = piResult.provider_request_events;
 	finalBudget.tool_call_usage = piResult.tool_call_events;
-	finalBudget.wall_time_usage_ms = Date.now() - started;
+	finalBudget.wall_time_usage_ms = wallClock() - started;
 	const budgetExhausted =
 		finalBudget.provider_request_usage > finalBudget.provider_request_limit ||
 		finalBudget.tool_call_usage > finalBudget.tool_call_limit ||
 		finalBudget.wall_time_usage_ms > finalBudget.wall_time_limit_ms;
-	const outcome = buildOutcomeV0B({
+	let outcome = buildOutcomeV0B({
 		runId,
 		attemptId,
 		evidenceValid: validation.valid,
@@ -572,7 +579,7 @@ export async function executeV0BRun(options: {
 		started_at: createdAt,
 		settled_at: settledAt,
 		terminal_reason: outcome.terminal_reason,
-		budget_allocation: budget(preflight.task),
+		budget_allocation: budget(preflight.task, wallTimeLimitMs),
 		budget_usage: finalBudget,
 	};
 	const run: RunRecordV0B = {
@@ -617,20 +624,10 @@ export async function executeV0BRun(options: {
 	let scanResult: SecretScanResultV0B;
 	try {
 		scanResult = scanPreterminalEvidenceV0B({
-			files: [
-				{ scope_label: "task_snapshot", path: resolve(runRoot, taskSnapshotRef.path) },
-				{ scope_label: "strategy_snapshot", path: resolve(runRoot, strategySnapshotRef.path) },
-				{ scope_label: "instruction_snapshot", path: resolve(runRoot, instructionSnapshotRef.path) },
-				{ scope_label: "verifier_snapshot", path: resolve(runRoot, verifierSnapshotRef.path) },
-				{ scope_label: "session_evidence", path: sessionPath },
-				{ scope_label: "journal_preterminal", path: journalPath },
-				{ scope_label: "verifier_output", path: resolve(runRoot, verifierResult.full_output_ref.path) },
-				{ scope_label: "validation_artifact", path: resolve(runRoot, validationArtifact.path) },
-				...piResult.tool_result_artifacts.map((ref, index) => ({
-					scope_label: `tool_result_artifact_${index + 1}`,
-					path: resolve(runRoot, ref.path),
-				})),
-			],
+			files: terminalScanFileScopesV0B(piResult.tool_result_artifacts).map((scope) => ({
+				scope_label: scope.scope_label,
+				path: resolve(runRoot, scope.path),
+			})),
 			objects: [
 				{ scope_label: "pending_run_object", value: run },
 				{ scope_label: "pending_attempt_object", value: attempt },
@@ -644,19 +641,11 @@ export async function executeV0BRun(options: {
 					value: [
 						{
 							type: "outcome_created",
-							data: {
-								status: outcome.status,
-								failure_class: outcome.failure_class,
-								terminal_reason: outcome.terminal_reason,
-							},
+							data: terminalLifecycleDataV0B(outcome),
 						},
 						{
 							type: "run_terminal",
-							data: {
-								status: outcome.status,
-								failure_class: outcome.failure_class,
-								terminal_reason: outcome.terminal_reason,
-							},
+							data: terminalLifecycleDataV0B(outcome),
 						},
 					],
 				},
@@ -720,16 +709,48 @@ export async function executeV0BRun(options: {
 		};
 	}
 
-	journal.append("outcome_created", {
-		status: outcome.status,
-		failure_class: outcome.failure_class,
-		terminal_reason: outcome.terminal_reason,
+	finalBudget.wall_time_usage_ms = wallClock() - started;
+	const postScanBudgetExhausted =
+		finalBudget.provider_request_usage > finalBudget.provider_request_limit ||
+		finalBudget.tool_call_usage > finalBudget.tool_call_limit ||
+		finalBudget.wall_time_usage_ms > finalBudget.wall_time_limit_ms;
+	if (postScanBudgetExhausted) {
+		writeSafeIncompleteResult({
+			runRoot,
+			run,
+			attempt,
+			abort: {
+				...abortEvidence,
+				terminal_reason: "wall_time_limit_exceeded_after_integrated_scan",
+			},
+			reason: "wall_time_limit_exceeded_after_integrated_scan",
+		});
+		return {
+			run_id: runId,
+			run_root: portable(relative(options.projectRoot, runRoot)),
+			outcome: null,
+			external_provider_calls: 0,
+			faux_provider_calls: piResult.faux_provider_calls,
+			recovery_attempts: 0,
+			child_attempts: 0,
+			terminal_record: null,
+			incomplete_reason: "wall_time_limit_exceeded_after_integrated_scan",
+		};
+	}
+	outcome = buildOutcomeV0B({
+		runId,
+		attemptId,
+		evidenceValid: validation.valid,
+		verifierStatus: verifierResult.status,
+		agentTerminalReason: piResult.terminal_reason,
+		evidenceIndexRef: "evidence-index.json",
+		budgetExhausted: false,
 	});
-	journal.append("run_terminal", {
-		status: outcome.status,
-		failure_class: outcome.failure_class,
-		terminal_reason: outcome.terminal_reason,
-	});
+	attempt.terminal_reason = outcome.terminal_reason;
+	abortEvidence.terminal_reason = outcome.terminal_reason;
+
+	journal.append("outcome_created", terminalLifecycleDataV0B(outcome));
+	journal.append("run_terminal", terminalLifecycleDataV0B(outcome));
 	const abortArtifact = writeOnceJson(runRoot, "evidence/abort.json", abortEvidence);
 	const runArtifact = writeOnceJson(runRoot, "run.json", run);
 	const attemptArtifact = writeOnceJson(runRoot, "attempt.json", attempt);
@@ -740,28 +761,39 @@ export async function executeV0BRun(options: {
 		schema_version: 1,
 		run_id: runId,
 		items: [
-			responsibility(taskSnapshotRef, "task contract snapshot"),
-			responsibility(strategySnapshotRef, "strategy contract snapshot"),
-			responsibility(verifierSnapshotRef, "write-once executed external verifier source"),
-			responsibility(instructionSnapshotRef, "task instruction snapshot"),
-			responsibility(runArtifact, "terminal Run record"),
-			responsibility(attemptArtifact, "single Attempt record"),
-			responsibility(workspaceRefArtifact, "Workspace identity and final digest"),
-			responsibility(sessionRefArtifact, "reasoning-safe Session reference"),
-			responsibility(sessionArtifact, "public-openable reasoning-safe Session JSONL"),
-			responsibility(journalArtifact, "append-only lifecycle Journal"),
-			responsibility(verifierResultArtifact, "external Verifier result and execution identity"),
-			responsibility(verifierResult.full_output_ref, "external Verifier full output"),
-			...piResult.tool_result_artifacts.map((ref) =>
-				responsibility(ref, "externalized safe Tool Result projection"),
-			),
-			responsibility(validationArtifact, "preterminal evidence validation"),
-			responsibility(abortArtifact, "bounded abort and terminal snapshot"),
-			responsibility(scanArtifact, "integrated preterminal secret and reasoning scan"),
-			responsibility(outcomeArtifact, "accepted-precedence terminal Outcome"),
+			terminalIndexItemV0B(taskSnapshotRef),
+			terminalIndexItemV0B(strategySnapshotRef),
+			terminalIndexItemV0B(verifierSnapshotRef),
+			terminalIndexItemV0B(instructionSnapshotRef),
+			terminalIndexItemV0B(runArtifact),
+			terminalIndexItemV0B(attemptArtifact),
+			terminalIndexItemV0B(workspaceRefArtifact),
+			terminalIndexItemV0B(sessionRefArtifact),
+			terminalIndexItemV0B(sessionArtifact),
+			terminalIndexItemV0B(journalArtifact),
+			terminalIndexItemV0B(verifierResultArtifact),
+			terminalIndexItemV0B(verifierResult.full_output_ref),
+			...piResult.tool_result_artifacts.map(terminalIndexItemV0B),
+			terminalIndexItemV0B(validationArtifact),
+			terminalIndexItemV0B(abortArtifact),
+			terminalIndexItemV0B(scanArtifact),
+			terminalIndexItemV0B(outcomeArtifact),
 		],
 	};
 	const indexArtifact = writeOnceJson(runRoot, "evidence-index.json", index);
+	if (wallClock() - started > finalBudget.wall_time_limit_ms) {
+		return {
+			run_id: runId,
+			run_root: portable(relative(options.projectRoot, runRoot)),
+			outcome: null,
+			external_provider_calls: 0,
+			faux_provider_calls: piResult.faux_provider_calls,
+			recovery_attempts: 0,
+			child_attempts: 0,
+			terminal_record: null,
+			incomplete_reason: "wall_time_limit_exceeded_before_terminal_marker",
+		};
+	}
 	const terminalRecord: TerminalRecordV0B = {
 		schema_version: 1,
 		run_id: runId,

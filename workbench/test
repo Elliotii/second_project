@@ -8,5 +8,6 @@ import "./tests/v0b-outcome.test.ts";
 import "./tests/v0b-evidence.test.ts";
 import "./tests/v0b-inspect.test.ts";
 import "./tests/v0b-secret-scan.test.ts";
+import "./tests/v0b-post-audit.test.ts";
 import "./tests/v0b-verifier.test.ts";
 import "./tests/v0b-e2e.test.ts";

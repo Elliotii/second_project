@@ -10,6 +10,9 @@ V0-B converts one settled Attempt into bounded, reviewable evidence:
 - write-once `Outcome`, Evidence Index, and final terminal commit marker;
 - a deterministic secret/reasoning scan over the Session, Journal, artifacts,
   terminal objects, and pending Outcome before any terminal marker is written;
+- one bounded terminal-evidence policy shared by the writer and `inspect` for
+  required Index paths/responsibilities, scan scopes/projections, and the final
+  `evidence_validation_completed < outcome_created < run_terminal` Journal suffix;
 - explicit budgets, abort snapshot, ArtifactRefs, and read-only `inspect`;
 - deterministic `passed/null`, `failed/agent`, `invalid/verifier`, and `invalid/evidence` routes.
 
@@ -18,6 +21,14 @@ fixed by preflight. Its executable, argv, cwd identity, environment allowlist
 keys, timeout, output cap, duration, and full-output ArtifactRef are evidence.
 Artifact reads reject linked Run roots, linked path segments, real-path escapes,
 directories, malformed envelopes, and digest/size mismatches.
+
+`wall_time_usage_ms` ends immediately after the integrated scan and before the
+terminal commit sequence. It includes the Agent/Faux cycle, settlement, Session
+persistence, external verifier, preterminal validation, and integrated scan.
+The writer checks the deadline again immediately before `terminal.json`; a
+crossing fails closed without a terminal marker. This does not claim exact
+last-disk-byte timing, real-time scheduling, or process-tree cancellation, and
+unavoidable final marker-write latency is outside the recorded endpoint.
 
 Two evidence faults are intentionally distinct. Post-persistence corruption can
 produce a committed `invalid/evidence` envelope whose damaged ArtifactRef is

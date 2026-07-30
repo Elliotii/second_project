@@ -7,7 +7,9 @@ import {
 	type JournalEntryV0B,
 	type JournalEventTypeV0B,
 	type JsonValue,
+	type OutcomeV0B,
 } from "../contracts/v0b-types.ts";
+import { validateTerminalJournalSuffixV0B } from "./terminal-policy.ts";
 
 export interface JournalIdentityV0B {
 	run_id: string;
@@ -83,6 +85,8 @@ export function validateJournal(
 	options: {
 		requireValidationCompleted?: boolean;
 		route?: "settled" | "error" | "abort";
+		mode?: "preterminal" | "terminal";
+		outcome?: OutcomeV0B;
 	} = {},
 ): string[] {
 	const errors: string[] = [];
@@ -126,6 +130,16 @@ export function validateJournal(
 	}
 	if (options.requireValidationCompleted === true && !seen.has("evidence_validation_completed")) {
 		errors.push("required journal event missing: evidence_validation_completed");
+	}
+	if (options.mode === "preterminal" && (seen.has("outcome_created") || seen.has("run_terminal"))) {
+		errors.push("terminal Journal events are forbidden during preterminal validation");
+	}
+	if (options.mode === "terminal") {
+		if (!options.outcome) {
+			errors.push("terminal Journal validation requires an Outcome");
+		} else {
+			errors.push(...validateTerminalJournalSuffixV0B(entries, options.outcome));
+		}
 	}
 	for (const callId of starts) if (!completes.has(callId)) errors.push(`tool call has no terminal event: ${callId}`);
 	for (const callId of completes) if (!starts.has(callId)) errors.push(`tool result has no start event: ${callId}`);
