@@ -5,40 +5,35 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_b_activated_pending_implementation
-  status: V0_B_EVIDENCE_FOUNDATION_ACTIVE
+  phase: v0_b_closed_v0_c_not_authorized
+  status: V0_B_EVIDENCE_FOUNDATION_CLOSED_ACCEPTED
 
 active_goal:
-  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
-  status: accepted_activated_pending_implementation
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
+  id: null
+  status: null
+  contract: null
   disposition: null
-  contract_accepted: true
-  activation_authorized: true
-  implementation_owner: dedicated_v0_b_goal_session
-  implementation_started: false
-  control_baseline_commit: resulting_HEAD_of_this_revision
 
 last_executed_goal:
-  id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
+  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
-  disposition: PASS_V0_A_FOUNDATION
-  architecture_review: ACCEPT_V0_A_FOUNDATION_AFTER_BOUNDED_PATH_SECURITY_CORRECTION
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
+  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+  architecture_review: ACCEPT_V0_B_AFTER_BOUNDED_CORRECTION_AND_FOCUSED_INDEPENDENT_REAUDIT
 
 last_closed_goal:
-  id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
+  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
-  disposition: PASS_V0_A_FOUNDATION
-  architecture_review: ACCEPT_V0_A_FOUNDATION_AFTER_BOUNDED_PATH_SECURITY_CORRECTION
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
+  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+  architecture_review: ACCEPT_V0_B_AFTER_BOUNDED_CORRECTION_AND_FOCUSED_INDEPENDENT_REAUDIT
 
 last_completed_goal:
-  id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
+  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
-  disposition: PASS_V0_A_FOUNDATION
-  architecture_review: ACCEPT_V0_A_FOUNDATION_AFTER_BOUNDED_PATH_SECURITY_CORRECTION
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
+  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+  architecture_review: ACCEPT_V0_B_AFTER_BOUNDED_CORRECTION_AND_FOCUSED_INDEPENDENT_REAUDIT
 
 next_goal:
   id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
@@ -185,6 +180,18 @@ completed_work:
   - V0_B_activation_authorized_by_user
   - V0_B_control_baseline_commit_authorized_by_user
   - V0_B_control_state_updated_by_main_session
+  - V0_B_control_baseline_commit_created_and_verified
+  - V0_B_dedicated_goal_session_completed_deterministic_stage_1
+  - V0_B_initial_main_review_bounded_correction_completed
+  - V0_B_first_candidate_commit_created
+  - V0_B_first_independent_risk_audit_requested_bounded_correction
+  - V0_B_five_audit_findings_corrected
+  - V0_B_basic_authorization_object_micro_correction_completed
+  - V0_B_corrected_candidate_commit_created
+  - V0_B_focused_independent_reaudit_passed
+  - V0_B_Gates_A_through_H_and_DoD_25_of_25_accepted
+  - V0_B_PASS_V0_B_EVIDENCE_FOUNDATION_accepted_by_main_session_and_user
+  - V0_B_control_and_evidence_closeout_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -199,7 +206,10 @@ workspace:
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
   v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
-  v0_b_control_baseline_commit: resulting_HEAD_of_this_revision
+  v0_b_control_baseline_commit: 32dc7b136053e2fdc17f294322a3cf7fef79e737
+  v0_b_first_failed_audit_candidate: 18ba8466799198b1ce3e732990a49f626fb83d48
+  v0_b_implementation_baseline_commit: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
+  v0_b_control_evidence_closeout_commit: resulting_HEAD_of_this_revision
   v0_b_control_baseline_tracked_files_clean_required: true
   registered_untracked_reference_directory: reference/
 
@@ -221,7 +231,7 @@ pi:
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: accepted_for_V0_scope_V0_B_active
+  status: accepted_for_V0_scope_V0_B_closed_V0_C_not_authorized
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -237,7 +247,7 @@ architecture:
     public_workaround: subscribe
     core_route_blocker: false
     pi_core_patch_required: false
-  next_decision_material: docs/reports/PROJECT_ZERO_TO_CURRENT_PROGRESS_CONCLUSIONS_AND_COMPLETE_FORWARD_PLAN_2026-07-30.md
+  next_decision_material: docs/reports/V0_B_CLOSEOUT.md
 
 first_policy:
   candidate: Completion Verification
@@ -246,6 +256,12 @@ first_policy:
 v0:
   charter: docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
   charter_status: accepted
+  status: in_progress_V0_A_and_V0_B_closed_V0_C_not_authorized
+  completed_goals:
+    - V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
+    - V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+  remaining_goal:
+    - V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
   roadmap_reconciliation: docs/第二项目_Codex交接包_2026-07-30/ROADMAP_RECONCILIATION_REPORT.md
   reference_acquisition_plan: docs/第二项目_Codex交接包_2026-07-30/REFERENCE_ACQUISITION_PLAN.md
   control_rule: docs/第二项目_Codex交接包_2026-07-30/09_对接执行、文件权威与验收规则.md
@@ -316,37 +332,116 @@ v0_b:
   goal_id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
   contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
   precontract_research: docs/reports/V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME_PRECONTRACT_RESEARCH.md
-  contract_status: accepted_activated_pending_implementation
+  contract_status: closed_accepted
   contract_accepted: true
-  active_goal: true
+  active_goal: false
   activation_authorized: true
   implementation_owner: dedicated_v0_b_goal_session
-  implementation_authorized: true_for_dedicated_v0_b_goal_session_after_Gate_A
-  implementation_started: false
-  implementation_completed: false
-  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  control_baseline_commit: resulting_HEAD_of_this_revision
+  implementation_authorized: consumed_and_completed_by_dedicated_v0_b_goal_session
+  implementation_started: true
+  implementation_completed: true
+  control_baseline_commit_authorized: consumed
+  control_baseline_commit: 32dc7b136053e2fdc17f294322a3cf7fef79e737
   dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
-  dedicated_goal_session_prompt_status: pending_control_baseline_confirmation
-  dedicated_goal_session_started: false
-  formal_workbench_extension_authorized: true_for_dedicated_v0_b_goal_session_after_Gate_A
+  dedicated_goal_session_prompt_status: consumed
+  dedicated_goal_session_started: true
+  dedicated_goal_session_completed: true
+  formal_workbench_extension_authorized: consumed
   dependency_installation_authorized: false
   external_network_authorized: false
   real_model_calls_authorized: 0
   real_model_stage_2_authorized: false
-  implementation_git_commit_authorized: false
+  real_model_stage_2_executed: false
+  dedicated_goal_session_git_commit_authorized: false
   pi_core_patch_authorized: false
   private_pi_import_authorized: false
   external_module_port_authorized: false
+  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+  main_session_review: accepted_after_bounded_correction_and_focused_independent_reaudit
+  user_acceptance: accepted_2026_07_31
+  first_failed_audit_candidate:
+    commit: 18ba8466799198b1ce3e732990a49f626fb83d48
+    audit_disposition: REQUEST_BOUNDED_CORRECTION
+    findings: 5
+    highest_severity: P1
+  implementation_baseline_commit: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
+  control_evidence_closeout_commit: resulting_HEAD_of_this_revision
+  authoritative_run_id: run-914dc89c-defd-4e03-ab37-7fd09230fe93
+  workbench_tree_digest: b8034b235acdf50630c7bebc3859f001799986333622ae0ce1b545528d3fe8d0
+  source_inventory:
+    files: 52
+    mismatches: 0
+    sha256: 6b9e90e4652df1ee85fc1f29e6d053d931901c17e098fa46dcb4cdbdf9ca9ac5
+  source_delta:
+    files: 36
+    mismatches: 0
+    sha256: 49e6cf7a750f446734c87a662088843fb104d4d6c5c7994f3243cf9aca19237b
+  independent_reaudit:
+    status: passed
+    disposition: PASS_FOCUSED_INDEPENDENT_REAUDIT
+    findings_resolved: 5
+    findings_unresolved: 0
+    report: docs/reports/V0_B_INDEPENDENT_REAUDIT_REPORT.md
+  gates:
+    A: passed
+    B: passed
+    C: passed
+    D: passed
+    E: passed
+    F: passed
+    G: passed
+    H: passed
+  definition_of_done:
+    passed: 25
+    failed: 0
+    total: 25
+  tests:
+    strict_typescript: passed
+    post_audit: 11_passed_0_failed_0_skipped
+    complete_workbench: 67_passed_0_failed_0_skipped
+    v0_a_public: 3_passed_0_failed_0_skipped
+  runtime_counts:
+    external_provider_calls: 0
+    real_model_calls: 0
+    recovery_attempts: 0
+    child_attempts: 0
+    pi_core_patches: 0
+    private_pi_imports: 0
+  known_issue:
+    id: v0_b_post_audit_test_ignored_directory_setup
+    classification: non_blocking_test_fixture_setup_debt
+    observed: true
+    product_semantic_failure: false
+    independent_reaudit_effect: none
+    revisit_trigger: future_test_runner_or_V0_C_test_environment_change
+  reports:
+    implementation: docs/reports/V0_B_IMPLEMENTATION_REPORT.md
+    execution_closeout_draft: docs/reports/V0_B_CLOSEOUT_DRAFT.md
+    first_independent_audit: docs/reports/V0_B_INDEPENDENT_RISK_AUDIT_REPORT.md
+    focused_independent_reaudit: docs/reports/V0_B_INDEPENDENT_REAUDIT_REPORT.md
+    accepted_closeout: docs/reports/V0_B_CLOSEOUT.md
   stage_1:
     deterministic_faux_only: true
-    recovery_attempts_authorized: 0
-    child_attempts_authorized: 0
+    status: completed_accepted
+    external_provider_calls: 0
+    recovery_attempts: 0
+    child_attempts: 0
   stage_2:
-    status: optional_not_authorized
+    status: optional_not_authorized_not_executed
     maximum_if_separately_authorized:
       real_runs: 1
       cost_cap_usd: 1
+
+v0_c:
+  goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  status: charter_defined_not_authorized
+  contract_created: false
+  contract_accepted: false
+  active_goal: false
+  research_authorized: false
+  implementation_authorized: false
+  real_model_calls_authorized: 0
+  dedicated_goal_session_started: false
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
@@ -354,6 +449,9 @@ implementation:
   real_model_run_completed: one_valid_G006_baseline_candidate_pair_both_initial_verifiers_passed
   formal_workbench_foundation_created: true_V0_A
   v0_a_direct_public_agentharness_faux_cycle: passed
+  v0_b_evidence_session_verifier_outcome_foundation: closed_accepted
+  v0_b_real_model_route: not_executed
+  v0_c_completion_controller: not_started_not_authorized
 
 g005_authorization:
   goal_contract_created: true
@@ -698,35 +796,29 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/V0_B_CLOSEOUT.md
+  - docs/reports/V0_B_INDEPENDENT_REAUDIT_REPORT.md
+  - docs/reports/V0_B_IMPLEMENTATION_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
-  - docs/reports/V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME_PRECONTRACT_RESEARCH.md
-  - docs/reports/V0_A_CLOSEOUT.md
-  - docs/reports/V0_A_IMPLEMENTATION_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/09_对接执行、文件权威与验收规则.md
+  - docs/reports/V0_A_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/V0_A_GOAL_CONTRACT.md
   - docs/reports/PROJECT_ZERO_TO_CURRENT_PROGRESS_CONCLUSIONS_AND_COMPLETE_FORWARD_PLAN_2026-07-30.md
-  - docs/goals/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_REPORT.md
   - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_CLOSEOUT.md
-  - docs/reports/G006_GATE_0_IMPLEMENTATION_AND_OFFLINE_REVIEW.md
-  - docs/reports/G006_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLEAN_RETRY_PRECONTRACT_RESEARCH.md
-  - docs/reports/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_REPORT.md
-  - docs/reports/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY_CLOSEOUT.md
-  - docs/goals/G005_PHASE3_REAL_MODEL_COMPLETION_VERIFICATION_FEASIBILITY.md
   - docs/reports/CC_HARNESS_REFERENCE_ANALYSIS_DECISION_SUMMARY.md
   - docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - create_and_verify_the_authorized_V0_B_control_baseline_commit
-  - record_the_exact_V0_B_control_baseline_commit_SHA_in_the_start_prompt
-  - start_the_dedicated_V0_B_goal_session
-  - dedicated_session_executes_Gate_A_before_implementation
+  - await_user_authorization_for_V0_C_precontract_research_and_contract_drafting
+  - if_authorized_reconcile_V0_C_charter_scope_with_accepted_V0_B_evidence
+  - do_not_create_or_activate_V0_C_before_contract_review
 
 open_user_decisions:
-  - optional_V0_B_stage_2_real_route_smoke_requires_separate_authorization_after_stage_1_review
-  - V0_B_result_acceptance_and_implementation_baseline_commit_require_future_main_session_review_and_user_authorization
+  - whether_to_authorize_V0_C_precontract_research_and_Goal_Contract_drafting
+  - later_V0_C_Contract_acceptance_Activation_Control_Baseline_and_real_task_budget_remain_separate
 ```
 
 ## Current Constraints
@@ -772,21 +864,29 @@ open_user_decisions:
   its Implementation Baseline Commit is
   `1a1565fa7e6d1440c8f99e2c7e587201a14111c1`. The dedicated V0-A Goal
   Session never had Git commit authority.
-- V0-B is accepted and active. Its implementation owner is the dedicated V0-B
-  Goal Session, which may begin only after the Main Session creates and verifies
-  the Control Baseline Commit and Gate A passes. Stage 1 permits deterministic
-  Faux execution only: real-model calls, external network, dependency
-  installation, Pi patches, private imports, Recovery, child Attempts and
-  implementation Git commits remain unauthorized.
+- V0-B is closed and accepted with `PASS_V0_B_EVIDENCE_FOUNDATION`. Its Control
+  Baseline Commit is `32dc7b136053e2fdc17f294322a3cf7fef79e737` and its
+  accepted Implementation Baseline Commit is
+  `7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180`. Do not reopen its Stage 1,
+  execute optional Stage 2, rewrite accepted Runs, or continue either closed
+  dedicated Session without explicit new user direction.
+- Preserve the V0-B focused re-audit observation that
+  `workbench/tests/v0b-post-audit.test.ts` expects the ignored
+  `.runs/v0-b/test-cases/` setup directory. It is accepted as non-blocking test
+  fixture setup debt. Revisit only when the test runner or V0-C test
+  environment is already in scope; do not rewrite V0-B evidence history.
+- V0-C is Charter-defined but has no Contract, Activation, Control Baseline,
+  implementation or real-model authorization.
 
 ## Expected Next Handoff
 
-V0-A is closed and accepted with `PASS_V0_A_FOUNDATION`; its exact
-Implementation Baseline Commit is
-`1a1565fa7e6d1440c8f99e2c7e587201a14111c1`. V0-B Contract and precontract
-research are accepted, and `active_goal` is
-`V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME`. The Main Session must create and
-verify the authorized V0-B Control Baseline Commit, record its exact SHA in the
-dedicated Session start prompt, and then start the dedicated V0-B Goal Session.
-That Session owns bounded Stage 1 implementation and must first pass Gate A.
-Real-model Stage 2 remains separately gated and unauthorized.
+V0-A and V0-B are closed and accepted. V0-B disposition is
+`PASS_V0_B_EVIDENCE_FOUNDATION`; its exact Implementation Baseline Commit is
+`7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180`, and its focused independent
+re-audit resolved all five prior findings. `active_goal` is `null`.
+
+V0-C is the next Charter-defined Goal but remains completely unauthorized. The
+next main-session action, only after user authorization, is bounded V0-C
+precontract research and Goal Contract drafting. Contract acceptance,
+Activation/Control Baseline, implementation Session and any real Coding Task
+remain separate future decisions.

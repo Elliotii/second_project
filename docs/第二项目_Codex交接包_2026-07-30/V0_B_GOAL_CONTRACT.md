@@ -2,39 +2,49 @@
 
 ```yaml
 goal_id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
-status: accepted_activated_pending_implementation
+status: closed_accepted
 version: V0_B
 date: 2026-07-31
 accepted_by_user: 2026-07-31
 activated_by_user: 2026-07-31
+closed_by_user: 2026-07-31
 execution_owner: dedicated_v0_b_goal_session
 implementation_owner: dedicated_v0_b_goal_session
 main_session_owner: current_codex_main_session
-active_goal: true
+active_goal: false
 contract_accepted: true
 activation_authorized: true
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit_authorized: consumed
+control_baseline_commit: 32dc7b136053e2fdc17f294322a3cf7fef79e737
 dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
-dedicated_goal_session_started: false
-implementation_authorized: true_for_dedicated_v0_b_goal_session_after_Gate_A
-implementation_started: false
-formal_workbench_extension_authorized: true_for_dedicated_v0_b_goal_session_after_Gate_A
+dedicated_goal_session_started: true
+dedicated_goal_session_completed: true
+implementation_authorized: consumed_and_completed_by_dedicated_v0_b_goal_session
+implementation_started: true
+implementation_completed: true
+formal_workbench_extension_authorized: consumed
 dependency_installation_authorized: false
 external_network_authorized: false
 real_model_calls_authorized: 0
 real_model_stage_2_authorized: false
-git_commit_authorized: false
+real_model_stage_2_executed: false
+dedicated_goal_session_git_commit_authorized: false
 pi_core_patch_authorized: false
 private_pi_import_authorized: false
 external_module_port_authorized: false
 V0_A_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
+first_failed_audit_candidate: 18ba8466799198b1ce3e732990a49f626fb83d48
+implementation_baseline_commit: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
+independent_reaudit: passed
+accepted_disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+formal_closeout: docs/reports/V0_B_CLOSEOUT.md
+control_evidence_closeout_commit: resulting_HEAD_of_this_revision
 ```
 
-> 用户已于 2026-07-31 接受本 Contract，并授权 V0-B Activation、Control
-> Baseline Commit 和专用 Goal Session启动。实现只授权给专用 V0-B Goal
-> Session，并且必须先通过 Gate A。真实模型、外部网络、依赖安装、Pi 修改和
-> 实现 Git commit 仍未授权。
+> 用户已于 2026-07-31 正式接受 V0-B，处置为
+> `PASS_V0_B_EVIDENCE_FOUNDATION`。专用 Goal Session、两轮有界返修和聚焦
+> 独立复审均已停止；`active_goal` 现为 `null`。本关闭状态不授权 V0-B
+> Stage 2、V0-C、真实模型、外部网络、依赖安装、Pi 修改或后续实现。
 
 ---
 
@@ -104,9 +114,11 @@ V0-B 不实现 Recovery，也不评价 Completion Policy 是否改善真实模�
 
 ### 2.2 Current stop point
 
-当前已授权主 Session正式化本 Contract、同步控制状态、创建 Control Baseline
-Commit，并在核验精确 SHA 后启动专用 V0-B Goal Session。当前主 Session不得
-实现 V0-B。
+V0-B Stage 1 已实现、返修、独立复审并由主 Session与用户正式接受。
+Implementation Baseline Commit 为
+`7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180`，正式 Closeout 为
+`docs/reports/V0_B_CLOSEOUT.md`。V0-B Stage 2 未授权且未执行；V0-C 仍为
+Charter-defined、未创建 Contract、未激活、未授权。
 
 ---
 
@@ -1229,34 +1241,38 @@ accepted_decisions:
     accepted_value: authorized
     consequence: main Session can prepare exact baseline and specialist start prompt
 
-user_decisions_required:
-  - decision: authorize_optional_real_route_stage_2
-    evidence: deterministic evidence correctness should be proven before credentials and spend are exposed
-    options:
-      - defer_until_stage_1_review
-      - authorize_one_run_now_but_execute_only_after_stage_1
-      - omit_from_v0_b
-    recommendation: defer_until_stage_1_review
-    consequence: Stage 1 remains zero-call; one-run/$1 authority remains with the user
+closing_decisions:
+  - decision: accept_v0_b_stage_1
+    accepted_value: PASS_V0_B_EVIDENCE_FOUNDATION
+    accepted_by_user: 2026-07-31
+    consequence: V0_B_is_closed_and_active_goal_is_null
+
+future_authority_not_granted:
+  - optional_V0_B_real_route_Stage_2
+  - V0_C_precontract_research_or_Contract
+  - V0_C_Activation_or_implementation
+  - any_real_model_call
 ```
 
 ---
 
-## 27. Current Start and Stop Point
+## 27. Final Stop Point
 
 ```yaml
-contract_status: accepted_activated_pending_implementation
-active_goal: true
-implementation_started: false
+contract_status: closed_accepted
+active_goal: false
+implementation_started: true
+implementation_completed: true
+accepted_disposition: PASS_V0_B_EVIDENCE_FOUNDATION
+implementation_baseline_commit: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
+focused_independent_reaudit: passed
 real_model_calls_authorized: 0
-next_allowed_action:
-  - create_and_verify_control_baseline_commit
-  - record_exact_baseline_SHA_in_start_prompt
-  - start_dedicated_v0_b_goal_session
-  - dedicated_session_executes_Gate_A
+stage_2: not_authorized_not_executed
+next_goal:
+  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  status: charter_defined_not_authorized
 ```
 
-当前主 Session完成控制状态、Control Baseline Commit、精确 SHA 核验、启动
-Prompt 和专用 Session启动后必须停止实现工作。当前主 Session不得修改
-Workbench、创建 `.runs/v0-b/` 或调用真实模型；这些 Stage 1 工作仅由专用
-Session在 Gate A 通过后执行。
+V0-B 已停止。不得由主 Session、原专用实现 Session 或原独立审计 Session继续
+实现、创建新 Run、执行 Stage 2 或进入 V0-C。任何 V0-C 研究、Contract、
+Activation、实现和真实 Coding Task 都需要后续独立用户授权。
