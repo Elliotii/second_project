@@ -10,16 +10,20 @@ binding_review: 第二项目_三份草案验收与V0冻结建议_2026-07-30.md
 version: V0
 version_name: Evidence-grounded Coding Agent Workbench
 project_identity_long_term: Reliability-first Adaptive Coding Agent Harness
-current_active_goal: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+current_active_goal: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
 V0_A_status: closed_accepted
 V0_A_implementation_owner: dedicated_v0_a_goal_session
 V0_A_implementation_started: true
 V0_A_implementation_completed: true
 V0_A_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
-V0_B_status: accepted_activated_pending_implementation
+V0_B_status: closed_accepted
 V0_B_implementation_owner: dedicated_v0_b_goal_session
-V0_B_implementation_started: false
+V0_B_implementation_started: true
 V0_B_real_model_calls_authorized: 0
+V0_C_status: accepted_activated_pending_stage_1_implementation
+V0_C_implementation_owner: dedicated_v0_c_stage_1_implementation_session
+V0_C_implementation_started: false
+V0_C_real_model_calls_authorized: 0
 formal_workbench_created: true
 pi_go_status: accepted_for_V0_scope
 completion_mechanism_status: accepted_for_V0_not_implemented

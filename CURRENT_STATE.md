@@ -5,13 +5,13 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_c_precontract_research_authorized
-  status: V0_C_PRECONTRACT_RESEARCH_AUTHORIZED
+  phase: v0_c_stage_1_activated_pending_dedicated_execution
+  status: V0_C_STAGE_1_ACTIVATED
 
 active_goal:
-  id: null
-  status: null
-  contract: null
+  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  status: accepted_activated_pending_stage_1_implementation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
   disposition: null
 
 last_executed_goal:
@@ -37,8 +37,8 @@ last_completed_goal:
 
 next_goal:
   id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: precontract_research_authorized_contract_not_created
-  contract: null
+  status: active_stage_1_pending_dedicated_execution
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -194,6 +194,12 @@ completed_work:
   - V0_B_control_and_evidence_closeout_authorized_by_user
   - V0_C_session_governance_revision_authorized_by_user
   - V0_C_precontract_research_authorized_by_user
+  - V0_C_precontract_research_completed
+  - V0_C_precontract_research_reviewed_by_main_session
+  - V0_C_goal_contract_drafted_and_accepted_by_user
+  - V0_C_activation_authorized_by_user
+  - V0_C_control_baseline_commit_authorized_by_user
+  - V0_C_zero_real_call_stage_1_dedicated_session_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -213,6 +219,8 @@ workspace:
   v0_b_implementation_baseline_commit: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
   v0_b_control_evidence_closeout_commit: resulting_HEAD_of_this_revision
   v0_b_control_baseline_tracked_files_clean_required: true
+  v0_c_control_baseline_commit: resulting_HEAD_of_this_revision
+  v0_c_control_baseline_tracked_files_clean_required: true
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -233,7 +241,7 @@ pi:
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: accepted_for_V0_scope_V0_B_closed_V0_C_not_authorized
+  status: accepted_for_V0_scope_V0_C_stage_1_active
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -249,7 +257,7 @@ architecture:
     public_workaround: subscribe
     core_route_blocker: false
     pi_core_patch_required: false
-  next_decision_material: docs/reports/V0_B_CLOSEOUT.md
+  next_decision_material: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
 
 first_policy:
   candidate: Completion Verification
@@ -258,7 +266,7 @@ first_policy:
 v0:
   charter: docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
   charter_status: accepted
-  status: in_progress_V0_A_and_V0_B_closed_V0_C_not_authorized
+  status: in_progress_V0_A_and_V0_B_closed_V0_C_stage_1_active
   completed_goals:
     - V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
     - V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
@@ -436,16 +444,37 @@ v0_b:
 
 v0_c:
   goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: precontract_research_authorized_contract_not_created
-  contract_created: false
-  contract_accepted: false
-  active_goal: false
+  status: accepted_activated_pending_stage_1_implementation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  contract_created: true
+  contract_accepted: true
+  contract_accepted_at: 2026-07-31
+  activation_authorized: true
+  activation_authorized_at: 2026-07-31
+  active_goal: true
+  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  control_baseline_commit: resulting_HEAD_of_this_revision
   research_authorized: true
   research_owner: dedicated_v0_c_precontract_research_session
-  research_status: authorized_for_commit_bound_dedicated_session
-  implementation_authorized: false
+  research_status: completed_main_session_reviewed
+  research_report: docs/reports/V0_C_BOUNDED_COMPLETION_PRECONTRACT_RESEARCH.md
+  research_disposition: ACCEPT_FOR_CONTRACT_DRAFTING_WITH_BINDING_NARROWING
+  implementation_owner: dedicated_v0_c_stage_1_implementation_session
+  implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
+  implementation_started: false
   real_model_calls_authorized: 0
+  credential_access_authorized: false
+  external_network_authorized: false
+  dependency_installation_authorized: false
+  pi_core_patch_authorized: false
+  private_pi_import_authorized: false
+  dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
+  dedicated_goal_session_prompt_status: pending_exact_control_baseline_sha
   dedicated_goal_session_started: false
+  candidate_commit_authorized: false
+  independent_audit_authorized: false
+  stage_2_user_run_authorized: false
+  stage_2_real_model_calls_authorized: 0
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
@@ -455,7 +484,7 @@ implementation:
   v0_a_direct_public_agentharness_faux_cycle: passed
   v0_b_evidence_session_verifier_outcome_foundation: closed_accepted
   v0_b_real_model_route: not_executed
-  v0_c_completion_controller: not_started_not_authorized
+  v0_c_completion_controller: authorized_not_started
 
 g005_authorization:
   goal_contract_created: true
@@ -800,6 +829,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  - docs/reports/V0_C_BOUNDED_COMPLETION_PRECONTRACT_RESEARCH.md
   - docs/reports/V0_B_CLOSEOUT.md
   - docs/reports/V0_B_INDEPENDENT_REAUDIT_REPORT.md
   - docs/reports/V0_B_IMPLEMENTATION_REPORT.md
@@ -816,13 +847,16 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - dedicated_read_only_V0_C_precontract_research_session_returns_advisory_report
-  - main_session_review_research_report_before_any_contract_draft
-  - do_not_create_or_activate_V0_C_before_contract_review
+  - main_session_creates_and_verifies_V0_C_control_baseline_commit
+  - main_session_generates_commit_bound_V0_C_stage_1_start_prompt
+  - dedicated_V0_C_stage_1_session_executes_Gates_A_through_J_with_zero_real_calls
+  - main_session_reviews_source_delta_commands_evidence_and_state_proposal
 
 open_user_decisions:
-  - V0_C_Goal_Contract_drafting_and_acceptance_after_research_review
-  - later_V0_C_Contract_acceptance_Activation_Control_Baseline_and_real_task_budget_remain_separate
+  - V0_C_candidate_commit_and_focused_independent_audit_after_stage_1_main_review
+  - V0_C_implementation_baseline_after_audit
+  - V0_C_stage_2_task_model_workspace_feedback_and_run_cost_budget
+  - V0_C_final_acceptance_closeout_and_control_commit
 ```
 
 ## Current Constraints
@@ -879,20 +913,27 @@ open_user_decisions:
   `.runs/v0-b/test-cases/` setup directory. It is accepted as non-blocking test
   fixture setup debt. Revisit only when the test runner or V0-C test
   environment is already in scope; do not rewrite V0-B evidence history.
-- V0-C bounded precontract research is authorized for a dedicated read-only
-  Research Session. V0-C still has no Goal Contract, Activation, Control
-  Baseline, implementation, independent-audit or real-model authorization.
+- V0-C Contract is accepted and Activation, Control Baseline Commit and
+  dedicated deterministic Stage 1 are authorized. Stage 1 must start from the
+  exact committed Control Baseline, use zero real-model/provider calls, zero
+  credential access, zero external network, zero dependency installation and
+  zero Pi Core patches, and return reports without modifying control state or
+  creating a Git commit. Candidate Commit, focused independent audit,
+  Implementation Baseline, Stage 2 and final acceptance remain separately
+  unauthorized.
 
 ## Expected Next Handoff
 
-V0-A and V0-B are closed and accepted. V0-B disposition is
-`PASS_V0_B_EVIDENCE_FOUNDATION`; its exact Implementation Baseline Commit is
-`7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180`, and its focused independent
-re-audit resolved all five prior findings. `active_goal` is `null`.
+V0-A and V0-B are closed and accepted. V0-C Precontract Research is complete
+and the Main Session accepted it for Contract drafting with binding narrowing.
+The user accepted the formal V0-C Contract and separately authorized
+Activation, the Control Baseline Commit and a zero-real-call deterministic
+Stage 1 dedicated Session. `active_goal` is
+`V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE`.
 
-V0-C is the next Charter-defined Goal. The user has authorized only its bounded
-read-only precontract research and the governance/research-authorization
-commit. The next action is to bind a Research Session prompt to that exact
-Commit and obtain an advisory report. Goal Contract drafting and acceptance,
-Activation/Control Baseline, implementation, independent audit and any real
-Coding Task remain separate future decisions.
+The Main Session must create and verify the exact Control Baseline Commit, then
+generate a commit-bound Stage 1 start Prompt. The dedicated Session owns
+implementation, tests, ignored evidence, Implementation Report, Closeout Draft
+and structured `CURRENT_STATE_UPDATE_PROPOSAL`. It must not commit or modify
+control state. Candidate freeze/audit, Stage 2 user-facing real Task and final
+acceptance remain future user decisions.

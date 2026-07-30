@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Agent Harness Reliability Workbench. V0-A and V0-B are closed and accepted. V0-C is Charter-defined but has no accepted Contract, Activation, implementation, or real-model authorization. The current phase is main-session governance and, only after explicit user authorization, bounded V0-C precontract research and Contract drafting.
+This repository is building an Agent Harness Reliability Workbench. V0-A and V0-B are closed and accepted. The V0-C Contract is accepted and activated for a dedicated deterministic Stage 1 implementation Session from the recorded Control Baseline. Stage 1 permits zero real-model calls, zero credential access, zero external network, zero dependency installation, zero Pi Core patches, and no dedicated-session Git commit. Focused independent audit, Candidate/Implementation Baseline commits, Stage 2 user acceptance, real-model calls, and final V0-C acceptance remain separately unauthorized.
 
 ## Required Read Order
 
