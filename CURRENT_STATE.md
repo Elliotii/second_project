@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_b_closed_v0_c_not_authorized
-  status: V0_B_EVIDENCE_FOUNDATION_CLOSED_ACCEPTED
+  phase: v0_c_precontract_research_authorized
+  status: V0_C_PRECONTRACT_RESEARCH_AUTHORIZED
 
 active_goal:
   id: null
@@ -37,7 +37,7 @@ last_completed_goal:
 
 next_goal:
   id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: charter_defined_not_authorized
+  status: precontract_research_authorized_contract_not_created
   contract: null
 
 retired_goal_candidate:
@@ -192,6 +192,8 @@ completed_work:
   - V0_B_Gates_A_through_H_and_DoD_25_of_25_accepted
   - V0_B_PASS_V0_B_EVIDENCE_FOUNDATION_accepted_by_main_session_and_user
   - V0_B_control_and_evidence_closeout_authorized_by_user
+  - V0_C_session_governance_revision_authorized_by_user
+  - V0_C_precontract_research_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -434,11 +436,13 @@ v0_b:
 
 v0_c:
   goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: charter_defined_not_authorized
+  status: precontract_research_authorized_contract_not_created
   contract_created: false
   contract_accepted: false
   active_goal: false
-  research_authorized: false
+  research_authorized: true
+  research_owner: dedicated_v0_c_precontract_research_session
+  research_status: authorized_for_commit_bound_dedicated_session
   implementation_authorized: false
   real_model_calls_authorized: 0
   dedicated_goal_session_started: false
@@ -812,12 +816,12 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - await_user_authorization_for_V0_C_precontract_research_and_contract_drafting
-  - if_authorized_reconcile_V0_C_charter_scope_with_accepted_V0_B_evidence
+  - dedicated_read_only_V0_C_precontract_research_session_returns_advisory_report
+  - main_session_review_research_report_before_any_contract_draft
   - do_not_create_or_activate_V0_C_before_contract_review
 
 open_user_decisions:
-  - whether_to_authorize_V0_C_precontract_research_and_Goal_Contract_drafting
+  - V0_C_Goal_Contract_drafting_and_acceptance_after_research_review
   - later_V0_C_Contract_acceptance_Activation_Control_Baseline_and_real_task_budget_remain_separate
 ```
 
@@ -875,8 +879,9 @@ open_user_decisions:
   `.runs/v0-b/test-cases/` setup directory. It is accepted as non-blocking test
   fixture setup debt. Revisit only when the test runner or V0-C test
   environment is already in scope; do not rewrite V0-B evidence history.
-- V0-C is Charter-defined but has no Contract, Activation, Control Baseline,
-  implementation or real-model authorization.
+- V0-C bounded precontract research is authorized for a dedicated read-only
+  Research Session. V0-C still has no Goal Contract, Activation, Control
+  Baseline, implementation, independent-audit or real-model authorization.
 
 ## Expected Next Handoff
 
@@ -885,8 +890,9 @@ V0-A and V0-B are closed and accepted. V0-B disposition is
 `7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180`, and its focused independent
 re-audit resolved all five prior findings. `active_goal` is `null`.
 
-V0-C is the next Charter-defined Goal but remains completely unauthorized. The
-next main-session action, only after user authorization, is bounded V0-C
-precontract research and Goal Contract drafting. Contract acceptance,
-Activation/Control Baseline, implementation Session and any real Coding Task
-remain separate future decisions.
+V0-C is the next Charter-defined Goal. The user has authorized only its bounded
+read-only precontract research and the governance/research-authorization
+commit. The next action is to bind a Research Session prompt to that exact
+Commit and obtain an advisory report. Goal Contract drafting and acceptance,
+Activation/Control Baseline, implementation, independent audit and any real
+Coding Task remain separate future decisions.

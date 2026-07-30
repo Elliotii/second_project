@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Agent Harness Reliability Workbench. The current phase is bounded evidence, architecture control, and preparation for a possible real-model feasibility goal, not full implementation.
+This repository is building an Agent Harness Reliability Workbench. V0-A and V0-B are closed and accepted. V0-C is Charter-defined but has no accepted Contract, Activation, implementation, or real-model authorization. The current phase is main-session governance and, only after explicit user authorization, bounded V0-C precontract research and Contract drafting.
 
 ## Required Read Order
 
@@ -58,6 +58,11 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - The dedicated Goal Session owns the bounded implementation, commands, raw evidence, execution report, and Closeout draft. It must stop at Contract gates and return its report without making architecture acceptance decisions.
 - The main session reviews the dedicated Session's report and cited evidence, discusses material choices with the user, and owns final Goal acceptance and next-phase decisions.
 - Deviating from the declared Session owner requires explicit user direction and must be recorded in the Goal report, Closeout, and `CURRENT_STATE.md`.
+- Independent audit is risk-driven, not automatic for every Goal or correction. Use a separate audit Session when a frozen candidate changes or depends on high-risk control-flow, lineage, budget/stop, secret/evidence, terminalization, permission, or external-side-effect boundaries, or when the user explicitly requests independent review.
+- An independent audit Session may inspect source, run authorized regressions, and create audit-local ignored evidence plus an audit report. It must not repair source, modify control state, create the candidate commit, accept the Goal, or broaden a focused audit into a general platform review.
+- When main review or audit finds a correctable implementation defect, return a bounded correction prompt to the original implementation Session. Main Session and audit Session do not silently repair it. Re-audit only the affected findings and required regressions unless new concrete evidence justifies broader scope.
+- For V0-C, keep four temporary specialist roles distinct when their stages are authorized: a read-only precontract research Session, a dedicated deterministic Stage 1 implementation Session, a focused independent audit Session for the frozen candidate, and a fresh Stage 2 user-acceptance Session that exercises the frozen product surface without source-edit authority.
+- V0-C Stage 1 must use zero real-model calls. Stage 2 requires a separately authorized frozen implementation baseline, one bounded user-visible Coding Task and its explicit run/cost budget. Credentials and real-model authority do not flow backward to research, implementation, or audit Sessions.
 
 ## Commands and Changes
 
