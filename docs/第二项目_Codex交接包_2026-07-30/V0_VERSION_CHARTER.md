@@ -10,11 +10,17 @@ binding_review: 第二项目_三份草案验收与V0冻结建议_2026-07-30.md
 version: V0
 version_name: Evidence-grounded Coding Agent Workbench
 project_identity_long_term: Reliability-first Adaptive Coding Agent Harness
-current_active_goal: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
-V0_A_status: accepted_activated_pending_implementation
-V0_A_implementation_owner: future_dedicated_goal_session
-V0_A_implementation_started: false
-formal_workbench_created: false
+current_active_goal: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+V0_A_status: closed_accepted
+V0_A_implementation_owner: dedicated_v0_a_goal_session
+V0_A_implementation_started: true
+V0_A_implementation_completed: true
+V0_A_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
+V0_B_status: accepted_activated_pending_implementation
+V0_B_implementation_owner: dedicated_v0_b_goal_session
+V0_B_implementation_started: false
+V0_B_real_model_calls_authorized: 0
+formal_workbench_created: true
 pi_go_status: accepted_for_V0_scope
 completion_mechanism_status: accepted_for_V0_not_implemented
 V1_status: continuity_only_not_authorized
@@ -38,7 +44,7 @@ charter_semantics:
     - definition_of_done
     - V1_V2_continuity
 
-  candidate_until_V0_A_contract_acceptance:
+  implementation_details_delegated_to_accepted_goal_contracts:
     - exact_field_names
     - exact_file_layout
     - exact_cli_argument_shape
@@ -56,7 +62,9 @@ charter_semantics:
     - Non_goals
 ```
 
-V0-A 可以在不改变上述绑定语义的前提下调整实现字段、目录和方法签名；这些细节只有在 V0-A Contract 被用户接受后才成为该 Goal 的实现约束。
+每个 V0 Goal 可以在不改变上述绑定语义的前提下，由已接受的 Goal Contract
+冻结该 Goal 的实现字段、目录和方法签名。当前 V0-A 已关闭接受；V0-B 的实现
+细节以正式 `V0_B_GOAL_CONTRACT.md` 为准。
 
 ---
 

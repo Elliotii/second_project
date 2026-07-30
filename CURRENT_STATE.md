@@ -5,19 +5,19 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_a_closed_accepted
-  status: V0_A_FOUNDATION_ACCEPTED
+  phase: v0_b_activated_pending_implementation
+  status: V0_B_EVIDENCE_FOUNDATION_ACTIVE
 
 active_goal:
-  id: null
-  status: none
-  contract: null
+  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+  status: accepted_activated_pending_implementation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
   disposition: null
-  contract_accepted: false
-  activation_authorized: false
-  implementation_owner: null
+  contract_accepted: true
+  activation_authorized: true
+  implementation_owner: dedicated_v0_b_goal_session
   implementation_started: false
-  control_baseline_commit: null
+  control_baseline_commit: resulting_HEAD_of_this_revision
 
 last_executed_goal:
   id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -41,8 +41,8 @@ last_completed_goal:
   architecture_review: ACCEPT_V0_A_FOUNDATION_AFTER_BOUNDED_PATH_SECURITY_CORRECTION
 
 next_goal:
-  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
-  status: candidate_contract_not_created_not_authorized
+  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  status: charter_defined_not_authorized
   contract: null
 
 retired_goal_candidate:
@@ -179,6 +179,12 @@ completed_work:
   - V0_A_PASS_V0_A_FOUNDATION_accepted_by_main_session_and_user
   - V0_A_content_addressed_workbench_and_fixture_LF_policy_added
   - V0_A_implementation_baseline_commit_authorized_as_resulting_HEAD
+  - V0_B_precontract_source_and_evidence_research_completed
+  - V0_B_goal_contract_drafted
+  - V0_B_goal_contract_accepted_by_user
+  - V0_B_activation_authorized_by_user
+  - V0_B_control_baseline_commit_authorized_by_user
+  - V0_B_control_state_updated_by_main_session
 
 workspace:
   git_initialized: true
@@ -191,8 +197,10 @@ workspace:
   runs_directory: .runs
   formal_workbench_created: true
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
-  v0_a_implementation_baseline_commit: resulting_HEAD_of_this_revision
+  v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
+  v0_b_control_baseline_commit: resulting_HEAD_of_this_revision
+  v0_b_control_baseline_tracked_files_clean_required: true
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -213,7 +221,7 @@ pi:
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: accepted_for_V0_scope_V0_A_foundation_closed_accepted
+  status: accepted_for_V0_scope_V0_B_active
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -272,7 +280,7 @@ v0_a:
   real_model_calls_authorized: 0
   real_model_calls_observed: 0
   implementation_git_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  implementation_baseline_commit: resulting_HEAD_of_this_revision
+  implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   pi_core_patch_authorized: false
   pi_core_patch_count: 0
   private_pi_import_authorized: false
@@ -303,6 +311,42 @@ v0_a:
   os_network_egress_blocking_proven: false
   implementation_report: docs/reports/V0_A_IMPLEMENTATION_REPORT.md
   closeout: docs/reports/V0_A_CLOSEOUT.md
+
+v0_b:
+  goal_id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
+  precontract_research: docs/reports/V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME_PRECONTRACT_RESEARCH.md
+  contract_status: accepted_activated_pending_implementation
+  contract_accepted: true
+  active_goal: true
+  activation_authorized: true
+  implementation_owner: dedicated_v0_b_goal_session
+  implementation_authorized: true_for_dedicated_v0_b_goal_session_after_Gate_A
+  implementation_started: false
+  implementation_completed: false
+  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  control_baseline_commit: resulting_HEAD_of_this_revision
+  dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
+  dedicated_goal_session_prompt_status: pending_control_baseline_confirmation
+  dedicated_goal_session_started: false
+  formal_workbench_extension_authorized: true_for_dedicated_v0_b_goal_session_after_Gate_A
+  dependency_installation_authorized: false
+  external_network_authorized: false
+  real_model_calls_authorized: 0
+  real_model_stage_2_authorized: false
+  implementation_git_commit_authorized: false
+  pi_core_patch_authorized: false
+  private_pi_import_authorized: false
+  external_module_port_authorized: false
+  stage_1:
+    deterministic_faux_only: true
+    recovery_attempts_authorized: 0
+    child_attempts_authorized: 0
+  stage_2:
+    status: optional_not_authorized
+    maximum_if_separately_authorized:
+      real_runs: 1
+      cost_cap_usd: 1
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
@@ -654,6 +698,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
+  - docs/reports/V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME_PRECONTRACT_RESEARCH.md
   - docs/reports/V0_A_CLOSEOUT.md
   - docs/reports/V0_A_IMPLEMENTATION_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
@@ -673,14 +719,14 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - create_and_verify_the_authorized_V0_A_implementation_baseline_commit
-  - record_the_exact_V0_A_implementation_baseline_commit_SHA_externally
-  - keep_active_goal_null_after_V0_A_closeout
-  - await_user_direction_before_V0_B_contract_research_or_drafting
+  - create_and_verify_the_authorized_V0_B_control_baseline_commit
+  - record_the_exact_V0_B_control_baseline_commit_SHA_in_the_start_prompt
+  - start_the_dedicated_V0_B_goal_session
+  - dedicated_session_executes_Gate_A_before_implementation
 
 open_user_decisions:
-  - whether_to_authorize_V0_B_contract_research_and_drafting
-  - future_V0_B_contract_acceptance_activation_and_real_model_budget_remain_separate_decisions
+  - optional_V0_B_stage_2_real_route_smoke_requires_separate_authorization_after_stage_1_review
+  - V0_B_result_acceptance_and_implementation_baseline_commit_require_future_main_session_review_and_user_authorization
 ```
 
 ## Current Constraints
@@ -723,15 +769,24 @@ open_user_decisions:
   references. Do not modify or commit them without explicit authorization.
 - The V0-A Control Baseline Commit is
   `b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b`. The user accepted V0-A and
-  authorized the Main Session to create the implementation baseline Commit for
-  this revision. The dedicated Goal Session never had Git commit authority.
+  its Implementation Baseline Commit is
+  `1a1565fa7e6d1440c8f99e2c7e587201a14111c1`. The dedicated V0-A Goal
+  Session never had Git commit authority.
+- V0-B is accepted and active. Its implementation owner is the dedicated V0-B
+  Goal Session, which may begin only after the Main Session creates and verifies
+  the Control Baseline Commit and Gate A passes. Stage 1 permits deterministic
+  Faux execution only: real-model calls, external network, dependency
+  installation, Pi patches, private imports, Recovery, child Attempts and
+  implementation Git commits remain unauthorized.
 
 ## Expected Next Handoff
 
-V0-A is closed and accepted with `PASS_V0_A_FOUNDATION`. The resulting revision
-is the authorized V0-A implementation baseline and contains the formal
-Workbench source, fixture, accepted reports, Closeout, Contract state and
-project-control state. `active_goal` is null. V0-B remains a Charter-defined
-candidate only: no Contract, Activation, implementation, real-model call or
-external acquisition is authorized until the user separately reviews and
-authorizes those steps.
+V0-A is closed and accepted with `PASS_V0_A_FOUNDATION`; its exact
+Implementation Baseline Commit is
+`1a1565fa7e6d1440c8f99e2c7e587201a14111c1`. V0-B Contract and precontract
+research are accepted, and `active_goal` is
+`V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME`. The Main Session must create and
+verify the authorized V0-B Control Baseline Commit, record its exact SHA in the
+dedicated Session start prompt, and then start the dedicated V0-B Goal Session.
+That Session owns bounded Stage 1 implementation and must first pass Gate A.
+Real-model Stage 2 remains separately gated and unauthorized.
