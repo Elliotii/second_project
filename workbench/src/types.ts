@@ -9,6 +9,12 @@ export interface CommandDescriptor {
 	max_combined_output_bytes: number;
 }
 
+export interface BoundedTaskPolicy {
+	writable_paths: string[];
+	protected_paths: string[];
+	command_descriptors: CommandDescriptor[];
+}
+
 export interface TaskSpecV0A {
 	schema_version: 1;
 	task_id: string;

@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 import { treeDigest, treeInventory } from "../hash.ts";
-import type { TaskSpecV0A, WorkspaceRefV0A } from "../types.ts";
+import type { BoundedTaskPolicy, WorkspaceRefV0A } from "../types.ts";
 import { WORKSPACE_DIGEST_EXCLUSIONS } from "../contracts/preflight.ts";
 
 function copyTreeWithoutLinks(source: string, target: string): void {
@@ -26,7 +26,7 @@ export function createTemporaryWorkspace(options: {
 	sourceRoot: string;
 	targetRoot: string;
 	workspaceId: string;
-	task: TaskSpecV0A;
+	task: BoundedTaskPolicy & { workspace_source_digest: string };
 }): { ref: WorkspaceRefV0A; initialInventory: ReturnType<typeof treeInventory> } {
 	const sourceRoot = resolve(options.sourceRoot);
 	const targetRoot = resolve(options.targetRoot);

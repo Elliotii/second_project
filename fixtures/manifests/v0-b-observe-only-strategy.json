@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "strategy_id": "v0_observe_only_faux",
+  "base_prompt_id": "v0_minimal_coding_prompt",
+  "base_prompt_sha256": "317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf",
+  "skill_refs": [],
+  "completion_policy_id": "observe_only",
+  "recovery_mode": "none",
+  "tool_profile_id": "v0_bounded_local_v1",
+  "model_profile_id": "public_emitted_faux"
+}

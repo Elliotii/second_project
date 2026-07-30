@@ -10,7 +10,7 @@ import {
 } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { Type, type TSchema } from "@earendil-works/pi-ai";
-import type { CommandDescriptor, TaskSpecV0A, ToolAuditEvent } from "../types.ts";
+import type { BoundedTaskPolicy, ToolAuditEvent } from "../types.ts";
 import { resolveWorkspacePath } from "../workspace/path-policy.ts";
 
 const MAX_TEXT_BYTES = 50 * 1024;
@@ -160,7 +160,7 @@ function repositoryDescriptor(commandId: string): { executable: string; argv: st
 	return argv ? { executable: "git", argv, timeout: 15, maxBytes: MAX_TEXT_BYTES } : undefined;
 }
 
-function listWorkspace(root: string, start: string, depth: number, task: TaskSpecV0A): string {
+function listWorkspace(root: string, start: string, depth: number, task: BoundedTaskPolicy): string {
 	const rows: string[] = [];
 	const visit = (absolute: string, level: number): void => {
 		for (const entry of readdirSync(absolute, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -181,7 +181,7 @@ function listWorkspace(root: string, start: string, depth: number, task: TaskSpe
 	return projectText(rows.join("\n"), MAX_TEXT_BYTES).text;
 }
 
-export function createBoundedToolProfile(workspaceRoot: string, task: TaskSpecV0A): BoundedToolProfile {
+export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTaskPolicy): BoundedToolProfile {
 	const canonicalRoot = resolve(workspaceRoot);
 	const auditEvents: ToolAuditEvent[] = [];
 	const commandExecutions: CommandExecutionProjection[] = [];
@@ -365,6 +365,6 @@ export function createBoundedToolProfile(workspaceRoot: string, task: TaskSpecV0
 	return { tools, context, auditEvents, commandExecutions };
 }
 
-export function readProtectedBytes(workspaceRoot: string, task: TaskSpecV0A): Record<string, string> {
+export function readProtectedBytes(workspaceRoot: string, task: BoundedTaskPolicy): Record<string, string> {
 	return Object.fromEntries(task.protected_paths.map((path) => [path, readFileSync(resolve(workspaceRoot, path), "utf8")]));
 }
