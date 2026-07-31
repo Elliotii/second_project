@@ -1,6 +1,6 @@
 {
   "name": "agent-harness-reliability-workbench",
-  "version": "0.0.0-v0b",
+  "version": "0.0.0-v0c-stage1",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test test",
-    "v0b:deterministic": "node scripts/run-v0b-deterministic-suite.mjs"
+    "v0b:deterministic": "node scripts/run-v0b-deterministic-suite.mjs",
+    "v0c:deterministic": "node scripts/run-v0c-deterministic-suite.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",

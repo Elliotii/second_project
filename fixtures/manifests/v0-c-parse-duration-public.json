@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task_id": "v0-c-parse-duration-public",
+  "instruction_ref": "fixtures/tasks/v0-a-parse-duration/task.md",
+  "instruction_sha256": "22b166bda844a1a4de90d54b4fa399896ce6e418b3fd5abc094a39409bdb0f35",
+  "workspace_source_ref": "fixtures/tasks/v0-a-parse-duration",
+  "workspace_source_digest": "83e14ee6480099d479faa392fb9dc5eb1db6e5e860b93702289ef20ca2cc3e0c",
+  "writable_paths": ["src/parse-duration.ts"],
+  "protected_paths": ["task.md", "task.json", "package.json", "test/public.test.ts"],
+  "verifier_id": "v0-c-parse-duration-public-v1",
+  "verifier_ref": "fixtures/verifiers/v0-c-parse-duration/verify.mjs",
+  "verifier_sha256": "0228b85b1fa58ca375c14d6860ba86e2af0e5c9d01308343f5a4fe07519145b7",
+  "acceptance_visibility": "public_external",
+  "agent_feedback_schema": {
+    "type": "verifier_failure",
+    "fields": ["parent_attempt_id", "verifier_id", "failure_summary", "failed_checks", "instruction"],
+    "max_projection_bytes": 8192,
+    "max_summary_characters": 2000,
+    "max_failed_checks": 32,
+    "max_failed_check_characters": 256
+  },
+  "tool_profile_id": "v0_bounded_local_v1",
+  "command_descriptors": [{
+    "command_id": "test",
+    "executable": "current_node_executable",
+    "argv": ["--test", "test/public.test.ts"],
+    "cwd": "workspace",
+    "timeout_seconds": 15,
+    "max_combined_output_bytes": 8192
+  }],
+  "verifier_command": {
+    "executable": "current_node_executable",
+    "argv": ["fixtures/verifiers/v0-c-parse-duration/verify.mjs"],
+    "cwd": "project",
+    "timeout_ms": 30000,
+    "output_limit_bytes": 262144
+  }
+}

@@ -38,7 +38,7 @@ export interface StrategySpecV0B {
 	completion_policy_id: "observe_only";
 	recovery_mode: "none";
 	tool_profile_id: string;
-	model_profile_id: "public_emitted_faux";
+	model_profile_id: "public_emitted_faux" | "deepseek_v4_flash_real";
 }
 
 export interface BudgetSnapshotV0B {
@@ -48,13 +48,13 @@ export interface BudgetSnapshotV0B {
 	tool_call_usage: number;
 	wall_time_limit_ms: number;
 	wall_time_usage_ms: number;
-	token_limit: "not_applicable";
-	token_usage: "unknown";
-	cost_limit_usd: 0;
-	cost_usage_usd: 0;
+	token_limit: number | "not_applicable";
+	token_usage: number | "unknown";
+	cost_limit_usd: number;
+	cost_usage_usd: number;
 	verifier_timeout_ms: number;
 	verifier_output_limit_bytes: number;
-	external_provider_calls: 0;
+	external_provider_calls: number;
 }
 
 export interface RunRecordV0B {
@@ -131,7 +131,7 @@ export interface SessionRefV0B {
 	pi_commit: string;
 	storage_ref: ArtifactRefV0B;
 	metadata_digest: string;
-	model_profile_id: "public_emitted_faux";
+	model_profile_id: "public_emitted_faux" | "deepseek_v4_flash_real";
 	tool_profile_id: string;
 	reasoning_persistence: "metadata_only";
 	resume_capability: "not_claimed";
@@ -217,6 +217,7 @@ export interface VerifierResultV0B {
 	exit_code: number | null;
 	timed_out: boolean;
 	summary: string;
+	public_failed_checks?: string[];
 	full_output_ref: ArtifactRefV0B;
 	full_output_sha256: string;
 	invalid_reason: string | null;

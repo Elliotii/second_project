@@ -70,3 +70,37 @@ node workbench/src/cli.ts run --task fixtures/manifests/v0-b-parse-duration.json
 node workbench/src/cli.ts run --task fixtures/manifests/v0-b-parse-duration.json --strategy v0_observe_only_faux
 node workbench/src/cli.ts inspect --run <run-id>
 ```
+
+V0-C Stage 1 product commands:
+
+```powershell
+node workbench/src/cli.ts run --task fixtures/manifests/v0-c-parse-duration-public.json --strategy v0_c_observe_only_faux --dry-run
+node workbench/src/cli.ts run --task fixtures/manifests/v0-c-parse-duration-public.json --strategy v0_c_recover_once_same_session_faux
+node workbench/src/cli.ts inspect <run-id>
+node workbench/src/cli.ts run --task fixtures/manifests/v0-c-parse-duration-public.json --strategy v0_c_recover_once_same_session_deepseek_v4_flash --dry-run
+node workbench/scripts/run-v0c-deterministic-suite.mjs
+```
+# V0-C Stage 1 Candidate
+
+V0-C Stage 1 preserves the accepted V0-A/V0-B foundation and adds bounded
+Completion and same-Session Recovery. A Run owns one long-lived public Pi
+`AgentHarness`/Session/Workspace handle, one or two started Attempts, a
+public-only Failure Packet, one Completion decision per evaluated Attempt, a
+single Run validation, and a dynamic closed evidence set. Recovery can issue at
+most one child Attempt and checks the frozen child reserve before persisting a
+Packet or allocating the child identity.
+
+Stage 1 uses only the deterministic public emitted Faux Provider. The DeepSeek
+V4 Flash profile is represented through the formal Task/Strategy preflight and
+CLI route, but only `--dry-run` is authorized: it reads no credential and makes
+zero network or Provider calls. Real execution remains fail-closed until a
+later, separately authorized Stage 2.
+
+The corrected V0-C Product Surface keeps its Pi handle alive through terminal
+commit, scans each persisted Failure Packet with the shared V0-B rules before
+allocating a child identity, freezes Run-level lineage/budget/evidence-plan
+validation before Outcome, and exposes an explicit authority/credential/
+Provider-factory/budget injection boundary for a future Stage 2. The default
+real-profile execution path has no authority or dependencies and therefore
+fails before creating any formal runtime identity. Tests reach the same
+orchestration with injected non-secret Faux dependencies only.

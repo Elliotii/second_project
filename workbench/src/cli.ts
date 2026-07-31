@@ -1,7 +1,15 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { inspectRunV0B } from "./inspect-v0b.ts";
+import { inspectRunV0C } from "./inspect-v0c.ts";
 import { dryRunV0A, executeV0ARun } from "./run.ts";
 import { dryRunV0B, executeV0BRun } from "./run-v0b.ts";
+import { runV0CProductSurface } from "./product-surface-v0c.ts";
+import {
+	V0C_OBSERVE_STRATEGY_PATH,
+	V0C_REAL_STRATEGY_PATH,
+	V0C_RECOVERY_STRATEGY_PATH,
+} from "./contracts/preflight-v0c.ts";
 
 interface RunArguments {
 	command: "run";
@@ -19,8 +27,9 @@ type CliArguments = RunArguments | InspectArguments;
 
 function parseArguments(argv: string[]): CliArguments {
 	if (argv[0] === "inspect") {
-		if (argv.length !== 3 || argv[1] !== "--run" || !argv[2]) throw new Error("usage: cli.ts inspect --run <run-id>");
-		return { command: "inspect", runId: argv[2] };
+		const runId = argv.length === 2 ? argv[1] : argv.length === 3 && argv[1] === "--run" ? argv[2] : undefined;
+		if (!runId) throw new Error("usage: cli.ts inspect <run-id>");
+		return { command: "inspect", runId };
 	}
 	if (argv[0] !== "run") {
 		throw new Error("usage: cli.ts run --task <path> --strategy <id> [--dry-run] | cli.ts inspect --run <run-id>");
@@ -43,9 +52,54 @@ async function main(): Promise<void> {
 	const args = parseArguments(process.argv.slice(2));
 	const projectRoot = resolve(import.meta.dirname, "../..");
 	if (args.command === "inspect") {
-		const result = await inspectRunV0B(projectRoot, args.runId);
+		const result = existsSync(resolve(projectRoot, ".runs/v0-c/runs", args.runId))
+			? await inspectRunV0C(projectRoot, args.runId)
+			: await inspectRunV0B(projectRoot, args.runId);
 		process.stdout.write(`${JSON.stringify(result)}\n`);
 		if (!result.integrity_valid) process.exitCode = 1;
+		return;
+	}
+	const v0cStrategies: Readonly<Record<string, string>> = {
+		v0_c_observe_only_faux: V0C_OBSERVE_STRATEGY_PATH,
+		v0_c_recover_once_same_session_faux: V0C_RECOVERY_STRATEGY_PATH,
+		v0_c_recover_once_same_session_deepseek_v4_flash: V0C_REAL_STRATEGY_PATH,
+	};
+	const v0cStrategyPath = v0cStrategies[args.strategyId];
+	if (v0cStrategyPath) {
+		if (args.dryRun) {
+			const product = await runV0CProductSurface({
+				projectRoot,
+				taskPath: args.taskPath,
+				strategyPath: v0cStrategyPath,
+				dryRun: true,
+				scenario: v0cStrategyPath === V0C_OBSERVE_STRATEGY_PATH ? "observe_pass" : "recover_once_pass",
+			});
+			if (product.mode !== "dry_run") throw new Error("V0-C Product Surface mode mismatch");
+			process.stdout.write(`${product.plan_json}\n`);
+			return;
+		}
+		const product = await runV0CProductSurface({
+			projectRoot,
+			taskPath: args.taskPath,
+			strategyPath: v0cStrategyPath,
+			dryRun: false,
+			scenario: v0cStrategyPath === V0C_OBSERVE_STRATEGY_PATH ? "observe_pass" : "recover_once_pass",
+		});
+		if (product.mode !== "execution") throw new Error("V0-C Product Surface mode mismatch");
+		const result = product.result;
+		process.stdout.write(`${JSON.stringify({
+			run_id: result.run_id,
+			status: result.outcome?.status ?? "incomplete",
+			failure_class: result.outcome?.failure_class ?? null,
+			terminal_reason: result.outcome?.terminal_reason ?? result.incomplete_reason,
+			attempt_ids: result.attempt_ids,
+			session_id: result.session_id,
+			workspace_id: result.workspace_id,
+			external_provider_calls: result.external_provider_calls,
+			recovery_attempts: result.recovery_attempts,
+			run_root: result.run_root,
+		})}\n`);
+		if (!result.outcome || result.outcome.status !== "passed") process.exitCode = 1;
 		return;
 	}
 	if (args.strategyId === "v0_observe_only_faux") {
