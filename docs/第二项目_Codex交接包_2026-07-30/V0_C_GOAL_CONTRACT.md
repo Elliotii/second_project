@@ -2,7 +2,7 @@
 
 ```yaml
 goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-status: stage_1_and_focused_reaudit_passed_stage_2_authorized
+status: closed_accepted
 version: V0_C
 date: 2026-07-31
 contract_drafting_authorized_by_user: true
@@ -10,7 +10,7 @@ accepted_by_user: 2026-07-31
 activated_by_user: 2026-07-31
 contract_accepted: true
 activation_authorized: true
-active_goal: true
+active_goal: false
 control_baseline_commit_authorized: consumed
 control_baseline_commit: 47d36f25563012e1d411576eca387a778ba6a3e7
 stage_1_execution_owner: dedicated_v0_c_implementation_session
@@ -25,20 +25,29 @@ corrected_workbench_digest: a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa
 focused_independent_audit_owner: original_independent_v0_c_audit_session
 focused_independent_audit_authorized: consumed
 focused_independent_reaudit_disposition: PASS_FOCUSED_V0_C_REAUDIT
-implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-implementation_baseline_commit: resulting_HEAD_of_this_revision
-stage_2_execution_owner: fresh_v0_c_user_acceptance_session
-stage_2_user_run_authorized: true
-stage_2_authorized_runs: 1
+implementation_baseline_commit_authorized: consumed
+implementation_baseline_commit: 12db75aaea4db4afb774046cfcc94de772a2e90b
+stage_2_execution_owner: first_and_replacement_fresh_v0_c_user_acceptance_sessions
+stage_2_user_run_authorized: consumed
+stage_2_initial_authorized_runs: 1
+stage_2_initial_run_status: paused_pre_dispatch_zero_real_calls
+stage_2_replacement_authorized_runs: 1
+stage_2_replacement_run_status: completed_passed_accepted
 stage_2_attempt_limit: 2
 stage_2_recovery_slot_limit: 1
 stage_2_cost_cap_usd: 2
-stage_2_real_model_calls_authorized: bounded_by_one_run_and_frozen_request_budget
-stage_2_credential_access_authorized: true_for_fresh_uat_session_only
-stage_2_external_network_authorized: true_for_frozen_deepseek_api_route_only
+stage_2_real_model_calls_authorized: consumed_no_additional_calls_authorized
+stage_2_real_model_calls_observed: 5
+stage_2_credential_access_authorized: consumed_for_fresh_UAT_sessions_only
+stage_2_external_network_authorized: consumed_for_frozen_deepseek_API_route_only
 automatic_second_run_authorized: false
-final_acceptance: pending_uat_evidence
-final_closeout_and_git_commit_authorized: true_after_uat_main_review
+final_acceptance: PASS_V0_C_USER_ACCEPTANCE
+final_closeout_and_git_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+authoritative_run_id: run-c3297fc5-bfd1-4bd1-b46c-3a636271a177
+authoritative_run_outcome: passed
+authoritative_run_recovery_observed: false
+authoritative_run_cost_usd: 0.0012407808000000002
+closeout: docs/reports/V0_C_CLOSEOUT.md
 dedicated_session_git_commit_authorized: false
 dependency_installation_authorized: false
 external_network_authorized_for_stage_1: false
@@ -51,13 +60,15 @@ v0_b_implementation_baseline: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 ```
 
-> 用户已于 2026-07-31 接受并激活本 Contract。确定性 Stage 1、首次 focused
-> audit、两项有界返修和 corrected Candidate focused re-audit 已完成，复审
-> disposition 为 `PASS_FOCUSED_V0_C_REAUDIT`。用户随后一次性预授权 V0-C
-> 剩余路径：Implementation Baseline、一次 fresh UAT Session 的 Stage 2
-> 正式 Product Surface Run、证据验收、Closeout、控制状态同步与 Git commit。
-> Stage 2 总 DeepSeek 成本不得超过 USD 2，至多两个 Attempt、一个 Recovery，
-> 不得自动执行第二个 Run。Pause Conditions 继续优先于连续执行授权。
+> 用户已于 2026-07-31 接受并激活本 Contract。确定性 Stage 1、focused
+> audit、两项有界返修和 corrected Candidate focused re-audit 均已完成。
+> 第一次 fresh UAT 因 UAT-local 旧三工具断言在 HTTP 前暂停，真实调用和成本
+> 均为 0；用户随后单独授权了修正后的 replacement UAT。replacement Run
+> `run-c3297fc5-bfd1-4bd1-b46c-3a636271a177` 在冻结 Implementation
+> Baseline 上通过正式 Product Surface，初始 Verifier 通过，Outcome 为
+> `passed`，成本为 USD `0.0012407808000000002`。主 Session据此接受
+> `PASS_V0_C_USER_ACCEPTANCE` 并正式关闭 V0-C 和 V0。真实失败后的 Recovery
+> 及 Completion Policy 效果仍未证明。
 
 ---
 
@@ -146,22 +157,24 @@ V0-C 不证明 Completion Verification 提高成功率，也不实现 V2 多路�
 
 ```yaml
 pre_activation_root_head: bb4d1023d9359a5b4172e9ce2e3c9332a6a917be
-control_baseline_commit: resulting_HEAD_of_this_revision
-active_goal: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+control_baseline_commit: 47d36f25563012e1d411576eca387a778ba6a3e7
+active_goal: null
 V0_A: closed_accepted
 V0_B: closed_accepted
+V0_C: closed_accepted
+V0: closed_accepted
 V0_C_precontract_research: completed_main_review_accepted_for_contract
-V0_C_contract: accepted
+V0_C_contract: closed_accepted
 V0_C_activation: authorized_and_recorded
 V0_C_implementation: deterministic_stage_1_completed
 V0_C_audit: focused_reaudit_passed
-V0_C_implementation_baseline: resulting_HEAD_of_this_revision
-V0_C_stage_2: one_run_authorized_pending_frozen_uat_prompt
-real_model_calls_authorized: bounded_by_one_run_and_USD_2_total_cost_cap
+V0_C_implementation_baseline: 12db75aaea4db4afb774046cfcc94de772a2e90b
+V0_C_stage_2: replacement_user_acceptance_passed_and_accepted
+additional_real_model_calls_authorized: 0
 ```
 
-主 Session只能完成控制状态、Control Baseline、精确 SHA 核验和 Stage 1
-启动 Prompt，然后把实现交给专用 Session并停止。
+本节保留完整授权顺序作为历史控制记录。V0-C 已经关闭；不得从本 Contract
+重新启动 UAT、Recovery、模型调用或实现。
 
 ---
 
@@ -1687,25 +1700,60 @@ V1/V2/V3 或其他范围扩张。
 
 ---
 
-## 29. Final Stop Point
+## 29. Accepted Closeout Record
 
 ```yaml
-contract_status: stage_1_and_focused_reaudit_passed_stage_2_authorized
-contract_accepted: true
-active_goal: true
-implementation_started: true
-implementation_completed: true
-implementation_baseline_commit: resulting_HEAD_of_this_revision
-stage_2_authorized_runs: 1
-stage_2_real_model_calls_authorized: bounded_by_one_run_and_frozen_request_budget
-stage_2_credential_access_authorized: true_for_fresh_uat_session_only
-stage_2_external_network_authorized: true_for_frozen_deepseek_api_route_only
-stage_2_cost_cap_usd: 2
-git_commit_authorized: true_for_implementation_baseline_and_final_closeout
-next_owner: fresh_v0_c_user_acceptance_session_after_frozen_uat_prompt
+accepted_disposition: PASS_V0_C_USER_ACCEPTANCE
+accepted_by_main_session: 2026-07-31
+accepted_under_user_continuous_closeout_authorization: 2026-07-31
+implementation_baseline_commit: 12db75aaea4db4afb774046cfcc94de772a2e90b
+workbench_tree_digest: a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446
+first_uat:
+  run_id: run-1d7829b0-338f-4555-b6ac-72d5d08b228d
+  status: paused_pre_dispatch
+  real_model_calls: 0
+  cost_usd: 0
+replacement_uat:
+  run_id: run-c3297fc5-bfd1-4bd1-b46c-3a636271a177
+  attempt_id: attempt-f6d6a9c6-d299-44d5-9283-a71d48f37288
+  outcome: passed
+  terminal_reason: verifier_passed
+  inspector: committed_integrity_valid
+  real_model_calls: 5
+  tool_calls: 8
+  tokens: 16625
+  cost_usd: 0.0012407808000000002
+  recovery_observed: false
+closeout: docs/reports/V0_C_CLOSEOUT.md
 ```
 
-Main Session不得实现或临场修复 Stage 2。它只冻结并核验 exact Implementation
-Baseline 与 UAT 输入，然后把唯一一次正式 Run 交给 fresh UAT Session。UAT
-Session不得修改 Workbench/fixture/test source、Pi、控制状态或 Git；命中
-Pause Condition 时必须停止，不得以第二个 Run 或扩大预算补救。
+第一次 UAT 的 pre-dispatch composition defect 与修正后的 replacement UAT
+都作为历史证据保留。replacement Run 的初始 Verifier 通过，因此只证明
+`stop_passed` 真实路径；真实失败后的 same-Session Recovery 和 Completion
+Policy effectiveness 继续是明确未验证项，不得扩大解释。
+
+---
+
+## 30. Final Stop Point
+
+```yaml
+contract_status: closed_accepted
+contract_accepted: true
+active_goal: false
+implementation_started: true
+implementation_completed: true
+implementation_baseline_commit: 12db75aaea4db4afb774046cfcc94de772a2e90b
+stage_2_initial_authorized_runs: 1_consumed_paused_pre_dispatch
+stage_2_replacement_authorized_runs: 1_consumed_completed_passed
+stage_2_real_model_calls_authorized: 0_additional
+stage_2_credential_access_authorized: false_after_closeout
+stage_2_external_network_authorized: false_after_closeout
+stage_2_cost_cap_usd: 2
+stage_2_actual_cost_usd: 0.0012407808000000002
+git_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+next_owner: main_session_for_V1_planning_only_after_explicit_user_authorization
+```
+
+V0-C 已关闭。任何额外 V0-C Run、模型调用、凭据或网络使用、源码返修、Pi
+修改或证据回填均未获授权。V1 只是下一版本候选，不得由本 Contract 自动创建、
+激活或实现。

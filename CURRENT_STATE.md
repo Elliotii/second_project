@@ -5,40 +5,36 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_c_stage_2_authorized_pending_frozen_uat
-  status: V0_C_IMPLEMENTATION_AUDITED
+  phase: v0_completed
+  status: V0_C_CLOSED_ACCEPTED
 
-active_goal:
-  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: stage_1_and_focused_reaudit_passed_stage_2_authorized
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
-  disposition: pending_stage_2_user_acceptance
+active_goal: null
 
 last_executed_goal:
-  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
-  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
-  architecture_review: ACCEPT_V0_B_AFTER_BOUNDED_CORRECTION_AND_FOCUSED_INDEPENDENT_REAUDIT
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  disposition: PASS_V0_C_USER_ACCEPTANCE
+  architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
 
 last_closed_goal:
-  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
-  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
-  architecture_review: ACCEPT_V0_B_AFTER_BOUNDED_CORRECTION_AND_FOCUSED_INDEPENDENT_REAUDIT
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  disposition: PASS_V0_C_USER_ACCEPTANCE
+  architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
 
 last_completed_goal:
-  id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
+  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_B_GOAL_CONTRACT.md
-  disposition: PASS_V0_B_EVIDENCE_FOUNDATION
-  architecture_review: ACCEPT_V0_B_AFTER_BOUNDED_CORRECTION_AND_FOCUSED_INDEPENDENT_REAUDIT
+  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  disposition: PASS_V0_C_USER_ACCEPTANCE
+  architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
 
 next_goal:
-  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: active_stage_1_pending_dedicated_execution
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  id: V1_SKILL_RUNTIME_COMPARISON
+  status: candidate_not_authorized
+  contract: null
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -208,6 +204,14 @@ completed_work:
   - V0_C_corrected_candidate_commit_created
   - V0_C_focused_independent_reaudit_passed
   - V0_C_implementation_baseline_and_remaining_sequence_preauthorized_by_user
+  - V0_C_implementation_baseline_commit_created_and_verified
+  - V0_C_stage_2_initial_UAT_paused_before_HTTP_dispatch_on_local_composition_defect
+  - V0_C_stage_2_UAT_composition_corrected_with_zero_real_calls
+  - V0_C_stage_2_replacement_run_separately_authorized
+  - V0_C_stage_2_replacement_user_acceptance_passed
+  - V0_C_PASS_V0_C_USER_ACCEPTANCE_accepted_by_main_session_and_user
+  - V0_C_closed_accepted
+  - V0_closed_accepted
 
 workspace:
   git_initialized: true
@@ -227,7 +231,11 @@ workspace:
   v0_b_implementation_baseline_commit: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
   v0_b_control_evidence_closeout_commit: resulting_HEAD_of_this_revision
   v0_b_control_baseline_tracked_files_clean_required: true
-  v0_c_control_baseline_commit: resulting_HEAD_of_this_revision
+  v0_c_control_baseline_commit: 47d36f25563012e1d411576eca387a778ba6a3e7
+  v0_c_failed_audit_candidate_commit: 930c549b402fce9ffa96847a673ad187c64f6094
+  v0_c_corrected_candidate_commit: 861b7241e8abf8608fc981a68bae39037f598f5d
+  v0_c_implementation_baseline_commit: 12db75aaea4db4afb774046cfcc94de772a2e90b
+  v0_c_closeout_commit: resulting_HEAD_of_this_revision
   v0_c_control_baseline_tracked_files_clean_required: true
   registered_untracked_reference_directory: reference/
 
@@ -249,7 +257,7 @@ pi:
 
 architecture:
   candidate: Direct pi-agent-core AgentHarness
-  status: accepted_for_V0_scope_V0_C_stage_1_active
+  status: accepted_for_V0_scope_V0_completed
   supersedes: Pi SDK Runner + Inline Extension as V0 experimental runtime basis
   retained_comparator: Pi Coding Agent SDK Runner + Inline Extension
   fallback: Pi RPC/process adapter only on observed isolation need
@@ -265,21 +273,21 @@ architecture:
     public_workaround: subscribe
     core_route_blocker: false
     pi_core_patch_required: false
-  next_decision_material: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  next_decision_material: docs/第二项目_Codex交接包_2026-07-30/ROADMAP_RECONCILIATION_REPORT.md
 
 first_policy:
   candidate: Completion Verification
-  status: accepted_for_V0_mechanism_not_implemented_real_recovery_and_policy_effect_unverified
+  status: V0_mechanism_implemented_deterministically_real_user_run_initial_pass_real_recovery_and_policy_effect_unverified
 
 v0:
   charter: docs/第二项目_Codex交接包_2026-07-30/V0_VERSION_CHARTER.md
   charter_status: accepted
-  status: in_progress_V0_A_and_V0_B_closed_V0_C_stage_1_active
+  status: closed_accepted
   completed_goals:
     - V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
     - V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
-  remaining_goal:
     - V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  remaining_goal: null
   roadmap_reconciliation: docs/第二项目_Codex交接包_2026-07-30/ROADMAP_RECONCILIATION_REPORT.md
   reference_acquisition_plan: docs/第二项目_Codex交接包_2026-07-30/REFERENCE_ACQUISITION_PLAN.md
   control_rule: docs/第二项目_Codex交接包_2026-07-30/09_对接执行、文件权威与验收规则.md
@@ -452,14 +460,15 @@ v0_b:
 
 v0_c:
   goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: stage_1_and_focused_reaudit_passed_stage_2_authorized
+  status: closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
+  contract_status: closed_accepted
   contract_created: true
   contract_accepted: true
   contract_accepted_at: 2026-07-31
   activation_authorized: true
   activation_authorized_at: 2026-07-31
-  active_goal: true
+  active_goal: false
   control_baseline_commit_authorized: consumed
   control_baseline_commit: 47d36f25563012e1d411576eca387a778ba6a3e7
   research_authorized: true
@@ -492,20 +501,52 @@ v0_c:
     findings_resolved: 2
     unresolved_findings: 0
     report: docs/reports/V0_C_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
-  implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  implementation_baseline_commit: resulting_HEAD_of_this_revision
+  implementation_baseline_commit_authorized: consumed
+  implementation_baseline_commit: 12db75aaea4db4afb774046cfcc94de772a2e90b
   implementation_baseline_workbench_digest: a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446
-  stage_2_execution_owner: fresh_v0_c_user_acceptance_session
-  stage_2_user_run_authorized: true
-  stage_2_authorized_runs: 1
+  stage_2_execution_owner: first_and_replacement_fresh_v0_c_user_acceptance_sessions
+  stage_2_user_run_authorized: consumed
+  stage_2_initial_authorized_runs: 1
+  stage_2_initial_run:
+    id: run-1d7829b0-338f-4555-b6ac-72d5d08b228d
+    status: paused_pre_dispatch
+    reason: uat_local_composition_expected_obsolete_three_tool_profile
+    provider_calls: 0
+    model_calls: 0
+    tool_calls: 0
+    verifier_runs: 0
+    token_usage: 0
+    cost_usage_usd: 0
+  stage_2_replacement_authorized_runs: 1
+  stage_2_replacement_run:
+    id: run-c3297fc5-bfd1-4bd1-b46c-3a636271a177
+    status: completed_passed_accepted
+    attempt_id: attempt-f6d6a9c6-d299-44d5-9283-a71d48f37288
+    session_id: session-0cd59a8b-5b9a-4665-8444-88e52470ffaf
+    workspace_id: workspace-8c1e52a0-0d13-4f45-82ec-f6c26e3fdfad
+    outcome: passed
+    terminal_reason: verifier_passed
+    inspector: committed_integrity_valid
+    provider_calls: 5
+    model_calls: 5
+    tool_calls: 8
+    verifier_runs: 1
+    token_usage: 16625
+    cost_usage_usd: 0.0012407808000000002
+    recovery_observed: false
+    composition_sha256: e543fce7d648fdfc4fcd1b91e7a21c8799a83662e86e850001d5a8741d4fb906
   stage_2_attempt_limit: 2
   stage_2_recovery_slot_limit: 1
   stage_2_cost_cap_usd: 2
-  stage_2_real_model_calls_authorized: bounded_by_one_run_and_frozen_request_budget
-  stage_2_credential_access_authorized: true_for_fresh_uat_session_only
-  stage_2_external_network_authorized: true_for_frozen_deepseek_api_route_only
-  automatic_second_run_authorized: false
-  final_closeout_and_git_commit_authorized: true_after_uat_main_review
+  stage_2_real_model_calls_authorized: consumed_no_additional_calls_authorized
+  stage_2_credential_access_authorized: consumed_for_fresh_UAT_sessions_only
+  stage_2_external_network_authorized: consumed_for_frozen_deepseek_API_route_only
+  automatic_second_run_authorized: false_first_session_paused_and_replacement_was_separately_authorized
+  final_closeout_and_git_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  final_disposition: PASS_V0_C_USER_ACCEPTANCE
+  main_session_review: accepted
+  user_acceptance: accepted_by_continuous_V0_C_closeout_authorization_2026_07_31
+  closeout: docs/reports/V0_C_CLOSEOUT.md
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
@@ -515,7 +556,8 @@ implementation:
   v0_a_direct_public_agentharness_faux_cycle: passed
   v0_b_evidence_session_verifier_outcome_foundation: closed_accepted
   v0_b_real_model_route: not_executed
-  v0_c_completion_controller: deterministic_stage_1_and_focused_reaudit_passed
+  v0_c_completion_controller: closed_accepted
+  v0_product_surface_real_user_run: passed
 
 g005_authorization:
   goal_contract_created: true
@@ -860,6 +902,9 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/V0_C_CLOSEOUT.md
+  - docs/reports/V0_C_STAGE2_REPLACEMENT_USER_ACCEPTANCE_REPORT.md
+  - docs/reports/V0_C_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
   - docs/reports/V0_C_BOUNDED_COMPLETION_PRECONTRACT_RESEARCH.md
   - docs/reports/V0_B_CLOSEOUT.md
@@ -878,10 +923,9 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - main_session_creates_and_verifies_V0_C_implementation_baseline_commit
-  - main_session_freezes_one_stage_2_task_model_workspace_feedback_and_budget
-  - fresh_V0_C_UAT_session_executes_exactly_one_formal_product_surface_run
-  - main_session_reviews_UAT_and_closes_V0_C_and_V0
+  - user_and_main_session_review_V0_post_closeout_state
+  - main_session_may_research_and_draft_V1_version_scope_only_after_user_authorization
+  - no_V1_contract_activation_implementation_or_real_model_calls_are_currently_authorized
 
 open_user_decisions: []
 ```
@@ -940,29 +984,33 @@ open_user_decisions: []
   `.runs/v0-b/test-cases/` setup directory. It is accepted as non-blocking test
   fixture setup debt. Revisit only when the test runner or V0-C test
   environment is already in scope; do not rewrite V0-B evidence history.
-- V0-C deterministic Stage 1 and its focused independent re-audit passed.
-  Corrected Candidate `861b7241e8abf8608fc981a68bae39037f598f5d`
-  binds Workbench digest
+- V0-C is closed and accepted with `PASS_V0_C_USER_ACCEPTANCE`. Its
+  Implementation Baseline Commit is
+  `12db75aaea4db4afb774046cfcc94de772a2e90b`, binding Workbench digest
   `a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446`.
-  The user pre-authorized the remaining bounded sequence. Stage 2 is limited
-  to one fresh UAT Session, one formal Product Surface Run, at most two
-  Attempts, at most one Recovery, no automatic second Run, and total DeepSeek
-  cost at or below USD 2. Credentials/network authority belongs only to that
-  UAT Session. It does not authorize source edits, Pi changes, dependency
-  installation, test injection or a second Run. Pause Conditions remain
-  binding.
+  Preserve the first pre-dispatch UAT pause and the accepted replacement Run
+  `run-c3297fc5-bfd1-4bd1-b46c-3a636271a177`. The replacement Run passed its
+  initial Verifier, so real Recovery remains unobserved. No additional V0-C
+  Run, credential/network use, real-model call, source change or repair is
+  authorized.
+- V0 is closed and accepted. This does not authorize a V1 Goal Contract,
+  Activation, implementation, real-model execution or V2/V3 work. V1 remains
+  a candidate comparison of Baseline, Skill-only and Skill + External Verifier
+  / Runtime Control; V2 bounded multi-path recovery remains the Portfolio North
+  Star rather than current scope.
 
 ## Expected Next Handoff
 
-V0-A and V0-B are closed and accepted. V0-C deterministic Stage 1 is complete.
-The first Candidate failed focused audit with two bounded P2 findings; the
-original Implementation Session corrected both, the corrected Candidate was
-frozen, and the independent focused re-audit passed with no unresolved finding.
+V0-A, V0-B and V0-C are closed and accepted. V0 now provides the minimal real
+Coding Agent Workbench foundation: controlled Workspace, Direct Pi
+`AgentHarness`, formal Run/Attempt/Session/Workspace lineage, deterministic
+Verifier, Outcome, Evidence Index, Inspector and a bounded completion/recovery
+mechanism. One frozen real Coding Task passed the formal Product Surface within
+budget, but it passed its initial Verifier; real recovery effect and Completion
+Policy effectiveness remain unproven.
 
-The Main Session now owns the exact Implementation Baseline and Stage 2 freeze.
-A fresh UAT Session must execute exactly one real user-facing Run through the
-formal Product Surface, without source-edit or Git authority, under the frozen
-DeepSeek/task/workspace/feedback/request/time/cost envelope. It must return a
-UAT Report and stop. The Main Session then decides evidence-based V0-C
-acceptance, updates control state and creates the already-authorized final Git
-commit.
+There is no active Goal. The next handoff, only after explicit user
+authorization, is Main Session V1 scoping and bounded research. It must preserve
+Skill-only as a genuine competitor to Skill + Runtime Control, avoid treating
+V0's single success as policy evidence, and must not start V1 or V2
+implementation from this state.

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Agent Harness Reliability Workbench. V0-A and V0-B are closed and accepted. V0-C deterministic Stage 1 is complete, its corrected Candidate passed the focused independent re-audit, and the Main Session has accepted that audit result. The user has pre-authorized the remaining V0-C sequence: an exact Implementation Baseline, one frozen Stage 2 user-acceptance Run through the formal Product Surface with at most two Attempts, at most one Recovery and total DeepSeek cost not exceeding USD 2, followed by evidence-based Main Session acceptance/closeout and Git commit. Stage 2 credentials and network authority belong only to the fresh UAT Session; they do not flow backward to research, implementation or audit Sessions. Pause Conditions still override continuous execution.
+This repository is building an Agent Harness Reliability Workbench. V0-A, V0-B and V0-C are closed and accepted, so the minimal usable V0 Workbench is complete. There is no active Goal. The current phase is Main Session review and bounded V1 planning only after explicit user authorization. V1 is expected to compare Baseline, Skill-only and Skill + External Verifier / Runtime Control without presuming the winner; V2 bounded multi-path recovery remains the Portfolio North Star, not a current implementation scope. No V0-C Run, real-model call, V1 Contract, Activation or implementation is authorized by this status.
 
 ## Required Read Order
 
