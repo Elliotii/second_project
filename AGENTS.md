@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Agent Harness Reliability Workbench. V0-A and V0-B are closed and accepted. The V0-C Contract is accepted and activated for a dedicated deterministic Stage 1 implementation Session from the recorded Control Baseline. Stage 1 permits zero real-model calls, zero credential access, zero external network, zero dependency installation, zero Pi Core patches, and no dedicated-session Git commit. Focused independent audit, Candidate/Implementation Baseline commits, Stage 2 user acceptance, real-model calls, and final V0-C acceptance remain separately unauthorized.
+This repository is building an Agent Harness Reliability Workbench. V0-A and V0-B are closed and accepted. V0-C deterministic Stage 1 is complete, its corrected Candidate passed the focused independent re-audit, and the Main Session has accepted that audit result. The user has pre-authorized the remaining V0-C sequence: an exact Implementation Baseline, one frozen Stage 2 user-acceptance Run through the formal Product Surface with at most two Attempts, at most one Recovery and total DeepSeek cost not exceeding USD 2, followed by evidence-based Main Session acceptance/closeout and Git commit. Stage 2 credentials and network authority belong only to the fresh UAT Session; they do not flow backward to research, implementation or audit Sessions. Pause Conditions still override continuous execution.
 
 ## Required Read Order
 

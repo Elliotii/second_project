@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_c_stage_1_activated_pending_dedicated_execution
-  status: V0_C_STAGE_1_ACTIVATED
+  phase: v0_c_stage_2_authorized_pending_frozen_uat
+  status: V0_C_IMPLEMENTATION_AUDITED
 
 active_goal:
   id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: accepted_activated_pending_stage_1_implementation
+  status: stage_1_and_focused_reaudit_passed_stage_2_authorized
   contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
-  disposition: null
+  disposition: pending_stage_2_user_acceptance
 
 last_executed_goal:
   id: V0_B_EVIDENCE_SESSION_VERIFIER_OUTCOME
@@ -200,6 +200,14 @@ completed_work:
   - V0_C_activation_authorized_by_user
   - V0_C_control_baseline_commit_authorized_by_user
   - V0_C_zero_real_call_stage_1_dedicated_session_authorized_by_user
+  - V0_C_deterministic_stage_1_completed
+  - V0_C_initial_main_review_bounded_correction_completed
+  - V0_C_first_candidate_commit_created
+  - V0_C_first_focused_audit_requested_two_P2_bounded_corrections
+  - V0_C_post_audit_two_finding_correction_completed
+  - V0_C_corrected_candidate_commit_created
+  - V0_C_focused_independent_reaudit_passed
+  - V0_C_implementation_baseline_and_remaining_sequence_preauthorized_by_user
 
 workspace:
   git_initialized: true
@@ -444,7 +452,7 @@ v0_b:
 
 v0_c:
   goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-  status: accepted_activated_pending_stage_1_implementation
+  status: stage_1_and_focused_reaudit_passed_stage_2_authorized
   contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
   contract_created: true
   contract_accepted: true
@@ -452,29 +460,52 @@ v0_c:
   activation_authorized: true
   activation_authorized_at: 2026-07-31
   active_goal: true
-  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  control_baseline_commit: resulting_HEAD_of_this_revision
+  control_baseline_commit_authorized: consumed
+  control_baseline_commit: 47d36f25563012e1d411576eca387a778ba6a3e7
   research_authorized: true
   research_owner: dedicated_v0_c_precontract_research_session
   research_status: completed_main_session_reviewed
   research_report: docs/reports/V0_C_BOUNDED_COMPLETION_PRECONTRACT_RESEARCH.md
   research_disposition: ACCEPT_FOR_CONTRACT_DRAFTING_WITH_BINDING_NARROWING
   implementation_owner: dedicated_v0_c_stage_1_implementation_session
-  implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
-  implementation_started: false
-  real_model_calls_authorized: 0
-  credential_access_authorized: false
-  external_network_authorized: false
+  implementation_authorized: consumed_completed_zero_real_calls
+  implementation_started: true
+  implementation_completed: true
+  stage_1_real_model_calls_authorized: 0
+  stage_1_real_model_calls_observed: 0
+  stage_1_credential_access_authorized: false
+  stage_1_external_network_authorized: false
   dependency_installation_authorized: false
   pi_core_patch_authorized: false
   private_pi_import_authorized: false
   dedicated_goal_session_prompt_authorized: true_after_control_baseline_commit_confirmation
-  dedicated_goal_session_prompt_status: pending_exact_control_baseline_sha
-  dedicated_goal_session_started: false
-  candidate_commit_authorized: false
-  independent_audit_authorized: false
-  stage_2_user_run_authorized: false
-  stage_2_real_model_calls_authorized: 0
+  dedicated_goal_session_prompt_status: consumed
+  dedicated_goal_session_started: true
+  dedicated_goal_session_completed: true
+  failed_audit_candidate_commit: 930c549b402fce9ffa96847a673ad187c64f6094
+  failed_audit_disposition: REQUEST_V0_C_BOUNDED_CORRECTION
+  corrected_candidate_commit: 861b7241e8abf8608fc981a68bae39037f598f5d
+  corrected_workbench_digest: a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446
+  focused_independent_reaudit:
+    status: passed
+    disposition: PASS_FOCUSED_V0_C_REAUDIT
+    findings_resolved: 2
+    unresolved_findings: 0
+    report: docs/reports/V0_C_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
+  implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  implementation_baseline_commit: resulting_HEAD_of_this_revision
+  implementation_baseline_workbench_digest: a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446
+  stage_2_execution_owner: fresh_v0_c_user_acceptance_session
+  stage_2_user_run_authorized: true
+  stage_2_authorized_runs: 1
+  stage_2_attempt_limit: 2
+  stage_2_recovery_slot_limit: 1
+  stage_2_cost_cap_usd: 2
+  stage_2_real_model_calls_authorized: bounded_by_one_run_and_frozen_request_budget
+  stage_2_credential_access_authorized: true_for_fresh_uat_session_only
+  stage_2_external_network_authorized: true_for_frozen_deepseek_api_route_only
+  automatic_second_run_authorized: false
+  final_closeout_and_git_commit_authorized: true_after_uat_main_review
 
 implementation:
   dependencies_installed: true_in_isolated_g002_g003_g005_and_g006_clones
@@ -484,7 +515,7 @@ implementation:
   v0_a_direct_public_agentharness_faux_cycle: passed
   v0_b_evidence_session_verifier_outcome_foundation: closed_accepted
   v0_b_real_model_route: not_executed
-  v0_c_completion_controller: authorized_not_started
+  v0_c_completion_controller: deterministic_stage_1_and_focused_reaudit_passed
 
 g005_authorization:
   goal_contract_created: true
@@ -847,16 +878,12 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - main_session_creates_and_verifies_V0_C_control_baseline_commit
-  - main_session_generates_commit_bound_V0_C_stage_1_start_prompt
-  - dedicated_V0_C_stage_1_session_executes_Gates_A_through_J_with_zero_real_calls
-  - main_session_reviews_source_delta_commands_evidence_and_state_proposal
+  - main_session_creates_and_verifies_V0_C_implementation_baseline_commit
+  - main_session_freezes_one_stage_2_task_model_workspace_feedback_and_budget
+  - fresh_V0_C_UAT_session_executes_exactly_one_formal_product_surface_run
+  - main_session_reviews_UAT_and_closes_V0_C_and_V0
 
-open_user_decisions:
-  - V0_C_candidate_commit_and_focused_independent_audit_after_stage_1_main_review
-  - V0_C_implementation_baseline_after_audit
-  - V0_C_stage_2_task_model_workspace_feedback_and_run_cost_budget
-  - V0_C_final_acceptance_closeout_and_control_commit
+open_user_decisions: []
 ```
 
 ## Current Constraints
@@ -913,27 +940,29 @@ open_user_decisions:
   `.runs/v0-b/test-cases/` setup directory. It is accepted as non-blocking test
   fixture setup debt. Revisit only when the test runner or V0-C test
   environment is already in scope; do not rewrite V0-B evidence history.
-- V0-C Contract is accepted and Activation, Control Baseline Commit and
-  dedicated deterministic Stage 1 are authorized. Stage 1 must start from the
-  exact committed Control Baseline, use zero real-model/provider calls, zero
-  credential access, zero external network, zero dependency installation and
-  zero Pi Core patches, and return reports without modifying control state or
-  creating a Git commit. Candidate Commit, focused independent audit,
-  Implementation Baseline, Stage 2 and final acceptance remain separately
-  unauthorized.
+- V0-C deterministic Stage 1 and its focused independent re-audit passed.
+  Corrected Candidate `861b7241e8abf8608fc981a68bae39037f598f5d`
+  binds Workbench digest
+  `a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446`.
+  The user pre-authorized the remaining bounded sequence. Stage 2 is limited
+  to one fresh UAT Session, one formal Product Surface Run, at most two
+  Attempts, at most one Recovery, no automatic second Run, and total DeepSeek
+  cost at or below USD 2. Credentials/network authority belongs only to that
+  UAT Session. It does not authorize source edits, Pi changes, dependency
+  installation, test injection or a second Run. Pause Conditions remain
+  binding.
 
 ## Expected Next Handoff
 
-V0-A and V0-B are closed and accepted. V0-C Precontract Research is complete
-and the Main Session accepted it for Contract drafting with binding narrowing.
-The user accepted the formal V0-C Contract and separately authorized
-Activation, the Control Baseline Commit and a zero-real-call deterministic
-Stage 1 dedicated Session. `active_goal` is
-`V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE`.
+V0-A and V0-B are closed and accepted. V0-C deterministic Stage 1 is complete.
+The first Candidate failed focused audit with two bounded P2 findings; the
+original Implementation Session corrected both, the corrected Candidate was
+frozen, and the independent focused re-audit passed with no unresolved finding.
 
-The Main Session must create and verify the exact Control Baseline Commit, then
-generate a commit-bound Stage 1 start Prompt. The dedicated Session owns
-implementation, tests, ignored evidence, Implementation Report, Closeout Draft
-and structured `CURRENT_STATE_UPDATE_PROPOSAL`. It must not commit or modify
-control state. Candidate freeze/audit, Stage 2 user-facing real Task and final
-acceptance remain future user decisions.
+The Main Session now owns the exact Implementation Baseline and Stage 2 freeze.
+A fresh UAT Session must execute exactly one real user-facing Run through the
+formal Product Surface, without source-edit or Git authority, under the frozen
+DeepSeek/task/workspace/feedback/request/time/cost envelope. It must return a
+UAT Report and stop. The Main Session then decides evidence-based V0-C
+acceptance, updates control state and creates the already-authorized final Git
+commit.

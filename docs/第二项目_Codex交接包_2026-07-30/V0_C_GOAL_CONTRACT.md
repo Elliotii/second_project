@@ -2,7 +2,7 @@
 
 ```yaml
 goal_id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
-status: accepted_activated_pending_stage_1_implementation
+status: stage_1_and_focused_reaudit_passed_stage_2_authorized
 version: V0_C
 date: 2026-07-31
 contract_drafting_authorized_by_user: true
@@ -11,19 +11,34 @@ activated_by_user: 2026-07-31
 contract_accepted: true
 activation_authorized: true
 active_goal: true
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit_authorized: consumed
+control_baseline_commit: 47d36f25563012e1d411576eca387a778ba6a3e7
 stage_1_execution_owner: dedicated_v0_c_implementation_session
 stage_1_implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
-stage_1_implementation_started: false
+stage_1_implementation_started: true
+stage_1_implementation_completed: true
 stage_1_real_model_calls_authorized: 0
-candidate_commit_authorized: false
-focused_independent_audit_owner: future_fresh_v0_c_audit_session
-focused_independent_audit_authorized: false
-stage_2_execution_owner: future_fresh_v0_c_user_acceptance_session
-stage_2_user_run_authorized: false
-stage_2_real_model_calls_authorized: 0
-final_acceptance: false
+candidate_commit_authorized: consumed
+failed_audit_candidate_commit: 930c549b402fce9ffa96847a673ad187c64f6094
+corrected_candidate_commit: 861b7241e8abf8608fc981a68bae39037f598f5d
+corrected_workbench_digest: a7e80a50ac415cd95b4d1480bc81c6e4339857b119dbc8c37afa98ffbe260446
+focused_independent_audit_owner: original_independent_v0_c_audit_session
+focused_independent_audit_authorized: consumed
+focused_independent_reaudit_disposition: PASS_FOCUSED_V0_C_REAUDIT
+implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+implementation_baseline_commit: resulting_HEAD_of_this_revision
+stage_2_execution_owner: fresh_v0_c_user_acceptance_session
+stage_2_user_run_authorized: true
+stage_2_authorized_runs: 1
+stage_2_attempt_limit: 2
+stage_2_recovery_slot_limit: 1
+stage_2_cost_cap_usd: 2
+stage_2_real_model_calls_authorized: bounded_by_one_run_and_frozen_request_budget
+stage_2_credential_access_authorized: true_for_fresh_uat_session_only
+stage_2_external_network_authorized: true_for_frozen_deepseek_api_route_only
+automatic_second_run_authorized: false
+final_acceptance: pending_uat_evidence
+final_closeout_and_git_commit_authorized: true_after_uat_main_review
 dedicated_session_git_commit_authorized: false
 dependency_installation_authorized: false
 external_network_authorized_for_stage_1: false
@@ -36,11 +51,13 @@ v0_b_implementation_baseline: 7e0d8f7aeb4c1d95e7e0f5dcdc63d720ecd0a180
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 ```
 
-> 用户已于 2026-07-31 接受本 Contract，并单独授权 V0-C Activation、
-> Control Baseline Commit 与零真实调用 Stage 1 专用 Session启动。Stage 1
-> 只能在精确 Control Baseline SHA 确认后由新的专用 Implementation Session
-> 执行。本状态不授权独立审计、Candidate Commit、Stage 2、真实模型、凭据
-> 读取、外部网络、依赖安装、Pi 修改或专用 Session创建 Git commit。
+> 用户已于 2026-07-31 接受并激活本 Contract。确定性 Stage 1、首次 focused
+> audit、两项有界返修和 corrected Candidate focused re-audit 已完成，复审
+> disposition 为 `PASS_FOCUSED_V0_C_REAUDIT`。用户随后一次性预授权 V0-C
+> 剩余路径：Implementation Baseline、一次 fresh UAT Session 的 Stage 2
+> 正式 Product Surface Run、证据验收、Closeout、控制状态同步与 Git commit。
+> Stage 2 总 DeepSeek 成本不得超过 USD 2，至多两个 Attempt、一个 Recovery，
+> 不得自动执行第二个 Run。Pause Conditions 继续优先于连续执行授权。
 
 ---
 
@@ -136,10 +153,11 @@ V0_B: closed_accepted
 V0_C_precontract_research: completed_main_review_accepted_for_contract
 V0_C_contract: accepted
 V0_C_activation: authorized_and_recorded
-V0_C_implementation: authorized_for_dedicated_stage_1_after_exact_baseline
-V0_C_audit: not_authorized
-V0_C_stage_2: not_authorized
-real_model_calls_authorized: 0
+V0_C_implementation: deterministic_stage_1_completed
+V0_C_audit: focused_reaudit_passed
+V0_C_implementation_baseline: resulting_HEAD_of_this_revision
+V0_C_stage_2: one_run_authorized_pending_frozen_uat_prompt
+real_model_calls_authorized: bounded_by_one_run_and_USD_2_total_cost_cap
 ```
 
 主 Session只能完成控制状态、Control Baseline、精确 SHA 核验和 Stage 1
@@ -1643,24 +1661,13 @@ accepted_decisions:
     accepted_value: dedicated_session_zero_real_calls_after_exact_baseline
     consequence: Stage_1_may_start_only_from_confirmed_Control_Baseline
 
-future_user_decisions_required:
-  - decision: authorize_Candidate_Commit_and_focused_audit
-    evidence: Stage_1_main_review_required
-    options: [authorize_after_review, request_correction, reject]
-    recommendation: decide_after_source_and_evidence_review
-    consequence: freezes_independent_audit_target
+  - decision: authorize_remaining_V0_C_sequence
+    accepted_by_user: 2026-07-31
+    accepted_value: corrected_candidate_commit_then_focused_reaudit_then_implementation_baseline_then_one_UAT_then_closeout
+    budget: one_run_two_attempts_one_recovery_total_DeepSeek_cost_at_or_below_USD_2
+    consequence: no_additional_routine_user_authorization_required_before_closeout
 
-  - decision: authorize_Stage_2_task_model_workspace_and_budget
-    evidence: audit_pass_and_Implementation_Baseline_required
-    options: [authorize_one_run, defer, reject_real_uat]
-    recommendation: decide_only_after_frozen_product
-    consequence: at_most_one_real_run_under_USD_2
-
-  - decision: accept_final_V0_C
-    evidence: Stage_1_audit_and_Stage_2_UAT
-    options: [accept, revise, pause, reject]
-    recommendation: decide_after_full_evidence
-    consequence: closes_V0_and_sets_next_V1_entry
+future_user_decisions_required: []
 ```
 
 本 Contract 已由 Main Session选择、用户接受并冻结以下设计决定：
@@ -1674,30 +1681,31 @@ future_user_decisions_required:
 - real route在 Stage 1 zero-call readiness 中完成；
 - Candidate freeze 后进行一次 focused independent audit。
 
-任何修订都需要 Main Session与用户重新审查。当前执行授权只覆盖零真实调用的
-Stage 1，不覆盖后续 Candidate、Audit 或 Stage 2。
+技术 Scope、Gates、Pause Conditions 和 Claims 未改变。剩余执行权限仅覆盖
+已冻结的 V0-C 路径，不覆盖第二个 Run、源码临场修复、Pi 修改、依赖安装、
+V1/V2/V3 或其他范围扩张。
 
 ---
 
 ## 29. Final Stop Point
 
 ```yaml
-contract_status: accepted_activated_pending_stage_1_implementation
+contract_status: stage_1_and_focused_reaudit_passed_stage_2_authorized
 contract_accepted: true
 active_goal: true
-implementation_started: false
-real_model_calls_authorized: 0
-credential_access_authorized: false
-external_network_authorized: false
-git_commit_authorized: false
-next_owner: dedicated_v0_c_implementation_session_after_exact_baseline
+implementation_started: true
+implementation_completed: true
+implementation_baseline_commit: resulting_HEAD_of_this_revision
+stage_2_authorized_runs: 1
+stage_2_real_model_calls_authorized: bounded_by_one_run_and_frozen_request_budget
+stage_2_credential_access_authorized: true_for_fresh_uat_session_only
+stage_2_external_network_authorized: true_for_frozen_deepseek_api_route_only
+stage_2_cost_cap_usd: 2
+git_commit_authorized: true_for_implementation_baseline_and_final_closeout
+next_owner: fresh_v0_c_user_acceptance_session_after_frozen_uat_prompt
 ```
 
-精确 Control Baseline Commit 和启动 Prompt形成后，Main Session必须停止日常
-实现。当前主 Session不得：
-
-- 修改 Workbench/fixture/test source；
-- 创建 `.runs/v0-c/`；
-- 调用模型、读取凭据、访问外部网络；
-- 创建 Control Baseline 之外的实现 Git commit；
-- 开始独立审计或 Stage 2。
+Main Session不得实现或临场修复 Stage 2。它只冻结并核验 exact Implementation
+Baseline 与 UAT 输入，然后把唯一一次正式 Run 交给 fresh UAT Session。UAT
+Session不得修改 Workbench/fixture/test source、Pi、控制状态或 Git；命中
+Pause Condition 时必须停止，不得以第二个 Run 或扩大预算补救。
