@@ -4,15 +4,32 @@ import type {
 	RunBudgetV0C,
 	RunEvidenceValidationV0C,
 } from "../contracts/v0c-types.ts";
+import type { ArtifactRefV0B, VerifierResultV0B } from "../contracts/v0b-types.ts";
+import { readJsonArtifact, validateArtifactRef } from "./artifacts.ts";
+import { attemptDirectoryV0C } from "./terminal-policy-v0c.ts";
 import { digestObject, stableJson } from "../hash.ts";
 
+export interface AttemptValidationEvidenceV0C {
+	validation: AttemptEvidenceValidationV0C;
+	validationRef: ArtifactRefV0B;
+}
+
+export interface VerifierEvidenceV0C {
+	verifier: VerifierResultV0B;
+	resultRef: ArtifactRefV0B;
+	outputRef: ArtifactRefV0B;
+}
+
 export interface RunValidationInputV0C {
+	runRoot: string;
 	runId: string;
 	sessionId: string;
 	workspaceId: string;
 	attempts: AttemptRecordV0C[];
-	attemptValidations: AttemptEvidenceValidationV0C[];
-	verifierAttemptIds: string[];
+	attemptValidations: AttemptValidationEvidenceV0C[];
+	verifiers: VerifierEvidenceV0C[];
+	verifierId: string;
+	verifierSha256: string;
 	runBudget: RunBudgetV0C;
 	recoverySlotsConsumed: 0 | 1;
 	failurePacketId: string | null;
@@ -23,15 +40,35 @@ export interface RunValidationInputV0C {
 	baseErrors?: string[];
 }
 
+function readbackMatches(
+	runRoot: string,
+	ref: ArtifactRefV0B,
+	expected: unknown,
+	label: string,
+	errors: string[],
+): void {
+	errors.push(...validateArtifactRef(runRoot, ref).map((error) => `${label}: ${error}`));
+	try {
+		const readback = readJsonArtifact<unknown>(runRoot, ref.path);
+		if (stableJson(readback) !== stableJson(expected)) errors.push(`${label} readback mismatch`);
+	} catch {
+		errors.push(`${label} readback is malformed or unreadable`);
+	}
+}
+
 export function validateRunEvidenceV0C(input: RunValidationInputV0C): RunEvidenceValidationV0C {
 	const errors: string[] = [...(input.baseErrors ?? [])];
 	const attemptIds = input.attempts.map((attempt) => attempt.attempt_id);
-	const validationIds = input.attemptValidations.map((validation) => validation.attempt_id);
-	const verifierAttemptIds = [...input.verifierAttemptIds];
+	const validationIds = input.attemptValidations.map((evidence) => evidence.validation.attempt_id);
+	const verifierAttemptIds = input.verifiers.map((evidence) => evidence.verifier.attempt_id);
 	if (input.faultInjection === "attempt_validation_relation" && validationIds.length > 0) validationIds[0] = "mutated-attempt";
 	if (input.attempts.length < 1 || input.attempts.length > 2 || new Set(attemptIds).size !== attemptIds.length) {
 		errors.push("started Attempt count/identity is invalid");
 	}
+	if (input.attemptValidations.length !== input.attempts.length) {
+		errors.push("Attempt-validation evidence count mismatch");
+	}
+	if (input.verifiers.length !== input.attempts.length) errors.push("Verifier evidence count mismatch");
 	if (stableJson(validationIds) !== stableJson(attemptIds)) errors.push("Attempt-validation relation mismatch");
 	if (stableJson(verifierAttemptIds) !== stableJson(attemptIds)) errors.push("Verifier/Attempt relation mismatch");
 	for (const [index, attempt] of input.attempts.entries()) {
@@ -49,6 +86,64 @@ export function validateRunEvidenceV0C(input: RunValidationInputV0C): RunEvidenc
 			if (!parent || attempt.parent_attempt_id !== parent.attempt_id || attempt.failure_packet_id !== input.failurePacketId) {
 				errors.push("child Attempt/Packet lineage is invalid");
 			}
+		}
+		const attemptRoot = attemptDirectoryV0C(attempt);
+		const validationEvidence = input.attemptValidations[index];
+		if (validationEvidence) {
+			const expectedPath = `${attemptRoot}/validation.json`;
+			if (validationEvidence.validationRef.path !== expectedPath) {
+				errors.push(`Attempt validation ArtifactRef path mismatch at ${attempt.attempt_id}`);
+			}
+			if (
+				validationEvidence.validation.run_id !== input.runId ||
+				validationEvidence.validation.attempt_id !== attempt.attempt_id
+			) {
+				errors.push(`Attempt validation identity mismatch at ${attempt.attempt_id}`);
+			}
+			readbackMatches(
+				input.runRoot,
+				validationEvidence.validationRef,
+				validationEvidence.validation,
+				`Attempt validation ${attempt.attempt_id}`,
+				errors,
+			);
+		}
+		const verifierEvidence = input.verifiers[index];
+		if (verifierEvidence) {
+			const expectedResultPath = `${attemptRoot}/verifier-result.json`;
+			const expectedOutputPath = `${attemptRoot}/verifier-output.txt`;
+			if (verifierEvidence.resultRef.path !== expectedResultPath) {
+				errors.push(`Verifier result ArtifactRef path mismatch at ${attempt.attempt_id}`);
+			}
+			if (
+				verifierEvidence.outputRef.path !== expectedOutputPath ||
+				verifierEvidence.verifier.full_output_ref.path !== expectedOutputPath
+			) {
+				errors.push(`Verifier output ArtifactRef path mismatch at ${attempt.attempt_id}`);
+			}
+			if (stableJson(verifierEvidence.outputRef) !== stableJson(verifierEvidence.verifier.full_output_ref)) {
+				errors.push(`Verifier output ArtifactRef relationship mismatch at ${attempt.attempt_id}`);
+			}
+			if (verifierEvidence.verifier.attempt_id !== attempt.attempt_id) {
+				errors.push(`Verifier Attempt relationship mismatch at ${attempt.attempt_id}`);
+			}
+			if (
+				verifierEvidence.verifier.verifier_id !== input.verifierId ||
+				verifierEvidence.verifier.verifier_sha256 !== input.verifierSha256
+			) {
+				errors.push(`Verifier frozen identity/digest mismatch at ${attempt.attempt_id}`);
+			}
+			readbackMatches(
+				input.runRoot,
+				verifierEvidence.resultRef,
+				verifierEvidence.verifier,
+				`Verifier result ${attempt.attempt_id}`,
+				errors,
+			);
+			errors.push(
+				...validateArtifactRef(input.runRoot, verifierEvidence.outputRef)
+					.map((error) => `Verifier output ${attempt.attempt_id}: ${error}`),
+			);
 		}
 	}
 	const summed = {

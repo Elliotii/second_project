@@ -13,3 +13,4 @@ import "./tests/v0b-verifier.test.ts";
 import "./tests/v0b-e2e.test.ts";
 import "./tests/v0c-stage1.test.ts";
 import "./tests/v0c-main-review-correction.test.ts";
+import "./tests/v0c-post-audit-correction.test.ts";

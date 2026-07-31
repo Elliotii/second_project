@@ -263,8 +263,8 @@ export interface RunEvidenceValidationV0C {
 	valid: boolean;
 	errors: string[];
 	attempt_count: 1 | 2;
-	attempt_validation_count: 1 | 2;
-	verifier_count: 1 | 2;
+	attempt_validation_count: number;
+	verifier_count: number;
 	recovery_slots_consumed: 0 | 1;
 	attempt_ids: string[];
 	attempt_validation_ids: string[];

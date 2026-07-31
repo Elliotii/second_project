@@ -49,6 +49,7 @@ import {
 	terminalIndexItemV0C,
 	terminalScanFileScopesV0C,
 	terminalScanObjectScopesV0C,
+	validateTerminalIndexPolicyV0C,
 } from "./evidence/terminal-policy-v0c.ts";
 import { digestObject, stableJson, treeDigest, treeInventory } from "./hash.ts";
 import { createPiRunHandleV0C, type PiRunHandleOptionsV0C } from "./pi/pi-adapter-v0c.ts";
@@ -109,6 +110,18 @@ export type V0CRunScenario =
 	| "packet_scanner_error"
 	| "packet_post_scan_mutation"
 	| "packet_persisted_no_child";
+
+export type V0CPostAuditFault =
+	| "verifier_attempt_relation"
+	| "verifier_evidence_missing"
+	| "verifier_evidence_duplicate"
+	| "verifier_identity"
+	| "verifier_ref_path"
+	| "verifier_ref_digest"
+	| "verifier_ref_size"
+	| "index_omission"
+	| "index_unexpected"
+	| "index_responsibility";
 
 export interface V0CRunResult {
 	run_id: string;
@@ -313,6 +326,7 @@ export async function executeV0CRun(options: {
 	realExecution?: RealExecutionDependenciesV0C;
 	lifecycleProbe?: (event: "handle_created" | "terminal_committed" | "handle_closed") => void;
 	runValidationFault?: "attempt_validation_relation" | "cumulative_budget" | "dynamic_plan";
+	postAuditFault?: V0CPostAuditFault;
 }): Promise<V0CRunResult> {
 	const startedMs = Date.now();
 	const preflight = preflightV0C({
@@ -425,21 +439,22 @@ export async function executeV0CRun(options: {
 					credential_handle: credentialHandle,
 				})
 			: createPiRunHandleV0C(handleOptions);
-	options.lifecycleProbe?.("handle_created");
-	const handleIdentity = handle.debugIdentity();
-	const budget = runBudget(executionBudget);
-	const attemptIds: string[] = [];
-	const attempts: EvaluatedAttempt[] = [];
-	let recoverySlots: 0 | 1 = 0;
-	let failurePacket: FailurePacketV0C | null = null;
-	let failurePacketRef: ArtifactRefV0B | null = null;
-	let projectionRef: ArtifactRefV0B | null = null;
-	let packetFailure: string | null = null;
-	let packetScanRef: ArtifactRefV0B | null = null;
-	let verifierRuns = 0;
-	let externalProviderCalls = 0;
+	try {
+		options.lifecycleProbe?.("handle_created");
+		const handleIdentity = handle.debugIdentity();
+		const budget = runBudget(executionBudget);
+		const attemptIds: string[] = [];
+		const attempts: EvaluatedAttempt[] = [];
+		let recoverySlots: 0 | 1 = 0;
+		let failurePacket: FailurePacketV0C | null = null;
+		let failurePacketRef: ArtifactRefV0B | null = null;
+		let projectionRef: ArtifactRefV0B | null = null;
+		let packetFailure: string | null = null;
+		let packetScanRef: ArtifactRefV0B | null = null;
+		let verifierRuns = 0;
+		let externalProviderCalls = 0;
 
-	const evaluate = async (input: {
+		const evaluate = async (input: {
 		ordinal: 1 | 2;
 		parentAttemptId: string | null;
 		failurePacketId: string | null;
@@ -506,6 +521,12 @@ export async function executeV0CRun(options: {
 			workspaceEnvironmentKey: "V0C_WORKSPACE",
 			faultInjection: input.verifierInvalid ? "missing" : undefined,
 		});
+		if (input.ordinal === 1 && options.postAuditFault === "verifier_attempt_relation") {
+			verifier.attempt_id = "mutated-verifier-attempt";
+		}
+		if (input.ordinal === 1 && options.postAuditFault === "verifier_identity") {
+			verifier.verifier_sha256 = "0".repeat(64);
+		}
 		journal.append("verifier_completed", {
 			verifier_id: verifier.verifier_id,
 			status: verifier.status,
@@ -611,10 +632,18 @@ export async function executeV0CRun(options: {
 			recovery_slot_after: decision.recovery_slot_after,
 		}, attemptId);
 		const decisionRef = writeOnceJson(runRoot, `${attemptRoot}/policy-decision.json`, decision);
+		const returnedVerifierRef =
+			input.ordinal === 1 && options.postAuditFault === "verifier_ref_path"
+				? { ...verifierResultRef, path: verifier.full_output_ref.path }
+				: input.ordinal === 1 && options.postAuditFault === "verifier_ref_digest"
+					? { ...verifierResultRef, sha256: "0".repeat(64) }
+					: input.ordinal === 1 && options.postAuditFault === "verifier_ref_size"
+						? { ...verifierResultRef, size_bytes: verifierResultRef.size_bytes + 1 }
+						: verifierResultRef;
 		return {
 			record,
 			verifier,
-			verifierRef: verifierResultRef,
+			verifierRef: returnedVerifierRef,
 			verifierOutputRef: verifier.full_output_ref,
 			validation,
 			validationRef,
@@ -623,9 +652,8 @@ export async function executeV0CRun(options: {
 			decisionRef,
 			toolRefs: settlement.tool_result_artifacts,
 		};
-	};
+		};
 
-	try {
 		const initialMode =
 			options.scenario === "observe_pass" || options.scenario === "recovery_initial_pass" ? "repair" : "no_repair";
 		const initial = await evaluate({
@@ -780,12 +808,40 @@ export async function executeV0CRun(options: {
 		hasFailurePacketScan: packetScanRef !== null,
 	});
 	const runValidation = validateRunEvidenceV0C({
+		runRoot,
 		runId,
 		sessionId,
 		workspaceId,
 		attempts: attempts.map((attempt) => attempt.record),
-		attemptValidations: attempts.map((attempt) => attempt.validation),
-		verifierAttemptIds: attempts.map((attempt) => attempt.record.attempt_id),
+		attemptValidations: attempts.map((attempt) => ({
+			validation: attempt.validation,
+			validationRef: attempt.validationRef,
+		})),
+		verifiers:
+			options.postAuditFault === "verifier_evidence_missing"
+				? []
+				: options.postAuditFault === "verifier_evidence_duplicate"
+					? attempts.length > 0
+						? [
+								{
+									verifier: attempts[0]!.verifier,
+									resultRef: attempts[0]!.verifierRef,
+									outputRef: attempts[0]!.verifierOutputRef,
+								},
+								{
+									verifier: attempts[0]!.verifier,
+									resultRef: attempts[0]!.verifierRef,
+									outputRef: attempts[0]!.verifierOutputRef,
+								},
+							]
+						: []
+					: attempts.map((attempt) => ({
+							verifier: attempt.verifier,
+							resultRef: attempt.verifierRef,
+							outputRef: attempt.verifierOutputRef,
+						})),
+		verifierId: preflight.task.verifier_id,
+		verifierSha256: preflight.task.verifier_sha256,
 		runBudget: budget,
 		recoverySlotsConsumed: recoverySlots,
 		failurePacketId: failurePacket?.failure_packet_id ?? null,
@@ -794,16 +850,36 @@ export async function executeV0CRun(options: {
 		faultInjection: options.runValidationFault,
 		baseErrors: lineageErrors,
 	});
+	const runValidationRef = writeOnceJson(runRoot, "evidence/run-validation.json", runValidation);
 	journal.append("run_evidence_validation_completed", {
 		valid: runValidation.valid,
 		error_count: runValidation.errors.length,
 		attempt_count: runValidation.attempt_count,
 	}, null);
+	if (!runValidation.valid) {
+		return {
+			run_id: runId,
+			run_root: portable(relative(options.projectRoot, runRoot)),
+			outcome: null,
+			terminal_record: null,
+			attempt_ids: [...attemptIds],
+			session_id: sessionId,
+			workspace_id: workspaceId,
+			harness_instance_id: handleIdentity.harness_instance_id,
+			external_provider_calls: externalProviderCalls,
+			real_model_calls: externalProviderCalls,
+			credential_reads: credentialReads,
+			network_calls: 0,
+			recovery_attempts: attempts.length === 2 ? 1 : 0,
+			child_attempts: attempts.length === 2 ? 1 : 0,
+			verifier_runs: verifierRuns,
+			incomplete_reason: "run_evidence_validation_rejected",
+		};
+	}
 	const outcome = outcomeFor({
 		runId,
 		attempts,
 		recoverySlots,
-		override: runValidation.valid ? undefined : { status: "invalid", failureClass: "evidence", terminalReason: "run_evidence_invalid" },
 	});
 	const workspaceRef = workspaceRefFor({
 		projectRoot: options.projectRoot,
@@ -918,7 +994,6 @@ export async function executeV0CRun(options: {
 	const runRef = writeOnceJson(runRoot, "run.json", run);
 	const workspaceRefArtifact = writeOnceJson(runRoot, "evidence/workspace.json", workspaceRef);
 	const sessionRefArtifact = writeOnceJson(runRoot, "evidence/session-ref.json", sessionRef);
-	const runValidationRef = writeOnceJson(runRoot, "evidence/run-validation.json", runValidation);
 	const abortRef = writeOnceJson(runRoot, "evidence/abort.json", abort);
 	const outcomeRef = writeOnceJson(runRoot, "outcome.json", outcome);
 	const journalRef = artifactRef(runRoot, journal.path, "application/x-ndjson", false);
@@ -952,10 +1027,48 @@ export async function executeV0CRun(options: {
 		scanRef,
 		outcomeRef,
 	];
+	const indexItems = refs.map((ref) => terminalIndexItemV0C(ref, expected));
+	if (options.postAuditFault === "index_omission") indexItems.pop();
+	if (options.postAuditFault === "index_unexpected" && indexItems[0]) {
+		indexItems.push({
+			...indexItems[0],
+			path: "unexpected/post-audit.json",
+			responsibility: "unexpected post-audit evidence",
+		});
+	}
+	if (options.postAuditFault === "index_responsibility" && indexItems[0]) {
+		indexItems[0] = { ...indexItems[0], responsibility: "wrong responsibility" };
+	}
+	const indexErrors = [
+		...validateTerminalIndexPolicyV0C(indexItems, expected),
+		...indexItems.flatMap((item) =>
+			validateArtifactRef(runRoot, item).map((error) => `Evidence Index ${item.path}: ${error}`),
+		),
+	];
+	if (indexErrors.length > 0) {
+		return {
+			run_id: runId,
+			run_root: portable(relative(options.projectRoot, runRoot)),
+			outcome: null,
+			terminal_record: null,
+			attempt_ids: [...attemptIds],
+			session_id: sessionId,
+			workspace_id: workspaceId,
+			harness_instance_id: handleIdentity.harness_instance_id,
+			external_provider_calls: externalProviderCalls,
+			real_model_calls: externalProviderCalls,
+			credential_reads: credentialReads,
+			network_calls: 0,
+			recovery_attempts: attempts.length === 2 ? 1 : 0,
+			child_attempts: attempts.length === 2 ? 1 : 0,
+			verifier_runs: verifierRuns,
+			incomplete_reason: `realized_evidence_index_rejected:${indexErrors.join("; ")}`,
+		};
+	}
 	const index: EvidenceIndexV0C = {
 		schema_version: 1,
 		run_id: runId,
-		items: refs.map((ref) => terminalIndexItemV0C(ref, expected)),
+		items: indexItems,
 	};
 	const indexRef = writeOnceJson(runRoot, "evidence-index.json", index);
 	const journalErrors = validateJournalV0C(readJournalV0C(journal.path), {

@@ -9,12 +9,14 @@ import type {
 	WorkspaceRefV0B,
 } from "./contracts/v0b-types.ts";
 import type {
+	AttemptEvidenceValidationV0C,
 	AttemptRecordV0C,
 	CompletionDecisionV0C,
 	EvidenceIndexV0C,
 	OutcomeV0C,
 	RunEvidenceValidationV0C,
 	RunRecordV0C,
+	TaskSpecV0C,
 	TerminalRecordV0C,
 } from "./contracts/v0c-types.ts";
 import {
@@ -117,6 +119,7 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 	const outcome = safeJson(runRoot, "outcome.json", "Outcome", errors) as OutcomeV0C | null;
 	const index = safeJson(runRoot, "evidence-index.json", "Evidence Index", errors) as EvidenceIndexV0C | null;
 	const run = safeJson(runRoot, "run.json", "Run record", errors) as RunRecordV0C | null;
+	const task = safeJson(runRoot, "config/task.json", "Task", errors) as TaskSpecV0C | null;
 	const workspace = safeJson(runRoot, "evidence/workspace.json", "WorkspaceRef", errors) as WorkspaceRefV0B | null;
 	const sessionRef = safeJson(runRoot, "evidence/session-ref.json", "SessionRef", errors) as SessionRefV0B | null;
 	const runValidation = safeJson(
@@ -130,6 +133,7 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 		["Outcome", outcome],
 		["Evidence Index", index],
 		["Run", run],
+		["Task", task],
 		["WorkspaceRef", workspace],
 		["SessionRef", sessionRef],
 		["Run validation", runValidation],
@@ -146,22 +150,38 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 	if (attemptIds.length < 1 || attemptIds.length > 2) errors.push("Run attempt_ids length is not 1 or 2");
 	const attempts: AttemptRecordV0C[] = [];
 	const verifiers: VerifierResultV0B[] = [];
+	const attemptValidations: AttemptEvidenceValidationV0C[] = [];
 	const decisions: CompletionDecisionV0C[] = [];
 	for (const [indexValue, attemptId] of attemptIds.entries()) {
 		const ordinal = (indexValue + 1) as 1 | 2;
 		const root = `attempts/0${ordinal}-${attemptId}`;
 		const attempt = safeJson(runRoot, `${root}/attempt.json`, `Attempt ${ordinal}`, errors) as AttemptRecordV0C | null;
 		const verifier = safeJson(runRoot, `${root}/verifier-result.json`, `Verifier ${ordinal}`, errors) as VerifierResultV0B | null;
+		const validation = safeJson(
+			runRoot,
+			`${root}/validation.json`,
+			`Attempt validation ${ordinal}`,
+			errors,
+		) as AttemptEvidenceValidationV0C | null;
 		const decision = safeJson(runRoot, `${root}/policy-decision.json`, `Decision ${ordinal}`, errors) as CompletionDecisionV0C | null;
 		if (record(attempt)) attempts.push(attempt);
 		if (record(verifier)) verifiers.push(verifier);
+		if (record(validation)) attemptValidations.push(validation);
 		if (record(decision)) decisions.push(decision);
 	}
-	if (attempts.length !== attemptIds.length || verifiers.length !== attemptIds.length || decisions.length !== attemptIds.length) {
-		errors.push("Attempt/Verifier/Decision evidence count mismatch");
+	if (
+		attempts.length !== attemptIds.length ||
+		verifiers.length !== attemptIds.length ||
+		attemptValidations.length !== attemptIds.length ||
+		decisions.length !== attemptIds.length
+	) {
+		errors.push("Attempt/Verifier/validation/Decision evidence count mismatch");
 	}
 	for (const [indexValue, attempt] of attempts.entries()) {
 		const ordinal = (indexValue + 1) as 1 | 2;
+		const verifier = verifiers[indexValue];
+		const validation = attemptValidations[indexValue];
+		const attemptRoot = attemptDirectoryV0C(attempt);
 		if (attempt.attempt_id !== attemptIds[indexValue] || attempt.ordinal !== ordinal || attempt.run_id !== runId) {
 			errors.push(`Attempt ${ordinal} identity or ordinal mismatch`);
 		}
@@ -176,6 +196,21 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 			(attempt.parent_attempt_id !== attemptIds[0] || !attempt.failure_packet_id || attempt.trigger !== "verifier_failure")
 		) {
 			errors.push("child Attempt lineage is invalid");
+		}
+		if (!verifier || verifier.attempt_id !== attempt.attempt_id) {
+			errors.push(`Verifier ${ordinal} Attempt relationship mismatch`);
+		} else {
+			if (verifier.verifier_id !== task?.verifier_id || verifier.verifier_sha256 !== task?.verifier_sha256) {
+				errors.push(`Verifier ${ordinal} frozen identity/digest mismatch`);
+			}
+			const expectedOutputPath = `${attemptRoot}/verifier-output.txt`;
+			if (verifier.full_output_ref.path !== expectedOutputPath) {
+				errors.push(`Verifier ${ordinal} output ArtifactRef path mismatch`);
+			}
+			errors.push(...validateArtifactRef(runRoot, verifier.full_output_ref));
+		}
+		if (!validation || validation.run_id !== runId || validation.attempt_id !== attempt.attempt_id) {
+			errors.push(`Attempt validation ${ordinal} identity mismatch`);
 		}
 	}
 	if (outcome?.final_attempt_id !== attemptIds.at(-1)) errors.push("Outcome final Attempt mismatch");
@@ -216,6 +251,25 @@ async function inspectCore(projectRoot: string, runId: string): Promise<InspectR
 		}
 		items.push(item as EvidenceIndexItemV0B);
 		errors.push(...validateArtifactRef(runRoot, item));
+	}
+	const itemByPath = new Map(items.map((item) => [item.path, item]));
+	for (const [indexValue, attempt] of attempts.entries()) {
+		const verifier = verifiers[indexValue];
+		if (!verifier) continue;
+		const outputPath = `${attemptDirectoryV0C(attempt)}/verifier-output.txt`;
+		const outputItem = itemByPath.get(outputPath);
+		if (
+			!outputItem ||
+			stableJson({
+				path: outputItem.path,
+				sha256: outputItem.sha256,
+				size_bytes: outputItem.size_bytes,
+				media_type: outputItem.media_type,
+				truncated: outputItem.truncated,
+			}) !== stableJson(verifier.full_output_ref)
+		) {
+			errors.push(`Verifier ${indexValue + 1} output ArtifactRef/Index mismatch`);
+		}
 	}
 	const toolRefs: ArtifactRefV0B[] = journal.flatMap((entry) => {
 		if (entry.type !== "tool_call_completed" && entry.type !== "tool_call_error" && entry.type !== "tool_call_aborted") return [];

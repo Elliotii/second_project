@@ -94,7 +94,9 @@ test("V0C-MR-003 freezes Attempt relations, cumulative budget, and dynamic termi
 			scenario: "recovery_initial_pass",
 			runValidationFault: fault,
 		});
-		assert.equal(run.outcome?.status, "invalid");
+		assert.equal(run.outcome, null);
+		assert.equal(run.terminal_record, null);
+		assert.equal(existsSync(resolve(PROJECT_ROOT, run.run_root, "terminal.json")), false);
 		const validation = JSON.parse(
 			readFileSync(resolve(PROJECT_ROOT, run.run_root, "evidence/run-validation.json"), "utf8"),
 		) as RunEvidenceValidationV0C;
