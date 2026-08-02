@@ -1,0 +1,1 @@
+Repair `src/subject.ts` so `boundedAt` returns the item at an in-range integer index and `undefined` for every out-of-range or non-integer index. Preserve the export and run the declared public check.

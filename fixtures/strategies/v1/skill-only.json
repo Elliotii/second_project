@@ -1,0 +1,1 @@
+{"schema_version":1,"strategy_id":"skill_only","initial_invocation":"skill","skill_id":"reliability-completion-v1","measurement_verifier_id":"v1_measurement_verifier","completion_policy_id":"observe_only","recovery_mode":"none","recovery_budget":0,"verifier_runs_max":1,"initial_budget_id":"v1_common_initial_budget","child_reserve":"none","model_visible_policy_fields":[]}

@@ -1,0 +1,261 @@
+{
+    "schema_version":  1,
+    "experiment_id":  "v1-bounded-pilot",
+    "experiment_revision":  1,
+    "protocol_id":  "v1_skill_runtime_comparison",
+    "manifest_id":  "cf5c368564a6633b3f225bf12bea8b23d0b7a4877724bcde740915ee22e43f13",
+    "created_at":  "2026-08-03T00:00:00.000Z",
+    "thinking_level":  "off",
+    "task_pack_digest":  "23cee2a5085cc1e541ca258abea8b28b410b934e387b97e1aae13220ccd92d20",
+    "task_digests":  {
+                         "v1-parse-duration":  "164923ab6f289879be84f59a2b28e51bcdcea9287a595b7b51bc4ca6e8acbe9a",
+                         "v1-bounded-index":  "73caaa3efb8b9010e4c6c861da99d5a15f0f50bb3e3b98e5bb0f661904235107",
+                         "v1-state-transition":  "4111032744d77e011ef7991222642f016d391633d4f18380138b94897d95e2e1",
+                         "v1-stable-format":  "00726e1ac3edb0440b3b651f32008df4ed984effc349b905f2db5f0ad3843b26"
+                     },
+    "workspace_digests":  {
+                              "v1-parse-duration":  "5690aab9c1e7eb3905258c342d7bad4504e23377c18fec9fde39f22f9a99defa",
+                              "v1-bounded-index":  "44822d2c4d1779654d03d5db359fbf4d8bce16258643f055965f0efdfa8a19ee",
+                              "v1-state-transition":  "ecbc62cbfb21edef0dbfb05c2c8f3ab2be5e8dd99d0db3df177958f7808c54e4",
+                              "v1-stable-format":  "408b53fc073e6e802e6e4af218821bd52b5560a306cdc22fa08f1b22073d304d"
+                          },
+    "skill_digest":  "d41a123a4fa7c5aece7c1efece8fcc3be2040b272a5ab76f14622d3b17fc80af",
+    "strategy_digests":  {
+                             "baseline":  "4e49de731ada794a5695506b466d3b46438fe1d879b6e417860f21319a5e7272",
+                             "skill_only":  "037096faf6e30970d7deb11d665a9ba7e395b0a886ea72a6b5dc8aa31c442788",
+                             "skill_plus_runtime_control":  "f403ca2eea94281038a213b12bb1bc5856f8886e21c63861f00a6cff00fed830"
+                         },
+    "model_profile_id":  "deepseek_fixed_v1",
+    "model_profile_digest":  "26b06fdcc8a576d7d1da452d35b51b8795a318526e72c610c417518d1c2bad9f",
+    "base_prompt_id":  "project_minimal_base_v1",
+    "base_prompt_digest":  "317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf",
+    "tool_profile_id":  "bounded_tools_v1",
+    "tool_profile_digest":  "ad036e4d67ffa98be7a02024c59a56f153d2600037d27f6aa4e3fb0de6908781",
+    "verifier_digests":  {
+                             "v1-parse-duration-verifier":  "0924cb0f56e43a56dc74b262539f2ad0700b2cb2a43da26a9415b7e9ffaf21da",
+                             "v1-bounded-index-verifier":  "05404f5234df8c0360ee64f7a7660f0ad1db4573b627622d6709a194ffe19fa4",
+                             "v1-state-transition-verifier":  "13014e8c932daef02612d73755b8c72e428f709210aeb80e15515c7653e8b285",
+                             "v1-stable-format-verifier":  "6e5480d7e62b289435ea54f8869078b603aad0780a85aab6982f3d572198c36f"
+                         },
+    "workbench_commit":  "c9f91057db60cf61dab0d3aa305564d498c89cd6",
+    "workbench_tree_digest":  "eeb15b3130d1ea972aba777d018c16cf5176121a862de180b8ce788eb4ebbda8",
+    "pi_commit":  "027a5847901b5dde30270abaa1041046cd2b4b55",
+    "members":  [
+                    {
+                        "run_id":  "v1-parse-duration-1-baseline",
+                        "task_id":  "v1-parse-duration",
+                        "repetition":  1,
+                        "order_slot":  1,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-parse-duration-1-skill_only",
+                        "task_id":  "v1-parse-duration",
+                        "repetition":  1,
+                        "order_slot":  2,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-parse-duration-1-skill_plus_runtime_control",
+                        "task_id":  "v1-parse-duration",
+                        "repetition":  1,
+                        "order_slot":  3,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-parse-duration-2-baseline",
+                        "task_id":  "v1-parse-duration",
+                        "repetition":  2,
+                        "order_slot":  4,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-parse-duration-2-skill_only",
+                        "task_id":  "v1-parse-duration",
+                        "repetition":  2,
+                        "order_slot":  5,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-parse-duration-2-skill_plus_runtime_control",
+                        "task_id":  "v1-parse-duration",
+                        "repetition":  2,
+                        "order_slot":  6,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-bounded-index-1-baseline",
+                        "task_id":  "v1-bounded-index",
+                        "repetition":  1,
+                        "order_slot":  7,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-bounded-index-1-skill_only",
+                        "task_id":  "v1-bounded-index",
+                        "repetition":  1,
+                        "order_slot":  8,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-bounded-index-1-skill_plus_runtime_control",
+                        "task_id":  "v1-bounded-index",
+                        "repetition":  1,
+                        "order_slot":  9,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-bounded-index-2-baseline",
+                        "task_id":  "v1-bounded-index",
+                        "repetition":  2,
+                        "order_slot":  10,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-bounded-index-2-skill_only",
+                        "task_id":  "v1-bounded-index",
+                        "repetition":  2,
+                        "order_slot":  11,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-bounded-index-2-skill_plus_runtime_control",
+                        "task_id":  "v1-bounded-index",
+                        "repetition":  2,
+                        "order_slot":  12,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-state-transition-1-baseline",
+                        "task_id":  "v1-state-transition",
+                        "repetition":  1,
+                        "order_slot":  13,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-state-transition-1-skill_only",
+                        "task_id":  "v1-state-transition",
+                        "repetition":  1,
+                        "order_slot":  14,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-state-transition-1-skill_plus_runtime_control",
+                        "task_id":  "v1-state-transition",
+                        "repetition":  1,
+                        "order_slot":  15,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-state-transition-2-baseline",
+                        "task_id":  "v1-state-transition",
+                        "repetition":  2,
+                        "order_slot":  16,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-state-transition-2-skill_only",
+                        "task_id":  "v1-state-transition",
+                        "repetition":  2,
+                        "order_slot":  17,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-state-transition-2-skill_plus_runtime_control",
+                        "task_id":  "v1-state-transition",
+                        "repetition":  2,
+                        "order_slot":  18,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-stable-format-1-baseline",
+                        "task_id":  "v1-stable-format",
+                        "repetition":  1,
+                        "order_slot":  19,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-stable-format-1-skill_only",
+                        "task_id":  "v1-stable-format",
+                        "repetition":  1,
+                        "order_slot":  20,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-stable-format-1-skill_plus_runtime_control",
+                        "task_id":  "v1-stable-format",
+                        "repetition":  1,
+                        "order_slot":  21,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-stable-format-2-baseline",
+                        "task_id":  "v1-stable-format",
+                        "repetition":  2,
+                        "order_slot":  22,
+                        "strategy_id":  "baseline",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-stable-format-2-skill_only",
+                        "task_id":  "v1-stable-format",
+                        "repetition":  2,
+                        "order_slot":  23,
+                        "strategy_id":  "skill_only",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    },
+                    {
+                        "run_id":  "v1-stable-format-2-skill_plus_runtime_control",
+                        "task_id":  "v1-stable-format",
+                        "repetition":  2,
+                        "order_slot":  24,
+                        "strategy_id":  "skill_plus_runtime_control",
+                        "disposition":  "required_terminal",
+                        "pause_reason":  null
+                    }
+                ]
+}

@@ -1,4 +1,4 @@
-export type CommandId = "test" | "build" | "typecheck" | "lint";
+export type CommandId = "test" | "build" | "typecheck" | "lint" | "public_test";
 
 export interface CommandDescriptor {
 	command_id: CommandId;

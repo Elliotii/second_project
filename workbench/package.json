@@ -7,10 +7,12 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "node ../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test test",
     "v0b:deterministic": "node scripts/run-v0b-deterministic-suite.mjs",
-    "v0c:deterministic": "node scripts/run-v0c-deterministic-suite.mjs"
+    "v0c:deterministic": "node scripts/run-v0c-deterministic-suite.mjs",
+    "v1a:test": "node --test tests/v1a-deterministic.test.ts",
+    "v1a:deterministic": "node scripts/run-v1a-deterministic-suite.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",
