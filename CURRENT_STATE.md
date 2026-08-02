@@ -5,10 +5,15 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_planning
-  status: V1_PLANNING_BASELINE_AUTHORIZED_CONTRACT_DRAFT_PENDING
+  phase: v1_a_activated_pending_dedicated_implementation
+  status: V1_A_ACTIVATED_IMPLEMENTATION_NOT_STARTED
 
-active_goal: null
+active_goal:
+  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+  status: accepted_activated_pending_implementation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
+  implementation_owner: dedicated_v1_a_implementation_session
+  disposition: null
 
 last_executed_goal:
   id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
@@ -33,8 +38,8 @@ last_completed_goal:
 
 next_goal:
   id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-  status: candidate_contract_not_created
-  contract: null
+  status: active_pending_dedicated_implementation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -221,6 +226,13 @@ completed_work:
   - V1_version_charter_accepted_by_user
   - V1_version_charter_formalized_with_no_active_goal
   - V1_planning_baseline_commit_authorized_by_user
+  - V1_planning_baseline_commit_created_and_verified
+  - V1_A_goal_contract_draft_created
+  - V1_A_goal_contract_accepted_by_user
+  - V1_A_goal_contract_formalized_accepted_not_activated
+  - V1_A_activation_authorized_by_user
+  - V1_A_control_baseline_commit_authorized_by_user
+  - V1_A_control_state_updated_by_main_session
 
 workspace:
   git_initialized: true
@@ -246,6 +258,10 @@ workspace:
   v0_c_implementation_baseline_commit: 12db75aaea4db4afb774046cfcc94de772a2e90b
   v0_c_closeout_commit: resulting_HEAD_of_this_revision
   v0_c_control_baseline_tracked_files_clean_required: true
+  v1_planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
+  v1_planning_baseline_tracked_files_clean_verified: true
+  v1_a_control_baseline_commit: resulting_HEAD_of_this_revision
+  v1_a_control_baseline_tracked_files_clean_required: true
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -309,12 +325,16 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: charter_accepted_pre_contract
-  active_goal: false
+  status: V1_A_activated_pending_dedicated_implementation
+  active_goal: true
   current_candidate_goal: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-  goal_contract_created: false
-  activation_authorized: false
-  implementation_authorized: false
+  formal_goal_contract_created: true
+  activation_authorized: true
+  activation_authorized_at: 2026-08-03
+  implementation_owner: dedicated_v1_a_implementation_session
+  implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
+  implementation_started: false
+  implementation_completed: false
   real_model_calls_authorized: 0
   external_network_authorized: false
   pi_core_patch_authorized: false
@@ -339,10 +359,26 @@ v1:
   focused_V1_A_audit_required: true
   V1_B_contract_before_V1_A_acceptance: prohibited
   pi_sdk_extension_effect_on_V1: none_deferred_non_blocking_compatibility_checkpoint
-  planning_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  planning_baseline_commit: resulting_HEAD_of_this_revision
+  planning_baseline_commit_authorized: consumed
+  planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
   V1_A_contract_draft_authorized: true_after_planning_baseline_verification
-  V1_A_contract_draft_status: not_created_at_planning_baseline
+  V1_A_contract_draft: superseded_by_formal_contract
+  V1_A_contract_draft_status: superseded
+  V1_A_contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
+  V1_A_contract_status: accepted_activated_pending_implementation
+  V1_A_contract_accepted: true
+  V1_A_activation_authorized: true
+  V1_A_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  V1_A_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_A_dedicated_session_prompt_authorized: true_after_control_baseline_confirmation
+  V1_A_dedicated_session_prompt_status: to_be_generated_after_exact_SHA_confirmation
+  V1_A_dedicated_session_git_commit_authorized: false
+  V1_A_real_model_calls_authorized: 0
+  V1_A_external_provider_calls_authorized: 0
+  V1_A_credential_reads_authorized: 0
+  V1_A_external_network_authorized: false
+  V1_A_pi_core_patch_authorized: false
+  V1_A_private_pi_import_authorized: false
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -952,6 +988,7 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
   - docs/reports/V1_SKILL_PRIMARY_SOURCE_MAPPING_MAIN_REVIEW.md
   - docs/reports/V1_SKILL_PRIMARY_SOURCE_MAPPING.md
   - docs/reports/V1_SKILL_RUNTIME_COMPARISON_PRECONTRACT_RESEARCH_MAIN_REVIEW.md
@@ -978,12 +1015,13 @@ required_reading:
 
 next_checkpoint:
   - V1_version_charter_accepted_and_formalized
-  - create_and_verify_authorized_V1_planning_baseline_commit
-  - main_session_draft_V1_A_goal_contract_after_exact_baseline_SHA_is_known
-  - no_V1_contract_activation_implementation_or_real_model_calls_are_currently_authorized
+  - V1_planning_baseline_commit_created_and_verified
+  - create_and_verify_V1_A_active_control_baseline_commit
+  - generate_dedicated_V1_A_goal_session_prompt_with_exact_SHA
+  - dedicated_session_executes_Gate_A_and_zero_real_call_implementation
+  - no_real_model_calls_candidate_commit_audit_or_V1_B_are_authorized
 
-open_user_decisions:
-  - review_V1_A_goal_contract_after_draft
+open_user_decisions: []
 ```
 
 ## Current Constraints
@@ -1049,12 +1087,13 @@ open_user_decisions:
   initial Verifier, so real Recovery remains unobserved. No additional V0-C
   Run, credential/network use, real-model call, source change or repair is
   authorized.
-- V0 is closed and accepted. The V1 Version Charter is also accepted, but there
-  is no active Goal and no V1-A Contract. Charter acceptance does not authorize
-  a Planning Baseline Commit, Activation, implementation, credential/network
-  use, real-model execution or V2/V3 work. V1 will compare Baseline, Skill-only
-  and Skill + External Verifier / Runtime Control; V2 bounded multi-path
-  recovery remains the Portfolio North Star rather than current scope.
+- V0 is closed and accepted. The V1 Version Charter and formal V1-A Contract
+  are accepted, and V1-A is active pending a dedicated zero-call
+  Implementation Session. Main Session must not implement it. V1-A does not
+  authorize credential/network use, real-model execution, Candidate Commit,
+  focused audit, V1-B or V2/V3 work. V1 will compare Baseline, Skill-only and
+  Skill + External Verifier / Runtime Control; V2 bounded multi-path recovery
+  remains the Portfolio North Star rather than current scope.
 
 ## Expected Next Handoff
 
@@ -1066,9 +1105,11 @@ mechanism. One frozen real Coding Task passed the formal Product Surface within
 budget, but it passed its initial Verifier; real recovery effect and Completion
 Policy effectiveness remain unproven.
 
-There is no active Goal. V1 bounded Precontract Research, Pi Skill source audit,
-primary-source review and the V1 Version Charter are complete and accepted. The
-next handoff requires separate user authorization for a V1 Planning Baseline
-Commit; only after that clean planning baseline may Main Session draft the V1-A
-Goal Contract. V1-A Activation, implementation, external network, credential
-use, real-model calls and V2 work remain unauthorized from this state.
+V1-A is the active Goal, with implementation owned by a dedicated V1-A
+Implementation Session. The Planning Baseline is
+`7617ce3f56bc8844a0e7eb3605b4327aa6412932`; the active Control Baseline is
+the resulting HEAD of this control revision and must be resolved to an exact
+SHA before the Session starts. V1-A permits only zero-real-call deterministic
+implementation. Candidate Commit, focused audit, Implementation Baseline,
+external network, credentials, real-model calls, V1-B and V2 remain separate
+and unauthorized.

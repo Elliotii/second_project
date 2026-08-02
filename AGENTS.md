@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Agent Harness Reliability Workbench. V0-A, V0-B and V0-C are closed and accepted, so the minimal usable V0 Workbench is complete. The V1 Version Charter is accepted, but there is no active Goal and no formal V1-A Goal Contract. The user authorized one V1 Planning Baseline Commit; Main Session must create and verify that clean tracked baseline before drafting the V1-A Contract for review. V1 compares Baseline, Skill-only and Skill + External Verifier / Runtime Control without presuming the winner; V2 bounded multi-path recovery remains the Portfolio North Star, not a current implementation scope. Planning-baseline authority does not authorize V1 Activation, implementation, credential/network use or real-model calls.
+This repository is building an Agent Harness Reliability Workbench. V0-A, V0-B and V0-C are closed and accepted, so the minimal usable V0 Workbench is complete. V1-A is the active Goal under the accepted `V1_A_GOAL_CONTRACT.md`; its implementation owner is a dedicated V1-A Implementation Session starting from the exact active Control Baseline. The Main Session must not implement V1-A. V1-A permits deterministic Faux-provider work only: real-model/external-provider calls, credentials, external network, dependency installation, Pi changes, private imports and dedicated-session Git commits are all prohibited. Candidate Commit, focused audit, Implementation Baseline and V1-B remain separate later control points. V1 compares Baseline, Skill-only and Skill + External Verifier / Runtime Control without presuming the winner; V2 bounded multi-path recovery remains the Portfolio North Star, not current implementation scope.
 
 ## Required Read Order
 
