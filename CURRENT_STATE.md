@@ -1,12 +1,12 @@
 # Current State
 
-> Updated: 2026-07-31
+> Updated: 2026-08-03
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v0_completed
-  status: V0_C_CLOSED_ACCEPTED
+  phase: v1_planning
+  status: V1_PLANNING_BASELINE_AUTHORIZED_CONTRACT_DRAFT_PENDING
 
 active_goal: null
 
@@ -32,8 +32,8 @@ last_completed_goal:
   architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
 
 next_goal:
-  id: V1_SKILL_RUNTIME_COMPARISON
-  status: candidate_not_authorized
+  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+  status: candidate_contract_not_created
   contract: null
 
 retired_goal_candidate:
@@ -212,6 +212,15 @@ completed_work:
   - V0_C_PASS_V0_C_USER_ACCEPTANCE_accepted_by_main_session_and_user
   - V0_C_closed_accepted
   - V0_closed_accepted
+  - V1_skill_runtime_comparison_precontract_research_completed
+  - V1_precontract_research_main_review_accepted_with_binding_corrections
+  - V1_skill_primary_source_research_completed
+  - V1_primary_source_gate_accepted_with_binding_interpretive_correction
+  - V1_version_charter_drafted
+  - Pi_SDK_Extension_future_compatibility_checkpoint_recorded
+  - V1_version_charter_accepted_by_user
+  - V1_version_charter_formalized_with_no_active_goal
+  - V1_planning_baseline_commit_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -294,6 +303,46 @@ v0:
   control_rule_status: accepted
   scoped_pi_go: accepted
   formal_workbench_created: true
+
+v1:
+  charter: docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
+  charter_status: accepted
+  charter_accepted: true
+  charter_formalized_at: 2026-08-03
+  status: charter_accepted_pre_contract
+  active_goal: false
+  current_candidate_goal: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+  goal_contract_created: false
+  activation_authorized: false
+  implementation_authorized: false
+  real_model_calls_authorized: 0
+  external_network_authorized: false
+  pi_core_patch_authorized: false
+  runtime_surface: direct_public_emitted_AgentHarness
+  strategies:
+    - baseline
+    - skill_only
+    - skill_plus_external_verifier_runtime_control
+  accepted_goal_sequence:
+    - V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+    - V1_B_FROZEN_BOUNDED_REAL_PILOT
+  primary_source_gate: satisfied
+  primary_source: SkillOS_arXiv_2605_06614v1
+  primary_source_binding_correction: training_signal_is_distinct_from_diagnostic_judge_and_formal_external_outcome
+  accepted_pilot_ceiling:
+    tasks: 4
+    repetitions_per_task: 2
+    strategies_per_repetition: 3
+    planned_initial_runs_max: 24
+    child_attempts_max: 8
+    whole_pilot_cost_usd_max: 2.00
+  focused_V1_A_audit_required: true
+  V1_B_contract_before_V1_A_acceptance: prohibited
+  pi_sdk_extension_effect_on_V1: none_deferred_non_blocking_compatibility_checkpoint
+  planning_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  planning_baseline_commit: resulting_HEAD_of_this_revision
+  V1_A_contract_draft_authorized: true_after_planning_baseline_verification
+  V1_A_contract_draft_status: not_created_at_planning_baseline
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -902,6 +951,11 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
+  - docs/reports/V1_SKILL_PRIMARY_SOURCE_MAPPING_MAIN_REVIEW.md
+  - docs/reports/V1_SKILL_PRIMARY_SOURCE_MAPPING.md
+  - docs/reports/V1_SKILL_RUNTIME_COMPARISON_PRECONTRACT_RESEARCH_MAIN_REVIEW.md
+  - docs/reports/V1_SKILL_RUNTIME_COMPARISON_PRECONTRACT_RESEARCH.md
   - docs/reports/V0_C_CLOSEOUT.md
   - docs/reports/V0_C_STAGE2_REPLACEMENT_USER_ACCEPTANCE_REPORT.md
   - docs/reports/V0_C_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
@@ -923,11 +977,13 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - user_and_main_session_review_V0_post_closeout_state
-  - main_session_may_research_and_draft_V1_version_scope_only_after_user_authorization
+  - V1_version_charter_accepted_and_formalized
+  - create_and_verify_authorized_V1_planning_baseline_commit
+  - main_session_draft_V1_A_goal_contract_after_exact_baseline_SHA_is_known
   - no_V1_contract_activation_implementation_or_real_model_calls_are_currently_authorized
 
-open_user_decisions: []
+open_user_decisions:
+  - review_V1_A_goal_contract_after_draft
 ```
 
 ## Current Constraints
@@ -993,11 +1049,12 @@ open_user_decisions: []
   initial Verifier, so real Recovery remains unobserved. No additional V0-C
   Run, credential/network use, real-model call, source change or repair is
   authorized.
-- V0 is closed and accepted. This does not authorize a V1 Goal Contract,
-  Activation, implementation, real-model execution or V2/V3 work. V1 remains
-  a candidate comparison of Baseline, Skill-only and Skill + External Verifier
-  / Runtime Control; V2 bounded multi-path recovery remains the Portfolio North
-  Star rather than current scope.
+- V0 is closed and accepted. The V1 Version Charter is also accepted, but there
+  is no active Goal and no V1-A Contract. Charter acceptance does not authorize
+  a Planning Baseline Commit, Activation, implementation, credential/network
+  use, real-model execution or V2/V3 work. V1 will compare Baseline, Skill-only
+  and Skill + External Verifier / Runtime Control; V2 bounded multi-path
+  recovery remains the Portfolio North Star rather than current scope.
 
 ## Expected Next Handoff
 
@@ -1009,8 +1066,9 @@ mechanism. One frozen real Coding Task passed the formal Product Surface within
 budget, but it passed its initial Verifier; real recovery effect and Completion
 Policy effectiveness remain unproven.
 
-There is no active Goal. The next handoff, only after explicit user
-authorization, is Main Session V1 scoping and bounded research. It must preserve
-Skill-only as a genuine competitor to Skill + Runtime Control, avoid treating
-V0's single success as policy evidence, and must not start V1 or V2
-implementation from this state.
+There is no active Goal. V1 bounded Precontract Research, Pi Skill source audit,
+primary-source review and the V1 Version Charter are complete and accepted. The
+next handoff requires separate user authorization for a V1 Planning Baseline
+Commit; only after that clean planning baseline may Main Session draft the V1-A
+Goal Contract. V1-A Activation, implementation, external network, credential
+use, real-model calls and V2 work remain unauthorized from this state.

@@ -306,6 +306,55 @@ reference/papers/<topic>/
 | OpenHarness | 条件性 adapter 比较 | 条件性 portability | 条件性 | 非核心 | 非核心 |
 | Harbor/Terminal-Bench | 不进入 | Pilot scale 触发 | 可作为任务来源 | Regression scale 触发 | 非核心 |
 
+### 8.1 Pi SDK / Extension / Package 延后兼容检查点
+
+**Fact.** 固定 Pi `027a5847901b5dde30270abaa1041046cd2b4b55` 的
+`packages/coding-agent/src/core/sdk.ts#createAgentSession`、
+`agent-session-runtime.ts#AgentSessionRuntime`、
+`extensions/types.ts#ExtensionAPI`，以及
+`test/agent-session-runtime-events.test.ts`、
+`test/suite/agent-session-model-extension.test.ts` 和
+`test/extensions-runner.test.ts` 已证明存在公开的应用级 Session、Tool Hook、
+Tool Result middleware 与 Extension 生命周期入口。
+`src/core/footer-data-provider.ts#FooterDataProvider` 与
+`test/footer-data-provider.test.ts` 只证明 Pi 能够在 Git Worktree cwd 中识别 Git
+状态，没有证明 Pi Core 已提供完整 Worktree 创建、清理、lineage 和验证合同。
+
+**Inference.** SDK/Extension 的主要价值是复用 Pi 的真实应用形态，而不是替换 Direct
+`AgentHarness` 的受控实验路线：SDK 候选服务程序化 Session/runtime 组合，Extension
+候选服务 TUI/RPC 审批与 Policy 接入，Pi Package 候选服务已验证 Skill/Policy/Adapter
+的分发。Worktree、正式 Outcome、Experiment identity 和不可篡改证据仍属于 Workbench。
+
+```yaml
+pi_sdk_extension_compatibility:
+  status: deferred_non_blocking
+  current_V1_effect: none
+  triggers:
+    - post_V1_policy_is_selected_for_real_Pi_use
+    - pre_V2_clean_session_or_clean_workspace_contract
+  package_or_module_adoption_gate:
+    - canonical_source_and_exact_version_or_commit_recorded
+    - license_notice_and_reuse_form_recorded
+    - dependencies_install_scripts_and_network_behavior_reviewed
+    - pinned_or_selected_Pi_version_compatibility_proven
+    - Windows_behavior_proven_when_the_project_route_requires_Windows
+    - public_API_only_unless_a_new_architecture_review_authorizes_otherwise
+    - deterministic_failure_and_fail_closed_tests_defined
+    - no_access_to_protected_verifier_acceptance_or_credential_material
+    - raw_execution_evidence_remains_distinct_from_model_visible_tool_result
+    - disable_and_rollback_path_defined
+  allowed_dispositions:
+    - direct_dependency
+    - thin_extension_adapter
+    - module_port_with_attribution
+    - behavioral_reference_only
+    - reject
+```
+
+**Recommendation.** Package gallery、版本数量或下载量只能用于发现候选，不能单独证明
+“成熟”。Permission Extension 不能被表述为 OS Sandbox；Pi Session 不能替代
+Run/Attempt/Workspace/Outcome；Extension 修改后的 Tool Result 不能覆盖原始执行证据。
+
 ---
 
 ## 9. 复用、移植与归因规则
@@ -352,6 +401,7 @@ allowed_when_provenance_and_license_pass:
 | 1 | V0-A 要求 advanced dry-run/checkpoint | SearchCLI source/license/module audit | 1 份 source map + reuse decision | 不实现、不研究全 CLI |
 | 2 | V1 Charter 前 | Skill primary-paper + cc/Pi/mirror comparison | Skill contract inputs | 不实现 Skill registry |
 | 3 | V2 Charter 前 | Same-session vs clean-session recovery pattern audit | route invariants + smallest experiment | 不建 Router/Experience platform |
+| 3A | V1 选出可进入真实 Pi 的 Policy 后，或 V2 Contract 前 | Pi SDK / Extension / Worktree bounded compatibility audit | adopt/adapter/port/reference/reject matrix | 不改变 V1、不安装未审计 Package、不实现通用插件或权限平台 |
 | 4 | V2 需要外部框架 | Youtu Environment/Rollout/Judge audit | bounded comparison matrix | 不研究训练平台 |
 | 5 | V3 前 | Experience/meta-evolution primary-source audit | experience/promotion inputs | 不实现自治 Curator |
 | 6 | Pilot 任务规模触发 | Harbor/Terminal-Bench packaging audit | adapter decision | 不迁移 benchmark ecosystem |

@@ -766,6 +766,51 @@ Oversized Tool Result
 
 Session Reliability、Godot、MCP、Container、Subagent 等能力继续根据真实失败、技术证据和求职收益决定。
 
+### Pi SDK / Extension 兼容检查点（延后、非阻塞）
+
+**Fact.** 固定 Pi 的 `pi-coding-agent` 公共层已经提供
+`packages/coding-agent/src/core/sdk.ts#createAgentSession`、
+`agent-session-runtime.ts#AgentSessionRuntime`、
+`session-manager.ts#SessionManager` 和 `extensions/types.ts#ExtensionAPI`；
+`test/agent-session-runtime-events.test.ts`、
+`test/suite/agent-session-model-extension.test.ts` 与
+`test/extensions-runner.test.ts` 覆盖 Session new/resume/fork、Tool Call 阻断、
+Tool Result 修改和 Extension 生命周期。Pi Package 还允许从 npm、git 或本地路径
+安装 Extension/Skill，但第三方 Package 拥有完整进程权限，“可安装”不等于已经通过
+本项目的成熟度、安全或兼容性审计。
+
+```yaml
+pi_application_integration_checkpoint:
+  status: deferred_non_blocking
+  does_not_change:
+    - Direct_AgentHarness_as_controlled_experiment_runtime
+    - current_V1_scope_fairness_or_goal_sequence
+  evaluation_triggers:
+    - V1_produces_a_policy_worth_exposing_in_real_Pi_interactive_use
+    - before_drafting_V2_clean_session_or_clean_workspace_recovery_contract
+  bounded_questions:
+    - can_a_thin_Extension_adapter_reuse_the_same_project_owned_policy_core
+    - can_SDK_session_runtime_replace_host_reimplementation_for_new_resume_or_fork
+    - can_an_audited_Worktree_extension_or_module_supply_lifecycle_helpers_without_owning_Workbench_lineage
+    - can_Pi_tool_result_projection_and_truncation_be_reused_without_weakening_raw_evidence
+  retained_workbench_authority:
+    - Run_Attempt_Workspace_and_Session_lineage
+    - external_Verifier_and_formal_Outcome
+    - immutable_evidence_budget_and_experiment_fairness
+    - protected_paths_and_security_claim_boundaries
+  stop_conditions:
+    - no_concrete_V1_or_V2_problem_is_solved
+    - adoption_changes_V1_treatment_fairness
+    - source_license_version_or_Windows_compatibility_cannot_be_verified
+    - integration_requires_private_import_or_Pi_Core_patch_without_new_review
+    - integration_weakens_external_evidence_authority
+```
+
+**Recommendation.** V1 不加载新的 SDK/Extension 路线。若命中上述触发条件，由主
+Session授权一次有界只读兼容审计，输出 `direct_dependency`、`thin_adapter`、
+`module_port`、`behavioral_reference` 或 `reject` 之一；没有具体问题时不得把它升级
+成 Goal。
+
 ---
 
 # 10. Pi Go / No-Go

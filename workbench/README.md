@@ -1,8 +1,14 @@
-# Agent Harness Reliability Workbench — V0-B Evidence Foundation
+# Agent Harness Reliability Workbench — V0
 
-This directory preserves the accepted V0-A foundation and adds the bounded V0-B Stage 1 evidence slice. V0-A proves a direct, public Pi `AgentHarness` integration with a deterministic public Faux provider, a temporary-copy Workspace, strict path wrappers, a command-ID surface, and separate Task/Strategy/Run/Attempt/Session/Workspace identities.
+V0-A, V0-B, and V0-C are closed and accepted. Together they form a minimum
+Workbench that can run a bounded Coding Task through the public Pi
+`AgentHarness`, control a copied Workspace, correlate runtime identities and
+events, verify the result outside the Agent write scope, preserve reviewable
+evidence, and produce one formal Outcome.
 
-V0-B converts one settled Attempt into bounded, reviewable evidence:
+V0-A established the direct Pi integration, Workspace/path boundary,
+command-ID surface, and Task/Strategy/Run/Attempt/Session/Workspace identities.
+V0-B then converted one settled Attempt into bounded, reviewable evidence:
 
 - a complete in-process Pi Session plus an append-only, reasoning-safe public JSONL evidence mirror;
 - a closed-envelope lifecycle Journal with Run/Attempt/Session/Workspace and Tool Call/Result correlation;
@@ -40,11 +46,31 @@ the Agent.
 
 Pi-specific imports remain centralized under `src/pi/`. Runtime dependencies resolve to the ignored isolated Pi copy at `.runs/v0-a/pi`; no Pi Core source is modified. V0-B uses a new external manifest and verifier while preserving the accepted V0-A fixture byte-for-byte.
 
+V0-C added deterministic Completion decisions and at most one bounded
+same-Session Recovery Attempt. Its Stage 2 user-acceptance Run proved that a
+frozen real-provider composition can execute one real Coding Task through the
+formal Product Surface without modifying Pi Core.
+
+The tracked CLI intentionally does not contain credentials or a general
+provider registry. Its real strategy requires explicitly injected execution
+dependencies and otherwise fails closed; the accepted Stage 2 composition was
+UAT-local, ignored under `.runs/`, and is not tracked product source. Therefore
+V0 is a proven bounded Workbench foundation, not yet a turnkey multi-provider
+CLI.
+
 ## Boundaries and non-claims
 
-Stage 1 uses only the public emitted Faux provider: external Provider/model calls are zero, credentials are not loaded, Recovery is zero, and each Run has one initial Attempt. The Session evidence mirror is intentionally not a continuation store.
+V0-A, V0-B, and V0-C Stage 1 used only the public emitted Faux provider, with
+zero external Provider/model calls. V0-C Stage 2 then completed one authorized
+real DeepSeek Run. That Run's initial Verifier passed, so no Recovery was
+triggered. The Session evidence mirror is intentionally not a continuation
+store.
 
-The implementation does **not** prove or provide real-model effectiveness, Completion Policy improvement, child Attempts, Recovery, cross-process Resume, crash-after-side-effect reconciliation, exactly-once Tool execution, an OS sandbox, network-egress blocking, statistical Eval validity, V1 Skill competition, or V2 adaptive multi-path recovery.
+The implementation does **not** prove real-model effectiveness, Completion
+Policy improvement, successful Recovery after a real failure, cross-process
+Resume, crash-after-side-effect reconciliation, exactly-once Tool execution, an
+OS sandbox, network-egress blocking, statistical Eval validity, V1 Skill
+competition, or V2 adaptive multi-path recovery.
 
 The verifier timeout uses bounded child-process termination but does not claim
 system-level process-tree termination. Windows junction/reparse coverage shares
@@ -80,27 +106,32 @@ node workbench/src/cli.ts inspect <run-id>
 node workbench/src/cli.ts run --task fixtures/manifests/v0-c-parse-duration-public.json --strategy v0_c_recover_once_same_session_deepseek_v4_flash --dry-run
 node workbench/scripts/run-v0c-deterministic-suite.mjs
 ```
-# V0-C Stage 1 Candidate
+## V0-C Completion and real-use closeout
 
-V0-C Stage 1 preserves the accepted V0-A/V0-B foundation and adds bounded
-Completion and same-Session Recovery. A Run owns one long-lived public Pi
+V0-C preserves the accepted V0-A/V0-B foundation and adds bounded Completion
+and same-Session Recovery. A Run owns one long-lived public Pi
 `AgentHarness`/Session/Workspace handle, one or two started Attempts, a
 public-only Failure Packet, one Completion decision per evaluated Attempt, a
 single Run validation, and a dynamic closed evidence set. Recovery can issue at
 most one child Attempt and checks the frozen child reserve before persisting a
 Packet or allocating the child identity.
 
-Stage 1 uses only the deterministic public emitted Faux Provider. The DeepSeek
-V4 Flash profile is represented through the formal Task/Strategy preflight and
-CLI route, but only `--dry-run` is authorized: it reads no credential and makes
-zero network or Provider calls. Real execution remains fail-closed until a
-later, separately authorized Stage 2.
+Stage 1 used only the deterministic public emitted Faux Provider. After focused
+audit, correction, and a frozen Implementation Baseline, the separately
+authorized replacement Stage 2 Run
+`run-c3297fc5-bfd1-4bd1-b46c-3a636271a177` completed with formal Outcome
+`passed`, 5 Provider/model calls, 8 Tool calls, 16,625 tokens, and cost
+`0.0012407808000000002` USD. Its initial Verifier passed; Recovery observed was
+zero.
 
 The corrected V0-C Product Surface keeps its Pi handle alive through terminal
 commit, scans each persisted Failure Packet with the shared V0-B rules before
 allocating a child identity, freezes Run-level lineage/budget/evidence-plan
 validation before Outcome, and exposes an explicit authority/credential/
-Provider-factory/budget injection boundary for a future Stage 2. The default
-real-profile execution path has no authority or dependencies and therefore
-fails before creating any formal runtime identity. Tests reach the same
-orchestration with injected non-secret Faux dependencies only.
+Provider-factory/budget injection boundary used by the accepted Stage 2. The
+default real-profile execution path has no authority or dependencies and
+therefore fails before creating any formal runtime identity. Tests reach the
+same orchestration with injected non-secret Faux dependencies only.
+
+V0 is now closed. No additional real-model Run, V1 work, or later-version
+implementation is authorized by this README.
