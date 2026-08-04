@@ -8,16 +8,19 @@ formalized_at: 2026-08-03
 version: V1
 project: Agent Harness Reliability Workbench
 version_mission: fairly_measure_fixed_Skill_and_bounded_Runtime_Control_increment
-current_project_phase: v1_charter_accepted_pre_contract
+current_project_phase: v1_a_closed_v1_b_plan_accepted_pre_contract
 active_goal: null
-V1_contract_created: false
-V1_activation_authorized: false
+V1_A_contract_status: closed_accepted
+V1_B_contract_created: false
+V1_B_activation_authorized: false
 implementation_authorized: false
 real_model_calls_authorized: 0
 pi_core_patch_authorized: false
 external_download_authorized: false
 git_commit_authorized: false
 accepted_goal_count: 2
+V1_B_integrated_plan: docs/reports/V1_B_INTEGRATED_DEVELOPMENT_PLAN.md
+V1_B_integrated_plan_status: accepted
 portfolio_north_star_after_V1: V2_failure_aware_bounded_multi_path_recovery
 ```
 
@@ -561,6 +564,11 @@ whole_pilot:
 Implementation Baseline、V1-B Contract 接受、V1-B Stage 1 freeze 和 V1-B
 Stage 2 真实调用分别是独立授权点。
 
+`elapsed_execution_window_ms_max` 在 V1-B 中冻结为累计 active execution time，
+不计入 Main Session/用户审查、命令之间人工等待或授权等待；per-Attempt 和
+per-Run wall-time caps 仍独立生效。该解释不得由看到真实 Outcome 的 Execution
+Session事后改变。
+
 ## 13. Goal Decomposition and Session Ownership
 
 ### 13.1 V1-A — Deterministic Skill and Experiment Substrate
@@ -597,17 +605,43 @@ Candidate 冻结后必须进行一次 focused independent audit，范围只覆�
 
 正式 Contract 只在 V1-A accepted 后起草。
 
-Owner：新的 fresh dedicated V1-B Execution Session。
+V1-B 保持一个 Goal、两个执行 Stage，不增加默认第三个 V1 Goal：
 
-分两 Stage：
+1. **Stage 1 — Zero-call Execution Preparation**
+   - Owner：新的 dedicated V1-B Preparation Session；
+   - 允许在正式 Contract 明列的 V1-owned source/fixture/test/report 路径内做
+     有界修改；
+   - 建立 tracked public Pi composition、one-cell runner、Pilot ledger、
+     Inspector、V1 product surface 和完整 zero-call regressions；
+   - real model/provider call、credential read、external network、Pi patch、private
+     import、dependency install 和专用 Session Git commit 均为 0/false。
+2. **Stage 1 Focused Audit**
+   - Owner：新的 fresh independent Audit Session；
+   - 只审计冻结 Candidate 的 Provider/credential、fairness、budget/stop、C-only
+     lineage、Manifest/terminalization/evidence、Windows identity 和必要回归；
+   - 不修源码、不创建 Candidate Commit、不修改控制状态、不调用真实 Provider；
+   - finding 由原 Preparation Session 有界返修，仅复审受影响 finding 和必要
+     regression，除非出现新的具体非局部证据。
+3. **Stage 2 — Frozen Real Pilot**
+   - Owner：新的 fresh dedicated V1-B Execution Session；
+   - 只从 Main Session 记录的 exact Execution Baseline 和 immutable Manifest
+     逐 cell 执行一次完整 frozen Pilot；
+   - 没有 source/fixture/test/Manifest/control edit、stage 或 commit authority；
+   - credential/network/real-call/USD2 authority 必须由用户在 Stage 1 和 audit
+     接受后单独授权。
 
-1. zero-call protocol/task/source/model/credential/budget preflight 和 frozen
-   candidate baseline；
-2. 用户单独授权后，从该 baseline 执行一次完整 frozen Pilot。
+Stage 2 推荐使用 Manifest 强制的 one-cell-at-a-time `run-next` surface；不同
+planned Run 之间可以重新启动进程，C child 必须在同一进程、Session 和 Workspace
+内完成。该设计不声称或要求跨进程 Session resume。
 
-V1-B execution Session没有 source-edit authority。所有 planned cells 必须
-terminal、invalid 或 paused；禁止静默 deletion/retry。若 frozen source 变化，
-回到 Main Session重新决定 candidate identity 和是否 re-audit。
+所有 planned cells 必须 terminal、invalid 或 paused；禁止静默 deletion、same-Run
+retry、fallback 或 automatic replacement。若 frozen source 变化，必须回到 Main
+Session重新决定 candidate identity、Manifest binding 和是否 re-audit。
+
+本节修订是对原 §13.2 owner 描述和已接受 BC-5 实现落点的有界澄清：V1-A 已交付
+并审计 fixed Provider boundary 和 interfaces；真实可执行 tracked composition 在
+V1-B Stage 1 零调用形成。它不重新打开 V1-A，不改变 Direct public
+`AgentHarness`、两 Goal、三 Strategy、Pilot scale 或 Budget。
 
 ### 13.3 No default V1-C
 
@@ -817,6 +851,40 @@ accepted_charter_decisions:
       - full_general_V0_reaudit
     recommendation: one_focused_independent_audit
     consequence: validates causal/evidence boundaries without repeating the entire V0 audit
+
+  - decision: clarify_V1_B_two_stage_session_ownership
+    accepted_at: 2026-08-04
+    evidence: V1_A accepted abstract provider seams but the repository does not yet contain the tracked concrete real factory/runner/CLI required by a no-source-edit Pilot Session
+    options:
+      - same_V1_B_goal_with_zero_call_preparation_then_frozen_execution
+      - reopen_closed_V1_A
+      - allow_execution_local_ignored_adapter
+    recommendation: same_V1_B_goal_with_zero_call_preparation_then_frozen_execution
+    consequence: preserves the two-goal V1 while ensuring the Session that sees real outcomes cannot edit source
+
+  - decision: retain_full_24_cell_cell_at_a_time_pilot
+    accepted_at: 2026-08-04
+    evidence: accepted four-task/two-repetition/three-strategy scale remains bounded; independent cells do not require a single long-lived process
+    recommendation: immutable_manifest_enforced_run_next_with_24_initial_cells
+    consequence: preserves the descriptive Pilot while avoiding an unnecessary cross-process Session-resume requirement
+
+  - decision: clarify_whole_pilot_time_cap
+    accepted_at: 2026-08-04
+    evidence: human review and authorization waiting are not Provider execution time
+    recommendation: accumulated_active_execution_time
+    consequence: preserves the two-hour hard execution cap while per-Attempt and per-Run wall-time caps remain separately enforced
+
+  - decision: require_one_focused_V1_B_stage_1_audit
+    accepted_at: 2026-08-04
+    evidence: Stage 1 changes real Provider composition, credential, budget, C-only lineage, Manifest and terminalization boundaries
+    recommendation: one_focused_independent_audit_not_full_general_reaudit
+    consequence: validates the high-risk delta without repeating all V0/V1-A assurance
+
+  - decision: keep_Pi_SDK_Extension_checkpoint_deferred_for_V1_B
+    accepted_at: 2026-08-04
+    evidence: pinned public AgentHarness/model/provider paths cover V1-B; the current gap is Workbench-owned tracked composition
+    recommendation: defer_until_concrete_later_integration_trigger
+    consequence: does not block V1-B and does not create an SDK/Extension abstraction
 ```
 
 ## 20. Acceptance and Next Sequence
@@ -848,5 +916,19 @@ accepted_charter_decisions:
 → focused independent audit
 → 有界返修/聚焦复审（如需要）
 → 用户与 Main Session接受 V1-A Implementation Baseline
-→ Main Session再起草 V1-B Contract
+→ Main Session完成 V1-B bounded readiness review（已完成）
+→ 用户接受 V1-B Integrated Development Plan 和本 Charter 有界澄清（已完成）
+→ 用户单独授权 V1-B Planning/Charter Amendment Baseline Commit
+→ Main Session创建并核验该 baseline
+→ Main Session起草 V1-B Goal Contract Draft
+→ 用户审查并接受正式 V1-B Contract；此时仍未激活
+→ 用户单独授权 V1-B Activation + Control Baseline Commit + zero-call Stage 1
+→ dedicated V1-B Preparation Session执行 Stage 1
+→ Main Session复核并在用户授权后冻结 Candidate Commit
+→ fresh focused independent Audit Session审计 Stage 1 Candidate
+→ 原 Preparation Session有界返修/聚焦复审（如需要）
+→ Main Session在用户授权后冻结 V1-B Execution Baseline
+→ 用户单独授权 credential/network/real-call/USD2 Stage 2
+→ fresh no-source-edit V1-B Execution Session逐 cell执行 frozen Pilot
+→ Main Session与用户验收 V1-B/V1 并另行授权控制状态收口
 ```

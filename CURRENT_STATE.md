@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_a_closed_pending_v1_b_contract
-  status: V1_A_CLOSED_ACCEPTED
+  phase: v1_b_plan_accepted_pending_contract_baseline
+  status: V1_B_PLAN_ACCEPTED_CONTRACT_NOT_CREATED
 
 active_goal: null
 
@@ -238,6 +238,14 @@ completed_work:
   - V1_A_Gates_A_through_J_and_DoD_27_of_27_accepted
   - V1_A_PASS_V1_A_DETERMINISTIC_SUBSTRATE_accepted
   - V1_A_closed_accepted
+  - V1_B_precontract_readiness_gap_identified_before_real_calls
+  - V1_B_source_readiness_and_protocol_governance_specialist_reviews_completed
+  - V1_B_integrated_development_plan_accepted_by_user
+  - V1_B_two_stage_session_owner_charter_clarification_accepted
+  - V1_B_full_24_cell_cell_at_a_time_pilot_plan_accepted
+  - V1_B_focused_stage_1_audit_plan_accepted
+  - V1_B_Pi_SDK_Extension_checkpoint_remains_deferred
+  - V1_B_planning_charter_amendment_baseline_commit_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -334,7 +342,7 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: V1_A_closed_accepted_pending_V1_B_contract
+  status: V1_B_plan_accepted_pending_contract_baseline
   active_goal: false
   current_candidate_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
   formal_goal_contract_created: true
@@ -394,6 +402,21 @@ v1:
   V1_A_disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
   V1_A_implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
   V1_A_closeout: docs/reports/V1_A_CLOSEOUT.md
+  V1_B_integrated_plan: docs/reports/V1_B_INTEGRATED_DEVELOPMENT_PLAN.md
+  V1_B_integrated_plan_status: accepted
+  V1_B_precontract_pause_report: docs/reports/V1_B_PRECONTRACT_READINESS_PAUSE_REPORT.md
+  V1_B_session_model:
+    stage_1_preparation: future_dedicated_zero_call_source_edit_session
+    stage_1_audit: future_fresh_focused_independent_audit_session
+    bounded_correction: original_stage_1_preparation_session
+    stage_2_execution: future_fresh_no_source_edit_real_pilot_session
+  V1_B_pilot_execution_surface: immutable_manifest_enforced_one_cell_at_a_time
+  V1_B_pilot_scale: 24_initial_cells_max_8_child_attempts
+  V1_B_whole_pilot_time_semantics: accumulated_active_execution_time_max_7200000ms
+  V1_B_stage_1_focused_audit_required: true_after_candidate_freeze
+  V1_B_planning_charter_amendment_baseline_commit_authorized: consumed
+  V1_B_planning_charter_amendment_baseline_commit: resulting_HEAD_of_this_revision
+  V1_B_formal_goal_contract_created: false
   V1_B_contract_status: not_created
   V1_B_activation_authorized: false
   V1_B_execution_authorized: false
@@ -1007,6 +1030,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
+  - docs/reports/V1_B_INTEGRATED_DEVELOPMENT_PLAN.md
+  - docs/reports/V1_B_PRECONTRACT_READINESS_PAUSE_REPORT.md
   - docs/reports/V1_A_CLOSEOUT.md
   - docs/reports/V1_A_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
@@ -1037,7 +1062,9 @@ required_reading:
 next_checkpoint:
   - V1_version_charter_accepted_and_formalized
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
-  - draft_bounded_V1_B_goal_contract_for_user_review
+  - V1_B_integrated_development_plan_and_bounded_charter_clarification_accepted
+  - create_and_verify_V1_B_planning_charter_amendment_baseline_commit
+  - after_baseline_verification_draft_bounded_V1_B_goal_contract_for_user_review
   - keep_V1_B_inactive_until_separate_contract_acceptance_and_activation
   - no_credentials_network_or_real_model_calls_are_currently_authorized
 
