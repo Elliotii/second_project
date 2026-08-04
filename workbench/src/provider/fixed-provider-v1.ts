@@ -70,3 +70,105 @@ export function createPublicPiCompositionSeamV1(options: { factory: PublicPiHarn
 	const runtimeIdentity = `v1-fixed-provider-runtime-${++runtimeOrdinal}`;
 	return options.factory.create({ profile: DEEPSEEK_FIXED_PROFILE_V1, request, runtime_identity: runtimeIdentity });
 }
+
+export class FixedProviderBoundaryErrorV1B extends Error {
+	constructor() {
+		super("V1-B fixed provider boundary failed");
+		this.name = "FixedProviderBoundaryErrorV1B";
+	}
+}
+
+export interface OneRunProviderAccessV1B {
+	readonly profile: typeof DEEPSEEK_FIXED_PROFILE_V1;
+	resolveCredential(): Promise<string>;
+	assertOpen(): void;
+	close(): void;
+}
+
+export interface PublicPiRunHandleV1B {
+	close(): Promise<void>;
+}
+
+export interface PublicPiRunFactoryV1B<THandle extends PublicPiRunHandleV1B = PublicPiRunHandleV1B> {
+	create(access: OneRunProviderAccessV1B): THandle;
+}
+
+const RUN_AUTHORITY_BRAND = Symbol("v1b-one-run-authority");
+export class OneRunProviderAuthorityV1B {
+	readonly [RUN_AUTHORITY_BRAND] = true;
+	private state: "available" | "opened" | "closed" = "available";
+	private credential: string | undefined;
+	private readonly authorized: boolean;
+	private readonly resolver?: OpaqueCredentialResolverV1;
+
+	constructor(authorized: boolean, resolver?: OpaqueCredentialResolverV1) {
+		this.authorized = authorized;
+		this.resolver = resolver;
+	}
+
+	open(): OneRunProviderAccessV1B {
+		if (!this.authorized) throw new FixedProviderBoundaryErrorV1B();
+		if (this.state !== "available") throw new FixedProviderBoundaryErrorV1B();
+		this.state = "opened";
+		return {
+			profile: DEEPSEEK_FIXED_PROFILE_V1,
+			resolveCredential: async () => {
+				if (this.state !== "opened" || !this.resolver) throw new FixedProviderBoundaryErrorV1B();
+				if (this.credential !== undefined) return this.credential;
+				try {
+					const value = await this.resolver.resolve();
+					if (typeof value !== "string" || value.length === 0) throw new Error("invalid credential");
+					this.credential = value;
+					return value;
+				} catch {
+					throw new FixedProviderBoundaryErrorV1B();
+				}
+			},
+			assertOpen: () => {
+				if (this.state !== "opened") throw new FixedProviderBoundaryErrorV1B();
+			},
+			close: () => {
+				if (this.state === "closed") return;
+				if (this.state !== "opened") throw new FixedProviderBoundaryErrorV1B();
+				this.credential = undefined;
+				this.state = "closed";
+			},
+		};
+	}
+}
+
+export function createOneRunProviderAuthorityV1B(options: {
+	authorized: boolean;
+	resolver?: OpaqueCredentialResolverV1;
+}): OneRunProviderAuthorityV1B {
+	return new OneRunProviderAuthorityV1B(options.authorized, options.resolver);
+}
+
+export function createPublicPiRunCompositionV1B<THandle extends PublicPiRunHandleV1B>(options: {
+	authority: OneRunProviderAuthorityV1B;
+	factory: PublicPiRunFactoryV1B<THandle>;
+}): THandle {
+	if (!(options.authority instanceof OneRunProviderAuthorityV1B)) throw new FixedProviderBoundaryErrorV1B();
+	const access = options.authority.open();
+	try {
+		return options.factory.create(access);
+	} catch {
+		access.close();
+		throw new FixedProviderBoundaryErrorV1B();
+	}
+}
+
+export function assertKnownUsageV1B(value: {
+	input_tokens: number | "unknown";
+	output_tokens: number | "unknown";
+	cost_usd: number | "unknown";
+}): { tokens: number; cost_usd: number } {
+	if (value.input_tokens === "unknown" || value.output_tokens === "unknown" || value.cost_usd === "unknown") {
+		throw new FixedProviderBoundaryErrorV1B();
+	}
+	if (
+		![value.input_tokens, value.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) ||
+		!Number.isFinite(value.cost_usd) || value.cost_usd < 0
+	) throw new FixedProviderBoundaryErrorV1B();
+	return { tokens: value.input_tokens + value.output_tokens, cost_usd: value.cost_usd };
+}

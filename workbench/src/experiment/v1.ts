@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { AggregationResultV1, ExperimentManifestV1, RunResultV1, StrategyAggregationV1, StrategyIdV1 } from "../contracts/v1-types.ts";
+import type { AggregationResultV1, ExecutionCellV1B, ExecutionManifestV1B, ExperimentManifestV1, RunResultV1, StrategyAggregationV1, StrategyIdV1 } from "../contracts/v1-types.ts";
 import { V1_STRATEGY_IDS } from "../contracts/v1-types.ts";
 import { DEEPSEEK_FIXED_PROFILE_V1 } from "../provider/fixed-provider-v1.ts";
 import { createBoundedToolProfile } from "../pi/tool-profile.ts";
@@ -10,6 +10,7 @@ import { loadCandidateTaskPackV1 } from "./task-pack-v1.ts";
 
 const PI_COMMIT = "027a5847901b5dde30270abaa1041046cd2b4b55" as const;
 const WORKBENCH_COMMIT = "c9f91057db60cf61dab0d3aa305564d498c89cd6";
+const ACCEPTED_V1A_WORKBENCH_TREE_DIGEST = "aab587b0c7371964ad89ecfc9304720757d7243dc457b904d5e91956eb0bc5d2";
 const RUNTIME_DIGEST_DOMAIN = [
 	"workbench/src/completion/controller-v1.ts", "workbench/src/contracts/v1-types.ts", "workbench/src/experiment/task-pack-v1.ts",
 	"workbench/src/experiment/v1.ts", "workbench/src/pi/pi-adapter-v1.ts", "workbench/src/pi/tool-profile.ts",
@@ -26,13 +27,12 @@ export function deriveManifestBindingsV1(projectRoot: string): ManifestBindingsV
 	const profile = createBoundedToolProfile(resolve(projectRoot, tasks[0]!.workspace_source_ref), tasks[0]!);
 	const toolProjection = profile.tools.map((tool) => ({ name: tool.name, description: tool.description, parameters: tool.parameters }));
 	const verifier_digests = Object.fromEntries(tasks.map((task) => [task.external_verifier_id, task.external_verifier_sha256]));
-	const workbenchDomain = RUNTIME_DIGEST_DOMAIN.map((path) => ({ path, sha256: fileSha256(resolve(projectRoot, path)) }));
 	return { task_pack_digest: digestObject({ domain: "V1 task specs in task-id order", task_digests }), task_digests, workspace_digests,
 		skill_digest: fileSha256(resolve(projectRoot, "fixtures/skills/v1/reliability-completion/SKILL.md")),
 		strategy_digests: Object.fromEntries(V1_STRATEGY_IDS.map((id) => [id, fileSha256(resolve(projectRoot, STRATEGY_PATHS[id]))])) as Record<StrategyIdV1, string>,
 		model_profile_id: "deepseek_fixed_v1", model_profile_digest: digestObject(DEEPSEEK_FIXED_PROFILE_V1), base_prompt_id: "project_minimal_base_v1", base_prompt_digest: SYSTEM_PROMPT_SHA256,
 		tool_profile_id: "bounded_tools_v1", tool_profile_digest: digestObject(toolProjection), verifier_digests, workbench_commit: WORKBENCH_COMMIT,
-		workbench_tree_digest: digestObject({ domain: RUNTIME_DIGEST_DOMAIN, files: workbenchDomain }), pi_commit: PI_COMMIT };
+		workbench_tree_digest: ACCEPTED_V1A_WORKBENCH_TREE_DIGEST, pi_commit: PI_COMMIT };
 }
 
 export function manifestIdentityV1(manifest: ExperimentManifestV1): string { return digestObject({ ...manifest, manifest_id: "" }); }
@@ -117,3 +117,97 @@ export function aggregateExperimentV1(manifest: ExperimentManifestV1, runs: read
 }
 
 export const V1_MANIFEST_DIGEST_DOMAINS = Object.freeze({ task_pack_digest: "stable JSON of task_id -> TaskSpec digest", task_digests: "stable JSON of each complete TaskSpec", workspace_digests: "link-free workspace tree inventories", skill_digest: "exact SKILL.md bytes", strategy_digests: "exact Strategy JSON bytes", model_profile_digest: "stable JSON of frozen provider profile", base_prompt_digest: "exact base prompt bytes", tool_profile_digest: "actual model-visible tool name/description/schema projection", verifier_digests: "exact external verifier bytes", workbench_tree_digest: `stable inventory of ${RUNTIME_DIGEST_DOMAIN.join(", ")}` });
+
+const V1B_SOURCE_DOMAIN = [
+	"workbench/src/provider/fixed-provider-v1.ts",
+	"workbench/src/pi/pi-run-handle-v1.ts",
+	"workbench/src/run-v1.ts",
+	"workbench/src/pilot-v1.ts",
+	"workbench/src/inspect-v1.ts",
+	"workbench/src/product-surface-v1.ts",
+	"workbench/src/cli.ts",
+	"workbench/src/contracts/v1-types.ts",
+	"workbench/src/experiment/v1.ts",
+	"workbench/src/pi/pi-adapter-v1.ts",
+	"workbench/src/experiment/task-pack-v1.ts",
+	"workbench/src/skill/runtime-v1.ts",
+	"workbench/src/pi/tool-profile.ts",
+	"workbench/src/verifier/runner.ts",
+	"workbench/src/prompts/base.ts",
+	"workbench/package.json",
+	"workbench/README.md",
+] as const;
+
+const V1B_BLOCKS = [
+	["v1-parse-duration", 1, ["A", "B", "C"]],
+	["v1-bounded-index", 1, ["A", "C", "B"]],
+	["v1-state-transition", 1, ["B", "A", "C"]],
+	["v1-stable-format", 1, ["B", "C", "A"]],
+	["v1-parse-duration", 2, ["C", "A", "B"]],
+	["v1-bounded-index", 2, ["C", "B", "A"]],
+	["v1-state-transition", 2, ["A", "B", "C"]],
+	["v1-stable-format", 2, ["B", "C", "A"]],
+] as const;
+
+const ARM_STRATEGY = Object.freeze({ A: "baseline", B: "skill_only", C: "skill_plus_runtime_control" } as const);
+
+export function v1bManifestIdentity(manifest: ExecutionManifestV1B): string {
+	return digestObject({ ...manifest, manifest_id: "" });
+}
+
+export function v1bSourceDigest(projectRoot: string): string {
+	return digestObject(V1B_SOURCE_DOMAIN.map((path) => ({ path, sha256: fileSha256(resolve(projectRoot, path)) })));
+}
+
+function v1bCells(): ExecutionCellV1B[] {
+	const cells: ExecutionCellV1B[] = [];
+	for (const [blockIndex, [task, repetition, arms]] of V1B_BLOCKS.entries()) {
+		for (const [slotIndex, arm] of arms.entries()) {
+			const order = cells.length + 1;
+			cells.push({ cell_id: `v1b-cell-${String(order).padStart(2, "0")}`, planned_run_id: `v1b-run-${String(order).padStart(2, "0")}-${task.slice(3)}-r${repetition}-${arm.toLowerCase()}`, task_id: task, repetition, order_slot: order, block: blockIndex + 1, block_slot: (slotIndex + 1) as 1 | 2 | 3, arm, strategy_id: ARM_STRATEGY[arm] });
+		}
+	}
+	return cells;
+}
+
+export function buildExecutionManifestV1B(projectRoot: string, options: {
+	executionMode?: "stage1_zero_call" | "stage2_real";
+	executionBaselineCommit?: string;
+	realExecutionAuthorized?: boolean;
+} = {}): ExecutionManifestV1B {
+	const bindings = deriveManifestBindingsV1(projectRoot);
+	const initial = { provider_requests: 8, tool_calls: 12, tokens: 65_536, wall_time_ms: 300_000, cost_usd: 0.10, verifier_runs: 1, child_attempts: 0 };
+	const manifest: ExecutionManifestV1B = {
+		schema_version: "v1b-execution-manifest-v1", manifest_id: "", experiment_id: "v1-b-bounded-pilot", experiment_revision: 1,
+		execution_mode: options.executionMode ?? "stage1_zero_call", created_at: "2026-08-04T00:00:00.000Z",
+		control_baseline_commit: "de75ca7a4d5376713f01ca475bc5ad7637c70443", control_baseline_tree: "e930e1d0885b52bf911ed78912786723f321f06e",
+		execution_baseline_commit: options.executionBaselineCommit ?? "de75ca7a4d5376713f01ca475bc5ad7637c70443", workbench_source_digest: v1bSourceDigest(projectRoot),
+		pi_commit: PI_COMMIT, pi_version: "0.82.1", protocol_id: "v1_skill_runtime_comparison", credential_profile_name: "DEEPSEEK_API_KEY",
+		real_execution_authorized: options.realExecutionAuthorized ?? false,
+		bindings: { task_pack_digest: bindings.task_pack_digest, task_digests: bindings.task_digests, workspace_digests: bindings.workspace_digests, skill_digest: bindings.skill_digest, strategy_digests: bindings.strategy_digests, model_profile_digest: bindings.model_profile_digest, base_prompt_digest: bindings.base_prompt_digest, tool_profile_digest: bindings.tool_profile_digest, verifier_digests: bindings.verifier_digests },
+		budgets: {
+			initial_attempt: initial,
+			arm_a_or_b_run: { ...initial, verifier_runs: 1 },
+			arm_c_run: { provider_requests: 16, tool_calls: 24, tokens: 131_072, wall_time_ms: 900_000, cost_usd: 0.20, verifier_runs: 2, child_attempts: 1 },
+			pilot: { provider_requests: 256, tool_calls: 384, tokens: 32 * 65_536, wall_time_ms: 7_200_000, cost_usd: 2.00, verifier_runs: 32, child_attempts: 8 },
+		},
+		policy: { alternate_model_fallback: false, retry_same_run: false, automatic_replacement: false, invalid_ratio_pause_threshold: 0.25, repeated_invalid_cause_pause_count: 2, failure_taxonomy: ["task_pass", "task_fail", "treatment_guardrail_failure", "infrastructure_invalid", "evidence_invalid", "global_budget_stop", "paused_unclassified"] },
+		cells: v1bCells(),
+	};
+	manifest.manifest_id = v1bManifestIdentity(manifest);
+	return manifest;
+}
+
+export function validateExecutionManifestV1B(manifest: ExecutionManifestV1B, projectRoot: string, options: { requireCurrentSource?: boolean } = {}): void {
+	if (manifest.schema_version !== "v1b-execution-manifest-v1" || manifest.experiment_id !== "v1-b-bounded-pilot" || manifest.experiment_revision !== 1 || manifest.pi_commit !== PI_COMMIT || manifest.pi_version !== "0.82.1") throw new Error("V1-B Manifest metadata invalid");
+	if (manifest.manifest_id !== v1bManifestIdentity(manifest)) throw new Error("V1-B Manifest identity drift");
+	if (manifest.cells.length !== 24 || stableJson(manifest.cells) !== stableJson(v1bCells())) throw new Error("V1-B Manifest frozen 24-cell order drift");
+	if (new Set(manifest.cells.map((cell) => cell.cell_id)).size !== 24 || new Set(manifest.cells.map((cell) => cell.planned_run_id)).size !== 24) throw new Error("V1-B Manifest duplicate membership");
+	if (manifest.real_execution_authorized !== (manifest.execution_mode === "stage2_real")) throw new Error("V1-B Manifest execution authority mismatch");
+	if (manifest.policy.alternate_model_fallback || manifest.policy.retry_same_run || manifest.policy.automatic_replacement) throw new Error("V1-B Manifest forbidden retry/fallback policy");
+	if (options.requireCurrentSource !== false && manifest.workbench_source_digest !== v1bSourceDigest(projectRoot)) throw new Error("V1-B Manifest source drift");
+	const expected = buildExecutionManifestV1B(projectRoot, { executionMode: manifest.execution_mode, executionBaselineCommit: manifest.execution_baseline_commit, realExecutionAuthorized: manifest.real_execution_authorized });
+	if (stableJson(manifest) !== stableJson(expected)) throw new Error("V1-B complete frozen Manifest binding drift");
+}
+
+export const V1B_SOURCE_DIGEST_DOMAIN = V1B_SOURCE_DOMAIN;

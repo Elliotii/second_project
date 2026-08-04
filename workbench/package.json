@@ -12,7 +12,10 @@
     "v0b:deterministic": "node scripts/run-v0b-deterministic-suite.mjs",
     "v0c:deterministic": "node scripts/run-v0c-deterministic-suite.mjs",
     "v1a:test": "node --test tests/v1a-deterministic.test.ts",
-    "v1a:deterministic": "node scripts/run-v1a-deterministic-suite.mjs"
+    "v1a:deterministic": "node scripts/run-v1a-deterministic-suite.mjs",
+    "v1b:test": "node --test tests/v1b-stage1.test.ts tests/v1b-cli.test.ts",
+    "v1b:preflight": "node src/cli.ts v1b preflight",
+    "v1b:run-next": "node src/cli.ts v1b run-next"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",

@@ -5,6 +5,7 @@ import { inspectRunV0C } from "./inspect-v0c.ts";
 import { dryRunV0A, executeV0ARun } from "./run.ts";
 import { dryRunV0B, executeV0BRun } from "./run-v0b.ts";
 import { runV0CProductSurface } from "./product-surface-v0c.ts";
+import { aggregateV1B, inspectV1B, preflightV1B, runNextV1B, V1B_STAGE1_MANIFEST_PATH } from "./product-surface-v1.ts";
 import {
 	V0C_OBSERVE_STRATEGY_PATH,
 	V0C_REAL_STRATEGY_PATH,
@@ -49,8 +50,25 @@ function parseArguments(argv: string[]): CliArguments {
 }
 
 async function main(): Promise<void> {
-	const args = parseArguments(process.argv.slice(2));
 	const projectRoot = resolve(import.meta.dirname, "../..");
+	const raw = process.argv.slice(2);
+	if (raw[0] === "v1b") {
+		const action = raw[1];
+		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };
+		const pilotRoot = resolve(projectRoot, value("--pilot-root") ?? ".runs/v1-b/stage1/pilot-cli");
+		const manifestPath = value("--manifest") ?? V1B_STAGE1_MANIFEST_PATH;
+		if (action === "preflight") process.stdout.write(`${JSON.stringify(preflightV1B({ projectRoot, manifestPath, pilotRoot }))}\n`);
+		else if (action === "run-next") {
+			const result = await runNextV1B({ projectRoot, manifestPath, pilotRoot });
+			process.stdout.write(`${JSON.stringify(result ? { run_id: result.run_result.run_id, verifier_status: result.run_result.verifier_status, run_root: result.run_root, real_call_counters: result.real_call_counters } : { status: "complete" })}\n`);
+		} else if (action === "inspect") {
+			const plannedRunId = value("--run"); if (!plannedRunId) throw new Error("v1b inspect requires --run <planned-run-id>");
+			const result = inspectV1B({ projectRoot, pilotRoot, plannedRunId }); process.stdout.write(`${JSON.stringify(result)}\n`); if (!result.integrity_valid) process.exitCode = 1;
+		} else if (action === "aggregate") process.stdout.write(`${JSON.stringify(aggregateV1B({ projectRoot, pilotRoot }))}\n`);
+		else throw new Error("usage: cli.ts v1b <preflight|run-next|inspect|aggregate> [--manifest <path>] [--pilot-root <path>] [--run <planned-run-id>]");
+		return;
+	}
+	const args = parseArguments(raw);
 	if (args.command === "inspect") {
 		const result = existsSync(resolve(projectRoot, ".runs/v0-c/runs", args.runId))
 			? await inspectRunV0C(projectRoot, args.runId)

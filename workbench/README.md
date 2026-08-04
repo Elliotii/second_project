@@ -135,3 +135,42 @@ same orchestration with injected non-secret Faux dependencies only.
 
 V0 is now closed. No additional real-model Run, V1 work, or later-version
 implementation is authorized by this README.
+
+## V1-B Stage 1 preparation surface
+
+V1-B Stage 1 adds a separately versioned one-Run authority and a tracked
+public-Pi composition without changing V1-A's accepted one-request seam. The
+Stage 1 surface is strictly zero-call: it uses the public emitted Faux route,
+never resolves a real credential, never accesses the network, and records all
+real credential/network/Provider/model counters as zero.
+
+The execution Manifest preallocates the frozen 24 cells. `run-next` derives the
+only legal next cell from the immutable Manifest plus the append-only ledger;
+it cannot select, retry, replace, or overwrite a cell. Each cell owns a copied
+Workspace, one long-lived Pi Session/handle, one initial Attempt and—only for
+an eligible failed C arm with the complete reserve—one same-Session child.
+Every Provider request, Tool call, Verifier and child allocation is reserved
+against Attempt, Run and Pilot evidence before dispatch/allocation. Unknown or
+malformed usage fails closed.
+
+The independent Inspector reloads Manifest, ledger, terminal marker,
+RunResult, dispatch evidence and ArtifactRefs. Aggregate recomputes counts and
+checks complete B/C initial-dispatch equality plus the A/B Skill-only delta; it
+does not trust an execution summary or mutate evidence.
+
+Stage 1 commands (all default to ignored `.runs/v1-b/stage1/pilot-cli`):
+
+```powershell
+node workbench/src/cli.ts v1b preflight
+node workbench/src/cli.ts v1b run-next
+node workbench/src/cli.ts v1b inspect --run <planned-run-id>
+node workbench/src/cli.ts v1b aggregate
+node workbench/../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p workbench/tsconfig.json
+node --test workbench/tests/v1b-stage1.test.ts workbench/tests/v1b-cli.test.ts
+```
+
+This preparation surface does not authorize Stage 2, credential access,
+network traffic, external Provider/model calls, source repair during
+execution, Audit acceptance, or a Git commit. The real execution Manifest must
+be rebound by the Main Session to a reviewed Candidate/Execution Baseline
+before any separately authorized Stage 2 Session may use it.

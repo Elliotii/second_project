@@ -3,6 +3,173 @@ import type { BoundedTaskPolicy } from "../types.ts";
 export const V1_STRATEGY_IDS = ["baseline", "skill_only", "skill_plus_runtime_control"] as const;
 export type StrategyIdV1 = (typeof V1_STRATEGY_IDS)[number];
 
+export const V1B_ARM_IDS = ["A", "B", "C"] as const;
+export type ArmIdV1B = (typeof V1B_ARM_IDS)[number];
+
+export interface BudgetCapsV1B {
+	provider_requests: number;
+	tool_calls: number;
+	tokens: number;
+	wall_time_ms: number;
+	cost_usd: number;
+	verifier_runs: number;
+	child_attempts: number;
+}
+
+export interface BudgetUsageV1B {
+	provider_requests: number;
+	tool_calls: number;
+	tokens: number;
+	active_execution_time_ms: number;
+	cost_usd: number;
+	verifier_runs: number;
+	child_attempts: number;
+}
+
+export interface ExecutionCellV1B {
+	cell_id: string;
+	planned_run_id: string;
+	task_id: string;
+	repetition: 1 | 2;
+	order_slot: number;
+	block: number;
+	block_slot: 1 | 2 | 3;
+	arm: ArmIdV1B;
+	strategy_id: StrategyIdV1;
+}
+
+export interface ExecutionManifestV1B {
+	schema_version: "v1b-execution-manifest-v1";
+	manifest_id: string;
+	experiment_id: "v1-b-bounded-pilot";
+	experiment_revision: 1;
+	execution_mode: "stage1_zero_call" | "stage2_real";
+	created_at: string;
+	control_baseline_commit: "de75ca7a4d5376713f01ca475bc5ad7637c70443";
+	control_baseline_tree: "e930e1d0885b52bf911ed78912786723f321f06e";
+	execution_baseline_commit: string;
+	workbench_source_digest: string;
+	pi_commit: "027a5847901b5dde30270abaa1041046cd2b4b55";
+	pi_version: "0.82.1";
+	protocol_id: "v1_skill_runtime_comparison";
+	credential_profile_name: "DEEPSEEK_API_KEY";
+	real_execution_authorized: boolean;
+	bindings: {
+		task_pack_digest: string;
+		task_digests: Record<string, string>;
+		workspace_digests: Record<string, string>;
+		skill_digest: string;
+		strategy_digests: Record<StrategyIdV1, string>;
+		model_profile_digest: string;
+		base_prompt_digest: string;
+		tool_profile_digest: string;
+		verifier_digests: Record<string, string>;
+	};
+	budgets: {
+		initial_attempt: BudgetCapsV1B;
+		arm_a_or_b_run: BudgetCapsV1B;
+		arm_c_run: BudgetCapsV1B;
+		pilot: BudgetCapsV1B;
+	};
+	policy: {
+		alternate_model_fallback: false;
+		retry_same_run: false;
+		automatic_replacement: false;
+		invalid_ratio_pause_threshold: 0.25;
+		repeated_invalid_cause_pause_count: 2;
+		failure_taxonomy: readonly [
+			"task_pass", "task_fail", "treatment_guardrail_failure", "infrastructure_invalid",
+			"evidence_invalid", "global_budget_stop", "paused_unclassified",
+		];
+	};
+	cells: ExecutionCellV1B[];
+}
+
+export type LedgerStateV1B = "planned" | "started" | "terminal" | "invalid" | "paused";
+export interface LedgerEntryV1B {
+	schema_version: 1;
+	seq: number;
+	timestamp: string;
+	manifest_id: string;
+	cell_id: string;
+	planned_run_id: string;
+	state: LedgerStateV1B;
+	cause_id: string | null;
+	run_result_ref: string | null;
+}
+
+export interface AttemptEvidenceV1B {
+	attempt_id: string;
+	ordinal: 1 | 2;
+	parent_attempt_id: string | null;
+	trigger: "initial" | "verification_recovery";
+	session_id: string;
+	workspace_id: string;
+	settled: true;
+	provider_requests: number;
+	tool_calls: number;
+	tokens: number;
+	cost_usd: number;
+	active_execution_time_ms: number;
+	verifier_status: VerifierStatusV1;
+}
+
+export type FailureClassV1B =
+	| "task_pass"
+	| "task_fail"
+	| "treatment_guardrail_failure"
+	| "infrastructure_invalid"
+	| "evidence_invalid"
+	| "global_budget_stop"
+	| "paused_unclassified";
+
+export interface BudgetReservationEvidenceV1B {
+	reservation_id: string;
+	scope_id: string;
+	level: "attempt" | "run" | "pilot";
+	kind: "provider_request" | "tool_call" | "verifier" | "child" | "attempt_time";
+	before: BudgetUsageV1B;
+	reserved: BudgetUsageV1B;
+	actual: BudgetUsageV1B;
+	after: BudgetUsageV1B;
+	cap: BudgetCapsV1B;
+}
+
+export interface InitialDispatchEvidenceV1B {
+	model: unknown;
+	context: { systemPrompt: string | null; messages: unknown[]; tools: unknown[] };
+	options: unknown;
+	provider_payload: unknown;
+	payload_sha256: string;
+}
+
+export interface TerminalCellEvidenceV1B {
+	schema_version: 1;
+	manifest_id: string;
+	cell: ExecutionCellV1B;
+	run_id: string;
+	session_id: string;
+	workspace_id: string;
+	disposition: "terminal" | "invalid" | "paused";
+	failure_class: FailureClassV1B;
+	cause_id: string | null;
+	invalid_attribution: "none" | "treatment" | "infrastructure" | "evidence";
+	exclusion_preauthorized: boolean;
+	initial_dispatch: InitialDispatchEvidenceV1B;
+	attempts: AttemptEvidenceV1B[];
+	initial_verifier_status: VerifierStatusV1;
+	final_verifier_status: VerifierStatusV1;
+	recovery_eligible: boolean;
+	recovery_started: boolean;
+	budget_usage: BudgetUsageV1B;
+	reservations: BudgetReservationEvidenceV1B[];
+	protected_paths_unchanged: boolean;
+	secret_scan: { passed: true; match_count: 0; reasoning_payloads: 0 };
+	real_call_counters: { credential_reads: number; network_calls: number; provider_calls: number; model_calls: number };
+	artifact_refs: Array<{ path: string; sha256: string; size_bytes: number }>;
+	created_at: string;
+}
+
 export interface SkillRefV1 {
 	schema_version: 1;
 	skill_id: "reliability-completion-v1";
