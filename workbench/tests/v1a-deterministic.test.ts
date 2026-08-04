@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { cpSync, linkSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { extname, resolve } from "node:path";
 import test from "node:test";
 import type { Skill } from "@earendil-works/pi-agent-core";
 import { decideV1Intervention } from "../src/completion/controller-v1.ts";
@@ -8,8 +9,8 @@ import type { ExperimentManifestV1, RunResultV1, StrategySpecV1, TaskSpecV1, Ver
 import { validateStrategySpecV1 } from "../src/contracts/v1-types.ts";
 import { aggregateExperimentV1, buildDeterministicManifestV1, manifestIdentityV1, validateExperimentManifestV1, V1_MANIFEST_DIGEST_DOMAINS } from "../src/experiment/v1.ts";
 import { assertTaskWorkspaceBoundaryV1, calibrateTaskPackV1, loadCandidateTaskPackV1, verifierRejectsNonsolutionV1 } from "../src/experiment/task-pack-v1.ts";
-import { payloadDeltaProofV1, runTreatmentProbeV1 } from "../src/pi/pi-adapter-v1.ts";
-import { DEEPSEEK_FIXED_PROFILE_V1, FIXED_PROVIDER_ENVELOPE_V1, createOneUseProviderAuthorityV1, createPublicPiCompositionSeamV1, dryRunFixedProviderV1, projectFixedProviderUsageV1 } from "../src/provider/fixed-provider-v1.ts";
+import { FROZEN_FAUX_REQUEST_DESCRIPTOR_V1, payloadDeltaProofV1, runTreatmentProbeV1, serializeInitialRequestV1 } from "../src/pi/pi-adapter-v1.ts";
+import { DEEPSEEK_FIXED_PROFILE_V1, FIXED_PROVIDER_ENVELOPE_V1, FixedProviderRequestErrorV1, createOneUseProviderAuthorityV1, createPublicPiCompositionSeamV1, dryRunFixedProviderV1, projectFixedProviderUsageV1 } from "../src/provider/fixed-provider-v1.ts";
 import { assertNoSkillCollisionV1, expectedSkillIdentityV1, loadExactOneSkillV1 } from "../src/skill/runtime-v1.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 
@@ -118,6 +119,67 @@ test("V1-A fixed provider gate rejects denied/missing/malformed/consumed authori
 	assert.throws(() => createPublicPiCompositionSeamV1({ authority: {} as never, factory }), /Malformed/); assert.deepEqual([reads, calls, factories], [0, 0, 0]);
 	const allowed = createOneUseProviderAuthorityV1({ authorized: true, resolver, transport }); const handle = createPublicPiCompositionSeamV1({ authority: allowed, factory }); assert.equal(await handle.prompt("x"), "ok"); await handle.close(); assert.throws(() => createPublicPiCompositionSeamV1({ authority: allowed, factory }), /reserved|consumed/); assert.deepEqual([reads, calls, factories], [1, 1, 1]);
 	assert.deepEqual(projectFixedProviderUsageV1({ request_count: 1, input_tokens: 2, output_tokens: 3, cost_usd: 0.01 }).credential, []);
+});
+
+test("V1A-POST-AUDIT-F-001 fixture checkout bytes are LF-stable and accepted V0 fixture blobs are unchanged", () => {
+	const fixturePaths = execFileSync("git", ["ls-files", "fixtures"], { cwd: PROJECT_ROOT, encoding: "utf8" }).trim().split(/\r?\n/).filter(Boolean);
+	const permittedTextExtensions = new Set([".json", ".md", ".mjs", ".ts", ".txt"]);
+	assert.ok(fixturePaths.length > 0);
+	for (const path of fixturePaths) {
+		assert.ok(permittedTextExtensions.has(extname(path)), `unexpected fixture extension: ${path}`);
+		const attributes = execFileSync("git", ["check-attr", "text", "eol", "--", path], { cwd: PROJECT_ROOT, encoding: "utf8" });
+		assert.match(attributes, /text: set/); assert.match(attributes, /eol: lf/);
+		const bytes = readFileSync(resolve(PROJECT_ROOT, path)); assert.equal(bytes.includes(Buffer.from("\r\n")), false, `CRLF bytes: ${path}`);
+		const raw = execFileSync("git", ["hash-object", "--stdin"], { cwd: PROJECT_ROOT, input: bytes, encoding: "utf8" }).trim();
+		const filtered = execFileSync("git", ["hash-object", "--stdin", `--path=${path}`, "--filters"], { cwd: PROJECT_ROOT, input: bytes, encoding: "utf8" }).trim();
+		assert.equal(filtered, raw, `prospective clean bytes drift: ${path}`);
+		if (!path.includes("/v1/")) assert.deepEqual(bytes, execFileSync("git", ["show", `HEAD:${path}`], { cwd: PROJECT_ROOT }), `accepted V0 fixture blob changed: ${path}`);
+	}
+});
+
+test("V1A-POST-AUDIT-F-002 actual callback model and request options bind B/C equality and detect semantic drift", async () => {
+	const { skill, wrapper } = await loadExpected(); const task = loadCandidateTaskPackV1(PROJECT_ROOT)[0]!; const prompt = readFileSync(resolve(PROJECT_ROOT, task.instruction_ref), "utf8"); const workspace = resolve(PROJECT_ROOT, task.workspace_source_ref);
+	const [a, b, c] = await Promise.all(["baseline", "skill_only", "skill_plus_runtime_control"].map((strategyId) => runTreatmentProbeV1({ projectRoot: PROJECT_ROOT, workspaceRoot: workspace, strategyId: strategyId as "baseline" | "skill_only" | "skill_plus_runtime_control", taskPrompt: prompt, taskSpec: task, skill })));
+	for (const probe of [a!, b!, c!]) assert.deepEqual({ api: probe.initial_model_projection.model.api, provider: probe.initial_model_projection.model.provider, model_id: probe.initial_model_projection.model.id }, FROZEN_FAUX_REQUEST_DESCRIPTOR_V1);
+	assert.deepEqual(b!.initial_model_projection.model, c!.initial_model_projection.model); assert.deepEqual(b!.initial_model_projection.options, c!.initial_model_projection.options);
+	for (const mutate of [
+		(value: typeof c) => { value!.initial_model_projection.model.api = "drift-api"; },
+		(value: typeof c) => { value!.initial_model_projection.model.provider = "drift-provider"; },
+		(value: typeof c) => { value!.initial_model_projection.model.id = "drift-model"; },
+		(value: typeof c) => { value!.initial_model_projection.options.maxTokens = 1; },
+	]) {
+		const drift = structuredClone(c!); mutate(drift); drift.initial_model_payload = serializeInitialRequestV1(drift.initial_model_projection);
+		const proof = payloadDeltaProofV1(a!, b!, drift, wrapper, prompt); assert.equal(proof.bc_byte_equal, false); assert.equal(proof.common_context_equal, false);
+	}
+});
+
+test("V1A-POST-AUDIT-F-003 resolver and transport failures expose only a stable secret-free public error", async () => {
+	const marker = "FAKE_SENSITIVE_MARKER_V1A_F003"; const publicFactory = { create: ({ request }: { request: (prompt: string) => Promise<string> }) => ({ prompt: async (prompt: string) => await request(prompt), close: async () => undefined }) };
+	async function captureFailure(handle: { prompt(text: string): Promise<string> }): Promise<Error> { try { await handle.prompt("x"); assert.fail("expected public request failure"); } catch (error) { return error as Error; } }
+	let resolverReads = 0, transportCalls = 0;
+	const resolverFailure = createPublicPiCompositionSeamV1({ factory: publicFactory, authority: createOneUseProviderAuthorityV1({ authorized: true, resolver: { resolve: async () => { resolverReads++; throw new Error(marker); } }, transport: { request: async () => { transportCalls++; return { text: "unreachable" }; } } }) });
+	const first = await captureFailure(resolverFailure); assert.ok(first instanceof FixedProviderRequestErrorV1); assert.equal(first.message, "V1 fixed provider request failed"); assert.doesNotMatch(String(first), new RegExp(marker)); assert.equal(Object.hasOwn(first, "cause"), false); assert.deepEqual([resolverReads, transportCalls], [1, 0]);
+	const transportFailure = createPublicPiCompositionSeamV1({ factory: publicFactory, authority: createOneUseProviderAuthorityV1({ authorized: true, resolver: { resolve: async () => { resolverReads++; return "opaque-test-credential"; } }, transport: { request: async ({ credential }) => { transportCalls++; throw new Error(`${marker}:${credential}`); } } }) });
+	const second = await captureFailure(transportFailure); assert.ok(second instanceof FixedProviderRequestErrorV1); assert.equal(second.message, "V1 fixed provider request failed"); assert.doesNotMatch(String(second), new RegExp(marker)); assert.doesNotMatch(JSON.stringify({ name: second.name, message: second.message, cause: (second as Error & { cause?: unknown }).cause }), new RegExp(marker)); assert.deepEqual([resolverReads, transportCalls], [2, 1]);
+});
+
+test("V1A-POST-AUDIT-F-004 usage projection validates numeric shape and the fixed envelope", () => {
+	for (const valid of [
+		{ request_count: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0 },
+		{ request_count: 16, input_tokens: 65_536, output_tokens: 65_536, cost_usd: 0.20 },
+		{ request_count: 1, input_tokens: 2, output_tokens: 3, cost_usd: 0.01 },
+	]) assert.deepEqual(projectFixedProviderUsageV1(valid), { ...valid, credential: [] });
+	for (const invalid of [
+		{ request_count: Number.NaN, input_tokens: 0, output_tokens: 0, cost_usd: 0 },
+		{ request_count: 1, input_tokens: Number.POSITIVE_INFINITY, output_tokens: 0, cost_usd: 0 },
+		{ request_count: -1, input_tokens: 0, output_tokens: 0, cost_usd: 0 },
+		{ request_count: 1.5, input_tokens: 0, output_tokens: 0, cost_usd: 0 },
+		{ request_count: 17, input_tokens: 0, output_tokens: 0, cost_usd: 0 },
+		{ request_count: 1, input_tokens: 131_072, output_tokens: 1, cost_usd: 0 },
+		{ request_count: 1, input_tokens: 0, output_tokens: 0, cost_usd: -0.01 },
+		{ request_count: 1, input_tokens: 0, output_tokens: 0, cost_usd: Number.POSITIVE_INFINITY },
+		{ request_count: 1, input_tokens: 0, output_tokens: 0, cost_usd: 0.21 },
+	]) assert.throws(() => projectFixedProviderUsageV1(invalid), /Invalid|envelope exceeded/);
 });
 
 test("V1A-RR-001 complete frozen Manifest rejects membership and coherently rehashed binding drift", () => {

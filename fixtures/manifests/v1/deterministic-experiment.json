@@ -3,7 +3,7 @@
     "experiment_id":  "v1-bounded-pilot",
     "experiment_revision":  1,
     "protocol_id":  "v1_skill_runtime_comparison",
-    "manifest_id":  "cf5c368564a6633b3f225bf12bea8b23d0b7a4877724bcde740915ee22e43f13",
+    "manifest_id":  "c59cc2b780e6b0ca5c01c5f1d63f17fced4cc1d6b345370fd1856a0b11d3126e",
     "created_at":  "2026-08-03T00:00:00.000Z",
     "thinking_level":  "off",
     "task_pack_digest":  "23cee2a5085cc1e541ca258abea8b28b410b934e387b97e1aae13220ccd92d20",
@@ -38,7 +38,7 @@
                              "v1-stable-format-verifier":  "6e5480d7e62b289435ea54f8869078b603aad0780a85aab6982f3d572198c36f"
                          },
     "workbench_commit":  "c9f91057db60cf61dab0d3aa305564d498c89cd6",
-    "workbench_tree_digest":  "eeb15b3130d1ea972aba777d018c16cf5176121a862de180b8ce788eb4ebbda8",
+    "workbench_tree_digest":  "aab587b0c7371964ad89ecfc9304720757d7243dc457b904d5e91956eb0bc5d2",
     "pi_commit":  "027a5847901b5dde30270abaa1041046cd2b4b55",
     "members":  [
                     {

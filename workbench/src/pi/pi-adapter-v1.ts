@@ -1,5 +1,5 @@
 import { AgentHarness, InMemorySessionStorage, Session, type Skill } from "@earendil-works/pi-agent-core";
-import { createModels, fauxAssistantMessage, fauxProvider, type Context } from "@earendil-works/pi-ai";
+import { createModels, fauxAssistantMessage, fauxProvider, type Context, type Model, type StreamOptions } from "@earendil-works/pi-ai";
 import type { StrategyIdV1, TaskSpecV1, VerifierStatusV1 } from "../contracts/v1-types.ts";
 import { digestObject, sha256, stableJson } from "../hash.ts";
 import { SYSTEM_PROMPT } from "../prompts/base.ts";
@@ -8,7 +8,11 @@ import { createBoundedToolProfile } from "./tool-profile.ts";
 import { runMeasurementVerifierV1 } from "../experiment/task-pack-v1.ts";
 
 export const INITIAL_BUDGET_V1 = Object.freeze({ provider_request_limit: 16, tool_call_limit: 24, token_limit: 131_072, wall_time_limit_ms: 900_000, verifier_limit: 1, cost_limit_usd: 0.20 });
-export interface ModelVisibleProjectionV1 { systemPrompt: string | null; messages: unknown[]; tools: unknown[]; }
+export const FROZEN_FAUX_REQUEST_DESCRIPTOR_V1 = Object.freeze({ api: "v1a-faux-api-v1", provider: "v1a-faux-provider-v1", model_id: "v1a-faux-model-v1" });
+export interface ModelDescriptorProjectionV1 { api: string; provider: string; id: string; name: string; baseUrl: string; reasoning: boolean; input: readonly string[]; cost: unknown; contextWindow: number; maxTokens: number; }
+export interface RequestOptionsProjectionV1 { temperature: number | null; maxTokens: number | null; transport: string | null; cacheRetention: string | null; timeoutMs: number | null; websocketConnectTimeoutMs: number | null; maxRetries: number | null; maxRetryDelayMs: number | null; }
+export interface ModelVisibleContextProjectionV1 { systemPrompt: string | null; messages: unknown[]; tools: unknown[]; }
+export interface ModelVisibleProjectionV1 { model: ModelDescriptorProjectionV1; context: ModelVisibleContextProjectionV1; options: RequestOptionsProjectionV1; }
 export interface TreatmentProbeV1 {
 	strategy_id: StrategyIdV1; initial_provider_requests: 1; initial_turns: 1; preload_turns: 0; child_attempts: 0 | 1; verifier_runs: 1 | 2;
 	session_id: string; initial_model_projection: ModelVisibleProjectionV1; initial_model_payload: string; initial_model_payload_sha256: string;
@@ -26,17 +30,28 @@ function reasoningSafe(value: unknown): unknown {
 	}
 	return Object.fromEntries(entries);
 }
-export function projectActualModelContextV1(context: Context): ModelVisibleProjectionV1 {
+export function projectActualModelContextV1(context: Context): ModelVisibleContextProjectionV1 {
 	return { systemPrompt: context.systemPrompt ?? null, messages: reasoningSafe(context.messages) as unknown[], tools: reasoningSafe(context.tools ?? []) as unknown[] };
 }
+function projectActualModelDescriptorV1(model: Model<string>): ModelDescriptorProjectionV1 {
+	return { api: model.api, provider: model.provider, id: model.id, name: model.name, baseUrl: model.baseUrl, reasoning: model.reasoning, input: [...model.input], cost: reasoningSafe(model.cost), contextWindow: model.contextWindow, maxTokens: model.maxTokens };
+}
+function projectRequestOptionsV1(options: StreamOptions | undefined): RequestOptionsProjectionV1 {
+	return { temperature: options?.temperature ?? null, maxTokens: options?.maxTokens ?? null, transport: options?.transport ?? null, cacheRetention: options?.cacheRetention ?? null, timeoutMs: options?.timeoutMs ?? null, websocketConnectTimeoutMs: options?.websocketConnectTimeoutMs ?? null, maxRetries: options?.maxRetries ?? null, maxRetryDelayMs: options?.maxRetryDelayMs ?? null };
+}
+export function projectActualInitialRequestV1(context: Context, options: StreamOptions | undefined, model: Model<string>): ModelVisibleProjectionV1 {
+	return { model: projectActualModelDescriptorV1(model), context: projectActualModelContextV1(context), options: projectRequestOptionsV1(options) };
+}
+export function serializeInitialRequestV1(projection: ModelVisibleProjectionV1): string { return stableJson(projection); }
 function lastUserText(projection: ModelVisibleProjectionV1): string {
-	const messages = projection.messages as Array<{ role?: string; content?: unknown }>; const message = messages.findLast((entry) => entry.role === "user");
+	const messages = projection.context.messages as Array<{ role?: string; content?: unknown }>; const message = messages.findLast((entry) => entry.role === "user");
 	if (!message) throw new Error("model-visible user message absent"); if (typeof message.content === "string") return message.content;
 	if (!Array.isArray(message.content)) throw new Error("unexpected model-visible user content");
 	return message.content.flatMap((part) => part && typeof part === "object" && (part as { type?: string }).type === "text" ? [String((part as { text?: string }).text ?? "")] : []).join("");
 }
 function normalizedInitial(probe: TreatmentProbeV1, expectedText: string): string {
-	const cloned = structuredClone(probe.initial_model_projection); const messages = cloned.messages as Array<{ role?: string; content?: unknown }>;
+	if (serializeInitialRequestV1(probe.initial_model_projection) !== probe.initial_model_payload) throw new Error("captured initial request projection/payload drift");
+	const cloned = structuredClone(probe.initial_model_projection); const messages = cloned.context.messages as Array<{ role?: string; content?: unknown }>;
 	const user = messages.findLast((entry) => entry.role === "user"); if (!user || lastUserText(cloned) !== expectedText) throw new Error("actual model-visible treatment text mismatch");
 	if (typeof user.content === "string") user.content = "<V1_TREATMENT_TEXT>";
 	else user.content = (user.content as Array<Record<string, unknown>>).map((part) => part.type === "text" ? { ...part, text: "<V1_TREATMENT_TEXT>" } : part);
@@ -44,9 +59,9 @@ function normalizedInitial(probe: TreatmentProbeV1, expectedText: string): strin
 }
 
 export async function runTreatmentProbeV1(options: { projectRoot: string; workspaceRoot: string; strategyId: StrategyIdV1; taskPrompt: string; taskSpec: TaskSpecV1; skill: Skill; evidenceValid?: boolean; budgetAvailable?: boolean }): Promise<TreatmentProbeV1> {
-	const models = createModels(); const registration = fauxProvider({ provider: `v1a-faux-${options.strategyId}-${Date.now()}-${Math.random()}` }); models.setProvider(registration.provider);
+	const models = createModels(); const registration = fauxProvider({ api: FROZEN_FAUX_REQUEST_DESCRIPTOR_V1.api, provider: FROZEN_FAUX_REQUEST_DESCRIPTOR_V1.provider, models: [{ id: FROZEN_FAUX_REQUEST_DESCRIPTOR_V1.model_id, name: "V1-A Frozen Faux Model", reasoning: false, input: ["text", "image"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128_000, maxTokens: 16_384 }] }); models.setProvider(registration.provider);
 	const captured: ModelVisibleProjectionV1[] = []; const eventOrder: string[] = []; let phase: "initial" | "child" = "initial"; const settled = { count: 0 };
-	registration.setResponses([(context) => { captured.push(projectActualModelContextV1(context)); return fauxAssistantMessage("initial settled", { timestamp: 1 }); }]);
+	registration.setResponses([(context, requestOptions, _state, requestModel) => { captured.push(projectActualInitialRequestV1(context, requestOptions, requestModel)); return fauxAssistantMessage("initial settled", { timestamp: 1 }); }]);
 	const storage = new InMemorySessionStorage(); const session = new Session(storage); const profile = createBoundedToolProfile(options.workspaceRoot, options.taskSpec);
 	const harness = new AgentHarness({ models, session, model: registration.getModel(), resources: { skills: [options.skill] }, tools: profile.tools, toolContext: profile.context, systemPrompt: SYSTEM_PROMPT, thinkingLevel: "off" });
 	const unsubscribe = harness.subscribe((event) => { if (event.type === "settled") { settled.count++; eventOrder.push(phase === "initial" ? "initial_attempt_settled" : "child_attempt_settled"); } });
@@ -58,13 +73,13 @@ export async function runTreatmentProbeV1(options: { projectRoot: string; worksp
 		let finalStatus = initial.status as VerifierStatusV1; let verifierRuns: 1 | 2 = 1; let childAttempts: 0 | 1 = 0;
 		const decision = decideV1Intervention({ strategy_id: options.strategyId, verifier_status: initial.status as VerifierStatusV1, evidence_valid: options.evidenceValid ?? true, budget_available: options.budgetAvailable ?? true, is_child: false, child_attempt_count: 0 });
 		if (decision.decision === "create_child") {
-			phase = "child"; registration.setResponses([(context) => { captured.push(projectActualModelContextV1(context)); return fauxAssistantMessage("child settled", { timestamp: 2 }); }]);
+			phase = "child"; registration.setResponses([(context, requestOptions, _state, requestModel) => { captured.push(projectActualInitialRequestV1(context, requestOptions, requestModel)); return fauxAssistantMessage("child settled", { timestamp: 2 }); }]);
 			await harness.prompt("External verifier failed. Repair the same task, run its public check, then finish."); await harness.waitForIdle();
 			if (settledCount() !== 2 || providerCallCount() !== 2) throw new Error("C child did not settle exactly once in the same Session");
 			eventOrder.push("measurement_verifier_2_started"); const child = await runMeasurementVerifierV1({ projectRoot: options.projectRoot, workspaceRoot: options.workspaceRoot, task: options.taskSpec, attemptId: `${options.strategyId}-child` }); eventOrder.push("measurement_verifier_2_completed"); finalStatus = child.status as VerifierStatusV1; verifierRuns = 2; childAttempts = 1;
 		}
 		if (registration.getPendingResponseCount() !== 0) throw new Error("Faux response queue did not drain");
-		const initialProjection = captured[0]!; const initialPayload = stableJson(initialProjection); const forbidden = /(?:strategy_id|experiment_id|manifest_id|recovery_budget|policy_id|verifier_source|verifier_host)/i;
+		const initialProjection = captured[0]!; const initialPayload = serializeInitialRequestV1(initialProjection); const forbidden = /(?:strategy_id|experiment_id|manifest_id|recovery_budget|policy_id|verifier_source|verifier_host)/i;
 		if (forbidden.test(initialPayload)) throw new Error("hidden host/verifier identity leaked into actual model context");
 		return { strategy_id: options.strategyId, initial_provider_requests: 1, initial_turns: 1, preload_turns: 0, child_attempts: childAttempts, verifier_runs: verifierRuns,
 			session_id: (await storage.getMetadata()).id, initial_model_projection: initialProjection, initial_model_payload: initialPayload, initial_model_payload_sha256: sha256(initialPayload), host_identity_leak: false,

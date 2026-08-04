@@ -2,9 +2,9 @@
 
 ## Disposition
 
-`PASS_V1_A_MICRO_CORRECTED_CANDIDATE_FOR_MAIN_REREVIEW`
+`CORRECTED_CANDIDATE_PENDING_MAIN_REVIEW_AND_FREEZE`
 
-This is the original dedicated V1-A Implementation Session's bounded micro-correction return after Main Session rereview. It does not accept V1-A, create a Candidate Commit, launch Gate J, or authorize V1-B.
+This report now includes the original dedicated V1-A Implementation Session's post-focused-audit bounded correction. The final post-audit addendum supersedes earlier candidate identities and dispositions without erasing their history. It does not accept V1-A, create a Candidate Commit, pass Gate J, or authorize V1-B.
 
 ## Result
 
@@ -119,6 +119,155 @@ recommended_next_control_action: main_session_lightweight_bounded_rereview_then_
 
 This proposal is advisory. The dedicated Session did not modify `CURRENT_STATE.md`.
 
+## Post-focused-audit bounded-correction addendum
+
+This addendum is authoritative for the correction requested by
+`V1_A_POST_AUDIT_BOUNDED_CORRECTION_PROMPT.md`. It supersedes the earlier
+candidate disposition, identities, test counts and next-action proposal above,
+while preserving the earlier Main-review and Main-rereview correction history.
+
+### Binding input and entry boundary
+
+- **Fact:** the binding focused-audit report SHA-256 is
+  `7815d6ed522aaadedb764e02fe0808316e78b2a70145094fef88237a967e9cf5`.
+- **Fact:** correction started and ended on the audited Candidate commit
+  `e3ff98948b26187b48af61928b56e7cacb550d31`, tree
+  `89cae1c2c3c091ddc2644fac9a2d28c5b1800e03`; the correction itself remains an
+  unstaged working-tree delta pending Main review and separate freeze authority.
+- **Fact:** pinned Pi remains clean at
+  `027a5847901b5dde30270abaa1041046cd2b4b55`; the Git index is empty.
+- **Fact:** `CURRENT_STATE.md` and `AGENTS.md` remain unchanged at SHA-256
+  `986404b025274ba3ecc40529ac68e309e8896b28d78525a19b999bdd2658171e` and
+  `dc46f42eaf6dad3791e273afbf6ae5d6b90ebe2323854c971d9ea870d17d2c61`.
+  The binding audit report, reference sources and Pi were not modified.
+
+### F-001 through F-004 correction matrix
+
+| Finding | Bounded correction | Counterexample and evidence | Result |
+| --- | --- | --- | --- |
+| F-001 | Root `.gitattributes` now applies the exact text-fixture rule `/fixtures/** text eol=lf`. The tracked V1 Manifest was normalized to LF and rebound to corrected runtime identities; no V0 fixture content was edited. | All 50 tracked fixture paths have one of the bounded text extensions, resolve to `text: set` and `eol: lf`, contain zero CRLF sequences, and produce identical raw and prospective-clean Git object IDs. Every non-V1 fixture is byte-equal to its audited Candidate blob; accepted V0 fixture blob delta is 0. | passed in corrected worktree; fresh committed-Candidate checkout re-audit remains pending |
+| F-002 | `runTreatmentProbeV1` now constructs an isolated Faux registry with an explicit frozen `api/provider/model id` descriptor. The real four-argument response callback captures the actual request model and a stable projection of context plus request options. Signal, callback, secret, header and random session fields are not serialized. | B and C complete serialized initial requests are byte-equal. Negative mutations of API, provider, model id and `maxTokens` each break B/C equality and common-context proof. Existing A/B Skill-wrapper-only delta, actual Measurement Verifier ordering and C-only bounded child behavior remain green. | passed |
+| F-003 | Resolver and transport failures are projected to `FixedProviderRequestErrorV1` with the fixed message `V1 fixed provider request failed`; no internal message or `cause` crosses the public handle. Authority is still consumed before resolver/transport work. | Resolver-marker and transport-marker/credential counterexamples both reject through the public handle without exposing the fake marker. Resolver failure makes zero transport calls. | passed |
+| F-004 | `projectFixedProviderUsageV1` now rejects non-finite, fractional or negative counters, non-finite/negative cost, and request/token/cost envelope overflow before projecting credential-free evidence. | Zero, exact boundary and normal values pass; NaN, infinity, negative, fractional, request 17, combined tokens 131073 and cost 0.21 reject. | passed |
+
+### Exact post-audit correction delta
+
+Only the following source/fixture/test surfaces were changed:
+
+- `.gitattributes` — the single exact-byte fixture LF rule;
+- `fixtures/manifests/v1/deterministic-experiment.json` — LF normalization and
+  corrected `workbench_tree_digest` / `manifest_id` rebind only;
+- `workbench/src/pi/pi-adapter-v1.ts` — deterministic actual request descriptor,
+  callback capture and serialization;
+- `workbench/src/provider/fixed-provider-v1.ts` — secret-free public error
+  projection and bounded usage validation;
+- `workbench/tests/v1a-deterministic.test.ts` — four audit counterexamples;
+- `workbench/scripts/write-v1a-main-rereview-micro-evidence.mjs` — repurposed
+  existing V1 evidence writer for the append-only post-audit evidence set.
+
+No Task, Skill, Verifier, Strategy, V0 fixture, V0 schema, Pi, dependency,
+control-state or audit-report content changed.
+
+### Authoritative verification record
+
+Machine command records under
+`.runs/v1-a/corrections/focused-audit-001/final-evidence/command-*.json` include
+the exact executable/arguments, cwd, exit code, count, stdout/stderr and duration.
+
+| Command | Result | Duration |
+| --- | --- | ---: |
+| `node --test --test-name-pattern=V1A-POST-AUDIT-F tests/v1a-deterministic.test.ts` | 4/4, exit 0 | 7801 ms |
+| `node --test tests/v1a-deterministic.test.ts` | 18/18, exit 0 | 16087 ms |
+| `node scripts/run-v1a-deterministic-suite.mjs` | five gates, exit 0 | 4256 ms |
+| `node ../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p tsconfig.json` | exit 0 | 3165 ms |
+| `node --test tests/v0b-verifier.test.ts` | 2/2, exit 0 | 3383 ms |
+| `node --test --test-concurrency=1 tests/v0c-stage1.test.ts tests/v0c-main-review-correction.test.ts tests/v0c-post-audit-correction.test.ts` | 24/24, exit 0 | 18185 ms |
+| `node --test test` | 109/109, exit 0 | 53178 ms |
+
+The focused V0-C files share `.runs` identity enumeration. An earlier diagnostic
+invocation ran those three files with default cross-file concurrency and observed
+23/24 because another file created a Run between the test's before/after scans;
+the protocol-appropriate sequential command above passed 24/24 without any V0-C
+source change. Earlier diagnostics also observed the expected F-001 failure before
+the Manifest was normalized, and PowerShell blocked `npm.ps1`; the final record
+uses direct `node`/`npm.cmd` commands. These superseded diagnostics are not
+represented as successful evidence.
+
+### Authoritative evidence and identities
+
+The append-only evidence root is:
+
+` .runs/v1-a/corrections/focused-audit-001/final-evidence/ `
+
+Its `EVIDENCE_INDEX.md` binds the summary, command records, complete source
+inventory, fixture LF/prospective-clean results, finding matrix, actual request
+projection, Provider error/usage projection, protected boundary and
+secret/error/evidence scan.
+
+```yaml
+source_digest: 8702ac87651808e30f971e27dbcb64dfb4c8a2c1ca4ceb28e124978042b7ea59
+workbench_inventory_digest: a20c910330ef886a7c519deac2f6bfebb097215e970d1e30babe28ac50f8fa7b
+fixture_inventory_digest: cf0d88930491e8d9bfded909be490960b6eb995549abae274b8c81685aa68c06
+manifest_workbench_tree_digest: aab587b0c7371964ad89ecfc9304720757d7243dc457b904d5e91956eb0bc5d2
+manifest_id: c59cc2b780e6b0ca5c01c5f1d63f17fced4cc1d6b345370fd1856a0b11d3126e
+tracked_fixture_count: 50
+fixture_crlf_file_count: 0
+prospective_clean_mismatch_count: 0
+accepted_v0_fixture_blob_delta_count: 0
+```
+
+Observed deterministic counts remain Faux Provider calls 4 and external
+behavioral Verifier calls 16. Real-model calls, external Provider calls, network
+calls, credential reads, cost, dependency installs, Pi modifications, private
+imports and Git stage/commit operations are all zero.
+
+### Remaining uncertainty and required stop
+
+- **Unconfirmed:** Main Session lightweight review of F-001 through F-004.
+- **Unconfirmed:** a separately authorized corrected Candidate commit/SHA freeze.
+- **Unconfirmed:** F-001 reproduction from that newly committed Candidate in a
+  fresh Windows `core.autocrlf=true` checkout. Current worktree attribute,
+  prospective-clean and blob-delta proofs do not claim that later re-audit has
+  occurred.
+- **Unconfirmed:** Gate J acceptance, final V1-A acceptance, Implementation
+  Baseline and all V1-B questions.
+
+The dedicated Session stops here. It did not launch another audit, accept the
+Goal, freeze a Candidate or enter V1-B.
+
+## Post-audit CURRENT_STATE_UPDATE_PROPOSAL
+
+```yaml
+proposed_project_status: V1_A_POST_AUDIT_CORRECTED_CANDIDATE_PENDING_MAIN_REVIEW_AND_FREEZE
+proposed_active_goal: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+implementation_started: true
+implementation_completed: true_post_audit_corrected_worktree_only
+focused_audit_findings_corrected: 4/4
+candidate_disposition: CORRECTED_CANDIDATE_PENDING_MAIN_REVIEW_AND_FREEZE
+source_digest: 8702ac87651808e30f971e27dbcb64dfb4c8a2c1ca4ceb28e124978042b7ea59
+workbench_inventory_digest: a20c910330ef886a7c519deac2f6bfebb097215e970d1e30babe28ac50f8fa7b
+fixture_inventory_digest: cf0d88930491e8d9bfded909be490960b6eb995549abae274b8c81685aa68c06
+manifest_workbench_tree_digest: aab587b0c7371964ad89ecfc9304720757d7243dc457b904d5e91956eb0bc5d2
+manifest_id: c59cc2b780e6b0ca5c01c5f1d63f17fced4cc1d6b345370fd1856a0b11d3126e
+authoritative_deterministic_evidence: .runs/v1-a/corrections/focused-audit-001/final-evidence/EVIDENCE_INDEX.md
+real_model_calls_observed: 0
+external_provider_calls_observed: 0
+network_calls_observed: 0
+credential_reads_observed: 0
+pi_core_patch_count: 0
+private_import_count: 0
+git_stage_or_commit_operations: 0
+unverified_or_pending:
+  - main_session_lightweight_review_of_F_001_through_F_004
+  - separately_authorized_corrected_candidate_commit_and_sha_freeze
+  - fresh_windows_autocrlf_checkout_reaudit_of_new_candidate
+  - gate_J_and_final_V1_A_acceptance
+  - implementation_baseline_and_V1_B
+recommended_next_control_action: main_session_lightweight_review_then_stop_for_user_decision
+```
+
+This proposal is advisory. `CURRENT_STATE.md` remains untouched.
+
 ## Main rereview micro-correction addendum
 
 This addendum supersedes the pre-micro identities, command counts, handoff recommendation and state proposal above. The accepted Skill surface, actual Faux payload/Verifier ordering, Task behavioral calibration outside RR-004, and V0 behavior were preserved.
@@ -226,3 +375,16 @@ recommended_next_control_action: main_session_rereview_micro_corrected_candidate
 ```
 
 This proposal is advisory. The dedicated Session did not modify `CURRENT_STATE.md`.
+
+## Latest authority: post-focused-audit correction
+
+The historical micro-correction section above is retained for lineage only. The
+latest authoritative section is **Post-focused-audit bounded-correction
+addendum**, with disposition:
+
+`CORRECTED_CANDIDATE_PENDING_MAIN_REVIEW_AND_FREEZE`
+
+Main Session should review only F-001 through F-004 against
+`.runs/v1-a/corrections/focused-audit-001/final-evidence/EVIDENCE_INDEX.md`, then
+stop for the user's decision. No corrected Candidate commit, fresh-checkout
+re-audit, Gate J acceptance, final V1-A acceptance or V1-B work is claimed.

@@ -2,9 +2,9 @@
 
 ## Candidate disposition
 
-`PASS_V1_A_MICRO_CORRECTED_CANDIDATE_FOR_MAIN_REREVIEW`
+`CORRECTED_CANDIDATE_PENDING_MAIN_REVIEW_AND_FREEZE`
 
-This draft stops at the original dedicated Implementation Session's bounded-correction boundary. It does not close or accept V1-A.
+This draft now stops at the original dedicated Implementation Session's post-focused-audit bounded-correction boundary. The final post-audit section supersedes earlier candidate identities and counts without erasing their history. It does not close or accept V1-A.
 
 ## Main-review correction status (pre-micro predecessor)
 
@@ -124,3 +124,68 @@ v1_b_work_started: 0
 **Recommendation:** Main Session should rereview only V1A-RR-001 through V1A-RR-004 using the binding Main Rereview Report, Micro-Correction Prompt, corrected source, this draft and the final micro Evidence Index. Then stop for the user's control decision; no Candidate Commit or focused audit is authorized here.
 
 Proposed later audit inputs and the complete `CURRENT_STATE_UPDATE_PROPOSAL` are in `docs/reports/V1_A_IMPLEMENTATION_REPORT.md`. `CURRENT_STATE.md` remains untouched.
+
+## Post-focused-audit correction closeout
+
+This section is the latest authority and supersedes the historical micro-corrected
+counts, identities and handoff above.
+
+| Focused-audit finding | Closeout result |
+| --- | --- |
+| F-001 | Corrected-worktree pass: `/fixtures/** text eol=lf`; 50/50 tracked fixtures have LF attributes, zero CRLF and byte-identical prospective-clean projections; accepted V0 fixture blob delta is zero. Fresh checkout from a newly committed Candidate remains pending. |
+| F-002 | Pass: actual Faux callback captures explicit deterministic API/provider/model plus stable request semantics; B/C requests are byte-equal and four descriptor/options drift counterexamples reject. |
+| F-003 | Pass: resolver/transport internals project to one stable `FixedProviderRequestErrorV1`, with no `cause`, fake marker or injected credential in the public error. |
+| F-004 | Pass: usage projection validates finite/integer/nonnegative counters and request/token/cost envelopes; zero, boundary and normal cases remain accepted. |
+
+### Post-audit Definition of Done check
+
+1. Binding audit SHA and exact Candidate/tree/Pi entry boundary verified.
+2. F-001 through F-004 corrected without expanding beyond the authorized paths.
+3. Accepted Skill, Task semantics, actual Verifier ordering, C-only behavior and V0 behavior preserved.
+4. Focused findings 4/4 and complete V1-A 18/18 pass.
+5. V1-A deterministic five gates and strict TypeScript pass.
+6. Targeted V0-B Verifier 2/2, focused sequential V0-C 24/24 and full Workbench 109/109 pass.
+7. Append-only evidence contains commands, complete corrected inventory, four identities, LF/prospective-clean proof, error/usage proof, protected boundary and scans.
+8. Real model, external Provider, network, credential read, dependency install, Pi/private import and Git stage/commit counts are all zero.
+9. Implementation Report, this Closeout Draft and advisory state proposal are complete.
+10. `CURRENT_STATE.md`, the focused audit report and all reference/Pi sources remain untouched.
+
+Post-audit correction DoD: **10/10 for the authorized working-tree correction**.
+This is not V1-A acceptance and does not claim that the corrected Candidate has
+been committed or re-audited from a fresh checkout.
+
+### Final verification and identities
+
+- focused F-001..F-004: 4/4;
+- complete V1-A: 18/18;
+- deterministic suite: five gates;
+- strict TypeScript: exit 0;
+- targeted V0-B Verifier: 2/2;
+- focused V0-C with `--test-concurrency=1`: 24/24;
+- complete Workbench: 109/109.
+
+```yaml
+source_digest: 8702ac87651808e30f971e27dbcb64dfb4c8a2c1ca4ceb28e124978042b7ea59
+workbench_inventory_digest: a20c910330ef886a7c519deac2f6bfebb097215e970d1e30babe28ac50f8fa7b
+fixture_inventory_digest: cf0d88930491e8d9bfded909be490960b6eb995549abae274b8c81685aa68c06
+manifest_workbench_tree_digest: aab587b0c7371964ad89ecfc9304720757d7243dc457b904d5e91956eb0bc5d2
+manifest_id: c59cc2b780e6b0ca5c01c5f1d63f17fced4cc1d6b345370fd1856a0b11d3126e
+```
+
+Authoritative evidence is
+`.runs/v1-a/corrections/focused-audit-001/final-evidence/EVIDENCE_INDEX.md`.
+The complete exact commands and the advisory
+`Post-audit CURRENT_STATE_UPDATE_PROPOSAL` are in
+`docs/reports/V1_A_IMPLEMENTATION_REPORT.md`.
+
+### Required stop and handoff
+
+**Recommendation:** Main Session should perform a lightweight review limited to
+F-001 through F-004 using the binding focused audit, corrected source/tests, this
+draft, the Implementation Report and the new Evidence Index. A corrected
+Candidate commit/freeze and fresh Windows `core.autocrlf=true` checkout re-audit
+require separate authority. Gate J acceptance, final V1-A acceptance,
+Implementation Baseline and V1-B remain pending.
+
+The dedicated Implementation Session stops here. `CURRENT_STATE.md` remains
+untouched.
