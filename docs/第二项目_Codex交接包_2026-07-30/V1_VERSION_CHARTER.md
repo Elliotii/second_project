@@ -8,12 +8,12 @@ formalized_at: 2026-08-03
 version: V1
 project: Agent Harness Reliability Workbench
 version_mission: fairly_measure_fixed_Skill_and_bounded_Runtime_Control_increment
-current_project_phase: v1_a_closed_v1_b_plan_accepted_pre_contract
-active_goal: null
+current_project_phase: v1_b_stage_1_activated
+active_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
 V1_A_contract_status: closed_accepted
-V1_B_contract_created: false
-V1_B_activation_authorized: false
-implementation_authorized: false
+V1_B_contract_created: true
+V1_B_activation_authorized: true
+implementation_authorized: stage_1_only_zero_real_calls
 real_model_calls_authorized: 0
 pi_core_patch_authorized: false
 external_download_authorized: false

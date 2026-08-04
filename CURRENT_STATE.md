@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_b_plan_accepted_pending_contract_baseline
-  status: V1_B_PLAN_ACCEPTED_CONTRACT_NOT_CREATED
+  phase: v1_b_stage_1_activated_pending_dedicated_session
+  status: V1_B_ACTIVE_STAGE_1_AUTHORIZED_NOT_STARTED
 
-active_goal: null
+active_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
 
 last_executed_goal:
   id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-  status: charter_defined_contract_not_created
-  contract: null
+  status: active_stage_1_authorized_not_started
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -246,6 +246,13 @@ completed_work:
   - V1_B_focused_stage_1_audit_plan_accepted
   - V1_B_Pi_SDK_Extension_checkpoint_remains_deferred
   - V1_B_planning_charter_amendment_baseline_commit_authorized_by_user
+  - V1_B_planning_charter_amendment_baseline_commit_created_and_verified
+  - V1_B_goal_contract_draft_created
+  - V1_B_goal_contract_accepted_by_user
+  - V1_B_goal_contract_formalized
+  - V1_B_activation_authorized_by_user
+  - V1_B_control_baseline_commit_authorized_by_user
+  - V1_B_zero_real_call_stage_1_authorized_by_user
 
 workspace:
   git_initialized: true
@@ -279,6 +286,9 @@ workspace:
   v1_a_implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
   v1_a_implementation_baseline_tree: 680810b7c2f8b12dbd3503b5a38f1ab162b63996
   v1_a_control_evidence_closeout_commit: resulting_HEAD_of_this_revision
+  v1_b_planning_charter_amendment_baseline_commit: 51a0200450781faa7fb16c98b3547f294efcef7d
+  v1_b_planning_charter_amendment_baseline_tree: c51177ea760d3153257703326a220b550af10393
+  v1_b_control_baseline_commit: resulting_HEAD_of_this_revision
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -342,8 +352,8 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: V1_B_plan_accepted_pending_contract_baseline
-  active_goal: false
+  status: V1_B_active_stage_1_authorized_not_started
+  active_goal: true
   current_candidate_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
   formal_goal_contract_created: true
   activation_authorized: consumed_for_V1_A
@@ -415,12 +425,27 @@ v1:
   V1_B_whole_pilot_time_semantics: accumulated_active_execution_time_max_7200000ms
   V1_B_stage_1_focused_audit_required: true_after_candidate_freeze
   V1_B_planning_charter_amendment_baseline_commit_authorized: consumed
-  V1_B_planning_charter_amendment_baseline_commit: resulting_HEAD_of_this_revision
-  V1_B_formal_goal_contract_created: false
-  V1_B_contract_status: not_created
-  V1_B_activation_authorized: false
-  V1_B_execution_authorized: false
+  V1_B_planning_charter_amendment_baseline_commit: 51a0200450781faa7fb16c98b3547f294efcef7d
+  V1_B_planning_charter_amendment_baseline_tree: c51177ea760d3153257703326a220b550af10393
+  V1_B_goal_contract_draft: superseded_by_formal_contract
+  V1_B_goal_contract_draft_status: superseded
+  V1_B_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
+  V1_B_formal_goal_contract_created: true
+  V1_B_contract_status: accepted_activated_stage_1_authorized
+  V1_B_activation_authorized: true
+  V1_B_control_baseline_commit_authorized: consumed
+  V1_B_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_B_stage_1_owner: dedicated_v1_b_preparation_session
+  V1_B_stage_1_authorized: true_zero_real_calls
+  V1_B_stage_1_started: false
+  V1_B_execution_authorized: stage_1_only
+  V1_B_credential_reads_authorized: 0
+  V1_B_external_network_authorized: false
   V1_B_real_model_calls_authorized: 0
+  V1_B_candidate_commit_authorized: false
+  V1_B_focused_audit_authorized: false
+  V1_B_execution_baseline_authorized: false
+  V1_B_stage_2_authorized: false
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -1030,6 +1055,7 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
   - docs/reports/V1_B_INTEGRATED_DEVELOPMENT_PLAN.md
   - docs/reports/V1_B_PRECONTRACT_READINESS_PAUSE_REPORT.md
   - docs/reports/V1_A_CLOSEOUT.md
@@ -1063,9 +1089,13 @@ next_checkpoint:
   - V1_version_charter_accepted_and_formalized
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - V1_B_integrated_development_plan_and_bounded_charter_clarification_accepted
-  - create_and_verify_V1_B_planning_charter_amendment_baseline_commit
-  - after_baseline_verification_draft_bounded_V1_B_goal_contract_for_user_review
-  - keep_V1_B_inactive_until_separate_contract_acceptance_and_activation
+  - V1_B_planning_charter_amendment_baseline_commit_created_and_verified_at_51a0200450781faa7fb16c98b3547f294efcef7d
+  - V1_B_goal_contract_accepted_and_formalized
+  - V1_B_activation_control_baseline_and_zero_call_stage_1_authorized
+  - create_and_verify_V1_B_control_baseline_commit
+  - generate_exact_SHA_bound_V1_B_stage_1_preparation_prompt
+  - start_dedicated_V1_B_preparation_session
+  - keep_candidate_audit_execution_baseline_and_stage_2_separately_unauthorized
   - no_credentials_network_or_real_model_calls_are_currently_authorized
 
 open_user_decisions: []
