@@ -1,6 +1,6 @@
 {
   "schema_version": "v1b-execution-manifest-v1",
-  "manifest_id": "ec8a7a6f8dcc375dd18781e8f54b2ab00f5d2d7fba3938dee1011933de5f3b3b",
+  "manifest_id": "be258f6f62276436fef65a44459d70611749043b9dc2d25ec134a0e7abc1055d",
   "experiment_id": "v1-b-bounded-pilot",
   "experiment_revision": 1,
   "execution_mode": "stage1_zero_call",
@@ -8,7 +8,7 @@
   "control_baseline_commit": "de75ca7a4d5376713f01ca475bc5ad7637c70443",
   "control_baseline_tree": "e930e1d0885b52bf911ed78912786723f321f06e",
   "execution_baseline_commit": "de75ca7a4d5376713f01ca475bc5ad7637c70443",
-  "workbench_source_digest": "ce768cfd8af488861b251d94b6b5e14dec164e453c65bdba444fdc5aa0ade127",
+  "workbench_source_digest": "ef30c4be9bc4143569f30aabbb66b2a01db9b2098082f35dba2137f3acb22ffe",
   "pi_commit": "027a5847901b5dde30270abaa1041046cd2b4b55",
   "pi_version": "0.82.1",
   "protocol_id": "v1_skill_runtime_comparison",

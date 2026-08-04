@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { appendFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import type { ExecutionManifestV1B, LedgerEntryV1B, RunResultV1, TerminalCellEvidenceV1B } from "../src/contracts/v1-types.ts";
@@ -8,11 +8,12 @@ import { loadCandidateTaskPackV1 } from "../src/experiment/task-pack-v1.ts";
 import { aggregatePilotV1B, inspectV1RunCell } from "../src/inspect-v1.ts";
 import { initializePilotV1B, readPilotLedgerV1B, runNextPilotCellV1B, simulatePilotV1B, validatePilotLedgerV1B } from "../src/pilot-v1.ts";
 import { FixedProviderBoundaryErrorV1B, assertKnownUsageV1B, createOneRunProviderAuthorityV1B, createPublicPiRunCompositionV1B } from "../src/provider/fixed-provider-v1.ts";
-import { preflightV1B } from "../src/product-surface-v1.ts";
+import { createTrackedRealCompositionV1B, preflightV1B, runNextV1B } from "../src/product-surface-v1.ts";
 import { createPiRunHandleV1, emptyBudgetUsageV1B, projectSafeEvidenceV1B } from "../src/pi/pi-run-handle-v1.ts";
 import { expectedSkillIdentityV1, loadExactOneSkillV1 } from "../src/skill/runtime-v1.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
-import { fileSha256, sha256, stableJson } from "../src/hash.ts";
+import { fileSha256, sha256, stableJson, treeDigest, treeInventory } from "../src/hash.ts";
+import { scanFinalWorkspaceTreeV1B } from "../src/run-v1.ts";
 
 function root(label: string): string {
 	const value = resolve(PROJECT_ROOT, ".runs/v1-b/stage1/tests", `${label}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -192,6 +193,53 @@ test("V1-B F-002 filters secret/reasoning fields and independently scans final p
 	const marker = root("f002-persisted-factory-marker"); cpSync(source, marker, { recursive: true });
 	coherentRewrite(marker, cell.planned_run_id, ({ runRoot }) => { appendFileSync(resolve(runRoot, "journal.jsonl"), `${stableJson({ type: "error", value: "FAKE_FACTORY_ERROR" })}\n`); });
 	inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: marker, plannedRunId: cell.planned_run_id }); assert.equal(inspected.integrity_valid, false); assert.match(inspected.errors.join("; "), /secret\/reasoning/);
+});
+
+test("V1-B post-audit F-001 scans final Workspace bytes and fails closed on linked paths", async () => {
+	const manifest = trackedManifest();
+	const producer = root("post-audit-workspace-producer"); initializePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot: producer, manifest });
+	await assert.rejects(() => runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot: producer, deterministicInjection: { kind: "workspace_forbidden_marker", cause_id: "workspace_marker_test" } }), /typed boundary/);
+	assert.equal(existsSync(resolve(producer, "runs", manifest.cells[0]!.planned_run_id, "terminal.json")), false);
+	assert.equal(readPilotLedgerV1B(producer).at(-1)!.state, "paused");
+
+	const source = await completePilot(); const cell = manifest.cells[0]!;
+	const coherent = root("post-audit-workspace-coherent"); cpSync(source, coherent, { recursive: true });
+	coherentRewrite(coherent, cell.planned_run_id, ({ terminal, marker, runRoot }) => {
+		appendFileSync(resolve(runRoot, "workspace/src/subject.ts"), "\n// Bearer FAKE_REBOUND_WORKSPACE_TOKEN\n// FAKE_SENSITIVE_REBOUND_WORKSPACE\n", "utf8");
+		const inventory = treeInventory(resolve(runRoot, "workspace"));
+		const ref = { path: "workspace" as const, sha256: treeDigest(resolve(runRoot, "workspace")), file_count: inventory.length, size_bytes: inventory.reduce((sum, file) => sum + file.bytes, 0), scan: { passed: true as const, match_count: 0 as const, reasoning_payloads: 0 as const } };
+		terminal.workspace_tree_ref = ref; marker.final_workspace_digest = ref.sha256; marker.final_workspace_ref = ref;
+	});
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: coherent, plannedRunId: cell.planned_run_id });
+	assert.equal(inspected.integrity_valid, false); assert.match(inspected.errors.join("; "), /typed boundary|Workspace/);
+
+	const clean = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: source, plannedRunId: cell.planned_run_id });
+	assert.equal(clean.integrity_valid, true, clean.errors.join("; ")); assert.equal(clean.terminal!.workspace_tree_ref.scan.passed, true);
+
+	const linkRoot = root("post-audit-workspace-link"); const workspace = resolve(linkRoot, "workspace"); const outside = resolve(linkRoot, "outside");
+	mkdirSync(workspace, { recursive: true }); mkdirSync(outside, { recursive: true }); writeFileSync(resolve(outside, "outside.txt"), "safe\n", "utf8"); symlinkSync(outside, resolve(workspace, "escape"), "junction");
+	assert.throws(() => scanFinalWorkspaceTreeV1B(workspace), /typed boundary/);
+});
+
+test("V1-B post-audit F-002 tracked product surface keeps real authority concrete, one-Run and lazy", async () => {
+	let reads = 0;
+	const input = { authority_id: "v1b-public-pi-one-run" as const, credential_profile_name: "DEEPSEEK_API_KEY" as const, authorized: true, resolver: { resolve: async () => { reads++; return "unused"; } } };
+	const composition = createTrackedRealCompositionV1B(input); const authority = composition.createAuthority(trackedManifest().cells[0]!); authority.assertAvailable();
+	const handle = createPublicPiRunCompositionV1B({ authority, factory: { create: (access) => ({ close: async () => access.close() }) } });
+	assert.equal(reads, 0); await handle.close(); assert.equal(reads, 0);
+	assert.throws(() => createPublicPiRunCompositionV1B({ authority, factory: { create: () => ({ close: async () => undefined }) } }), FixedProviderBoundaryErrorV1B);
+
+	const realManifest = buildExecutionManifestV1B(PROJECT_ROOT, { executionMode: "stage2_real", executionBaselineCommit: "f".repeat(40), realExecutionAuthorized: true });
+	const realPath = resolve(root("post-audit-real-manifest"), "manifest.json"); mkdirSync(resolve(realPath, ".."), { recursive: true }); writeStable(realPath, realManifest);
+	for (const [label, authorityInput] of [
+		["denied", { ...input, authorized: false }],
+		["missing-resolver", { authority_id: input.authority_id, credential_profile_name: input.credential_profile_name, authorized: true }],
+	] as const) {
+		const pilotRoot = root(`post-audit-real-${label}`);
+		await assert.rejects(() => runNextV1B({ projectRoot: PROJECT_ROOT, manifestPath: realPath, pilotRoot, stage2ExecutionAuthority: authorityInput }), (error: Error) => error instanceof FixedProviderBoundaryErrorV1B && !String(error).includes("dependencies are unavailable"));
+		assert.equal(readPilotLedgerV1B(pilotRoot).filter((entry) => entry.state === "started").length, 0);
+	}
+	assert.equal(reads, 0);
 });
 
 test("V1-B F-003 proves A/B delta is exactly the frozen public Skill treatment", async () => {

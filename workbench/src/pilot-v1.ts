@@ -6,7 +6,7 @@ import { stableJson } from "./hash.ts";
 import { validateExecutionManifestV1B } from "./experiment/v1.ts";
 import { emptyBudgetUsageV1B } from "./pi/pi-run-handle-v1.ts";
 import { executeV1RunCell, V1BTypedPauseError, type ExecuteV1RunCellOptions, type ExecuteV1RunCellResult } from "./run-v1.ts";
-import type { OneRunProviderAuthorityV1B } from "./provider/fixed-provider-v1.ts";
+import { FixedProviderBoundaryErrorV1B, type OneRunProviderAuthorityV1B } from "./provider/fixed-provider-v1.ts";
 
 export interface PilotStateV1B {
 	manifest: ExecutionManifestV1B;
@@ -121,6 +121,15 @@ export async function runNextPilotCellV1B(options: {
 	if (!cell) return null;
 	if (state.manifest.execution_mode === "stage2_real" && !options.realExecution) throw new Error("real execution dependencies are unavailable");
 	if (state.manifest.execution_mode === "stage1_zero_call" && options.realExecution) throw new Error("Stage 1 rejects real execution dependencies");
+	let realAuthority: OneRunProviderAuthorityV1B | undefined;
+	if (options.realExecution) {
+		try {
+			realAuthority = options.realExecution.createAuthority(cell);
+			realAuthority.assertAvailable();
+		} catch {
+			throw new FixedProviderBoundaryErrorV1B();
+		}
+	}
 	if (options.deterministicInjection?.kind === "global_budget_stop") {
 		appendLedger(options.pilotRoot, state.manifest, cell, "paused", options.deterministicInjection.cause_id, null);
 		throw new V1BTypedPauseError("global_budget_stop", options.deterministicInjection.cause_id);
@@ -143,7 +152,7 @@ export async function runNextPilotCellV1B(options: {
 	appendLedger(options.pilotRoot, state.manifest, cell, "started", null, null);
 	const runRoot = resolve(options.pilotRoot, "runs", cell.planned_run_id);
 	try {
-		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(options.realExecution ? { realExecution: { authority: options.realExecution.createAuthority(cell) } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}) });
+		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}) });
 		appendLedger(options.pilotRoot, state.manifest, cell, result.terminal.disposition === "invalid" ? "invalid" : "terminal", result.terminal.cause_id, `runs/${cell.planned_run_id}/run-result.json`);
 		return result;
 	} catch (error) {

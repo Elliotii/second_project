@@ -1,64 +1,63 @@
 # V1-B Stage 1 Closeout Draft
 
 > Updated: 2026-08-05 (Asia/Hong_Kong)
-> Main Review input: `REVISE_V1_B_STAGE1`
-> Suggested corrected disposition: `PASS_V1_B_STAGE1_AFTER_BOUNDED_CORRECTION`
+> Input disposition: `ACCEPT_AUDIT_FINDINGS_AND_REVISE_CANDIDATE`
+> Suggested correction disposition: `CORRECTION_COMPLETE_PENDING_MAIN_CANDIDATE_REVIEW_AND_REAUDIT`
 > Acceptance owner: Main Session and user
 
 ## Outcome
 
-The original dedicated Stage 1 Preparation Session completed the authorized
-bounded correction for F-001 through F-005. Corrected Control Baseline
-`de75ca7a4d5376713f01ca475bc5ad7637c70443` / tree
-`e930e1d0885b52bf911ed78912786723f321f06e` remains unchanged. Pi remains exact
-and clean at `027a5847901b5dde30270abaa1041046cd2b4b55`.
+The original dedicated V1-B Stage 1 Preparation Session completed the bounded
+post-audit corrections for `V1B-AUD-F-001` and `V1B-AUD-F-002` from exact
+rejected Candidate `951e9161300eacd408e232aa6d1fa66ac02d0e10` / tree
+`a9ad6eee8ae4cfe32ee3e9e04613a8d16e5296f6`.
 
-The corrected Manifest is
-`ec8a7a6f8dcc375dd18781e8f54b2ab00f5d2d7fba3938dee1011933de5f3b3b`,
-binding Workbench source digest
-`ce768cfd8af488861b251d94b6b5e14dec164e453c65bdba444fdc5aa0ade127`.
+The first Candidate remains rejected. Pi remains exact and clean at
+`027a5847901b5dde30270abaa1041046cd2b4b55`. No source was staged or committed,
+no control state was edited, and Stage 2 was not entered.
 
-Credential reads, network calls, external Provider calls and real-model calls
-are `0 / 0 / 0 / 0`.
+Corrected Stage 1 identities:
 
-## Bounded correction closeout
+```yaml
+manifest_id: be258f6f62276436fef65a44459d70611749043b9dc2d25ec134a0e7abc1055d
+workbench_source_digest: ef30c4be9bc4143569f30aabbb66b2a01db9b2098082f35dba2137f3acb22ffe
+manifest_sha256: 5bae711bc4bb628b9c95486170e774ac4acbaa70f72010dac09e973303775b48
+credential_reads: 0
+network_calls: 0
+external_provider_calls: 0
+real_model_calls: 0
+```
+
+## Finding closeout
 
 | Finding | Corrected behavior | Formal result |
 | --- | --- | --- |
-| F-001 | Inspector independently derives all frozen semantic bindings and requires exactly one Verifier result/output pair per actual Attempt | coherent task/Skill/Verifier/Workbench rehash and missing/duplicate refs rejected |
-| F-002 | producer scans final actual/pending evidence and Inspector rescans actual persisted bytes | Authorization/Bearer/reasoning/thinking/signature/fake error markers rejected |
-| F-003 | A/B delta must equal the exact public Pi wrapper over frozen Skill bytes; B/C remains byte-equal | arbitrary/missing/extra/wrong treatment and model/options/Tool drift rejected |
-| F-004 | typed terminal/invalid/paused taxonomy, attribution and denominator counts are executable | infrastructure/evidence/treatment/global/unknown paths, 25% threshold and repeated cause passed |
-| F-005 | reservations are atomic and store before/reserved/actual/after/cap at Attempt/Run/Pilot levels | no-partial mutation, child capacity and tampered chain/actual cases passed |
+| `V1B-AUD-F-001` | producer and Inspector independently recurse through every regular final-Workspace file, reject links/escapes/unsupported entries, scan actual bytes, and bind a typed tree ref | producer marker cannot terminalize; coherent marker+digest/tree-ref rebind is Inspector-invalid; clean 24/24 passes |
+| `V1B-AUD-F-002` | tracked CLI requires `--stage2-real-authority` plus a valid real Manifest and constructs the existing public-Pi one-Run composition before `started` | missing/surplus/denied authority fails sanitized with zero dispatch; resolver is lazy; second Run open is rejected |
 
-## Stage 1 DoD
+## Required verification
 
-| Definition of Done | Result |
+| Check | Result |
 | --- | --- |
-| corrected baseline and exact clean Pi | PASS |
-| source delta restricted to Contract §6.2 | PASS |
-| public Pi composition and separate one-Run authority | PASS |
-| complete B/C equality and exact frozen A/B Skill treatment | PASS |
-| same Session/Workspace Attempt lineage and one eligible C child maximum | PASS |
-| atomic three-level budget reserve and independent recomputation | PASS |
-| immutable 24-cell Manifest and one-cell ledger | PASS |
-| typed terminal/invalid/paused taxonomy and denominator loop | PASS |
-| final evidence secret/reasoning scan and independent Inspector scan | PASS |
-| authoritative zero-call 24-cell simulation | PASS |
-| strict TypeScript and V1-B focused tests | PASS; 15/15 |
-| V1-A regression | PASS; 18/18 |
-| V0-C deterministic and post-audit regression | PASS; 8/8 post-audit |
-| fresh Windows source identity, TypeScript and V1-B tests | PASS; 14/14 source/test/Manifest identity, 15/15 tests |
-| reports, evidence index and `CURRENT_STATE_UPDATE_PROPOSAL` | PASS |
-| credential/network/external Provider/real-model calls | PASS; `0 / 0 / 0 / 0` |
+| Gate A exact rejected Candidate/tree and clean project index | PASS |
+| exact clean Pi | PASS |
+| strict TypeScript | PASS |
+| exact tracked CLI missing-credential micro-regression | PASS; `env: {}`, sanitized failure, first cell `started→paused`, zero terminal/advance/credential-shaped evidence |
+| V1-B focused Stage 1/CLI | PASS; 19/19 |
+| sequential V1-A/V0-C evidence and real-route regressions | PASS; 42/42 |
+| new authoritative 24-cell zero-call simulation | PASS; 24/24 terminal |
+| independent authoritative Inspector replay | PASS; 24/24 valid |
+| fresh Windows 20-file identity | PASS; 0 mismatch |
+| prior post-audit fresh Windows TypeScript and V1-B focused tests | PASS; then-current 18/18; production source unchanged by test-only micro-correction |
+| credential/network/external Provider/real model | PASS; `0 / 0 / 0 / 0` |
 
 ## Authoritative evidence
 
 ```yaml
-root: .runs/v1-b/stage1/gate-h-pilot-authoritative-after-main-review-correction
+root: .runs/v1-b/stage1/gate-h-pilot-authoritative-after-post-audit-correction
 file_count: 353
-byte_count: 725526
-ledger_sha256: bf8c9b5484da41184496256cb0f764be80ec5d09bc13a303b30602a9bb70a81c
+byte_count: 735697
+ledger_sha256: a79d7659f7e77be0886975dd1fe7014a88b329d08c93dcfec116595d37abfd61
 planned: 24
 started: 24
 terminal: 24
@@ -72,8 +71,8 @@ recovery_started: 5
 recovery_succeeded: 3
 faux_provider_requests: 55
 tool_calls: 26
-observational_faux_tokens: 74587
-active_execution_time_ms: 1921
+observational_faux_tokens: 74588
+active_execution_time_ms: 2080
 cost_usd: 0
 credential_reads: 0
 network_calls: 0
@@ -81,41 +80,36 @@ external_provider_calls: 0
 real_model_calls: 0
 ```
 
-The prior authoritative root and Main Review diagnostic evidence remain
-preserved. The evidence index records the prior root as
-`superseded_due_main_review_bounded_correction`; it is not a retry or
-replacement cell.
+The rejected Candidate evidence remains preserved and is superseded only
+because source identity and terminal evidence semantics changed. This is not a
+Stage 2 retry, fallback or replacement Run.
 
-Fresh Windows produced zero byte mismatch across the 14 Contract source/test/
-Manifest overlay paths. Three Markdown report/control paths converted to CRLF;
-they are outside the Workbench source digest domain and the fresh strict
-TypeScript plus 15/15 focused tests passed.
+Main re-review added one test-only exact CLI regression. It explicitly gives
+the child process an empty environment, reaches the tracked real composition,
+and proves missing `DEEPSEEK_API_KEY` ends the unique first cell as
+`started→paused` with sanitized error, no terminal evidence, no next-cell
+advance and no fallback/retry/replacement. No production source changed, so the
+24-cell authoritative root and broad regression evidence were not regenerated.
 
-## Remaining unauthorized and unverified
+## Remaining control points
 
-- Stage 1 acceptance by Main Session/user;
-- Candidate Commit and focused Audit;
-- Execution Baseline and Stage 2 Manifest;
-- credentials, network and real DeepSeek dispatch;
-- real Pilot results, Skill/recovery effect or strategy ranking.
-
-No source staging or commit was performed. No control state, Pi, accepted
-fixture or V0 source was modified.
-
-## Main review entry point
-
-Review the F-001–F-005 traceability and exact commands in
-`docs/reports/V1_B_STAGE1_IMPLEMENTATION_REPORT.md`, then verify the corrected
-Manifest and `.runs/v1-b/stage1/evidence-index.json`. If the bounded correction
-is accepted, the next control point remains Main Session disposition and any
-separately authorized Candidate Commit.
+- Main Session review of source/tests/report/evidence;
+- corrected Candidate decision and commit, if accepted;
+- separately authorized fresh focused re-audit;
+- Stage 1 acceptance, Execution Baseline and Stage 2 authority;
+- credentials, network and real DeepSeek execution.
 
 ```yaml
-stage1_preparation: completed_after_main_review_bounded_correction_pending_main_lightweight_review
-suggested_disposition: PASS_V1_B_STAGE1_AFTER_BOUNDED_CORRECTION
-candidate_commit: false
-focused_audit: false
-execution_baseline: false
-stage2_authorized: false
-v1_b_closed: false
+CURRENT_STATE_UPDATE_PROPOSAL:
+  first_candidate: rejected_and_remains_rejected
+  post_audit_bounded_correction: completed_after_main_rereview_test_only_micro_correction
+  suggested_disposition: CORRECTION_COMPLETE_PENDING_MAIN_CANDIDATE_REVIEW_AND_REAUDIT
+  main_rereview_production_fixes: accepted
+  exact_cli_missing_credential_micro_regression: passed
+  focused_tests: 19
+  corrected_candidate_commit: false
+  re_audit: false
+  execution_baseline: false
+  stage2_authorized: false
+  v1_b_closed: false
 ```

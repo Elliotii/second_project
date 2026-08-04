@@ -1,5 +1,5 @@
-import { appendFileSync, copyFileSync, mkdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { appendFileSync, copyFileSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { Skill } from "@earendil-works/pi-agent-core";
 import type { ArtifactRefV0B, TaskSpecV0B, VerifierResultV0B } from "./contracts/v0b-types.ts";
 import type {
@@ -12,6 +12,7 @@ import type {
 	TaskSpecV1,
 	TerminalCellEvidenceV1B,
 	VerifierStatusV1,
+	WorkspaceTreeRefV1B,
 } from "./contracts/v1-types.ts";
 import { writeOnceBytes, writeOnceJson } from "./evidence/artifacts.ts";
 import { loadCandidateTaskPackV1 } from "./experiment/task-pack-v1.ts";
@@ -45,7 +46,7 @@ export interface ExecuteV1RunCellOptions {
 	fakeScenario?: { initial: FakeAttemptModeV1B; child: FakeAttemptModeV1B };
 	realExecution?: { authority: OneRunProviderAuthorityV1B };
 	deterministicInjection?: {
-		kind: "infrastructure_invalid" | "evidence_invalid" | "treatment_guardrail_failure" | "global_budget_stop" | "unknown";
+		kind: "infrastructure_invalid" | "evidence_invalid" | "treatment_guardrail_failure" | "global_budget_stop" | "unknown" | "workspace_forbidden_marker";
 		cause_id: string;
 	};
 }
@@ -133,6 +134,50 @@ function scanSafeArtifacts(runRoot: string, paths: string[], pending: Record<str
 	for (const path of paths) assertSafeEvidenceBytes(path, readFileSync(resolve(runRoot, path)));
 	for (const [label, value] of Object.entries(pending)) assertSafeEvidenceBytes(label, `${stableJson(value)}\n`);
 	return { passed: true, match_count: 0, reasoning_payloads: 0 };
+}
+
+function isContainedPath(root: string, candidate: string): boolean {
+	const path = relative(root, candidate);
+	return path === "" || (!path.startsWith(`..${sep}`) && path !== ".." && !isAbsolute(path));
+}
+
+export function scanFinalWorkspaceTreeV1B(workspaceRoot: string): WorkspaceTreeRefV1B {
+	try {
+		const canonicalRoot = resolve(workspaceRoot);
+		const rootStats = lstatSync(canonicalRoot);
+		if (rootStats.isSymbolicLink() || !rootStats.isDirectory()) throw new Error("workspace root entry rejected");
+		const realRoot = realpathSync.native(canonicalRoot);
+		const inventory: Array<{ path: string; bytes: number; sha256: string }> = [];
+		const visit = (directory: string): void => {
+			const entries = readdirSync(directory, { withFileTypes: true }).sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+			for (const entry of entries) {
+				const absolute = resolve(directory, entry.name);
+				const path = relative(canonicalRoot, absolute).split(sep).join("/");
+				const stats = lstatSync(absolute);
+				if (stats.isSymbolicLink()) throw new Error("workspace path-link entry rejected");
+				const real = realpathSync.native(absolute);
+				if (!isContainedPath(realRoot, real)) throw new Error("workspace path escape rejected");
+				if (stats.isDirectory()) { visit(absolute); continue; }
+				if (!stats.isFile() || stats.nlink !== 1) throw new Error("workspace unsupported or linked file rejected");
+				const bytes = readFileSync(absolute);
+				assertSafeEvidenceBytes(path, bytes);
+				inventory.push({ path, bytes: bytes.length, sha256: sha256(bytes) });
+			}
+		};
+		visit(canonicalRoot);
+		const digest = sha256(stableJson(inventory));
+		if (digest !== treeDigest(canonicalRoot)) throw new Error("workspace tree identity changed during scan");
+		return {
+			path: "workspace",
+			sha256: digest,
+			file_count: inventory.length,
+			size_bytes: inventory.reduce((sum, file) => sum + file.bytes, 0),
+			scan: { passed: true, match_count: 0, reasoning_payloads: 0 },
+		};
+	} catch (error) {
+		if (error instanceof V1BTypedPauseError) throw error;
+		throw new V1BTypedPauseError("paused_unclassified", "workspace_tree_evidence_rejected");
+	}
 }
 
 function typedOutcome(finalStatus: VerifierStatusV1, injection: ExecuteV1RunCellOptions["deterministicInjection"]): {
@@ -223,6 +268,10 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 		const protectedAfter = readProtectedBytes(workspaceRoot, task);
 		const protectedUnchanged = task.protected_paths.every((path) => protectedAfter[path] === protectedBefore[path]);
 		if (!protectedUnchanged) throw new Error("protected Task path changed");
+		if (options.deterministicInjection?.kind === "workspace_forbidden_marker") {
+			appendFileSync(resolve(workspaceRoot, task.writable_paths[0]!), "\n// Bearer FAKE_WORKSPACE_TOKEN\n// FAKE_SENSITIVE_WORKSPACE_MARKER\n// {\"reasoning\":\"blocked\",\"signature\":\"blocked\"}\n", "utf8");
+		}
+		const workspaceTreeRef = scanFinalWorkspaceTreeV1B(workspaceRoot);
 		const usage = handle.usage().run;
 		const reservations = [
 			...initial.reservations,
@@ -241,10 +290,10 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 		const scan = scanSafeArtifacts(options.runRoot, artifactPaths, {});
 		const scanRef = writeOnceJson(options.runRoot, "secret-scan.json", scan); artifactPaths.push(scanRef.path);
 		const refs = artifactPaths.map((path) => { const bytes = readFileSync(resolve(options.runRoot, path)); return { path, sha256: fileSha256(resolve(options.runRoot, path)), size_bytes: bytes.length }; });
-		const terminal: TerminalCellEvidenceV1B = { schema_version: 1, manifest_id: options.manifest.manifest_id, cell: options.cell, run_id: options.cell.planned_run_id, session_id: handle.sessionId, workspace_id: workspaceId, disposition: outcome.disposition, failure_class: outcome.failureClass, cause_id: outcome.causeId, invalid_attribution: outcome.attribution, exclusion_preauthorized: outcome.excluded, initial_dispatch: initial.initial_dispatch, attempts, initial_verifier_status: initialVerifier.result.status, final_verifier_status: finalStatus, recovery_eligible: eligible, recovery_started: recoveryStarted, budget_usage: usage, reservations, protected_paths_unchanged: true, secret_scan: scan, real_call_counters: counters, artifact_refs: refs, created_at: new Date().toISOString() };
+		const terminal: TerminalCellEvidenceV1B = { schema_version: 1, manifest_id: options.manifest.manifest_id, cell: options.cell, run_id: options.cell.planned_run_id, session_id: handle.sessionId, workspace_id: workspaceId, disposition: outcome.disposition, failure_class: outcome.failureClass, cause_id: outcome.causeId, invalid_attribution: outcome.attribution, exclusion_preauthorized: outcome.excluded, initial_dispatch: initial.initial_dispatch, attempts, initial_verifier_status: initialVerifier.result.status, final_verifier_status: finalStatus, recovery_eligible: eligible, recovery_started: recoveryStarted, budget_usage: usage, reservations, protected_paths_unchanged: true, secret_scan: scan, workspace_tree_ref: workspaceTreeRef, real_call_counters: counters, artifact_refs: refs, created_at: new Date().toISOString() };
 		scanSafeArtifacts(options.runRoot, artifactPaths, { "terminal-evidence.json": terminal });
 		const terminalEvidenceRef = writeOnceJson(options.runRoot, "terminal-evidence.json", terminal);
-		const terminalMarker = { schema_version: 1, manifest_id: options.manifest.manifest_id, cell_id: options.cell.cell_id, planned_run_id: options.cell.planned_run_id, disposition: outcome.disposition, failure_class: outcome.failureClass, cause_id: outcome.causeId, run_result_ref: runResultRef, terminal_evidence_ref: terminalEvidenceRef, final_workspace_digest: treeDigest(workspaceRoot) };
+		const terminalMarker = { schema_version: 1, manifest_id: options.manifest.manifest_id, cell_id: options.cell.cell_id, planned_run_id: options.cell.planned_run_id, disposition: outcome.disposition, failure_class: outcome.failureClass, cause_id: outcome.causeId, run_result_ref: runResultRef, terminal_evidence_ref: terminalEvidenceRef, final_workspace_digest: workspaceTreeRef.sha256, final_workspace_ref: workspaceTreeRef };
 		scanSafeArtifacts(options.runRoot, artifactPaths, { "terminal-evidence.json": terminal, "terminal.json": terminalMarker });
 		writeOnceJson(options.runRoot, "terminal.json", terminalMarker);
 		if (stage1 && stableJson(counters) !== stableJson(ZERO_REAL_CALL_COUNTERS_V1B)) throw new Error("Stage 1 real-call counter changed");

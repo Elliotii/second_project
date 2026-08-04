@@ -154,7 +154,10 @@ against Attempt, Run and Pilot evidence before dispatch/allocation. Unknown or
 malformed usage fails closed.
 
 The independent Inspector reloads Manifest, ledger, terminal marker,
-RunResult, dispatch evidence and ArtifactRefs. Aggregate recomputes counts and
+RunResult, dispatch evidence and ArtifactRefs. Producer and Inspector each
+traverse the final Workspace tree independently, reject links/path escapes or
+unsupported entries, scan every regular-file byte, and bind one typed tree
+reference. Aggregate recomputes counts and
 checks complete B/C initial-dispatch equality plus the A/B Skill-only delta; it
 does not trust an execution summary or mutate evidence.
 
@@ -168,6 +171,14 @@ node workbench/src/cli.ts v1b aggregate
 node workbench/../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p workbench/tsconfig.json
 node --test workbench/tests/v1b-stage1.test.ts workbench/tests/v1b-cli.test.ts
 ```
+
+The tracked real route is the same `run-next` command plus the explicit
+`--stage2-real-authority` switch and a frozen `stage2_real` Manifest. Both are
+required. The switch constructs the bounded public-Pi one-Run composition;
+`DEEPSEEK_API_KEY` remains an opaque lazy identity and its value is resolved
+only inside an already-started authorized Run immediately before first
+dispatch. A Stage 1 Manifest rejects the switch, and a real Manifest without
+the switch fails before Pilot initialization or a `started` transition.
 
 This preparation surface does not authorize Stage 2, credential access,
 network traffic, external Provider/model calls, source repair during

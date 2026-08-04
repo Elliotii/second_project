@@ -9,13 +9,15 @@ import type {
 	ExecutionManifestV1B,
 	RunResultV1,
 	TerminalCellEvidenceV1B,
+	WorkspaceTreeRefV1B,
 } from "./contracts/v1-types.ts";
 import { validateArtifactRef } from "./evidence/artifacts.ts";
-import { digestObject, fileSha256, sha256, stableJson, treeDigest } from "./hash.ts";
+import { digestObject, fileSha256, sha256, stableJson } from "./hash.ts";
 import { deriveManifestBindingsV1, validateExecutionManifestV1B } from "./experiment/v1.ts";
 import { loadCandidateTaskPackV1 } from "./experiment/task-pack-v1.ts";
 import { readPilotLedgerV1B, validatePilotLedgerV1B } from "./pilot-v1.ts";
 import { expectedSkillIdentityV1 } from "./skill/runtime-v1.ts";
+import { scanFinalWorkspaceTreeV1B } from "./run-v1.ts";
 
 export interface InspectRunResultV1B {
 	integrity_valid: boolean;
@@ -35,6 +37,7 @@ interface TerminalMarkerV1B {
 	run_result_ref: ArtifactRefV0B;
 	terminal_evidence_ref: ArtifactRefV0B;
 	final_workspace_digest: string;
+	final_workspace_ref: WorkspaceTreeRefV1B;
 }
 
 const FORBIDDEN_PERSISTED_EVIDENCE_V1B = /(?:"(?:authorization|proxy[_-]?authorization|reasoning(?:_content)?|thinking|thoughtsignature|signature)"\s*:|bearer\s+[A-Za-z0-9._-]+|FAKE_(?:SENSITIVE|RESOLVER|PROVIDER|FACTORY)[A-Za-z0-9_-]*)/i;
@@ -174,7 +177,8 @@ export function inspectV1RunCell(options: { projectRoot: string; pilotRoot: stri
 		if (stableJson(manifestRef) !== stableJson({ manifest_id: manifest.manifest_id, workbench_source_digest: manifest.workbench_source_digest, pi_commit: manifest.pi_commit })) errors.push("config Manifest/source/Pi binding drift");
 		const instruction = readFileSync(resolve(options.projectRoot, task.instruction_ref)); if (!instruction.equals(readFileSync(resolve(runRoot, "config/instruction.md"))) || sha256(instruction) !== task.instruction_sha256) errors.push("task instruction binding drift");
 		const verifier = readFileSync(resolve(options.projectRoot, task.external_verifier_ref)); if (!verifier.equals(readFileSync(resolve(runRoot, "config/verifier.mjs"))) || sha256(verifier) !== task.external_verifier_sha256) errors.push("Verifier source binding drift");
-		if (marker.final_workspace_digest !== treeDigest(resolve(runRoot, "workspace"))) errors.push("final Workspace digest drift");
+		const workspaceTreeRef = scanFinalWorkspaceTreeV1B(resolve(runRoot, "workspace"));
+		if (marker.final_workspace_digest !== workspaceTreeRef.sha256 || stableJson(marker.final_workspace_ref) !== stableJson(workspaceTreeRef) || stableJson(terminal.workspace_tree_ref) !== stableJson(workspaceTreeRef)) errors.push("final Workspace tree reference drift");
 		const expectedSemantic = {
 			task_digest: digestObject(task), workspace_source_digest: task.workspace_source_digest, prompt_digest: bindings.base_prompt_digest,
 			skill_digest: cell.arm === "A" ? null : bindings.skill_digest, strategy_digest: bindings.strategy_digests[cell.strategy_id], tool_digest: bindings.tool_profile_digest,

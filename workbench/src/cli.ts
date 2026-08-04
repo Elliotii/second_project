@@ -6,6 +6,7 @@ import { dryRunV0A, executeV0ARun } from "./run.ts";
 import { dryRunV0B, executeV0BRun } from "./run-v0b.ts";
 import { runV0CProductSurface } from "./product-surface-v0c.ts";
 import { aggregateV1B, inspectV1B, preflightV1B, runNextV1B, V1B_STAGE1_MANIFEST_PATH } from "./product-surface-v1.ts";
+import { FixedProviderBoundaryErrorV1B } from "./provider/fixed-provider-v1.ts";
 import {
 	V0C_OBSERVE_STRATEGY_PATH,
 	V0C_REAL_STRATEGY_PATH,
@@ -59,13 +60,24 @@ async function main(): Promise<void> {
 		const manifestPath = value("--manifest") ?? V1B_STAGE1_MANIFEST_PATH;
 		if (action === "preflight") process.stdout.write(`${JSON.stringify(preflightV1B({ projectRoot, manifestPath, pilotRoot }))}\n`);
 		else if (action === "run-next") {
-			const result = await runNextV1B({ projectRoot, manifestPath, pilotRoot });
+			const stage2AuthorityRequested = raw.includes("--stage2-real-authority");
+			const stage2ExecutionAuthority = stage2AuthorityRequested ? {
+				authority_id: "v1b-public-pi-one-run" as const,
+				credential_profile_name: "DEEPSEEK_API_KEY" as const,
+				authorized: true,
+				resolver: { resolve: async (): Promise<string> => {
+					const credential = process.env["DEEPSEEK_API_KEY"];
+					if (typeof credential !== "string" || credential === "") throw new FixedProviderBoundaryErrorV1B();
+					return credential;
+				} },
+			} : undefined;
+			const result = await runNextV1B({ projectRoot, manifestPath, pilotRoot, ...(stage2ExecutionAuthority ? { stage2ExecutionAuthority } : {}) });
 			process.stdout.write(`${JSON.stringify(result ? { run_id: result.run_result.run_id, verifier_status: result.run_result.verifier_status, run_root: result.run_root, real_call_counters: result.real_call_counters } : { status: "complete" })}\n`);
 		} else if (action === "inspect") {
 			const plannedRunId = value("--run"); if (!plannedRunId) throw new Error("v1b inspect requires --run <planned-run-id>");
 			const result = inspectV1B({ projectRoot, pilotRoot, plannedRunId }); process.stdout.write(`${JSON.stringify(result)}\n`); if (!result.integrity_valid) process.exitCode = 1;
 		} else if (action === "aggregate") process.stdout.write(`${JSON.stringify(aggregateV1B({ projectRoot, pilotRoot }))}\n`);
-		else throw new Error("usage: cli.ts v1b <preflight|run-next|inspect|aggregate> [--manifest <path>] [--pilot-root <path>] [--run <planned-run-id>]");
+		else throw new Error("usage: cli.ts v1b <preflight|run-next|inspect|aggregate> [--manifest <path>] [--pilot-root <path>] [--run <planned-run-id>] [--stage2-real-authority]");
 		return;
 	}
 	const args = parseArguments(raw);

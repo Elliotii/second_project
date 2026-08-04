@@ -106,9 +106,12 @@ export class OneRunProviderAuthorityV1B {
 		this.resolver = resolver;
 	}
 
+	assertAvailable(): void {
+		if (!this.authorized || this.state !== "available" || !this.resolver) throw new FixedProviderBoundaryErrorV1B();
+	}
+
 	open(): OneRunProviderAccessV1B {
-		if (!this.authorized) throw new FixedProviderBoundaryErrorV1B();
-		if (this.state !== "available") throw new FixedProviderBoundaryErrorV1B();
+		this.assertAvailable();
 		this.state = "opened";
 		return {
 			profile: DEEPSEEK_FIXED_PROFILE_V1,

@@ -143,6 +143,14 @@ export interface InitialDispatchEvidenceV1B {
 	payload_sha256: string;
 }
 
+export interface WorkspaceTreeRefV1B {
+	path: "workspace";
+	sha256: string;
+	file_count: number;
+	size_bytes: number;
+	scan: { passed: true; match_count: 0; reasoning_payloads: 0 };
+}
+
 export interface TerminalCellEvidenceV1B {
 	schema_version: 1;
 	manifest_id: string;
@@ -165,6 +173,7 @@ export interface TerminalCellEvidenceV1B {
 	reservations: BudgetReservationEvidenceV1B[];
 	protected_paths_unchanged: boolean;
 	secret_scan: { passed: true; match_count: 0; reasoning_payloads: 0 };
+	workspace_tree_ref: WorkspaceTreeRefV1B;
 	real_call_counters: { credential_reads: number; network_calls: number; provider_calls: number; model_calls: number };
 	artifact_refs: Array<{ path: string; sha256: string; size_bytes: number }>;
 	created_at: string;
