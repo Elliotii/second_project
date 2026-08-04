@@ -1,12 +1,12 @@
 # Current State
 
-> Updated: 2026-08-04
+> Updated: 2026-08-05
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_b_corrected_control_baseline_pending_stage_1_restart
-  status: V1_B_ACTIVE_STAGE_1_RESTART_PENDING
+  phase: v1_b_stage_2_authorized_on_resulting_execution_baseline
+  status: V1_B_ACTIVE_EXECUTION_BASELINE_FROZEN_STAGE_2_PENDING
 
 active_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
 
@@ -33,7 +33,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-  status: active_stage_1_corrected_baseline_pending_restart
+  status: active_stage_2_authorized_pending_fresh_execution_session
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -259,6 +259,19 @@ completed_work:
   - V1_B_stage_1_Gate_A_identity_and_pi_precheck_passed
   - V1_B_first_stage_1_session_stopped_before_implementation_on_stale_control_narrative
   - V1_B_first_stage_1_session_zero_source_delta_and_zero_real_access_verified
+  - V1_B_corrected_control_baseline_commit_created_and_verified
+  - V1_B_fresh_stage_1_session_started_from_corrected_baseline
+  - V1_B_stage_1_implementation_completed_with_zero_real_access
+  - V1_B_first_candidate_rejected_after_focused_audit
+  - V1_B_two_P1_findings_corrected_by_original_preparation_session
+  - V1_B_main_rereview_test_only_micro_correction_completed
+  - V1_B_corrected_candidate_commit_created
+  - V1_B_focused_independent_reaudit_passed
+  - V1_B_corrected_candidate_and_reaudit_accepted_by_main_session
+  - V1_B_bounded_autonomy_execution_envelope_authorized_by_user
+  - V1_B_execution_baseline_and_closeout_commits_authorized_by_user
+  - V1_B_stage_2_opaque_credential_network_and_real_DeepSeek_calls_authorized_under_USD2_cap
+  - V2_remains_not_authorized
 
 workspace:
   git_initialized: true
@@ -296,7 +309,12 @@ workspace:
   v1_b_planning_charter_amendment_baseline_tree: c51177ea760d3153257703326a220b550af10393
   v1_b_first_control_baseline_commit: 84f548c93df40d8955a15572df30edac7b6df0fa
   v1_b_first_control_baseline_tree: 0df2d9f57cf2c2705e1f6255b3efa9c2e1be45de
-  v1_b_corrected_control_baseline_commit: resulting_HEAD_of_this_revision
+  v1_b_corrected_control_baseline_commit: de75ca7a4d5376713f01ca475bc5ad7637c70443
+  v1_b_corrected_control_baseline_tree: e930e1d0885b52bf911ed78912786723f321f06e
+  v1_b_rejected_candidate_commit: 951e9161300eacd408e232aa6d1fa66ac02d0e10
+  v1_b_corrected_candidate_commit: a11690e5827d9d540b731156799566bea21c689e
+  v1_b_corrected_candidate_tree: 282c4dc93d31131fa0b20fc70c48831409664eee
+  v1_b_execution_baseline_commit: resulting_HEAD_of_this_revision
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -439,28 +457,38 @@ v1:
   V1_B_goal_contract_draft_status: superseded
   V1_B_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
   V1_B_formal_goal_contract_created: true
-  V1_B_contract_status: accepted_activated_stage_1_authorized
+  V1_B_contract_status: accepted_activated_stage_2_authorized_pending_execution_baseline
   V1_B_activation_authorized: true
   V1_B_control_baseline_commit_authorized: consumed
   V1_B_first_control_baseline_commit: 84f548c93df40d8955a15572df30edac7b6df0fa
   V1_B_first_control_baseline_tree: 0df2d9f57cf2c2705e1f6255b3efa9c2e1be45de
-  V1_B_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_B_control_baseline_commit: de75ca7a4d5376713f01ca475bc5ad7637c70443
+  V1_B_control_baseline_tree: e930e1d0885b52bf911ed78912786723f321f06e
   V1_B_stage_1_owner: dedicated_v1_b_preparation_session
   V1_B_stage_1_authorized: true_zero_real_calls
-  V1_B_stage_1_started: false_pending_corrected_baseline_restart
+  V1_B_stage_1_started: true
+  V1_B_stage_1_completed: true
   V1_B_first_stage_1_thread_id: 019fcc05-43a5-7481-8cb7-7d51e2d7085f
   V1_B_first_stage_1_disposition: stopped_before_implementation_due_stale_CURRENT_STATE_narrative
   V1_B_first_stage_1_source_delta: 0
   V1_B_first_stage_1_real_access_counts: credential_0_network_0_provider_0_model_0
+  V1_B_stage_1_thread_id: 019fcc0a-16e1-7791-98ef-ba2eaff857b8
+  V1_B_stage_1_disposition: PASS_V1_B_STAGE1_PREPARATION_AFTER_CORRECTION_PENDING_GOAL_CLOSEOUT
+  V1_B_rejected_candidate_commit: 951e9161300eacd408e232aa6d1fa66ac02d0e10
+  V1_B_corrected_candidate_commit: a11690e5827d9d540b731156799566bea21c689e
+  V1_B_corrected_candidate_tree: 282c4dc93d31131fa0b20fc70c48831409664eee
+  V1_B_focused_reaudit_disposition: PASS_FOCUSED_V1_B_STAGE1_REAUDIT
   V1_B_stage_1_prompt: docs/reports/V1_B_STAGE1_PREPARATION_SESSION_START_PROMPT.md
-  V1_B_execution_authorized: stage_1_only
-  V1_B_credential_reads_authorized: 0
-  V1_B_external_network_authorized: false
-  V1_B_real_model_calls_authorized: 0
-  V1_B_candidate_commit_authorized: false
-  V1_B_focused_audit_authorized: false
-  V1_B_execution_baseline_authorized: false
-  V1_B_stage_2_authorized: false
+  V1_B_execution_authorized: stage_2_bounded_pilot_after_execution_baseline
+  V1_B_credential_reads_authorized: opaque_DEEPSEEK_API_KEY_only
+  V1_B_external_network_authorized: DeepSeek_API_only
+  V1_B_real_model_calls_authorized: frozen_24_cell_pilot_under_USD2_hard_cap
+  V1_B_candidate_commit_authorized: consumed
+  V1_B_focused_audit_authorized: consumed
+  V1_B_execution_baseline_authorized: true
+  V1_B_stage_2_authorized: true_fresh_no_source_edit_session
+  V1_B_closeout_commit_authorized: true
+  V1_B_v2_authorized: false
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -1108,12 +1136,15 @@ next_checkpoint:
   - V1_B_goal_contract_accepted_and_formalized
   - V1_B_activation_control_baseline_and_zero_call_stage_1_authorized
   - first_V1_B_stage_1_session_stopped_preimplementation_with_zero_delta
-  - create_and_verify_corrected_V1_B_control_baseline_commit
-  - update_exact_SHA_bound_prompt_and_restart_fresh_V1_B_stage_1_session
-  - await_V1_B_stage_1_implementation_report_and_closeout_draft
-  - main_session_limited_review_before_any_candidate_commit
-  - keep_candidate_audit_execution_baseline_and_stage_2_separately_unauthorized
-  - no_credentials_network_or_real_model_calls_are_currently_authorized
+  - corrected_V1_B_control_baseline_created_at_de75ca7a4d5376713f01ca475bc5ad7637c70443
+  - corrected_V1_B_candidate_created_at_a11690e5827d9d540b731156799566bea21c689e
+  - focused_reaudit_passed_and_two_original_P1_findings_closed
+  - materialize_final_stage_2_manifest_and_current_official_provider_checkpoint
+  - create_and_verify_execution_baseline_commit
+  - start_fresh_no_source_edit_stage_2_session
+  - execute_immutable_24_cell_pilot_under_USD2_hard_cap_or_stop_on_exit_condition
+  - main_session_limited_evidence_acceptance_and_authorized_V1_B_closeout_commit
+  - stop_before_V2
 
 open_user_decisions: []
 ```
@@ -1184,10 +1215,11 @@ open_user_decisions: []
 - V0 and V1-A are closed and accepted. V1-A's independently re-audited
   Implementation Baseline is
   `784bd1ec06c2aa9ed554a7da661bdf582097bcdf`. Do not reopen or silently
-  rewrite it. V1-B is the active Goal under the accepted formal Contract. Only
-  its dedicated zero-real-call Stage 1 Preparation is authorized; credential,
-  network, external Provider/model calls, Candidate Commit, focused audit,
-  Execution Baseline and Stage 2 remain unauthorized. V1 compares Baseline,
+  rewrite it. V1-B is the active Goal under the accepted formal Contract. Its
+  zero-call Stage 1 corrected Candidate passed focused independent re-audit.
+  The user has authorized Execution Baseline creation and a fresh no-source-edit
+  Stage 2 Pilot with opaque `DEEPSEEK_API_KEY` resolution, DeepSeek-only network
+  access and real calls under the immutable USD 2 hard cap. V1 compares Baseline,
   Skill-only and Skill + External Verifier / Runtime Control; V2 bounded
   multi-path recovery remains the Portfolio North Star rather than current
   scope.
@@ -1209,12 +1241,15 @@ Windows re-audited Implementation Baseline is
 Skill/experiment substrate with zero real-model calls, but did not test Skill
 effectiveness, real Recovery or strategy superiority.
 
-V1-B is active under the accepted `V1_B_GOAL_CONTRACT.md`. The first dedicated
-Stage 1 Session verified Control Baseline `84f548c93df40d8955a15572df30edac7b6df0fa`
-and the pinned Pi, then stopped before implementation when it found the stale
-inactive narrative that this revision corrects. Its tracked/staged/source delta
-and all real-access counters were zero. The next bounded handoff is a fresh
-dedicated Stage 1 Preparation Session from the corrected Control Baseline. It
-may implement only the Contract-listed zero-call source/test/report scope.
-Candidate Commit, focused audit, Execution Baseline, credentials, network,
-real-model calls and the USD 2 Stage 2 Pilot remain separate future controls.
+V1-B is active under the accepted `V1_B_GOAL_CONTRACT.md`. Fresh Stage 1 ran
+from corrected Control Baseline `de75ca7a4d5376713f01ca475bc5ad7637c70443`.
+After the first Candidate audit, the original Preparation Session corrected two
+P1 boundary findings and one test-only Main rereview gap. Corrected Candidate
+`a11690e5827d9d540b731156799566bea21c689e` then received
+`PASS_FOCUSED_V1_B_STAGE1_REAUDIT`; both original findings are closed and no new
+blocking finding was reported. The user accepted the recommended bounded
+autonomy envelope. The next handoff is deterministic Manifest/provider
+checkpoint materialization, an exact Execution Baseline, then a fresh
+no-source-edit Stage 2 Session. It may run only the frozen 24-cell Pilot under
+the USD 2 hard cap and automatic exit conditions. V1-B closeout commit is
+authorized if evidence is valid; entry into V2 is not authorized.

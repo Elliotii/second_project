@@ -1,0 +1,367 @@
+{
+  "schema_version": "v1b-execution-manifest-v1",
+  "manifest_id": "43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76",
+  "experiment_id": "v1-b-bounded-pilot",
+  "experiment_revision": 1,
+  "execution_mode": "stage2_real",
+  "created_at": "2026-08-04T00:00:00.000Z",
+  "control_baseline_commit": "de75ca7a4d5376713f01ca475bc5ad7637c70443",
+  "control_baseline_tree": "e930e1d0885b52bf911ed78912786723f321f06e",
+  "execution_baseline_commit": "a11690e5827d9d540b731156799566bea21c689e",
+  "workbench_source_digest": "ef30c4be9bc4143569f30aabbb66b2a01db9b2098082f35dba2137f3acb22ffe",
+  "pi_commit": "027a5847901b5dde30270abaa1041046cd2b4b55",
+  "pi_version": "0.82.1",
+  "protocol_id": "v1_skill_runtime_comparison",
+  "credential_profile_name": "DEEPSEEK_API_KEY",
+  "real_execution_authorized": true,
+  "bindings": {
+    "task_pack_digest": "23cee2a5085cc1e541ca258abea8b28b410b934e387b97e1aae13220ccd92d20",
+    "task_digests": {
+      "v1-parse-duration": "164923ab6f289879be84f59a2b28e51bcdcea9287a595b7b51bc4ca6e8acbe9a",
+      "v1-bounded-index": "73caaa3efb8b9010e4c6c861da99d5a15f0f50bb3e3b98e5bb0f661904235107",
+      "v1-state-transition": "4111032744d77e011ef7991222642f016d391633d4f18380138b94897d95e2e1",
+      "v1-stable-format": "00726e1ac3edb0440b3b651f32008df4ed984effc349b905f2db5f0ad3843b26"
+    },
+    "workspace_digests": {
+      "v1-parse-duration": "5690aab9c1e7eb3905258c342d7bad4504e23377c18fec9fde39f22f9a99defa",
+      "v1-bounded-index": "44822d2c4d1779654d03d5db359fbf4d8bce16258643f055965f0efdfa8a19ee",
+      "v1-state-transition": "ecbc62cbfb21edef0dbfb05c2c8f3ab2be5e8dd99d0db3df177958f7808c54e4",
+      "v1-stable-format": "408b53fc073e6e802e6e4af218821bd52b5560a306cdc22fa08f1b22073d304d"
+    },
+    "skill_digest": "d41a123a4fa7c5aece7c1efece8fcc3be2040b272a5ab76f14622d3b17fc80af",
+    "strategy_digests": {
+      "baseline": "4e49de731ada794a5695506b466d3b46438fe1d879b6e417860f21319a5e7272",
+      "skill_only": "037096faf6e30970d7deb11d665a9ba7e395b0a886ea72a6b5dc8aa31c442788",
+      "skill_plus_runtime_control": "f403ca2eea94281038a213b12bb1bc5856f8886e21c63861f00a6cff00fed830"
+    },
+    "model_profile_digest": "26b06fdcc8a576d7d1da452d35b51b8795a318526e72c610c417518d1c2bad9f",
+    "base_prompt_digest": "317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf",
+    "tool_profile_digest": "ad036e4d67ffa98be7a02024c59a56f153d2600037d27f6aa4e3fb0de6908781",
+    "verifier_digests": {
+      "v1-parse-duration-verifier": "0924cb0f56e43a56dc74b262539f2ad0700b2cb2a43da26a9415b7e9ffaf21da",
+      "v1-bounded-index-verifier": "05404f5234df8c0360ee64f7a7660f0ad1db4573b627622d6709a194ffe19fa4",
+      "v1-state-transition-verifier": "13014e8c932daef02612d73755b8c72e428f709210aeb80e15515c7653e8b285",
+      "v1-stable-format-verifier": "6e5480d7e62b289435ea54f8869078b603aad0780a85aab6982f3d572198c36f"
+    }
+  },
+  "budgets": {
+    "initial_attempt": {
+      "provider_requests": 8,
+      "tool_calls": 12,
+      "tokens": 65536,
+      "wall_time_ms": 300000,
+      "cost_usd": 0.1,
+      "verifier_runs": 1,
+      "child_attempts": 0
+    },
+    "arm_a_or_b_run": {
+      "provider_requests": 8,
+      "tool_calls": 12,
+      "tokens": 65536,
+      "wall_time_ms": 300000,
+      "cost_usd": 0.1,
+      "verifier_runs": 1,
+      "child_attempts": 0
+    },
+    "arm_c_run": {
+      "provider_requests": 16,
+      "tool_calls": 24,
+      "tokens": 131072,
+      "wall_time_ms": 900000,
+      "cost_usd": 0.2,
+      "verifier_runs": 2,
+      "child_attempts": 1
+    },
+    "pilot": {
+      "provider_requests": 256,
+      "tool_calls": 384,
+      "tokens": 2097152,
+      "wall_time_ms": 7200000,
+      "cost_usd": 2,
+      "verifier_runs": 32,
+      "child_attempts": 8
+    }
+  },
+  "policy": {
+    "alternate_model_fallback": false,
+    "retry_same_run": false,
+    "automatic_replacement": false,
+    "invalid_ratio_pause_threshold": 0.25,
+    "repeated_invalid_cause_pause_count": 2,
+    "failure_taxonomy": [
+      "task_pass",
+      "task_fail",
+      "treatment_guardrail_failure",
+      "infrastructure_invalid",
+      "evidence_invalid",
+      "global_budget_stop",
+      "paused_unclassified"
+    ]
+  },
+  "cells": [
+    {
+      "cell_id": "v1b-cell-01",
+      "planned_run_id": "v1b-run-01-parse-duration-r1-a",
+      "task_id": "v1-parse-duration",
+      "repetition": 1,
+      "order_slot": 1,
+      "block": 1,
+      "block_slot": 1,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-02",
+      "planned_run_id": "v1b-run-02-parse-duration-r1-b",
+      "task_id": "v1-parse-duration",
+      "repetition": 1,
+      "order_slot": 2,
+      "block": 1,
+      "block_slot": 2,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-03",
+      "planned_run_id": "v1b-run-03-parse-duration-r1-c",
+      "task_id": "v1-parse-duration",
+      "repetition": 1,
+      "order_slot": 3,
+      "block": 1,
+      "block_slot": 3,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-04",
+      "planned_run_id": "v1b-run-04-bounded-index-r1-a",
+      "task_id": "v1-bounded-index",
+      "repetition": 1,
+      "order_slot": 4,
+      "block": 2,
+      "block_slot": 1,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-05",
+      "planned_run_id": "v1b-run-05-bounded-index-r1-c",
+      "task_id": "v1-bounded-index",
+      "repetition": 1,
+      "order_slot": 5,
+      "block": 2,
+      "block_slot": 2,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-06",
+      "planned_run_id": "v1b-run-06-bounded-index-r1-b",
+      "task_id": "v1-bounded-index",
+      "repetition": 1,
+      "order_slot": 6,
+      "block": 2,
+      "block_slot": 3,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-07",
+      "planned_run_id": "v1b-run-07-state-transition-r1-b",
+      "task_id": "v1-state-transition",
+      "repetition": 1,
+      "order_slot": 7,
+      "block": 3,
+      "block_slot": 1,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-08",
+      "planned_run_id": "v1b-run-08-state-transition-r1-a",
+      "task_id": "v1-state-transition",
+      "repetition": 1,
+      "order_slot": 8,
+      "block": 3,
+      "block_slot": 2,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-09",
+      "planned_run_id": "v1b-run-09-state-transition-r1-c",
+      "task_id": "v1-state-transition",
+      "repetition": 1,
+      "order_slot": 9,
+      "block": 3,
+      "block_slot": 3,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-10",
+      "planned_run_id": "v1b-run-10-stable-format-r1-b",
+      "task_id": "v1-stable-format",
+      "repetition": 1,
+      "order_slot": 10,
+      "block": 4,
+      "block_slot": 1,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-11",
+      "planned_run_id": "v1b-run-11-stable-format-r1-c",
+      "task_id": "v1-stable-format",
+      "repetition": 1,
+      "order_slot": 11,
+      "block": 4,
+      "block_slot": 2,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-12",
+      "planned_run_id": "v1b-run-12-stable-format-r1-a",
+      "task_id": "v1-stable-format",
+      "repetition": 1,
+      "order_slot": 12,
+      "block": 4,
+      "block_slot": 3,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-13",
+      "planned_run_id": "v1b-run-13-parse-duration-r2-c",
+      "task_id": "v1-parse-duration",
+      "repetition": 2,
+      "order_slot": 13,
+      "block": 5,
+      "block_slot": 1,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-14",
+      "planned_run_id": "v1b-run-14-parse-duration-r2-a",
+      "task_id": "v1-parse-duration",
+      "repetition": 2,
+      "order_slot": 14,
+      "block": 5,
+      "block_slot": 2,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-15",
+      "planned_run_id": "v1b-run-15-parse-duration-r2-b",
+      "task_id": "v1-parse-duration",
+      "repetition": 2,
+      "order_slot": 15,
+      "block": 5,
+      "block_slot": 3,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-16",
+      "planned_run_id": "v1b-run-16-bounded-index-r2-c",
+      "task_id": "v1-bounded-index",
+      "repetition": 2,
+      "order_slot": 16,
+      "block": 6,
+      "block_slot": 1,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-17",
+      "planned_run_id": "v1b-run-17-bounded-index-r2-b",
+      "task_id": "v1-bounded-index",
+      "repetition": 2,
+      "order_slot": 17,
+      "block": 6,
+      "block_slot": 2,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-18",
+      "planned_run_id": "v1b-run-18-bounded-index-r2-a",
+      "task_id": "v1-bounded-index",
+      "repetition": 2,
+      "order_slot": 18,
+      "block": 6,
+      "block_slot": 3,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-19",
+      "planned_run_id": "v1b-run-19-state-transition-r2-a",
+      "task_id": "v1-state-transition",
+      "repetition": 2,
+      "order_slot": 19,
+      "block": 7,
+      "block_slot": 1,
+      "arm": "A",
+      "strategy_id": "baseline"
+    },
+    {
+      "cell_id": "v1b-cell-20",
+      "planned_run_id": "v1b-run-20-state-transition-r2-b",
+      "task_id": "v1-state-transition",
+      "repetition": 2,
+      "order_slot": 20,
+      "block": 7,
+      "block_slot": 2,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-21",
+      "planned_run_id": "v1b-run-21-state-transition-r2-c",
+      "task_id": "v1-state-transition",
+      "repetition": 2,
+      "order_slot": 21,
+      "block": 7,
+      "block_slot": 3,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-22",
+      "planned_run_id": "v1b-run-22-stable-format-r2-b",
+      "task_id": "v1-stable-format",
+      "repetition": 2,
+      "order_slot": 22,
+      "block": 8,
+      "block_slot": 1,
+      "arm": "B",
+      "strategy_id": "skill_only"
+    },
+    {
+      "cell_id": "v1b-cell-23",
+      "planned_run_id": "v1b-run-23-stable-format-r2-c",
+      "task_id": "v1-stable-format",
+      "repetition": 2,
+      "order_slot": 23,
+      "block": 8,
+      "block_slot": 2,
+      "arm": "C",
+      "strategy_id": "skill_plus_runtime_control"
+    },
+    {
+      "cell_id": "v1b-cell-24",
+      "planned_run_id": "v1b-run-24-stable-format-r2-a",
+      "task_id": "v1-stable-format",
+      "repetition": 2,
+      "order_slot": 24,
+      "block": 8,
+      "block_slot": 3,
+      "arm": "A",
+      "strategy_id": "baseline"
+    }
+  ]
+}

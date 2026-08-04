@@ -1,7 +1,7 @@
-# V1-B Goal Contract Draft — Frozen Bounded Real Pilot
+# V1-B Goal Contract — Frozen Bounded Real Pilot
 
 ```yaml
-status: accepted_activated_stage_1_authorized
+status: accepted_activated_stage_2_authorized_on_resulting_execution_baseline
 goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
 version: V1
 project: Agent Harness Reliability Workbench
@@ -15,34 +15,42 @@ v1_a_implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 contract_accepted: true
 active_goal: true
-implementation_authorized: stage_1_only
+implementation_authorized: stage_1_completed_stage_2_execution_authorized
 stage_1_authorized: true
 stage_1_implementation_owner: dedicated_v1_b_preparation_session
 first_control_baseline_commit: 84f548c93df40d8955a15572df30edac7b6df0fa
 first_control_baseline_tree: 0df2d9f57cf2c2705e1f6255b3efa9c2e1be45de
 first_stage_1_thread_id: 019fcc05-43a5-7481-8cb7-7d51e2d7085f
 first_stage_1_disposition: stopped_preimplementation_on_stale_control_narrative_zero_delta
-control_baseline_commit: resulting_HEAD_of_this_revision
-stage_1_started: false_pending_corrected_baseline_restart
-candidate_commit_authorized: false
-focused_audit_authorized: false
-execution_baseline_authorized: false
-stage_2_authorized: false
-credential_reads_authorized: 0
-external_network_authorized: false
-real_model_calls_authorized: 0
-real_provider_calls_authorized: 0
-whole_pilot_cost_authorized_usd: 0
+control_baseline_commit: de75ca7a4d5376713f01ca475bc5ad7637c70443
+control_baseline_tree: e930e1d0885b52bf911ed78912786723f321f06e
+stage_1_started: true
+stage_1_completed: true
+stage_1_thread_id: 019fcc0a-16e1-7791-98ef-ba2eaff857b8
+rejected_candidate_commit: 951e9161300eacd408e232aa6d1fa66ac02d0e10
+corrected_candidate_commit: a11690e5827d9d540b731156799566bea21c689e
+corrected_candidate_tree: 282c4dc93d31131fa0b20fc70c48831409664eee
+focused_reaudit_disposition: PASS_FOCUSED_V1_B_STAGE1_REAUDIT
+candidate_commit_authorized: consumed
+focused_audit_authorized: consumed
+execution_baseline_authorized: true
+execution_baseline_commit: resulting_HEAD_of_this_revision
+stage_2_authorized: true_bounded_pilot
+credential_reads_authorized: opaque_DEEPSEEK_API_KEY_only
+external_network_authorized: true_DeepSeek_API_only
+real_model_calls_authorized: bounded_by_frozen_manifest_and_USD2_cap
+real_provider_calls_authorized: bounded_by_frozen_manifest_and_USD2_cap
+whole_pilot_cost_authorized_usd: 2
 pi_core_patch_authorized: false
 private_pi_import_authorized: false
 dependency_install_authorized: false
 dedicated_session_git_commit_authorized: false
 ```
 
-> 本文件是用户已接受并已激活的 V1-B 正式 Goal Contract。当前授权只覆盖新的
-> dedicated Preparation Session 从精确 Control Baseline 执行零真实调用 Stage 1。
-> Candidate Commit、focused audit、Execution Baseline、Stage 2、凭据/网络、真实
-> Provider/model 调用和 USD2 Pilot 均仍是后续独立控制点。
+> 本文件是用户已接受并已激活的 V1-B 正式 Goal Contract。Stage 1 corrected
+> Candidate 已通过 focused independent re-audit。用户现已授权 Main Session创建
+> deterministic Execution Baseline，并授权新的 no-source-edit Stage 2 Session按冻结
+> Manifest逐 cell运行一次 USD2 hard-cap Pilot；本授权不扩展技术 Scope，不授权 V2。
 
 ## 1. Goal Mission
 
@@ -932,16 +940,27 @@ accepted_user_decisions:
   control_baseline_commit: authorized
   stage_1_preparation_session: authorized
   stage_1_real_model_calls: 0
-  stage_2: not_authorized
+  corrected_candidate: accepted_for_execution_baseline
+  focused_reaudit: accepted
+  execution_baseline_commit: authorized
+  stage_2: authorized_bounded_autonomy_envelope
+  opaque_credential_read: authorized_DEEPSEEK_API_KEY_only
+  external_network: authorized_DeepSeek_API_only
+  whole_pilot_cost_usd_max: 2
+  closeout_commit: authorized
+  v2: not_authorized
 ```
 
 当前唯一顺序：
 
 ```text
-Main Session同步 active_goal 和 Stage 1-only 控制事实
-→ Main Session创建并核验干净 Control Baseline Commit
-→ Main Session生成绑定 exact SHA 的 Stage 1 Preparation Session Prompt
-→ 新 dedicated Session从该 Commit 执行 Gate A
-→ Stage 1 Session完成零调用实现、报告和 CURRENT_STATE_UPDATE_PROPOSAL 后停止
-→ Main Session验收
+Main Session接受 corrected Candidate 和 focused re-audit
+→ Main Session完成 final Manifest identity materialization 和官方 Provider checkpoint
+→ Main Session创建并核验 Execution Baseline Commit
+→ Main Session生成绑定 exact SHA 的 fresh Stage 2 Prompt
+→ fresh no-source-edit Execution Session执行 Gates K–O 和逐 cell Pilot
+→ 命中任一 Pause/exit condition 立即停止
+→ 未命中时返回 Execution/Aggregate/Closeout Draft 和状态提案
+→ Main Session有限验收并在已授权范围内完成 V1-B/V1 closeout commit
+→ 停止；不得进入 V2
 ```
