@@ -2,7 +2,7 @@
 
 ```yaml
 goal_id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-status: accepted_activated_pending_implementation
+status: closed_accepted
 version: V1_A
 date: 2026-08-03
 contract_drafting_authorized_by_user: true
@@ -12,14 +12,14 @@ contract_accepted: true
 activation_authorized: true
 activated_by_user: true
 activated_at: 2026-08-03
-active_goal: true
+active_goal: false
 planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit_authorized: consumed
+control_baseline_commit: c9f91057db60cf61dab0d3aa305564d498c89cd6
 implementation_owner: dedicated_v1_a_implementation_session
-implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
-implementation_started: false
-implementation_completed: false
+implementation_authorized: consumed_and_completed_zero_real_calls
+implementation_started: true
+implementation_completed: true
 real_model_calls_authorized: 0
 external_provider_calls_authorized: 0
 credential_reads_authorized: 0
@@ -30,22 +30,29 @@ private_pi_import_authorized: false
 pi_sdk_rpc_extension_route_authorized: false
 external_module_download_or_port_authorized: false
 dedicated_session_git_commit_authorized: false
-candidate_commit_authorized: false
-focused_independent_audit_required_after_candidate_freeze: true
-focused_independent_audit_authorized: false
-implementation_baseline_commit_authorized: false
+candidate_commit_authorized: consumed
+first_failed_audit_candidate: e3ff98948b26187b48af61928b56e7cacb550d31
+focused_independent_audit_required_after_candidate_freeze: satisfied
+focused_independent_audit_authorized: consumed
+focused_independent_reaudit_disposition: PASS_FOCUSED_V1_A_REAUDIT
+implementation_baseline_commit_authorized: consumed
+implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+implementation_baseline_tree: 680810b7c2f8b12dbd3503b5a38f1ab162b63996
+final_disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
+closed_at: 2026-08-04
+closeout: docs/reports/V1_A_CLOSEOUT.md
 V1_B_contract_creation_authorized: false
 V1_B_execution_authorized: false
-dedicated_session_prompt_authorized: true_after_control_baseline_confirmation
+dedicated_session_prompt_authorized: consumed
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 accepted_v0_c_implementation_baseline: 12db75aaea4db4afb774046cfcc94de772a2e90b
 accepted_v1_charter: docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
 ```
 
-> 本文件是用户已接受并激活的 V1-A Goal Contract。实施权只授予从精确 Control
-> Baseline 开始的 dedicated V1-A Implementation Session；主 Session不得代替其
-> 实现。真实模型/外部 Provider调用、凭据读取、外部网络、依赖安装、Pi patch、
-> 专用 Session Git commit、Candidate Commit 和 V1-B 均未授权。
+> 本文件是已经完成并关闭的 V1-A Goal Contract。实现由 dedicated V1-A
+> Implementation Session 从精确 Control Baseline 完成；Main Session负责审查、
+> Candidate 冻结、独立复审和最终验收。V1-A 全程未调用真实模型/外部 Provider，
+> 未读取凭据、联网、安装依赖或修改 Pi。V1-B 仍未激活或授权执行。
 
 ---
 
@@ -136,26 +143,32 @@ V1 bounded research、primary-source Gate 和 Charter 接受
    修复实现。
 10. 本 Contract 不把任何权限传递给 V1-B。
 
-### 2.3 Current stop point
+### 2.3 Final accepted stop point
 
 ```yaml
 pre_activation_planning_baseline: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
-control_baseline_commit: resulting_HEAD_of_this_revision
-root_tracked_files: clean_after_control_baseline_commit_required
+control_baseline_commit: c9f91057db60cf61dab0d3aa305564d498c89cd6
+implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+root_tracked_files: clean_at_frozen_candidate_before_closeout
 registered_untracked_reference_directory: reference/
 pi_HEAD: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_status: clean
 V1_charter: accepted
-V1_A_contract: accepted_activated_pending_implementation
-active_goal: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+V1_A_contract: closed_accepted
+active_goal: null
 implementation_owner: dedicated_v1_a_implementation_session
-implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
-implementation_started: false
+implementation_authorized: consumed_and_completed_zero_real_calls
+implementation_started: true
+implementation_completed: true
+gate_J: passed_after_bounded_correction_and_fresh_focused_reaudit
+disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
 real_model_calls_authorized: 0
+real_model_calls_observed: 0
 ```
 
-本 Contract 已接受并激活。Main Session必须先创建、核验 Control Baseline 的精确
-SHA，再生成启动 Prompt；专用 Session只能从该 SHA 执行 Gate A。
+本 Contract 已经完成并关闭。历史 Activation、dedicated Session、Candidate、audit
+和 correction 过程由最终 Closeout 保留；当前不得重新打开 V1-A，也不得把其授权
+传递给 V1-B。
 
 ---
 
@@ -1155,24 +1168,30 @@ REJECT_V1_A_CANDIDATE
 
 ---
 
-## 25. Activated Control Baseline Stop Point
+## 25. Final Accepted Closeout State
 
-当前 Contract 已接受并激活，但实现尚未开始：
+当前 Contract 已完成并正式关闭：
 
 ```yaml
 planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
-contract_status: accepted_activated_pending_implementation
+contract_status: closed_accepted
 contract_accepted: true
 activation_authorized: true
-active_goal: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-control_baseline_commit: resulting_HEAD_of_this_revision
+active_goal: null
+control_baseline_commit: c9f91057db60cf61dab0d3aa305564d498c89cd6
 implementation_owner: dedicated_v1_a_implementation_session
-implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
-implementation_started: false
+implementation_authorized: consumed_and_completed_zero_real_calls
+implementation_started: true
+implementation_completed: true
+candidate_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+gate_J: passed_after_bounded_correction_and_fresh_focused_reaudit
+disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
+implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 real_model_calls_authorized: 0
-next_control_action: verify_exact_control_baseline_then_generate_dedicated_session_prompt
+real_model_calls_observed: 0
+next_control_action: draft_bounded_V1_B_goal_contract_for_user_review
 ```
 
-本状态不授权 Main Session实现，也不授权 Candidate Commit、focused audit、
-Implementation Baseline、真实调用或 V1-B。专用 Session提交结果后必须停止，等待
-Main Session与用户验收。
+V1-A 的 Scope、证据和实现基线已经冻结，不得在 V1-B 起草或执行时静默改写。
+V1-B Contract 接受、Activation、真实模型、credential/network 和 Pilot budget 仍是
+独立控制点。

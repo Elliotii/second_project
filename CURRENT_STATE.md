@@ -1,45 +1,40 @@
 # Current State
 
-> Updated: 2026-08-03
+> Updated: 2026-08-04
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_a_activated_pending_dedicated_implementation
-  status: V1_A_ACTIVATED_IMPLEMENTATION_NOT_STARTED
+  phase: v1_a_closed_pending_v1_b_contract
+  status: V1_A_CLOSED_ACCEPTED
 
-active_goal:
-  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-  status: accepted_activated_pending_implementation
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
-  implementation_owner: dedicated_v1_a_implementation_session
-  disposition: null
+active_goal: null
 
 last_executed_goal:
-  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
-  disposition: PASS_V0_C_USER_ACCEPTANCE
-  architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
+  disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
+  implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 
 last_closed_goal:
-  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
-  disposition: PASS_V0_C_USER_ACCEPTANCE
-  architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
+  disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
+  implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 
 last_completed_goal:
-  id: V0_C_BOUNDED_COMPLETION_AND_USER_FACING_USE
+  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V0_C_GOAL_CONTRACT.md
-  disposition: PASS_V0_C_USER_ACCEPTANCE
-  architecture_review: ACCEPT_V0_C_AND_CLOSE_V0
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
+  disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
+  implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 
 next_goal:
-  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-  status: active_pending_dedicated_implementation
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
+  id: V1_B_FROZEN_BOUNDED_REAL_PILOT
+  status: charter_defined_contract_not_created
+  contract: null
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -233,6 +228,16 @@ completed_work:
   - V1_A_activation_authorized_by_user
   - V1_A_control_baseline_commit_authorized_by_user
   - V1_A_control_state_updated_by_main_session
+  - V1_A_dedicated_zero_real_call_implementation_completed
+  - V1_A_main_review_bounded_corrections_completed
+  - V1_A_first_candidate_commit_created
+  - V1_A_first_focused_independent_audit_requested_four_bounded_corrections
+  - V1_A_post_audit_corrections_completed
+  - V1_A_corrected_candidate_commit_created
+  - V1_A_fresh_windows_focused_independent_reaudit_passed
+  - V1_A_Gates_A_through_J_and_DoD_27_of_27_accepted
+  - V1_A_PASS_V1_A_DETERMINISTIC_SUBSTRATE_accepted
+  - V1_A_closed_accepted
 
 workspace:
   git_initialized: true
@@ -260,8 +265,12 @@ workspace:
   v0_c_control_baseline_tracked_files_clean_required: true
   v1_planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
   v1_planning_baseline_tracked_files_clean_verified: true
-  v1_a_control_baseline_commit: resulting_HEAD_of_this_revision
+  v1_a_control_baseline_commit: c9f91057db60cf61dab0d3aa305564d498c89cd6
   v1_a_control_baseline_tracked_files_clean_required: true
+  v1_a_first_failed_audit_candidate: e3ff98948b26187b48af61928b56e7cacb550d31
+  v1_a_implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+  v1_a_implementation_baseline_tree: 680810b7c2f8b12dbd3503b5a38f1ab162b63996
+  v1_a_control_evidence_closeout_commit: resulting_HEAD_of_this_revision
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -325,16 +334,16 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: V1_A_activated_pending_dedicated_implementation
-  active_goal: true
-  current_candidate_goal: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+  status: V1_A_closed_accepted_pending_V1_B_contract
+  active_goal: false
+  current_candidate_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
   formal_goal_contract_created: true
-  activation_authorized: true
+  activation_authorized: consumed_for_V1_A
   activation_authorized_at: 2026-08-03
   implementation_owner: dedicated_v1_a_implementation_session
-  implementation_authorized: true_zero_real_calls_after_control_baseline_confirmation
-  implementation_started: false
-  implementation_completed: false
+  implementation_authorized: consumed_and_completed_zero_real_calls
+  implementation_started: true
+  implementation_completed: true
   real_model_calls_authorized: 0
   external_network_authorized: false
   pi_core_patch_authorized: false
@@ -356,8 +365,8 @@ v1:
     planned_initial_runs_max: 24
     child_attempts_max: 8
     whole_pilot_cost_usd_max: 2.00
-  focused_V1_A_audit_required: true
-  V1_B_contract_before_V1_A_acceptance: prohibited
+  focused_V1_A_audit_required: satisfied
+  V1_B_contract_before_V1_A_acceptance: prohibition_satisfied_V1_A_now_accepted
   pi_sdk_extension_effect_on_V1: none_deferred_non_blocking_compatibility_checkpoint
   planning_baseline_commit_authorized: consumed
   planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
@@ -365,13 +374,13 @@ v1:
   V1_A_contract_draft: superseded_by_formal_contract
   V1_A_contract_draft_status: superseded
   V1_A_contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
-  V1_A_contract_status: accepted_activated_pending_implementation
+  V1_A_contract_status: closed_accepted
   V1_A_contract_accepted: true
   V1_A_activation_authorized: true
-  V1_A_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  V1_A_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_A_control_baseline_commit_authorized: consumed
+  V1_A_control_baseline_commit: c9f91057db60cf61dab0d3aa305564d498c89cd6
   V1_A_dedicated_session_prompt_authorized: true_after_control_baseline_confirmation
-  V1_A_dedicated_session_prompt_status: to_be_generated_after_exact_SHA_confirmation
+  V1_A_dedicated_session_prompt_status: consumed
   V1_A_dedicated_session_git_commit_authorized: false
   V1_A_real_model_calls_authorized: 0
   V1_A_external_provider_calls_authorized: 0
@@ -379,6 +388,16 @@ v1:
   V1_A_external_network_authorized: false
   V1_A_pi_core_patch_authorized: false
   V1_A_private_pi_import_authorized: false
+  V1_A_first_failed_audit_candidate: e3ff98948b26187b48af61928b56e7cacb550d31
+  V1_A_corrected_candidate_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+  V1_A_focused_reaudit_disposition: PASS_FOCUSED_V1_A_REAUDIT
+  V1_A_disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
+  V1_A_implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+  V1_A_closeout: docs/reports/V1_A_CLOSEOUT.md
+  V1_B_contract_status: not_created
+  V1_B_activation_authorized: false
+  V1_B_execution_authorized: false
+  V1_B_real_model_calls_authorized: 0
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -988,6 +1007,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
+  - docs/reports/V1_A_CLOSEOUT.md
+  - docs/reports/V1_A_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
   - docs/reports/V1_SKILL_PRIMARY_SOURCE_MAPPING_MAIN_REVIEW.md
   - docs/reports/V1_SKILL_PRIMARY_SOURCE_MAPPING.md
@@ -1015,11 +1036,10 @@ required_reading:
 
 next_checkpoint:
   - V1_version_charter_accepted_and_formalized
-  - V1_planning_baseline_commit_created_and_verified
-  - create_and_verify_V1_A_active_control_baseline_commit
-  - generate_dedicated_V1_A_goal_session_prompt_with_exact_SHA
-  - dedicated_session_executes_Gate_A_and_zero_real_call_implementation
-  - no_real_model_calls_candidate_commit_audit_or_V1_B_are_authorized
+  - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
+  - draft_bounded_V1_B_goal_contract_for_user_review
+  - keep_V1_B_inactive_until_separate_contract_acceptance_and_activation
+  - no_credentials_network_or_real_model_calls_are_currently_authorized
 
 open_user_decisions: []
 ```
@@ -1087,13 +1107,14 @@ open_user_decisions: []
   initial Verifier, so real Recovery remains unobserved. No additional V0-C
   Run, credential/network use, real-model call, source change or repair is
   authorized.
-- V0 is closed and accepted. The V1 Version Charter and formal V1-A Contract
-  are accepted, and V1-A is active pending a dedicated zero-call
-  Implementation Session. Main Session must not implement it. V1-A does not
-  authorize credential/network use, real-model execution, Candidate Commit,
-  focused audit, V1-B or V2/V3 work. V1 will compare Baseline, Skill-only and
-  Skill + External Verifier / Runtime Control; V2 bounded multi-path recovery
-  remains the Portfolio North Star rather than current scope.
+- V0 and V1-A are closed and accepted. V1-A's independently re-audited
+  Implementation Baseline is
+  `784bd1ec06c2aa9ed554a7da661bdf582097bcdf`. Do not reopen or silently
+  rewrite it during V1-B planning. V1-B remains Contract-not-created and
+  inactive; credentials, network, real-model calls and Pilot execution are all
+  unauthorized. V1 will compare Baseline, Skill-only and Skill + External
+  Verifier / Runtime Control; V2 bounded multi-path recovery remains the
+  Portfolio North Star rather than current scope.
 
 ## Expected Next Handoff
 
@@ -1105,11 +1126,16 @@ mechanism. One frozen real Coding Task passed the formal Product Surface within
 budget, but it passed its initial Verifier; real recovery effect and Completion
 Policy effectiveness remain unproven.
 
-V1-A is the active Goal, with implementation owned by a dedicated V1-A
-Implementation Session. The Planning Baseline is
-`7617ce3f56bc8844a0e7eb3605b4327aa6412932`; the active Control Baseline is
-the resulting HEAD of this control revision and must be resolved to an exact
-SHA before the Session starts. V1-A permits only zero-real-call deterministic
-implementation. Candidate Commit, focused audit, Implementation Baseline,
-external network, credentials, real-model calls, V1-B and V2 remain separate
-and unauthorized.
+V1-A is closed and accepted with `PASS_V1_A_DETERMINISTIC_SUBSTRATE`. Its
+Control Baseline is `c9f91057db60cf61dab0d3aa305564d498c89cd6`; its fresh
+Windows re-audited Implementation Baseline is
+`784bd1ec06c2aa9ed554a7da661bdf582097bcdf`. It established the deterministic
+Skill/experiment substrate with zero real-model calls, but did not test Skill
+effectiveness, real Recovery or strategy superiority.
+
+There is no active Goal. The next bounded Main Session task is to draft a V1-B
+Goal Contract for user review from the accepted Charter and exact V1-A
+baseline. Drafting must preserve the three-arm comparison, the USD 2 whole-
+Pilot ceiling and the distinction between Measurement Verifier and C-only
+intervention. Contract acceptance, Activation, credentials, network and real
+model calls remain separate user decisions.
