@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { resolve } from "node:path";
 import test from "node:test";
 import { PROJECT_ROOT } from "./helpers.ts";
-import { buildExecutionManifestV1B } from "../src/experiment/v1.ts";
+import { buildExecutionManifestV1B, buildReplacementExecutionManifestV1B, buildReplacementSequenceAuthorityV1B } from "../src/experiment/v1.ts";
 import { stableJson } from "../src/hash.ts";
 
 function pilotRoot(label: string): string {
@@ -63,4 +63,20 @@ test("V1-B tracked Stage 2 CLI fails sanitized and without dispatch when DEEPSEE
 	assert.equal(existsSync(resolve(pilot, "runs", first.planned_run_id, "pause-evidence.json")), true);
 	const persisted = [result.stdout, result.stderr, ...readdirSync(pilot, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => readFileSync(resolve(entry.parentPath, entry.name), "utf8"))].join("\n");
 	assert.doesNotMatch(persisted, /(?:bearer\s+[A-Za-z0-9._-]+|"(?:authorization|proxy[_-]?authorization)"\s*:|FAKE_(?:SENSITIVE|RESOLVER|PROVIDER|FACTORY))/i);
+});
+
+test("V1-B tracked replacement CLI requires sequence state and rejects a second fresh Pilot", () => {
+	const baseline = `${Date.now().toString(16).padStart(40, "a")}`.slice(-40);
+	const manifest = buildReplacementExecutionManifestV1B(PROJECT_ROOT, { executionBaselineCommit: baseline });
+	const manifestPath = resolve(pilotRoot("replacement-cli-manifest"), "manifest.json"); mkdirSync(resolve(manifestPath, ".."), { recursive: true }); writeFileSync(manifestPath, `${stableJson(manifest)}\n`, "utf8");
+	const sequencePath = resolve(pilotRoot("replacement-cli-sequence"), "authority.json"); mkdirSync(resolve(sequencePath, ".."), { recursive: true }); writeFileSync(sequencePath, `${stableJson(buildReplacementSequenceAuthorityV1B(manifest))}\n`, "utf8");
+	const missingPilot = pilotRoot("replacement-cli-missing");
+	let result = spawnSync(process.execPath, [resolve(PROJECT_ROOT, "workbench/src/cli.ts"), "v1b", "run-next", "--manifest", manifestPath, "--pilot-root", missingPilot, "--stage2-real-authority"], { cwd: PROJECT_ROOT, encoding: "utf8", env: {} });
+	assert.equal(result.status, 1); assert.match(result.stderr, /replacement sequence authority is required/); assert.equal(existsSync(missingPilot), false);
+	const firstPilot = pilotRoot("replacement-cli-first");
+	result = spawnSync(process.execPath, [resolve(PROJECT_ROOT, "workbench/src/cli.ts"), "v1b", "run-next", "--manifest", manifestPath, "--pilot-root", firstPilot, "--replacement-sequence-state", sequencePath, "--stage2-real-authority"], { cwd: PROJECT_ROOT, encoding: "utf8", env: {} });
+	assert.equal(result.status, 1); assert.match(result.stderr, /V1BTypedPauseError/); assert.deepEqual(readFileSync(resolve(firstPilot, "ledger.jsonl"), "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)).filter((entry) => entry.state !== "planned").map((entry) => entry.state), ["started", "paused"]);
+	const secondPilot = pilotRoot("replacement-cli-second");
+	result = spawnSync(process.execPath, [resolve(PROJECT_ROOT, "workbench/src/cli.ts"), "v1b", "preflight", "--manifest", manifestPath, "--pilot-root", secondPilot, "--replacement-sequence-state", sequencePath], { cwd: PROJECT_ROOT, encoding: "utf8", env: {} });
+	assert.equal(result.status, 1); assert.match(result.stderr, /identity\/order drift/); assert.equal(existsSync(secondPilot), false);
 });

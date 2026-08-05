@@ -24,6 +24,7 @@ import { readProtectedBytes } from "./pi/tool-profile.ts";
 import {
 	createOneRunProviderAuthorityV1B,
 	createPublicPiRunCompositionV1B,
+	FixedProviderBoundaryErrorV1B,
 	V1BPauseBoundaryError,
 	type OneRunProviderAuthorityV1B,
 } from "./provider/fixed-provider-v1.ts";
@@ -48,6 +49,7 @@ export interface ExecuteV1RunCellOptions {
 	pilotUsage: BudgetUsageV1B;
 	fakeScenario?: { initial: FakeAttemptModeV1B; child: FakeAttemptModeV1B };
 	realExecution?: { authority: OneRunProviderAuthorityV1B };
+	replacementSequence?: { beforeChildStart(runId: string, attemptId: string): void };
 	deterministicInjection?: {
 		kind: "infrastructure_invalid" | "evidence_invalid" | "treatment_guardrail_failure" | "global_budget_stop" | "unknown" | "workspace_forbidden_marker";
 		cause_id: string;
@@ -250,6 +252,7 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 	let finalStatus: VerifierStatusV1;
 	let recoveryStarted = false;
 	let childSettlement: PiAttemptSettlementV1B | null = null;
+	let durablePauseWritten = false;
 	try {
 		journal(options.runRoot, seq, "attempt_started", { attempt_id: initialAttemptId, ordinal: 1, parent_attempt_id: null });
 		initial = await handle.runAttempt({ attemptId: initialAttemptId, prompt: instruction, invocation: options.cell.arm === "A" ? "prompt" : "skill", ...(stage1 ? { fakeMode: scenario.initial, fakePatch: patch } : {}) });
@@ -264,11 +267,12 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 		if (options.deterministicInjection?.kind === "unknown") throw new V1BTypedPauseError("paused_unclassified", options.deterministicInjection.cause_id);
 		const eligible = options.cell.arm === "C" && finalStatus === "failed";
 		if (eligible) {
+			const childAttemptId = `${options.cell.planned_run_id}-a2`;
+			options.replacementSequence?.beforeChildStart(options.cell.planned_run_id, childAttemptId);
 			handle.reserveChild();
 			recoveryStarted = true;
 			const packet = { schema_version: 1, parent_attempt_id: initialAttemptId, verifier_id: task.external_verifier_id, status: "failed", summary: initialVerifier.result.summary, failed_checks: initialVerifier.result.public_failed_checks ?? [] };
 			const packetRef = writeOnceJson(options.runRoot, "recovery/failure-packet.json", packet); artifactPaths.push(packetRef.path);
-			const childAttemptId = `${options.cell.planned_run_id}-a2`;
 			journal(options.runRoot, seq, "attempt_started", { attempt_id: childAttemptId, ordinal: 2, parent_attempt_id: initialAttemptId, failure_packet_ref: packetRef.path });
 			const child = await handle.runAttempt({ attemptId: childAttemptId, prompt: `External verifier failed. Repair only the bounded task.\n${initialVerifier.result.summary}`, invocation: "prompt", ...(stage1 ? { fakeMode: scenario.child, fakePatch: patch } : {}) });
 			childSettlement = child;
@@ -332,8 +336,9 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 			pause_evidence_ref: pauseRef, journal_prefix_sha256: pauseEvidence.journal_prefix_sha256,
 		});
 		assertSafeEvidenceBytes("journal.jsonl", readFileSync(resolve(options.runRoot, "journal.jsonl")));
+		durablePauseWritten = true;
 		throw new V1BTypedPauseError("paused_unclassified", `pause_${pauseEvidence.phase}`, pauseRef);
 	} finally {
-		await handle.close();
+		try { await handle.close(); } catch { if (!durablePauseWritten) throw new FixedProviderBoundaryErrorV1B(); }
 	}
 }

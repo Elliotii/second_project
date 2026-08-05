@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { AggregationResultV1, ExecutionCellV1B, ExecutionManifestV1B, ExperimentManifestV1, RunResultV1, StrategyAggregationV1, StrategyIdV1 } from "../contracts/v1-types.ts";
+import type { AggregationResultV1, ExecutionCellV1B, ExecutionManifestV1B, ExperimentManifestV1, ReplacementSequenceAuthorityV1B, ReplacementSequenceRuntimeStateV1B, RunResultV1, StrategyAggregationV1, StrategyIdV1 } from "../contracts/v1-types.ts";
 import { V1_STRATEGY_IDS } from "../contracts/v1-types.ts";
 import { DEEPSEEK_FIXED_PROFILE_V1 } from "../provider/fixed-provider-v1.ts";
 import { createBoundedToolProfile } from "../pi/tool-profile.ts";
@@ -151,6 +151,7 @@ const V1B_BLOCKS = [
 
 const ARM_STRATEGY = Object.freeze({ A: "baseline", B: "skill_only", C: "skill_plus_runtime_control" } as const);
 export const V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID = "43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76" as const;
+export const V1B_REPLACEMENT_PREDECESSOR_PAUSED_RUN_ID = "v1b-run-01-parse-duration-r1-a" as const;
 
 export function v1bManifestIdentity(manifest: ExecutionManifestV1B): string {
 	return digestObject({ ...manifest, manifest_id: "" });
@@ -190,15 +191,32 @@ export function buildReplacementExecutionManifestV1B(projectRoot: string, option
 	return manifest;
 }
 
-export function validateReplacementSequenceStateV1B(manifest: ExecutionManifestV1B, state: {
-	predecessor_manifest_id: string;
-	predecessor_started_run_ids: readonly string[];
-	replacement_started_run_ids: readonly string[];
-	replacement_child_attempts: number;
-	retry_same_run: boolean;
-	fallback: boolean;
-	automatic_replacement: boolean;
-}): void {
+export function replacementSequenceIdentityV1B(authority: ReplacementSequenceAuthorityV1B): string {
+	return digestObject({ ...authority, sequence_id: "" });
+}
+
+export function buildReplacementSequenceAuthorityV1B(manifest: ExecutionManifestV1B): ReplacementSequenceAuthorityV1B {
+	if (!manifest.replacement_revision) throw new Error("V1-B replacement sequence requires revision 2 Manifest");
+	const authority: ReplacementSequenceAuthorityV1B = {
+		schema_version: "v1b-replacement-sequence-authority-v1", sequence_id: "",
+		predecessor_manifest_id: V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID,
+		predecessor_paused_run_id: V1B_REPLACEMENT_PREDECESSOR_PAUSED_RUN_ID,
+		predecessor_started_run_ids: [V1B_REPLACEMENT_PREDECESSOR_PAUSED_RUN_ID],
+		conservative_prior_debit_usd: 0.10, prior_replacement_manifest_ids: [],
+		replacement_manifest_id: manifest.manifest_id,
+		replacement_run_ids: manifest.cells.map((cell) => cell.planned_run_id),
+		retry_same_run: false, fallback: false, automatic_replacement: false,
+	};
+	authority.sequence_id = replacementSequenceIdentityV1B(authority);
+	return authority;
+}
+
+export function validateReplacementSequenceAuthorityV1B(manifest: ExecutionManifestV1B, authority: ReplacementSequenceAuthorityV1B): void {
+	const expected = buildReplacementSequenceAuthorityV1B(manifest);
+	if (replacementSequenceIdentityV1B(authority) !== authority.sequence_id || stableJson(authority) !== stableJson(expected)) throw new Error("V1-B replacement sequence authority identity/binding drift");
+}
+
+export function validateReplacementSequenceStateV1B(manifest: ExecutionManifestV1B, state: ReplacementSequenceRuntimeStateV1B): void {
 	const revision = manifest.replacement_revision;
 	if (!revision || state.predecessor_manifest_id !== revision.predecessor_manifest_id) throw new Error("V1-B replacement predecessor mismatch");
 	const allStarted = [...state.predecessor_started_run_ids, ...state.replacement_started_run_ids];

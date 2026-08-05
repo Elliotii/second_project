@@ -93,15 +93,39 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	if (pause.request_ordinal !== (reservations.at(-1)?.data.request_ordinal ?? null)) errors.push("pause request ordinal/reservation relation drift");
 	for (const event of reservations) {
 		if (event.data.phase !== "provider_request_reserved_before_dispatch") errors.push("provider reservation phase invalid");
+		const attemptIndex = events.findIndex((candidate) => candidate.type === "attempt_started" && candidate.data.attempt_id === event.data.attempt_id);
+		const reservationIndex = events.indexOf(event);
+		const pauseIndex = events.findIndex((candidate) => candidate.type === "attempt_paused");
+		if (attemptIndex < 0 || reservationIndex <= attemptIndex || pauseIndex <= reservationIndex || event.data.attempt_id !== pause.attempt_id || event.data.session_id !== pause.session_id || event.data.workspace_id !== pause.workspace_id) errors.push("provider reservation write-before-dispatch identity/order drift");
 		for (const key of ["provider_requests", "network_calls", "provider_calls", "model_calls"] as const) {
 			const transition = event.data.counter_transition?.[key];
 			if (!transition || !Number.isSafeInteger(transition.before) || !Number.isSafeInteger(transition.after) || transition.before < 0 || transition.after < transition.before || transition.after - transition.before > 1) errors.push(`provider reservation ${key} counter transition invalid`);
 		}
 	}
 	for (const value of Object.values(pause.counter_snapshot)) if (!Number.isSafeInteger(value) || value < 0 || value > 1) errors.push("pause counter snapshot invalid");
+	const stage2 = manifest.execution_mode === "stage2_real";
+	const zeroCounters = { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 };
+	const credentialOnly = { credential_reads: 1, network_calls: 0, provider_calls: 0, model_calls: 0 };
+	const possibleDispatch = { credential_reads: 1, network_calls: 1, provider_calls: 1, model_calls: 1 };
+	const phase = pause.phase;
+	if (!stage2 && ["before_credential_resolution", "credential_resolution_failure_before_dispatch", "after_credential_before_provider_request_reservation"].includes(phase)) errors.push("Stage 1 deterministic seam masquerades as Stage 2 credential phase");
+	if (["before_credential_resolution", "credential_resolution_failure_before_dispatch"].includes(phase) && stableJson(pause.counter_snapshot) !== stableJson(zeroCounters)) errors.push("pre-credential pause counter matrix drift");
+	if (phase === "after_credential_before_provider_request_reservation" && (!stage2 || stableJson(pause.counter_snapshot) !== stableJson(credentialOnly))) errors.push("post-credential pause counter matrix drift");
+	if (phase === "other_bounded_runtime_failure" && stableJson(pause.counter_snapshot) !== stableJson(stage2 ? credentialOnly : zeroCounters)) errors.push("other bounded pause counter matrix drift");
+	if (["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(phase)) {
+		if (stableJson(pause.counter_snapshot) !== stableJson(stage2 ? possibleDispatch : zeroCounters)) errors.push("post-reservation pause counter snapshot/mode drift");
+		const transition = reservations[0]?.data.counter_transition;
+		if (!transition || transition.provider_requests.before !== 0 || transition.provider_requests.after !== 1) errors.push("post-reservation provider request transition is not exact 0->1");
+		for (const key of ["network_calls", "provider_calls", "model_calls"] as const) {
+			const expectedAfter = stage2 ? 1 : 0;
+			if (!transition || transition[key].before !== 0 || transition[key].after !== expectedAfter) errors.push(`post-reservation ${key} transition/mode drift`);
+		}
+	}
+	if (!["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(phase) && reservations.length !== 0) errors.push("pre-reservation phase carries reservation event");
 	if (pause.pending_provider_reservation) {
 		if (reservations.length !== 1 || pause.pending_provider_reservation.reservation_id !== reservations[0]!.data.reservation?.reservation_id) errors.push("pending reservation/journal relation drift");
 		const pending = pause.pending_provider_reservation;
+		if (pending.tokens !== reservations[0]?.data.reservation?.token_cap || Math.abs(pending.cost_usd - (reservations[0]?.data.reservation?.cost_usd_cap ?? Number.NaN)) > Number.EPSILON || pending.provider_requests !== 1) errors.push("pending reservation cap/ordinal relation drift");
 		if (pause.conservative_usage_charge.provider_requests !== pending.provider_requests || pause.conservative_usage_charge.tokens !== pending.tokens || Math.abs(pause.conservative_usage_charge.cost_usd - pending.cost_usd) > Number.EPSILON) errors.push("conservative charge does not equal pending reservation");
 	} else if (!usageEqual(pause.conservative_usage_charge, zeroUsage()) || reservations.length !== 0) errors.push("pre-reservation pause carries dispatch/reservation charge");
 	if (!usageEqual(pause.budget_usage_after_conservative_charge, addUsage(pause.accumulated_known_usage, pause.conservative_usage_charge))) errors.push("pause conservative accounting chain invalid");

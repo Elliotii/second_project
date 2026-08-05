@@ -1,79 +1,62 @@
-# V1-B Stage 2 Pause-path Correction Closeout Draft
+# V1-B Stage 2 Pause-path Post-audit Correction Closeout Draft
 
-```yaml
-status: draft_pending_main_review_and_focused_reaudit
-goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-session_owner: original_v1_b_preparation_session
-disposition_proposal: PASS_ZERO_CALL_PAUSE_PATH_CORRECTION_READY_FOR_FOCUSED_REAUDIT
-starting_commit: c68e834b654d56a1ce8312b6f5f085230e74d7d1
-starting_tree: 3c3b53ec1990ba50419380c09ddddc6070a4ebf6
-corrected_workbench_source_digest_proposal: 634879c68345ccb689ba3768197612db1cad83e575f217d5f125cabba5d9c0d5
-```
+Status: `READY_FOR_MAIN_SESSION_FOCUSED_REAUDIT`
 
 ## Closeout result
 
-**Fact.** The one authorized zero-call correction cycle is complete. Sanitized
-write-before-dispatch reservation evidence, six typed pause phases,
-write-once pause evidence, conservative pending-reservation accounting,
-independent paused-evidence inspection and fixed replacement-revision support
-are implemented within the allowlist.
+**Fact.** The authorized second-and-final zero-call correction closes P1-001,
+P1-002 and P1-003 within the prompt's bounded paths. Strict TypeScript passed,
+V1-B focused tests passed 31/31, and required sequential V1-A/V0-C regressions
+passed 42/42.
 
-**Fact.** Strict TypeScript passed, V1-B focused tests passed 26/26 and the
-required sequential V1-A/V0-C regressions passed 42/42. The authoritative
-synthetic post-reservation example inspects coherent, but remains zero-terminal
-and zero-comparable while charging USD 0.10 conservatively.
+The implementation now provides:
 
-**Fact.** Real credential/network/Provider/model access remained
-`0 / 0 / 0 / 0`. No dependency was installed, no Pi/control/fixture/reference
-state changed, nothing was staged or committed, and Stage 2 was not entered.
-
-## Definition of Done
-
-| Item | Result |
-| --- | --- |
-| Exact Pause Evidence Baseline Gate A | PASS |
-| Allowed source/report boundary only | PASS |
-| Write-before-dispatch sanitized event | PASS |
-| Six typed sanitized pause phases | PASS |
-| Pause file and journal before ledger pause | PASS |
-| Full pending reservation conservative charge | PASS |
-| Independent coherent-pause Inspector | PASS |
-| Pause cannot be terminal/comparable | PASS |
-| Required corruption/protected-marker counterexamples | PASS |
-| Fixed replacement revision and sequence caps | PASS |
-| Strict TypeScript | PASS |
-| V1-B focused suite | PASS, 26/26 |
-| V1-A/V0-C regressions | PASS, 42/42 |
-| Real credential/network/Provider/model calls | PASS, 0/0/0/0 |
-| Reports, evidence, digest and state proposal | PASS |
-| Commit/control-state/Stage 2 prohibited actions | PASS, none performed |
+- an exact execution-mode/phase/request counter matrix with independently
+  validated write-before-dispatch identity, order and reservation caps;
+- durable typed pause precedence across throwing Provider-access cleanup, with
+  `pause-evidence.json -> attempt_paused -> ledger paused` preserved;
+- an exact immutable replacement-sequence authority and one manifest-derived
+  write-once claim journal on the real public preflight/run-next/CLI path;
+- validation before Pilot initialization, Provider authority creation, every
+  initial Run start and every replacement child start;
+- fail-closed missing-state, reused Run, cross-sequence start, child-cap,
+  retry/fallback/automatic-replacement and second-Pilot behavior.
 
 ## Deliverables
 
-- `docs/reports/V1_B_STAGE2_PAUSE_PATH_CORRECTION_REPORT.md`;
-- this Closeout Draft;
-- the nine-file source/test delta listed in the Correction Report;
-- `.runs/v1-b/stage1/pause-path-correction-authoritative-final-20260805T063600Z-c68e834/`
-  additive authoritative evidence;
-- corrected Workbench source digest proposal
-  `634879c68345ccb689ba3768197612db1cad83e575f217d5f125cabba5d9c0d5`;
-- focused re-audit checklist and structured `CURRENT_STATE_UPDATE_PROPOSAL` in
-  the Correction Report.
+| Deliverable | Result |
+|---|---|
+| Finding closure matrix | PASS; Correction Report §2 |
+| Exact source/test delta | PASS; nine files, +247/-27 |
+| Strict TypeScript | PASS; exit 0 |
+| V1-B focused verification | PASS; 31/31 |
+| Sequential V1-A/V0-C regression | PASS; 42/42 |
+| Actual credential/network/Provider/model access | PASS; 0/0/0/0 |
+| Additive authoritative evidence | PASS; unique ignored root ending `20260805T152841922` |
+| Corrected source digest proposal | `0494bd0f749cd587df779596c95f84fafc1c4fe65f57eabf511810476d5989e7` |
+| CURRENT_STATE update proposal | PASS; Correction Report §9 |
 
-## Remaining control actions
+## Ownership and remaining decisions
 
-1. Main Session reviews this draft and the ignored evidence.
-2. Main/user materializes an exact corrected Candidate if accepted.
-3. A fresh focused Audit Session re-audits only the accepted pause/replacement
-   boundaries and required regressions.
-4. Only after a passing audit may Main/user create a new Execution Baseline and
-   final replacement Manifest.
-5. A fresh replacement Stage 2 Session still requires separate exact-baseline
-   handoff and must obey the accepted USD/call/start caps.
+**Fact.** Candidate `cdc9780fd6b3e9b34cdc4156713377d601c595ec`
+remains rejected. This Preparation Session did not modify `CURRENT_STATE.md`,
+stage files, fixtures, accepted evidence, Pi or the Git index; it did not stage,
+commit, create the final replacement Manifest, read credentials, use network,
+call a Provider/model or enter Stage 2.
 
-No Goal acceptance or project-control update is made by this draft. Work stops
-here pending Main Session and user review.
+**Recommendation.** Main Session should review the bounded delta and evidence,
+create a corrected Candidate only if satisfied, and hand it to a fresh focused
+re-audit limited to the three findings and required regressions. Main Session
+alone owns acceptance, control-state changes, future Execution Baseline and
+final replacement Manifest materialization.
 
-The Correction Report records one ignored-evidence cleanup incident. All 15
-affected files were restored with exact pre-cleanup sizes and SHA-256 values;
-the final authoritative capture then moved to a new unique additive directory.
+## Evidence
+
+Authoritative ignored evidence:
+
+`C:/Users/HUAWEI/.codex/worktrees/28be/project2/.runs/v1-b/stage1/pause-path-post-audit-second-final-correction-authoritative-20260805T152841922/`
+
+The full evidence index, command list, source inventory, digest proposal,
+re-audit checklist and structured state proposal are in the Correction Report.
+
+Work stops here pending Main Session review.

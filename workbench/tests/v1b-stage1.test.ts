@@ -3,17 +3,17 @@ import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, symlinkSyn
 import { resolve } from "node:path";
 import test from "node:test";
 import type { ExecutionManifestV1B, LedgerEntryV1B, PauseEvidenceV1B, PausePhaseV1B, RunResultV1, TerminalCellEvidenceV1B } from "../src/contracts/v1-types.ts";
-import { buildExecutionManifestV1B, buildReplacementExecutionManifestV1B, validateExecutionManifestV1B, validateReplacementSequenceStateV1B, v1bManifestIdentity, V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID } from "../src/experiment/v1.ts";
+import { buildExecutionManifestV1B, buildReplacementExecutionManifestV1B, buildReplacementSequenceAuthorityV1B, validateExecutionManifestV1B, validateReplacementSequenceStateV1B, v1bManifestIdentity, V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID } from "../src/experiment/v1.ts";
 import { loadCandidateTaskPackV1 } from "../src/experiment/task-pack-v1.ts";
 import { aggregatePilotV1B, inspectV1RunCell } from "../src/inspect-v1.ts";
 import { initializePilotV1B, readPilotLedgerV1B, runNextPilotCellV1B, simulatePilotV1B, validatePilotLedgerV1B } from "../src/pilot-v1.ts";
-import { FixedProviderBoundaryErrorV1B, assertKnownUsageV1B, createOneRunProviderAuthorityV1B, createPublicPiRunCompositionV1B } from "../src/provider/fixed-provider-v1.ts";
-import { createTrackedRealCompositionV1B, preflightV1B, runNextV1B } from "../src/product-surface-v1.ts";
+import { FixedProviderBoundaryErrorV1B, OneRunProviderAuthorityV1B, assertKnownUsageV1B, createOneRunProviderAuthorityV1B, createPublicPiRunCompositionV1B } from "../src/provider/fixed-provider-v1.ts";
+import { createReplacementSequenceCoordinatorV1B, createTrackedRealCompositionV1B, preflightV1B, runNextV1B } from "../src/product-surface-v1.ts";
 import { createPiRunHandleV1, emptyBudgetUsageV1B, projectSafeEvidenceV1B } from "../src/pi/pi-run-handle-v1.ts";
 import { expectedSkillIdentityV1, loadExactOneSkillV1 } from "../src/skill/runtime-v1.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 import { fileSha256, sha256, stableJson, treeDigest, treeInventory } from "../src/hash.ts";
-import { scanFinalWorkspaceTreeV1B } from "../src/run-v1.ts";
+import { V1BTypedPauseError, scanFinalWorkspaceTreeV1B } from "../src/run-v1.ts";
 
 function root(label: string): string {
 	const value = resolve(PROJECT_ROOT, ".runs/v1-b/stage1/tests", `${label}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -423,4 +423,62 @@ test("V1-B replacement revision freezes predecessor, USD1.90, new 24-cell IDs, c
 	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, predecessor_manifest_id: "wrong" }), /predecessor/);
 	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, replacement_child_attempts: 9 }), /child/);
 	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, fallback: true }), /retry\/fallback/);
+});
+
+test("V1-B Inspector rejects coherently rehashed real-mode counter contradictions", async () => {
+	const source = await pausedPilot("after_provider_request_reservation_usage_unavailable", "stage2_real");
+	const cell = source.manifest.cells[0]!;
+	const copy = root("pause-coherent-counter-contradiction"); cpSync(source.pilotRoot, copy, { recursive: true });
+	const runRoot = resolve(copy, "runs", cell.planned_run_id); const pausePath = resolve(runRoot, "pause-evidence.json"); const journalPath = resolve(runRoot, "journal.jsonl"); const ledgerPath = resolve(copy, "ledger.jsonl");
+	const pause = JSON.parse(readFileSync(pausePath, "utf8")) as PauseEvidenceV1B;
+	const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+	const reservation = events.find((event) => event.type === "provider_request_reserved");
+	for (const key of ["network_calls", "provider_calls", "model_calls"]) reservation.data.counter_transition[key].after = reservation.data.counter_transition[key].before;
+	pause.counter_snapshot = { credential_reads: 1, network_calls: 1, provider_calls: 1, model_calls: 1 };
+	const pauseIndex = events.findIndex((event) => event.type === "attempt_paused");
+	const prefix = `${events.slice(0, pauseIndex).map(stableJson).join("\n")}\n`; pause.journal_prefix_sha256 = sha256(prefix); writeStable(pausePath, pause);
+	events[pauseIndex].data.journal_prefix_sha256 = pause.journal_prefix_sha256;
+	events[pauseIndex].data.pause_evidence_ref = { path: "pause-evidence.json", sha256: fileSha256(pausePath), size_bytes: readFileSync(pausePath).length };
+	writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`, "utf8");
+	const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); ledger.at(-1).pause_evidence_ref = events[pauseIndex].data.pause_evidence_ref; ledger.at(-1).journal_sha256 = fileSha256(journalPath); writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`, "utf8");
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: copy, plannedRunId: cell.planned_run_id });
+	assert.equal(inspected.integrity_valid, false); assert.match(inspected.errors.join("; "), /transition\/mode drift/);
+});
+
+test("V1-B durable typed pause remains primary when Provider access close throws", async () => {
+	const marker = "AUDIT_SYNTHETIC_CLOSE_FAILURE";
+	class CloseFailAuthority extends OneRunProviderAuthorityV1B {
+		override open() { const access = super.open(); return { ...access, close: () => { access.close(); throw new Error(marker); } }; }
+	}
+	const manifest = buildExecutionManifestV1B(PROJECT_ROOT, { executionMode: "stage2_real", executionBaselineCommit: "e".repeat(40), realExecutionAuthorized: true });
+	const pilotRoot = root("typed-pause-close-failure"); initializePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot, manifest });
+	await assert.rejects(() => runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot, deterministicPausePhase: "before_credential_resolution", realExecution: { createAuthority: () => new CloseFailAuthority(true, { resolve: async () => "unused" }) } }), (error: Error) => error instanceof V1BTypedPauseError && !String(error.stack).includes(marker));
+	const cell = manifest.cells[0]!; const runRoot = resolve(pilotRoot, "runs", cell.planned_run_id);
+	assert.equal(existsSync(resolve(runRoot, "pause-evidence.json")), true);
+	assert.deepEqual(readPilotLedgerV1B(pilotRoot).filter((entry) => entry.state !== "planned").map((entry) => entry.state), ["started", "paused"]);
+	const journal = readFileSync(resolve(runRoot, "journal.jsonl"), "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); assert.equal(journal.at(-1).type, "attempt_paused");
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot, plannedRunId: cell.planned_run_id }); assert.equal(inspected.pause_integrity_valid, true, inspected.errors.join("; ")); assert.equal(inspected.terminal_valid, false); assert.equal(inspected.comparable, false);
+	assert.doesNotMatch([readFileSync(resolve(runRoot, "pause-evidence.json"), "utf8"), readFileSync(resolve(runRoot, "journal.jsonl"), "utf8"), readFileSync(resolve(pilotRoot, "ledger.jsonl"), "utf8")].join("\n"), new RegExp(marker));
+});
+
+test("V1-B public replacement handoff requires immutable sequence authority and rejects a second Pilot", async () => {
+	const executionBaselineCommit = sha256(root("replacement-sequence-baseline")).slice(0, 40);
+	const manifest = buildReplacementExecutionManifestV1B(PROJECT_ROOT, { executionBaselineCommit });
+	const manifestPath = resolve(root("replacement-public-manifest"), "manifest.json"); mkdirSync(resolve(manifestPath, ".."), { recursive: true }); writeStable(manifestPath, manifest);
+	const authorityPath = resolve(root("replacement-sequence-authority"), "authority.json"); mkdirSync(resolve(authorityPath, ".."), { recursive: true }); writeStable(authorityPath, buildReplacementSequenceAuthorityV1B(manifest));
+	const missingPilot = root("replacement-missing-sequence"); assert.throws(() => preflightV1B({ projectRoot: PROJECT_ROOT, manifestPath, pilotRoot: missingPilot }), /sequence authority is required/); assert.equal(existsSync(missingPilot), false);
+	const firstPilot = root("replacement-first-pilot"); assert.equal(preflightV1B({ projectRoot: PROJECT_ROOT, manifestPath, pilotRoot: firstPilot, replacementSequenceStatePath: authorityPath }).status, "ready");
+	await assert.rejects(() => runNextV1B({ projectRoot: PROJECT_ROOT, manifestPath, pilotRoot: firstPilot, replacementSequenceStatePath: authorityPath, stage2ExecutionAuthority: { authority_id: "v1b-public-pi-one-run", credential_profile_name: "DEEPSEEK_API_KEY", authorized: true, resolver: { resolve: async () => { throw new Error("synthetic resolver boundary"); } } } }), V1BTypedPauseError);
+	assert.deepEqual(readPilotLedgerV1B(firstPilot).filter((entry) => entry.state !== "planned").map((entry) => entry.state), ["started", "paused"]);
+	const secondPilot = root("replacement-second-pilot"); assert.throws(() => preflightV1B({ projectRoot: PROJECT_ROOT, manifestPath, pilotRoot: secondPilot, replacementSequenceStatePath: authorityPath }), /identity\/order drift/); assert.equal(existsSync(secondPilot), false);
+});
+
+test("V1-B replacement sequence coordinator enforces child and start boundaries", () => {
+	const manifest = buildReplacementExecutionManifestV1B(PROJECT_ROOT, { executionBaselineCommit: sha256(root("replacement-child-baseline")).slice(0, 40) });
+	const authorityPath = resolve(root("replacement-child-authority"), "authority.json"); mkdirSync(resolve(authorityPath, ".."), { recursive: true }); writeStable(authorityPath, buildReplacementSequenceAuthorityV1B(manifest));
+	const pilotRoot = root("replacement-child-pilot"); const coordinator = createReplacementSequenceCoordinatorV1B({ projectRoot: PROJECT_ROOT, pilotRoot, manifest, authorityPath, claimIfMissing: true }); coordinator.assertCurrent();
+	const runId = manifest.cells[0]!.planned_run_id; coordinator.beforeInitialStart(runId);
+	for (let index = 1; index <= 8; index++) coordinator.beforeChildStart(runId, `${runId}-child-${index}`);
+	assert.throws(() => coordinator.beforeChildStart(runId, `${runId}-child-9`), /child cap/);
+	assert.throws(() => coordinator.beforeInitialStart(runId), /reused Run ID/);
 });

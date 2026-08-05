@@ -1,265 +1,170 @@
-# V1-B Stage 2 Pause-path Bounded Correction Report
+# V1-B Stage 2 Pause-path Post-audit Bounded Correction Report
+
+Status: `READY_FOR_MAIN_SESSION_FOCUSED_REAUDIT`
+
+## 1. Frozen identity and authority
 
 ```yaml
-goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-session_role: original_v1_b_preparation_session
-correction_scope: accepted_pause_recovery_amendment_zero_call_cycle
-disposition_proposal: PASS_ZERO_CALL_PAUSE_PATH_CORRECTION_READY_FOR_FOCUSED_REAUDIT
+rejected_candidate_commit: cdc9780fd6b3e9b34cdc4156713377d601c595ec
+rejected_candidate_tree: fced95adf974cf95f26cb7a3c88ed871a7202ab8
 pause_evidence_baseline_commit: c68e834b654d56a1ce8312b6f5f085230e74d7d1
-pause_evidence_baseline_tree: 3c3b53ec1990ba50419380c09ddddc6070a4ebf6
 original_execution_baseline_commit: 19617319c13a9eecbb325682c920e79d1517b89d
-original_execution_baseline_tree: 48d2bee79a551fe53ac36ed12decea2357765645
 original_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
 original_paused_run: v1b-run-01-parse-duration-r1-a
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-corrected_workbench_source_digest_proposal: 634879c68345ccb689ba3768197612db1cad83e575f217d5f125cabba5d9c0d5
-credential_reads: 0
-network_calls: 0
-external_provider_calls: 0
-real_model_calls: 0
-control_state_modified: false
-git_staged: false
-git_commit_created: false
-stage_2_entered: false
+real_calls_authorized: 0
 ```
 
-## 1. Result
+**Fact.** Gate A passed before editing: HEAD/tree matched the rejected Candidate,
+tracked and staged state were clean, only the two expected Main Session prompt
+files were untracked, and pinned Pi was exact and clean. No reset, checkout,
+cleanup, staging or commit occurred.
 
-**Fact.** Gate A passed before editing. HEAD and tree exactly matched the frozen
-Pause Evidence Baseline, tracked and staged state were clean, and pinned Pi was
-exact and clean. The historical Manifest, historical paused evidence, accepted
-fixtures, Pi, reference material and control state were not modified.
+## 2. Finding closure matrix
 
-**Fact.** The bounded correction now persists a sanitized reservation event
-before a Provider request can leave the Pi harness; carries six closed typed
-pause phases; writes `pause-evidence.json` and the final `attempt_paused`
-journal event before the Pilot appends `paused`; and charges the full pending
-token/USD reservation when dispatch may have occurred but usage is unavailable.
+| Finding | Bounded correction | Deterministic proof | Result |
+|---|---|---|---|
+| P1-001 | `inspectPausedRunV1B` now binds phase to execution mode, request ordinal, matching Attempt/Session/Workspace, journal order, reservation caps, exact `0->1` Provider-request transition and the exact real-versus-Stage-1 external-counter matrix. | A coherently rehashed real-mode artifact with `network/provider/model 0->0` but snapshot `1/1/1` is rejected. All six positive typed phases remain accepted. | CLOSED |
+| P1-002 | `executeV1RunCell` marks the pause durable only after `pause-evidence.json` and `attempt_paused` are written. A later access-close exception cannot replace the typed sanitized pause; non-pause close failures are projected to the fixed sanitized boundary. | Throwing-close regression observes `pause-evidence.json -> attempt_paused -> ledger paused`, retains `V1BTypedPauseError`, excludes the raw marker and remains nonterminal/noncomparable. | CLOSED |
+| P1-003 | Revision-2 public preflight/run-next and CLI require an exact immutable replacement-sequence authority. A manifest-derived write-once claim journal binds one Pilot root; the runtime validator is invoked before Pilot initialization, before Provider authority creation, before each initial `started`, and before each child start. | Missing sequence state fails before Pilot creation; the first Pilot starts once and pauses; a second fresh Pilot with the same Manifest/sequence is rejected; the child cap rejects child 9 and duplicate initial Run IDs fail closed. | CLOSED |
 
-**Fact.** Inspector independently accepts coherent paused evidence while
-returning `terminal_valid: false` and `comparable: false`. It rejects missing,
-duplicated, reordered, tampered, coherently rehashed, secret-shaped and
-reasoning-shaped pause evidence. Aggregate retains the conservative accounting
-but contributes zero terminal or effect-denominator Runs.
+**Fact.** The sequence mechanism is one manifest-derived claim journal under the
+ignored `.runs/v1-b/replacement-sequence-claims/` boundary. It is not a general
+scheduler, registry or database and creates no final replacement Manifest.
 
-**Fact.** Deterministic replacement revision support freezes the predecessor
-Manifest ID, USD 0.10 prior debit, USD 1.90 replacement cap, 24 new Run IDs,
-unchanged treatment layout, at most 25 cross-sequence started initial Runs and
-at most eight replacement child Attempts. No final replacement Manifest was
-created.
+## 3. Exact source/test delta
 
-**Inference.** The accepted pause-path defect is corrected at the authorized
-source boundary and is ready for Main review and fresh focused re-audit. This is
-not Candidate acceptance, does not create a new Execution Baseline and does not
-authorize a replacement Stage 2 Pilot.
-
-## 2. Gate A
-
-| Check | Observed |
-| --- | --- |
-| Worktree | `C:/Users/HUAWEI/.codex/worktrees/28be/project2` |
-| HEAD | `c68e834b654d56a1ce8312b6f5f085230e74d7d1` |
-| HEAD tree | `3c3b53ec1990ba50419380c09ddddc6070a4ebf6` |
-| Starting tracked / staged state | clean / clean |
-| Pi HEAD / status | `027a5847901b5dde30270abaa1041046cd2b4b55` / clean |
-| Original Manifest ID | `43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76` |
-| Real credential/network/Provider/model access | `0 / 0 / 0 / 0` |
-
-Gate evidence:
-`.runs/v1-b/stage1/pause-path-correction-authoritative-final-20260805T063600Z-c68e834/gate-a.json`.
-
-## 3. Contract traceability
-
-| Requirement | Source | Positive proof | Counterexample / fail-closed proof |
-| --- | --- | --- | --- |
-| Write before dispatch | `pi/pi-run-handle-v1.ts` Provider hook; `run-v1.ts` journal callback | post-reservation test observes `provider_request_reserved` immediately before `attempt_paused` | persistence/hook failure cannot advance to request; event contains only identity, ordinal, counters, caps and phase |
-| Six typed pause phases | `contracts/v1-types.ts::V1B_PAUSE_PHASES`; `provider/fixed-provider-v1.ts::V1BPauseBoundaryError` | pre-credential, credential-failure, post-credential, post-reservation, invalid-usage and other-runtime paths exercised | raw caught errors never enter the typed object or persisted evidence |
-| Conservative unknown-usage charge | `pi/pi-run-handle-v1.ts::ThreeLevelBudgetV1B.createPauseSnapshot` | synthetic post-reservation and invalid-usage tests charge 65,536 tokens and USD 0.10 | Inspector rejects pending/charge mismatch and invalid accounting chain |
-| Pause persistence order | `run-v1.ts::executeV1RunCell`; `pilot-v1.ts::runNextPilotCellV1B` | pause file -> `attempt_paused` -> ledger `paused` | missing, duplicate, reordered and digest-drift cases fail |
-| Pause Inspector | `inspect-v1.ts::inspectPausedRunV1B` | authoritative copied Pilot returns pause-integrity valid | terminal/RunResult presence, coherent semantic rehash and protected-marker cases fail |
-| Nonterminal/noncomparable | `inspect-v1.ts::inspectV1RunCell` and `aggregatePilotV1B` | authoritative aggregate: 1 started, 1 paused, 0 terminal, 0 comparable, USD 0.10 conservative | a pause cannot satisfy the terminal branch because terminal artifacts are forbidden |
-| Replacement revision | `experiment/v1.ts::buildReplacementExecutionManifestV1B` and `validateReplacementSequenceStateV1B` | valid revision 2 and 24 new IDs pass | USD >1.90, predecessor mismatch, reused/nonmember IDs, >24 cells, >25 sequence starts, >8 children and retry/fallback/replacement drift fail |
-
-## 4. Exact source delta
-
-No path outside the correction allowlist changed. Source/test delta before these
-two reports was 477 insertions and 43 deletions across nine files:
+Relative to rejected Candidate `cdc9780...`, the bounded code/test delta is nine
+files, 247 insertions and 27 deletions:
 
 | Path | + | - | Purpose |
-| --- | ---: | ---: | --- |
-| `workbench/src/contracts/v1-types.ts` | 73 | 1 | typed phases, sanitized reservation/pause evidence, replacement revision and ledger refs |
-| `workbench/src/experiment/v1.ts` | 47 | 5 | deterministic replacement revision and sequence validation |
-| `workbench/src/inspect-v1.ts` | 75 | 3 | independent paused-evidence validation and noncomparable aggregation |
-| `workbench/src/pi/pi-run-handle-v1.ts` | 82 | 15 | pre-dispatch event, typed failure mapping and conservative pending reservation settlement |
-| `workbench/src/pilot-v1.ts` | 16 | 6 | pause ref/journal digest ledger binding and paused conservative usage loading |
-| `workbench/src/provider/fixed-provider-v1.ts` | 11 | 0 | sanitized typed pause carrier |
-| `workbench/src/run-v1.ts` | 37 | 2 | pause file/journal persistence before Pilot ledger pause |
-| `workbench/tests/v1b-cli.test.ts` | 8 | 5 | corrected-source Manifest binding and typed missing-credential evidence expectations |
-| `workbench/tests/v1b-stage1.test.ts` | 128 | 6 | seven pause/replacement regression groups plus corrected-source Manifest construction |
+|---|---:|---:|---|
+| `workbench/src/cli.ts` | 4 | 3 | carries `--replacement-sequence-state` through tracked CLI |
+| `workbench/src/contracts/v1-types.ts` | 25 | 0 | immutable sequence authority/runtime-state types |
+| `workbench/src/experiment/v1.ts` | 28 | 10 | exact authority builder/identity/validation and typed runtime validation |
+| `workbench/src/inspect-v1.ts` | 24 | 0 | exact pause counter, identity, order and cap matrix |
+| `workbench/src/pilot-v1.ts` | 6 | 1 | sequence validation at authority/initial-start boundary |
+| `workbench/src/product-surface-v1.ts` | 74 | 6 | public sequence requirement and write-once manifest claim journal |
+| `workbench/src/run-v1.ts` | 7 | 2 | child boundary plus durable typed-pause close precedence |
+| `workbench/tests/v1b-cli.test.ts` | 17 | 1 | tracked replacement CLI missing-state/second-root regression |
+| `workbench/tests/v1b-stage1.test.ts` | 62 | 4 | three finding regressions and child/start caps |
 
-The accepted Manifest fixture was intentionally not rewritten. Existing tests
-materialize the current deterministic Stage 1 Manifest in ignored test space so
-that the historical committed fixture remains immutable after this source
-correction.
+The two authorized report files are also updated. No fixture, Manifest, Pi,
+control-state, reference, accepted V0/V1-A source or Git-index entry changed.
 
-## 5. Verification commands and results
+## 4. Verification commands and results
 
-| Command | Working directory | Exit | Result |
-| --- | --- | ---: | --- |
-| `node ../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p tsconfig.json` | `workbench/` | 0 | strict TypeScript passed |
-| `node --test tests/v1b-stage1.test.ts tests/v1b-cli.test.ts` | `workbench/` | 0 | 26/26 passed: the original 19 focused tests plus seven correction groups |
-| `node --test --test-concurrency=1 tests/v1a-deterministic.test.ts tests/v0c-stage1.test.ts tests/v0c-post-audit-correction.test.ts tests/v0c-main-review-correction.test.ts` | `workbench/` | 0 | 42/42 passed |
-| `node workbench/src/cli.ts v1b inspect --pilot-root .../post-reservation-pilot-final --run v1b-run-01-parse-duration-r1-a` | repository root | 0 | coherent pause valid; terminal false; comparable false |
-| `node workbench/src/cli.ts v1b aggregate --pilot-root .../post-reservation-pilot-final` | repository root | 0 | 24 planned, 1 started, 1 paused, 0 terminal, 0 comparable; USD 0.10 conservative |
-| `git diff --check` | repository root | 0 | no whitespace errors |
+All commands ran from
+`C:/Users/HUAWEI/.codex/worktrees/28be/project2/workbench` unless stated.
 
-The focused tests include the exact tracked CLI invocation with
-`stage2_real`, `--stage2-real-authority` and an explicit empty environment that
-omits `DEEPSEEK_API_KEY`; it writes typed sanitized pause evidence and performs
-zero external dispatch.
+| Command | Exit | Result |
+|---|---:|---|
+| `npm.cmd run typecheck` | 0 | strict TypeScript passed |
+| `node --test tests/v1b-stage1.test.ts tests/v1b-cli.test.ts` | 0 | 31/31 passed |
+| `node --test --test-concurrency=1 tests/v1a-deterministic.test.ts tests/v0c-stage1.test.ts tests/v0c-post-audit-correction.test.ts tests/v0c-main-review-correction.test.ts` | 0 | 42/42 passed sequentially |
+| `git diff --check` (repository root) | 0 | no whitespace errors |
+| `git diff --cached --name-only` (repository root) | 0 | empty; index unchanged |
 
-## 6. Accounting
+**Fact.** Actual access totals for this correction are:
 
 ```yaml
-real_credential_reads: 0
+credential_material_reads: 0
 network_calls: 0
 external_provider_calls: 0
 real_model_calls: 0
-dependency_installs_or_downloads: 0
-pi_delta: 0
-accepted_fixture_delta: 0
-control_state_delta: 0
-git_stage_operations: 0
-git_commits: 0
-synthetic_post_reservation_example:
-  provider_request_reservations: 1
-  conservative_token_charge: 65536
-  conservative_cost_charge_usd: 0.10
-  network_calls: 0
-  external_provider_calls: 0
-  real_model_calls: 0
+installs_or_downloads: 0
 ```
 
-Synthetic fake-resolver observations are test seams and are not real
-credential reads. No environment credential value was read.
+Deterministic resolver/fault seams exercised typed counter transitions without
+reading an environment credential or dispatching any request.
 
-## 7. Evidence index
+## 5. Evidence index
 
-Authoritative ignored evidence root:
+Authoritative additive ignored evidence root:
 
-`.runs/v1-b/stage1/pause-path-correction-authoritative-final-20260805T063600Z-c68e834/`
+`C:/Users/HUAWEI/.codex/worktrees/28be/project2/.runs/v1-b/stage1/pause-path-post-audit-second-final-correction-authoritative-20260805T152841922/`
 
-Key artifacts:
+- `strict-typescript.txt` / `.exit.txt`: strict compile output and exit 0.
+- `v1b-focused.txt` / `.exit.txt`: 31/31 focused tests and exit 0.
+- `v1a-v0c-regressions.txt` / `.exit.txt`: 42/42 sequential regressions and exit 0.
+- `verification-summary.json`: frozen identity, counts, boundaries and digest.
+- `source-inventory.json`: SHA-256 inventory of every changed code/test file.
+- `source-delta.txt`: exact tracked code/test numstat.
+- `evidence-index.json`: recursive SHA-256/size inventory of authoritative evidence except itself.
 
-- `gate-a.json` — frozen starting identity;
-- `verification-summary.json` — commands, results and zero-call accounting;
-- `strict-typescript.exit.txt` — strict compile exit evidence (successful
-  compiler stdout was empty);
-- `v1b-focused.txt` and `.exit.txt` — 26/26 focused evidence;
-- `v1a-v0c-regressions.txt` and `.exit.txt` — 42/42 sequential regression evidence;
-- `post-reservation-pilot-final/` — coherent sanitized pause example;
-- `post-reservation-inspect-final.json` — pause valid / terminal false / comparable false;
-- `post-reservation-aggregate-final.json` — conservative accounting without denominator entry;
-- `evidence-index.json` and `evidence-index-addendum.json` — recursive SHA-256
-  inventory and additive post-index inventory;
-- `evidence-preservation-recovery.json` — exact hash verification for the
-  evidence-preservation incident described below.
+An earlier additive capture ending in `20260805T152615706` was preserved
+byte-for-byte after a final close-path refinement. It is non-authoritative; no
+historical ignored evidence was overwritten or removed.
 
-### Evidence-preservation incident
-
-**Fact.** A cleanup command targeting five preliminary ignored-evidence paths
-was already pending when Main Session directed that all existing ignored
-evidence be preserved and future capture be additive. The command completed
-before termination took effect. The five targets represented 15 files.
-
-**Fact.** All 15 affected files were immediately restored from the surviving
-original generated test directory plus deterministic command output. Every
-restored byte length and SHA-256 exactly matches the pre-cleanup
-`evidence-index.json`; `evidence-preservation-recovery.json` records each
-comparison and `all_hashes_exact: true`.
-
-**Fact.** No further ignored evidence was deleted or overwritten. The final
-authoritative capture is the unique additive directory named above.
-
-## 8. Corrected digest and replacement binding proposal
+## 6. Corrected digest proposal
 
 ```yaml
-corrected_workbench_source_digest_proposal: 634879c68345ccb689ba3768197612db1cad83e575f217d5f125cabba5d9c0d5
-replacement_manifest_revision: 2
-predecessor_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
-conservative_prior_debit_usd: 0.10
-replacement_pilot_cost_cap_usd: 1.90
-replacement_planned_initial_runs: 24
-sequence_started_initial_runs_max: 25
-replacement_child_attempts_max: 8
-final_replacement_manifest_materialized: false
+corrected_workbench_source_digest_proposal: 0494bd0f749cd587df779596c95f84fafc1c4fe65f57eabf511810476d5989e7
+candidate_commit: null
+candidate_tree: null
+owner_for_candidate_materialization: Main Session
 ```
 
-The final replacement Manifest ID is intentionally not proposed because it
-must bind the Main-created corrected Candidate/new Execution Baseline commit.
-The builder recomputes it deterministically only after that identity exists.
+**Fact.** The rejected Candidate remains rejected. This Session did not create a
+corrected Candidate or final replacement Manifest.
 
-## 9. Focused re-audit checklist
+## 7. Focused re-audit checklist
 
-1. Recompute exact Candidate tree and the proposed Workbench source digest.
-2. Independently observe that the journal reservation event is durable before
-   the Provider boundary can dispatch.
-3. Reproduce pre-credential, credential-failure, post-credential,
-   post-reservation, invalid-usage and other-runtime typed pause phases.
-4. Verify full pending token/USD reservation charging when usage is unavailable.
-5. Verify pause file -> `attempt_paused` -> ledger `paused` ordering and all
-   identity/digest relations.
-6. Re-run missing, duplicate, reordered, tampered and coherently rehashed pause
-   counterexamples, including protected markers.
-7. Confirm pause-integrity valid remains terminal-invalid and noncomparable.
-8. Re-run revision-2 predecessor/cost/membership/start/child/retry/fallback
-   counterexamples.
-9. Run strict TypeScript, all 26 focused tests and the 42 sequential regressions.
-10. Confirm zero real credential/network/Provider/model access and zero Pi,
-    fixture, control-state, staging or commit delta by this Session.
+1. Re-run the coherent P1-001 counter contradiction and verify rejection for the
+   exact mode/phase/transition mismatch.
+2. Re-run the P1-002 throwing-close seam and verify typed pause remains primary,
+   the raw marker is absent, and ledger ends `started -> paused`.
+3. Exercise revision-2 `preflightV1B`, `runNextV1B` and tracked CLI with missing,
+   mismatched and valid sequence authority.
+4. Verify one manifest-derived claim cannot bind two Pilot roots and every
+   initial/child start invokes `validateReplacementSequenceStateV1B` first.
+5. Re-run strict TypeScript, 31 focused tests and the 42 sequential regressions.
+6. Confirm actual access remains `0/0/0/0`, index remains empty, Pi remains exact,
+   and no protected path changed.
 
-## 10. Unverified and stop point
+## 8. Unverified and stop point
 
-**Unconfirmed / unauthorized.** No real Provider request, real model response,
-real usage record, real cost or replacement Pilot behavior was observed. No
-corrected Candidate, focused re-audit, new Execution Baseline or final
-replacement Manifest was created. Those remain Main/user-controlled steps.
+**Unconfirmed.** A corrected Candidate commit/tree does not yet exist. Main
+Session must review this delta, materialize any corrected Candidate, and decide
+whether a fresh focused re-audit accepts it. No Stage 2 execution, final
+replacement Manifest, credential access or real call was attempted.
 
-Work stops after producing this zero-call correction evidence.
-
-## 11. `CURRENT_STATE_UPDATE_PROPOSAL`
+## 9. `CURRENT_STATE_UPDATE_PROPOSAL`
 
 ```yaml
-proposal_only: true
-active_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
-phase: v1_b_pause_path_correction_complete_pending_main_review_and_focused_reaudit
-pause_evidence_baseline_commit: c68e834b654d56a1ce8312b6f5f085230e74d7d1
-pause_evidence_baseline_tree: 3c3b53ec1990ba50419380c09ddddc6070a4ebf6
-original_execution_baseline_commit: 19617319c13a9eecbb325682c920e79d1517b89d
-original_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
-original_pilot_status: immutable_paused
-original_actual_cost_usd: unknown
-correction_session_disposition_proposal: PASS_ZERO_CALL_PAUSE_PATH_CORRECTION_READY_FOR_FOCUSED_REAUDIT
-corrected_workbench_source_digest_proposal: 634879c68345ccb689ba3768197612db1cad83e575f217d5f125cabba5d9c0d5
-focused_tests: 26_of_26_passed
-required_regressions: 42_of_42_passed
-strict_typescript: passed
-real_access_accounting:
-  credential_reads: 0
-  network_calls: 0
-  external_provider_calls: 0
-  real_model_calls: 0
-replacement_protocol_support:
-  predecessor_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
-  conservative_prior_debit_usd: 0.10
-  replacement_pilot_cap_usd: 1.90
-  replacement_cells: 24
-  sequence_started_initial_runs_max: 25
-  replacement_child_attempts_max: 8
-candidate_commit: pending_main_materialization
-focused_pause_path_reaudit: pending_fresh_audit_session
-new_execution_baseline: not_created
-final_replacement_manifest: not_created
-replacement_stage_2: not_started
-v2_authorized: false
+active_goal: V1-B
+v1b_status: active_paused_post_audit_correction_ready_for_focused_reaudit
+rejected_candidate:
+  commit: cdc9780fd6b3e9b34cdc4156713377d601c595ec
+  tree: fced95adf974cf95f26cb7a3c88ed871a7202ab8
+  disposition: remains_rejected
+accepted_findings_closed_by_proposal:
+  - P1-001_exact_pause_counter_semantics
+  - P1-002_typed_pause_survives_close_cleanup
+  - P1-003_sequence_validator_on_public_execution_path
+verification:
+  strict_typescript: passed
+  v1b_focused: 31_of_31_passed
+  required_v1a_v0c_regressions: 42_of_42_passed
+  actual_access:
+    credential_material_reads: 0
+    network_calls: 0
+    external_provider_calls: 0
+    real_model_calls: 0
+corrected_workbench_source_digest_proposal: 0494bd0f749cd587df779596c95f84fafc1c4fe65f57eabf511810476d5989e7
+authoritative_evidence: .runs/v1-b/stage1/pause-path-post-audit-second-final-correction-authoritative-20260805T152841922
+main_session_owns:
+  - bounded_delta_review
+  - corrected_candidate_commit_and_tree
+  - focused_reaudit_handoff_and_acceptance
+  - any_future_execution_baseline
+  - final_replacement_manifest_materialization
+prohibited_until_separately_authorized:
+  - credential_or_network_access
+  - provider_or_real_model_call
+  - stage2_execution
+  - control_state_update
+  - staging_or_commit_by_preparation_session
 ```
+
+Work stops here for Main Session review.

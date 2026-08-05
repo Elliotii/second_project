@@ -94,6 +94,31 @@ export interface ExecutionManifestV1B {
 	cells: ExecutionCellV1B[];
 }
 
+export interface ReplacementSequenceAuthorityV1B {
+	schema_version: "v1b-replacement-sequence-authority-v1";
+	sequence_id: string;
+	predecessor_manifest_id: "43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76";
+	predecessor_paused_run_id: "v1b-run-01-parse-duration-r1-a";
+	predecessor_started_run_ids: readonly ["v1b-run-01-parse-duration-r1-a"];
+	conservative_prior_debit_usd: 0.10;
+	prior_replacement_manifest_ids: readonly [];
+	replacement_manifest_id: string;
+	replacement_run_ids: readonly string[];
+	retry_same_run: false;
+	fallback: false;
+	automatic_replacement: false;
+}
+
+export interface ReplacementSequenceRuntimeStateV1B {
+	predecessor_manifest_id: string;
+	predecessor_started_run_ids: readonly string[];
+	replacement_started_run_ids: readonly string[];
+	replacement_child_attempts: number;
+	retry_same_run: boolean;
+	fallback: boolean;
+	automatic_replacement: boolean;
+}
+
 export type LedgerStateV1B = "planned" | "started" | "terminal" | "invalid" | "paused";
 export interface LedgerEntryV1B {
 	schema_version: 1;

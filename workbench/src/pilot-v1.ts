@@ -120,6 +120,7 @@ export async function runNextPilotCellV1B(options: {
 	projectRoot: string;
 	pilotRoot: string;
 	realExecution?: { createAuthority(cell: ExecutionCellV1B): OneRunProviderAuthorityV1B };
+	replacementSequence?: { assertCurrent(): void; beforeInitialStart(runId: string): void; beforeChildStart(runId: string, attemptId: string): void };
 	deterministicInjection?: ExecuteV1RunCellOptions["deterministicInjection"];
 	deterministicPausePhase?: PausePhaseV1B;
 }): Promise<ExecuteV1RunCellResult | null> {
@@ -128,6 +129,9 @@ export async function runNextPilotCellV1B(options: {
 	if (!cell) return null;
 	if (state.manifest.execution_mode === "stage2_real" && !options.realExecution) throw new Error("real execution dependencies are unavailable");
 	if (state.manifest.execution_mode === "stage1_zero_call" && options.realExecution) throw new Error("Stage 1 rejects real execution dependencies");
+	if (state.manifest.experiment_revision === 2 && !options.replacementSequence) throw new Error("V1-B replacement sequence authority is required");
+	if (state.manifest.experiment_revision === 1 && options.replacementSequence) throw new Error("V1-B revision 1 rejects replacement sequence authority");
+	options.replacementSequence?.assertCurrent();
 	let realAuthority: OneRunProviderAuthorityV1B | undefined;
 	if (options.realExecution) {
 		try {
@@ -156,10 +160,11 @@ export async function runNextPilotCellV1B(options: {
 		appendLedger(options.pilotRoot, state.manifest, cell, "paused", "pilot_repeated_invalid_cause", null);
 		throw new V1BTypedPauseError("paused_unclassified", "pilot_repeated_invalid_cause");
 	}
+	options.replacementSequence?.beforeInitialStart(cell.planned_run_id);
 	appendLedger(options.pilotRoot, state.manifest, cell, "started", null, null);
 	const runRoot = resolve(options.pilotRoot, "runs", cell.planned_run_id);
 	try {
-		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}), ...(options.deterministicPausePhase ? { deterministicPausePhase: options.deterministicPausePhase } : {}) });
+		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(options.replacementSequence ? { replacementSequence: options.replacementSequence } : {}), ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}), ...(options.deterministicPausePhase ? { deterministicPausePhase: options.deterministicPausePhase } : {}) });
 		appendLedger(options.pilotRoot, state.manifest, cell, result.terminal.disposition === "invalid" ? "invalid" : "terminal", result.terminal.cause_id, `runs/${cell.planned_run_id}/run-result.json`);
 		return result;
 	} catch (error) {

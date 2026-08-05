@@ -58,7 +58,8 @@ async function main(): Promise<void> {
 		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };
 		const pilotRoot = resolve(projectRoot, value("--pilot-root") ?? ".runs/v1-b/stage1/pilot-cli");
 		const manifestPath = value("--manifest") ?? V1B_STAGE1_MANIFEST_PATH;
-		if (action === "preflight") process.stdout.write(`${JSON.stringify(preflightV1B({ projectRoot, manifestPath, pilotRoot }))}\n`);
+		const replacementSequenceStatePath = value("--replacement-sequence-state");
+		if (action === "preflight") process.stdout.write(`${JSON.stringify(preflightV1B({ projectRoot, manifestPath, pilotRoot, ...(replacementSequenceStatePath ? { replacementSequenceStatePath } : {}) }))}\n`);
 		else if (action === "run-next") {
 			const stage2AuthorityRequested = raw.includes("--stage2-real-authority");
 			const stage2ExecutionAuthority = stage2AuthorityRequested ? {
@@ -71,13 +72,13 @@ async function main(): Promise<void> {
 					return credential;
 				} },
 			} : undefined;
-			const result = await runNextV1B({ projectRoot, manifestPath, pilotRoot, ...(stage2ExecutionAuthority ? { stage2ExecutionAuthority } : {}) });
+			const result = await runNextV1B({ projectRoot, manifestPath, pilotRoot, ...(replacementSequenceStatePath ? { replacementSequenceStatePath } : {}), ...(stage2ExecutionAuthority ? { stage2ExecutionAuthority } : {}) });
 			process.stdout.write(`${JSON.stringify(result ? { run_id: result.run_result.run_id, verifier_status: result.run_result.verifier_status, run_root: result.run_root, real_call_counters: result.real_call_counters } : { status: "complete" })}\n`);
 		} else if (action === "inspect") {
 			const plannedRunId = value("--run"); if (!plannedRunId) throw new Error("v1b inspect requires --run <planned-run-id>");
 			const result = inspectV1B({ projectRoot, pilotRoot, plannedRunId }); process.stdout.write(`${JSON.stringify(result)}\n`); if (!result.integrity_valid) process.exitCode = 1;
 		} else if (action === "aggregate") process.stdout.write(`${JSON.stringify(aggregateV1B({ projectRoot, pilotRoot }))}\n`);
-		else throw new Error("usage: cli.ts v1b <preflight|run-next|inspect|aggregate> [--manifest <path>] [--pilot-root <path>] [--run <planned-run-id>] [--stage2-real-authority]");
+		else throw new Error("usage: cli.ts v1b <preflight|run-next|inspect|aggregate> [--manifest <path>] [--pilot-root <path>] [--replacement-sequence-state <path>] [--run <planned-run-id>] [--stage2-real-authority]");
 		return;
 	}
 	const args = parseArguments(raw);
