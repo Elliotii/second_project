@@ -5,24 +5,24 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_b_replacement_execution_baseline_frozen_stage_2_pending
-  status: V1_B_ACTIVE_REPLACEMENT_STAGE_2_AUTHORIZED_PENDING_FRESH_EXECUTION_SESSION
+  phase: v1_concluded_inconclusive
+  status: V1_CONCLUDED_INCONCLUSIVE_V2_NOT_AUTHORIZED
 
-active_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
+active_goal: null
 
 last_executed_goal:
-  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-  status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
-  disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
-  implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+  id: V1_B_FROZEN_BOUNDED_REAL_PILOT
+  status: closed_inconclusive_not_completed
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
+  disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
+  replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
 
 last_closed_goal:
-  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
-  status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
-  disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
-  implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+  id: V1_B_FROZEN_BOUNDED_REAL_PILOT
+  status: closed_inconclusive_not_completed
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
+  disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
+  closeout: docs/reports/V1_B_CLOSEOUT.md
 
 last_completed_goal:
   id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
@@ -32,9 +32,9 @@ last_completed_goal:
   implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 
 next_goal:
-  id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-  status: active_replacement_execution_baseline_frozen_stage_2_pending
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
+  id: null
+  status: none_authorized
+  contract: null
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -290,6 +290,13 @@ completed_work:
   - V1_B_replacement_manifest_and_sequence_authority_materialized_and_zero_call_validated
   - V1_B_current_official_DeepSeek_V4_Flash_checkpoint_revalidated
   - V1_B_replacement_execution_baseline_and_fresh_stage_2_authorized
+  - V1_B_replacement_execution_baseline_created_at_f7cf45150724061269179716e1b2f487db1ff5c7
+  - V1_B_replacement_stage_2_Gates_K_L_and_M_passed
+  - V1_B_replacement_stage_2_first_cell_started_once_and_paused_on_invalid_or_unknown_usage
+  - V1_B_replacement_stage_2_later_cells_not_started
+  - V1_B_authorized_original_and_replacement_sequence_exhausted
+  - V1_B_closed_inconclusive_not_completed
+  - V1_concluded_inconclusive_not_completed
   - V2_remains_not_authorized
 
 workspace:
@@ -337,7 +344,9 @@ workspace:
   v1_b_execution_baseline_tree: 48d2bee79a551fe53ac36ed12decea2357765645
   v1_b_pause_path_final_candidate_commit: 6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e
   v1_b_pause_path_final_candidate_tree: 7ab79aa4073baab1c7570424701ebf1302b34837
-  v1_b_replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+  v1_b_replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
+  v1_b_replacement_execution_baseline_tree: 4fe46f3955b069f52dd5f581d794b860ef159b4e
+  v1_b_closeout_commit: resulting_HEAD_of_this_revision
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -401,9 +410,9 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: V1_B_active_replacement_execution_baseline_frozen_stage_2_pending
-  active_goal: true
-  current_candidate_goal: V1_B_FROZEN_BOUNDED_REAL_PILOT
+  status: concluded_inconclusive_not_completed
+  active_goal: false
+  current_candidate_goal: null
   formal_goal_contract_created: true
   activation_authorized: consumed_for_V1_A
   activation_authorized_at: 2026-08-03
@@ -475,10 +484,10 @@ v1:
   V1_B_integrated_plan_status: accepted
   V1_B_precontract_pause_report: docs/reports/V1_B_PRECONTRACT_READINESS_PAUSE_REPORT.md
   V1_B_session_model:
-    stage_1_preparation: future_dedicated_zero_call_source_edit_session
-    stage_1_audit: future_fresh_focused_independent_audit_session
-    bounded_correction: original_stage_1_preparation_session
-    stage_2_execution: future_fresh_no_source_edit_real_pilot_session
+    stage_1_preparation: completed_dedicated_zero_call_source_edit_session
+    stage_1_audit: completed_fresh_focused_independent_audit_sessions
+    bounded_correction: completed_original_stage_1_preparation_session
+    stage_2_execution: completed_original_and_replacement_fresh_no_source_edit_sessions
   V1_B_pilot_execution_surface: immutable_manifest_enforced_one_cell_at_a_time
   V1_B_pilot_scale: 24_initial_cells_max_8_child_attempts
   V1_B_whole_pilot_time_semantics: accumulated_active_execution_time_max_7200000ms
@@ -490,7 +499,7 @@ v1:
   V1_B_goal_contract_draft_status: superseded
   V1_B_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
   V1_B_formal_goal_contract_created: true
-  V1_B_contract_status: accepted_active_replacement_stage_2_authorized_pending_fresh_session
+  V1_B_contract_status: closed_inconclusive_not_completed
   V1_B_activation_authorized: true
   V1_B_control_baseline_commit_authorized: consumed
   V1_B_first_control_baseline_commit: 84f548c93df40d8955a15572df30edac7b6df0fa
@@ -512,20 +521,21 @@ v1:
   V1_B_corrected_candidate_tree: 7ab79aa4073baab1c7570424701ebf1302b34837
   V1_B_focused_reaudit_disposition: PASS_FOCUSED_V1_B_P1_004_REAUDIT
   V1_B_stage_1_prompt: docs/reports/V1_B_STAGE1_PREPARATION_SESSION_START_PROMPT.md
-  V1_B_execution_authorized: original_stage_2_consumed_and_paused
-  V1_B_credential_reads_authorized: opaque_DEEPSEEK_API_KEY_only
-  V1_B_external_network_authorized: DeepSeek_API_only
-  V1_B_real_model_calls_authorized: replacement_stage_2_from_resulting_execution_baseline_under_USD1_90_cap
+  V1_B_execution_authorized: consumed_for_original_and_replacement_pilots
+  V1_B_credential_reads_authorized: consumed_no_further_reads_authorized
+  V1_B_external_network_authorized: consumed_no_further_network_authorized
+  V1_B_real_model_calls_authorized: consumed_no_further_calls_authorized
   V1_B_candidate_commit_authorized: consumed
   V1_B_focused_audit_authorized: consumed
   V1_B_execution_baseline_authorized: consumed_for_replacement_resulting_HEAD
   V1_B_execution_baseline_commit: 19617319c13a9eecbb325682c920e79d1517b89d
   V1_B_execution_baseline_tree: 48d2bee79a551fe53ac36ed12decea2357765645
-  V1_B_replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+  V1_B_replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
+  V1_B_replacement_execution_baseline_tree: 4fe46f3955b069f52dd5f581d794b860ef159b4e
   V1_B_replacement_manifest_id: 4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29
   V1_B_replacement_sequence_id: c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1
   V1_B_replacement_source_digest: b1fa032d42c4e381c880b8092bddb5a625169ea44ee2e0ea238da1595d0edf92
-  V1_B_stage_2_authorized: replacement_authorized_pending_fresh_execution_session
+  V1_B_stage_2_authorized: consumed_replacement_paused_no_further_execution
   V1_B_stage_2_thread_id: 019fce76-e00b-77c3-8804-af9b652fa08e
   V1_B_stage_2_disposition: PAUSE_V1_B_PILOT
   V1_B_stage_2_policy_recommendation: INCONCLUSIVE
@@ -534,6 +544,19 @@ v1:
   V1_B_stage_2_paused_run: v1b-run-01-parse-duration-r1-a
   V1_B_stage_2_actual_cost_usd: unknown
   V1_B_stage_2_retry_fallback_replacement: 0
+  V1_B_replacement_stage_2_thread_id: 019fd116-2bb1-76e1-bedc-ad9def6dd2d3
+  V1_B_replacement_stage_2_disposition: PAUSE_V1_B_REPLACEMENT_PILOT
+  V1_B_replacement_stage_2_policy_recommendation: INCONCLUSIVE
+  V1_B_replacement_stage_2_membership: planned_24_started_1_terminal_0_invalid_0_paused_1
+  V1_B_replacement_stage_2_paused_run: v1b-replacement-run-01-parse-duration-r1-a
+  V1_B_replacement_stage_2_provider_model_calls: 8
+  V1_B_replacement_stage_2_tool_calls: 10
+  V1_B_replacement_stage_2_tokens_known: 11670
+  V1_B_replacement_stage_2_persisted_known_cost_usd: 0.0003864952
+  V1_B_replacement_stage_2_actual_cost_usd: unknown
+  V1_B_replacement_stage_2_fail_closed_debit_usd: 0.10
+  V1_B_authorized_sequence_fail_closed_total_usd: 0.20
+  V1_B_valid_comparable_runs: 0
   V1_B_pause_recovery_amendment: docs/第二项目_Codex交接包_2026-07-30/V1_B_PAUSE_RECOVERY_AMENDMENT.md
   V1_B_pause_path_correction_authorized: consumed_two_cycles_plus_user_authorized_P1_004_micro_exception
   V1_B_pause_path_correction_owner: original_v1_b_preparation_session
@@ -542,7 +565,13 @@ v1:
   V1_B_replacement_conservative_prior_debit_usd: 0.10
   V1_B_replacement_pilot_cost_cap_usd: 1.90
   V1_B_authorized_sequence_started_initial_runs_max: 25
-  V1_B_closeout_commit_authorized: true
+  V1_B_closeout_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  V1_B_closeout_disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
+  V1_B_closeout: docs/reports/V1_B_CLOSEOUT.md
+  V1_closeout: docs/reports/V1_CLOSEOUT.md
+  V1_definition_of_done: not_met
+  V1_policy_recommendation: INCONCLUSIVE
+  V1_further_execution_authorized: false
   V1_B_v2_authorized: false
 
 v0_a:
@@ -1155,6 +1184,11 @@ required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_B_PAUSE_RECOVERY_AMENDMENT.md
+  - docs/reports/V1_CLOSEOUT.md
+  - docs/reports/V1_B_CLOSEOUT.md
+  - docs/reports/V1_B_REPLACEMENT_STAGE2_MAIN_REVIEW_AND_CLOSEOUT_DECISION.md
+  - docs/reports/V1_B_REPLACEMENT_STAGE2_PAUSE_REPORT.md
+  - docs/reports/V1_B_REPLACEMENT_STAGE2_EXECUTION_SESSION_START_PROMPT.md
   - docs/reports/V1_B_P1_004_MAIN_ACCEPTANCE_AND_REPLACEMENT_BASELINE_DECISION.md
   - docs/reports/V1_B_P1_004_FOCUSED_INDEPENDENT_REAUDIT_REPORT.md
   - docs/reports/V1_B_REPLACEMENT_EXECUTION_BASELINE_PREFLIGHT.md
@@ -1192,25 +1226,11 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
-  - V1_version_charter_accepted_and_formalized
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
-  - V1_B_integrated_development_plan_and_bounded_charter_clarification_accepted
-  - V1_B_planning_charter_amendment_baseline_commit_created_and_verified_at_51a0200450781faa7fb16c98b3547f294efcef7d
-  - V1_B_goal_contract_accepted_and_formalized
-  - V1_B_activation_control_baseline_and_zero_call_stage_1_authorized
-  - first_V1_B_stage_1_session_stopped_preimplementation_with_zero_delta
-  - corrected_V1_B_control_baseline_created_at_de75ca7a4d5376713f01ca475bc5ad7637c70443
-  - original_corrected_V1_B_candidate_created_at_a11690e5827d9d540b731156799566bea21c689e
-  - original_focused_reaudit_passed_and_two_original_P1_findings_closed
-  - original_execution_baseline_created_at_19617319c13a9eecbb325682c920e79d1517b89d
-  - original_stage_2_first_cell_paused_with_unknown_usage_and_cost
-  - pause_path_final_candidate_created_at_6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e
-  - P1_004_focused_reaudit_passed_with_no_fourth_correction_authorized
-  - replacement_manifest_and_sequence_authority_zero_call_preflight_passed
-  - create_and_verify_replacement_execution_baseline
-  - start_fresh_no_source_edit_replacement_stage_2_session
-  - run_fresh_replacement_pilot_under_USD1_90_remaining_cap_or_stop_on_exit_condition
-  - main_session_limited_evidence_acceptance_and_authorized_V1_B_closeout_commit
+  - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
+  - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
+  - V1_concluded_inconclusive_and_not_marked_complete
+  - no_active_goal_and_no_further_V1_B_execution_authority
   - stop_before_V2
 
 open_user_decisions: []
@@ -1282,14 +1302,13 @@ open_user_decisions: []
 - V0 and V1-A are closed and accepted. V1-A's independently re-audited
   Implementation Baseline is
   `784bd1ec06c2aa9ed554a7da661bdf582097bcdf`. Do not reopen or silently
-  rewrite it. V1-B is the active Goal under the accepted formal Contract. Its
-  original Stage 2 Pilot paused on the first cell with unknown usage/cost and no
-  later cell. The accepted Pause Recovery Amendment authorizes one zero-call
-  correction, focused re-audit and one new-identity replacement Pilot with a
-  USD 0.10 conservative prior debit and USD 1.90 remaining cap. V1 compares Baseline,
-  Skill-only and Skill + External Verifier / Runtime Control; V2 bounded
-  multi-path recovery remains the Portfolio North Star rather than current
-  scope.
+  rewrite it. V1-B is closed inconclusive, not completed. Both authorized real
+  Pilot identities paused before a terminal/comparable Run existed; their
+  actual costs remain unknown and conservative accounting totals USD 0.20.
+  No further correction, retry, fallback, replacement, credential/network use
+  or real-model call is authorized. V1 is concluded inconclusive and does not
+  claim a completed Baseline/Skill-only/Skill+Runtime comparison. V2 bounded
+  multi-path recovery remains the Portfolio North Star but is not authorized.
 
 ## Expected Next Handoff
 
@@ -1308,23 +1327,17 @@ Windows re-audited Implementation Baseline is
 Skill/experiment substrate with zero real-model calls, but did not test Skill
 effectiveness, real Recovery or strategy superiority.
 
-V1-B remains active under the accepted `V1_B_GOAL_CONTRACT.md` and
-`V1_B_PAUSE_RECOVERY_AMENDMENT.md`. The original Execution Baseline
-`19617319c13a9eecbb325682c920e79d1517b89d` and its first-cell pause remain
-immutable historical evidence with actual usage/cost `unknown`. After two
-normal bounded correction cycles, the user authorized and consumed exactly one
-P1-004 micro-correction exception. Final pause-path Candidate
-`6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e`, tree
-`7ab79aa4073baab1c7570424701ebf1302b34837`, passed
-`PASS_FOCUSED_V1_B_P1_004_REAUDIT`; no fourth correction is authorized.
+V1-B is closed with
+`CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED`. The original Pilot and
+the separately authorized replacement Pilot each started only cell 1 and then
+paused on evidence-integrity boundaries. The replacement reached eight
+Provider/model requests and ten Tool calls before an invalid/unknown usage
+response produced a pause state that the frozen Inspector rejected. Across
+both Pilots there are zero terminal/comparable Runs. Actual cost is unknown;
+fail-closed accounting totals USD 0.20 and remains below the USD 2 cap.
 
-The replacement Manifest and write-once sequence authority passed zero-call
-preflight. Their identities are
-`4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29` and
-`c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1`.
-The next handoff is a fresh no-source-edit Stage 2 Session from the resulting
-replacement Execution Baseline. It may execute only this 24-cell replacement
-Pilot one cell at a time, with USD 0.10 conservative prior debit, USD 1.90
-replacement actual-cost cap, at most 25 initial starts across both Pilots and
-at most eight replacement child Attempts. Historical evidence is immutable;
-no retry, fallback, second replacement or V2 work is authorized.
+V1 therefore ends as `V1_CONCLUDED_INCONCLUSIVE_NOT_COMPLETED`. V1-A's
+deterministic substrate remains accepted, but V1 has no valid A/B/C aggregate,
+no Skill/Runtime winner and no observed real Recovery effect. `active_goal` is
+`null`. The next interaction must begin with a new user decision; V2 research,
+Contract drafting, activation and implementation remain unauthorized.

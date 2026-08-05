@@ -1,7 +1,7 @@
 # V1-B Goal Contract — Frozen Bounded Real Pilot
 
 ```yaml
-status: accepted_active_replacement_stage_2_authorized_pending_fresh_session
+status: closed_inconclusive_not_completed
 goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
 version: V1
 project: Agent Harness Reliability Workbench
@@ -14,8 +14,8 @@ planning_charter_amendment_baseline_tree: c51177ea760d3153257703326a220b550af103
 v1_a_implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 contract_accepted: true
-active_goal: true
-implementation_authorized: stage_1_completed_stage_2_execution_authorized
+active_goal: false
+implementation_authorized: consumed_no_further_execution
 stage_1_authorized: true
 stage_1_implementation_owner: dedicated_v1_b_preparation_session
 first_control_baseline_commit: 84f548c93df40d8955a15572df30edac7b6df0fa
@@ -36,11 +36,11 @@ focused_audit_authorized: consumed
 execution_baseline_authorized: true
 execution_baseline_commit: 19617319c13a9eecbb325682c920e79d1517b89d
 execution_baseline_tree: 48d2bee79a551fe53ac36ed12decea2357765645
-stage_2_authorized: replacement_authorized_pending_fresh_execution_session
-credential_reads_authorized: opaque_DEEPSEEK_API_KEY_only
-external_network_authorized: true_DeepSeek_API_only
-real_model_calls_authorized: replacement_manifest_only_under_USD1_90_actual_cap
-real_provider_calls_authorized: replacement_manifest_only_under_USD1_90_actual_cap
+stage_2_authorized: consumed_original_and_replacement_pilots_paused
+credential_reads_authorized: consumed_no_further_reads
+external_network_authorized: consumed_no_further_network
+real_model_calls_authorized: consumed_no_further_calls
+real_provider_calls_authorized: consumed_no_further_calls
 whole_pilot_cost_authorized_usd: 2
 original_stage_2_status: paused_on_first_cell
 original_stage_2_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
@@ -52,8 +52,9 @@ pause_path_correction_authorized: consumed_two_cycles_plus_one_time_P1_004_micro
 pause_path_correction_owner: original_v1_b_preparation_session
 focused_pause_path_reaudit_authorized: consumed_PASS_FOCUSED_V1_B_P1_004_REAUDIT
 further_pause_path_corrections_authorized: false
-replacement_pilot_authorized: true_from_resulting_replacement_execution_baseline
-replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+replacement_pilot_authorized: consumed_paused_on_first_cell
+replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
+replacement_execution_baseline_tree: 4fe46f3955b069f52dd5f581d794b860ef159b4e
 replacement_manifest_path: fixtures/manifests/v1/v1b-stage2-replacement-execution.json
 replacement_manifest_id: 4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29
 replacement_sequence_authority_path: fixtures/manifests/v1/v1b-stage2-replacement-sequence-authority.json
@@ -63,16 +64,27 @@ conservative_prior_cost_debit_usd: 0.10
 replacement_pilot_cost_authorized_usd: 1.90
 authorized_sequence_started_initial_runs_max: 25
 replacement_child_attempts_max: 8
+replacement_stage_2_thread_id: 019fd116-2bb1-76e1-bedc-ad9def6dd2d3
+replacement_stage_2_status: paused_on_first_cell
+replacement_stage_2_provider_model_calls: 8
+replacement_stage_2_tool_calls: 10
+replacement_stage_2_actual_cost_usd: unknown
+replacement_stage_2_fail_closed_debit_usd: 0.10
+authorized_sequence_fail_closed_total_usd: 0.20
+valid_comparable_runs: 0
+goal_closeout_disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
+policy_recommendation: INCONCLUSIVE
+closeout_commit: resulting_HEAD_of_this_revision
 pi_core_patch_authorized: false
 private_pi_import_authorized: false
 dependency_install_authorized: false
 dedicated_session_git_commit_authorized: false
 ```
 
-> 本文件是用户已接受并已激活的 V1-B 正式 Goal Contract。原 Stage 2 Pilot在第一
-> cell 上按规则暂停，V1-B 尚未关闭。Pause Recovery Amendment 的返修、P1-004
-> 单次例外与 focused re-audit 已完成并通过；当前只等待从 replacement Execution
-> Baseline 启动 fresh no-source-edit Stage 2。原证据不可改写，V2 未授权。
+> 本文件是用户已接受并执行完授权序列的 V1-B 正式 Goal Contract。原 Stage 2 与
+> replacement Stage 2 均在第一 cell 的 evidence-integrity 边界暂停；V1-B 已按
+> `INCONCLUSIVE` 收口，但没有完成 Stage 2 DoD。原证据不可改写，无进一步执行或
+> 修复权限，V2 未授权。
 
 ## 1. Goal Mission
 
@@ -1048,3 +1060,37 @@ exact-SHA launch Prompt and start one fresh no-source-edit Stage 2 Session. The
 Session must run Gates K/L/M before any real call, then execute only the frozen
 replacement sequence one cell at a time. Any Contract or Amendment exit
 condition pauses the Goal immediately.
+
+## 26. Replacement Stage 2 Result and Goal Closeout
+
+The replacement Execution Baseline was
+`f7cf45150724061269179716e1b2f487db1ff5c7`, tree
+`4fe46f3955b069f52dd5f581d794b860ef159b4e`. Fresh no-source-edit Session
+`019fd116-2bb1-76e1-bedc-ad9def6dd2d3` passed Gates K/L/M, then started only
+`v1b-replacement-cell-01` once.
+
+That Run reached eight Provider/model requests and ten Tool calls before the
+frozen Producer classified request 8 as
+`invalid_or_unknown_usage_after_provider_response`. The resulting pause state
+was rejected by the frozen Inspector. No terminal/comparable Run, retry,
+fallback, child Attempt, second replacement or later cell exists.
+
+```yaml
+replacement_execution_disposition: PAUSE_V1_B_REPLACEMENT_PILOT
+replacement_started_initial_runs: 1
+replacement_terminal_runs: 0
+replacement_comparable_runs: 0
+replacement_persisted_known_cost_usd: 0.0003864952
+replacement_actual_cost_usd: unknown
+replacement_fail_closed_debit_usd: 0.10
+original_fail_closed_debit_usd: 0.10
+authorized_sequence_fail_closed_total_usd: 0.20
+policy_recommendation: INCONCLUSIVE
+goal_closeout_disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
+stage_2_definition_of_done: not_met
+```
+
+Main Session independently reproduced the Inspector failure, reconciled the
+append-only ledger/journal/sequence claim and accepted the automatic exit. The
+Goal is closed inconclusive, not marked complete. No further V1-B execution or
+correction and no V2 work is authorized.

@@ -1,7 +1,7 @@
 # V1-B Pause Recovery Amendment
 
 ```yaml
-status: accepted_authorized
+status: consumed_replacement_paused_closed_inconclusive
 accepted_by_user: 2026-08-05
 goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
 amendment_scope: one_bounded_pause_evidence_correction_and_one_replacement_pilot
@@ -24,9 +24,16 @@ final_candidate_commit: 6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e
 final_candidate_tree: 7ab79aa4073baab1c7570424701ebf1302b34837
 final_focused_reaudit: PASS_FOCUSED_V1_B_P1_004_REAUDIT
 further_correction_authorized: false
-replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
+replacement_execution_baseline_tree: 4fe46f3955b069f52dd5f581d794b860ef159b4e
 replacement_manifest_id: 4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29
 replacement_sequence_authority_id: c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1
+replacement_stage_2_thread_id: 019fd116-2bb1-76e1-bedc-ad9def6dd2d3
+replacement_stage_2_disposition: PAUSE_V1_B_REPLACEMENT_PILOT
+replacement_stage_2_actual_cost_usd: unknown
+replacement_stage_2_fail_closed_debit_usd: 0.10
+authorized_sequence_fail_closed_total_usd: 0.20
+goal_closeout_disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
 v2_authorized: false
 ```
 
@@ -154,3 +161,22 @@ write-once sequence authority ID
 `c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1`. Any new
 source defect, identity conflict, budget uncertainty or other Pause Condition
 stops V1-B; it does not authorize another repair.
+
+## 9. Replacement execution result and amendment exhaustion
+
+The replacement Pilot ran from exact baseline
+`f7cf45150724061269179716e1b2f487db1ff5c7`. It started only cell 1 once and
+paused after eight Provider/model requests with
+`invalid_or_unknown_usage_after_provider_response`. The persisted pause state
+and frozen Inspector disagreed, so there is no terminal/comparable Run and no
+exact actual-cost proof.
+
+The replacement known subtotal is USD `0.0003864952`; fail-closed accounting
+charges the replacement USD 0.10. Combined with the predecessor debit, the
+authorized sequence conservative total is USD 0.20. Remaining budget does not
+authorize another Run.
+
+This Amendment is fully consumed. V1-B is closed inconclusive under
+`CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED`. No further correction,
+retry, fallback, replacement, credential/network use, real-model call or V2
+work is authorized.
