@@ -113,7 +113,10 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	if (phase === "after_credential_before_provider_request_reservation" && (!stage2 || stableJson(pause.counter_snapshot) !== stableJson(credentialOnly))) errors.push("post-credential pause counter matrix drift");
 	if (phase === "other_bounded_runtime_failure" && stableJson(pause.counter_snapshot) !== stableJson(stage2 ? credentialOnly : zeroCounters)) errors.push("other bounded pause counter matrix drift");
 	if (["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(phase)) {
-		if (stableJson(pause.counter_snapshot) !== stableJson(stage2 ? possibleDispatch : zeroCounters)) errors.push("post-reservation pause counter snapshot/mode drift");
+		const validPostReservationSnapshot = stage2
+			? [credentialOnly, possibleDispatch].some((expected) => stableJson(pause.counter_snapshot) === stableJson(expected))
+			: stableJson(pause.counter_snapshot) === stableJson(zeroCounters);
+		if (!validPostReservationSnapshot) errors.push("post-reservation pause counter snapshot/mode drift");
 		const transition = reservations[0]?.data.counter_transition;
 		if (!transition || transition.provider_requests.before !== 0 || transition.provider_requests.after !== 1) errors.push("post-reservation provider request transition is not exact 0->1");
 		for (const key of ["network_calls", "provider_calls", "model_calls"] as const) {

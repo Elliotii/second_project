@@ -428,6 +428,28 @@ test("V1-B replacement revision freezes predecessor, USD1.90, new 24-cell IDs, c
 test("V1-B Inspector rejects coherently rehashed real-mode counter contradictions", async () => {
 	const source = await pausedPilot("after_provider_request_reservation_usage_unavailable", "stage2_real");
 	const cell = source.manifest.cells[0]!;
+	const sourceInspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: source.pilotRoot, plannedRunId: cell.planned_run_id });
+	assert.deepEqual({ valid: sourceInspected.integrity_valid, pause: sourceInspected.pause_integrity_valid, terminal: sourceInspected.terminal_valid, comparable: sourceInspected.comparable }, { valid: true, pause: true, terminal: false, comparable: false }, sourceInspected.errors.join("; "));
+	assert.deepEqual(sourceInspected.pause_evidence!.counter_snapshot, { credential_reads: 1, network_calls: 0, provider_calls: 0, model_calls: 0 });
+	assert.deepEqual({ tokens: sourceInspected.pause_evidence!.pending_provider_reservation!.tokens, cost: sourceInspected.pause_evidence!.pending_provider_reservation!.cost_usd }, { tokens: 65_536, cost: 0.10 });
+	assert.deepEqual({ tokens: sourceInspected.pause_evidence!.conservative_usage_charge.tokens, cost: sourceInspected.pause_evidence!.conservative_usage_charge.cost_usd }, { tokens: 65_536, cost: 0.10 });
+	const sourceJournal = readFileSync(resolve(source.pilotRoot, "runs", cell.planned_run_id, "journal.jsonl"), "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+	const sourceTransition = sourceJournal.find((event) => event.type === "provider_request_reserved").data.counter_transition;
+	for (const key of ["provider_requests", "network_calls", "provider_calls", "model_calls"]) assert.deepEqual(sourceTransition[key], { before: 0, after: 1 });
+
+	const rewriteSnapshot = (label: string, snapshot: PauseEvidenceV1B["counter_snapshot"]): string => {
+		const target = root(label); cpSync(source.pilotRoot, target, { recursive: true });
+		const runRoot = resolve(target, "runs", cell.planned_run_id); const pausePath = resolve(runRoot, "pause-evidence.json"); const journalPath = resolve(runRoot, "journal.jsonl"); const ledgerPath = resolve(target, "ledger.jsonl");
+		const pause = JSON.parse(readFileSync(pausePath, "utf8")) as PauseEvidenceV1B; pause.counter_snapshot = snapshot; writeStable(pausePath, pause);
+		const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); const pauseIndex = events.findIndex((event) => event.type === "attempt_paused"); events[pauseIndex].data.pause_evidence_ref = { path: "pause-evidence.json", sha256: fileSha256(pausePath), size_bytes: readFileSync(pausePath).length }; writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`, "utf8");
+		const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); ledger.at(-1).pause_evidence_ref = events[pauseIndex].data.pause_evidence_ref; ledger.at(-1).journal_sha256 = fileSha256(journalPath); writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`, "utf8");
+		return target;
+	};
+	const possibleDispatch = rewriteSnapshot("pause-valid-possible-dispatch", { credential_reads: 1, network_calls: 1, provider_calls: 1, model_calls: 1 });
+	const possibleInspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: possibleDispatch, plannedRunId: cell.planned_run_id }); assert.equal(possibleInspected.integrity_valid, true, possibleInspected.errors.join("; "));
+	const mixed = rewriteSnapshot("pause-invalid-mixed-dispatch", { credential_reads: 1, network_calls: 1, provider_calls: 0, model_calls: 1 });
+	const mixedInspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: mixed, plannedRunId: cell.planned_run_id }); assert.equal(mixedInspected.integrity_valid, false); assert.match(mixedInspected.errors.join("; "), /snapshot\/mode drift/);
+
 	const copy = root("pause-coherent-counter-contradiction"); cpSync(source.pilotRoot, copy, { recursive: true });
 	const runRoot = resolve(copy, "runs", cell.planned_run_id); const pausePath = resolve(runRoot, "pause-evidence.json"); const journalPath = resolve(runRoot, "journal.jsonl"); const ledgerPath = resolve(copy, "ledger.jsonl");
 	const pause = JSON.parse(readFileSync(pausePath, "utf8")) as PauseEvidenceV1B;

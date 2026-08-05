@@ -1,62 +1,49 @@
-# V1-B Stage 2 Pause-path Post-audit Correction Closeout Draft
+# V1-B P1-004 One-time Micro-correction Closeout Draft
 
-Status: `READY_FOR_MAIN_SESSION_FOCUSED_REAUDIT`
+Status: `READY_FOR_MAIN_SESSION_P1_004_REAUDIT`
 
 ## Closeout result
 
-**Fact.** The authorized second-and-final zero-call correction closes P1-001,
-P1-002 and P1-003 within the prompt's bounded paths. Strict TypeScript passed,
-V1-B focused tests passed 31/31, and required sequential V1-A/V0-C regressions
-passed 42/42.
+**Fact.** The user-authorized one-time micro-correction closes the implementation
+side of P1-004 using only `inspect-v1.ts` and `v1b-stage1.test.ts`. No producer,
+schema, product, CLI, Manifest or control path changed.
 
-The implementation now provides:
+The Inspector now preserves the existing write-ahead `0 -> 1` reservation and
+accepts exactly two real Stage-2 external snapshots after reservation:
 
-- an exact execution-mode/phase/request counter matrix with independently
-  validated write-before-dispatch identity, order and reservation caps;
-- durable typed pause precedence across throwing Provider-access cleanup, with
-  `pause-evidence.json -> attempt_paused -> ledger paused` preserved;
-- an exact immutable replacement-sequence authority and one manifest-derived
-  write-once claim journal on the real public preflight/run-next/CLI path;
-- validation before Pilot initialization, Provider authority creation, every
-  initial Run start and every replacement child start;
-- fail-closed missing-state, reused Run, cross-sequence start, child-cap,
-  retry/fallback/automatic-replacement and second-Pilot behavior.
+- `0 / 0 / 0` when the awaited reservation hook prevents dispatch;
+- `1 / 1 / 1` when dispatch may have occurred.
 
-## Deliverables
+It rejects partial/mixed tuples and the coherently rehashed `0 -> 0 + 1/1/1`
+forgery. Both valid states retain credential count 1, the complete pending
+65,536-token/USD0.10 reservation and full conservative charge. Stage-1 remains
+exact zero-access.
 
-| Deliverable | Result |
+## Verification summary
+
+| Check | Result |
 |---|---|
-| Finding closure matrix | PASS; Correction Report §2 |
-| Exact source/test delta | PASS; nine files, +247/-27 |
+| Exact code/test delta | PASS; two files, +26/-1 |
 | Strict TypeScript | PASS; exit 0 |
-| V1-B focused verification | PASS; 31/31 |
-| Sequential V1-A/V0-C regression | PASS; 42/42 |
+| V1-B focused tests | PASS; 31/31 |
+| P1-002/P1-003 regressions | PASS |
+| Sequential V1-A/V0-C regressions | PASS; 42/42 |
 | Actual credential/network/Provider/model access | PASS; 0/0/0/0 |
-| Additive authoritative evidence | PASS; unique ignored root ending `20260805T152841922` |
-| Corrected source digest proposal | `0494bd0f749cd587df779596c95f84fafc1c4fe65f57eabf511810476d5989e7` |
-| CURRENT_STATE update proposal | PASS; Correction Report §9 |
+| Corrected source digest proposal | `b1fa032d42c4e381c880b8092bddb5a625169ea44ee2e0ea238da1595d0edf92` |
 
-## Ownership and remaining decisions
+## Evidence and ownership
 
-**Fact.** Candidate `cdc9780fd6b3e9b34cdc4156713377d601c595ec`
-remains rejected. This Preparation Session did not modify `CURRENT_STATE.md`,
-stage files, fixtures, accepted evidence, Pi or the Git index; it did not stage,
-commit, create the final replacement Manifest, read credentials, use network,
-call a Provider/model or enter Stage 2.
+Authoritative additive evidence:
 
-**Recommendation.** Main Session should review the bounded delta and evidence,
-create a corrected Candidate only if satisfied, and hand it to a fresh focused
-re-audit limited to the three findings and required regressions. Main Session
-alone owns acceptance, control-state changes, future Execution Baseline and
-final replacement Manifest materialization.
+`C:/Users/HUAWEI/.codex/worktrees/28be/project2/.runs/v1-b/stage1/p1-004-micro-correction-authoritative-20260805T160148369/`
 
-## Evidence
+**Fact.** No historical evidence was overwritten or deleted. No file was staged
+or committed. Candidate `c360ebc4af9ef941252e6aff99638eca00b161e0`
+remains rejected.
 
-Authoritative ignored evidence:
+**Recommendation.** Main Session should review this exact micro-delta, create a
+new Candidate only if satisfied, and return it for a P1-004-only re-audit plus
+mandatory regressions. Acceptance, control state, final replacement Manifest,
+Execution Baseline and any Stage 2 authority remain Main Session decisions.
 
-`C:/Users/HUAWEI/.codex/worktrees/28be/project2/.runs/v1-b/stage1/pause-path-post-audit-second-final-correction-authoritative-20260805T152841922/`
-
-The full evidence index, command list, source inventory, digest proposal,
-re-audit checklist and structured state proposal are in the Correction Report.
-
-Work stops here pending Main Session review.
+No fourth correction is authorized. Work stops here.
