@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_stage_1_accepted_execution_baseline_ready_canary_not_authorized
-  status: V1_C_STAGE1_AUDITED_EXECUTION_BASELINE_READY_REAL_CANARY_NOT_AUTHORIZED
+  phase: v1_c_real_canary_authorized_not_started
+  status: V1_C_REAL_CANARY_AUTHORIZED_FULL_PILOT_CONDITIONAL_V2_NOT_AUTHORIZED
 
 active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
@@ -33,7 +33,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_waiting_real_canary_authorization
+  status: active_real_canary_authorized_not_started
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -311,6 +311,10 @@ completed_work:
   - V1_C_one_cell_Canary_manifest_materialized_and_zero_call_preflight_passed
   - V1_C_current_official_DeepSeek_provider_checkpoint_passed
   - V1_C_audited_execution_baseline_authorized_by_user
+  - V1_C_audited_execution_baseline_created_at_cc71cdb8952178ef1d7422f44359d6ca08473b18
+  - V1_C_real_Canary_opaque_credential_network_and_calls_authorized_under_USD_0_10
+  - V1_C_full_Pilot_conditionally_pre_authorized_after_valid_Main_reviewed_Canary_under_USD_1_90
+  - V1_C_final_closeout_commit_authorized
   - V2_remains_not_authorized
 
 workspace:
@@ -366,7 +370,8 @@ workspace:
   v1_c_rejected_candidate_commit: e021662e2f4b6d2721f9b0378ac2efa64b706963
   v1_c_corrected_candidate_commit: 962b42a281d3092f0faf399b9f6f1ecaa0212f31
   v1_c_corrected_candidate_tree: d828f9fdb23c7099cdb1e4d5a993ff5579422dd4
-  v1_c_audited_execution_baseline_commit: resulting_HEAD_of_this_revision
+  v1_c_audited_execution_baseline_commit: cc71cdb8952178ef1d7422f44359d6ca08473b18
+  v1_c_audited_execution_baseline_tree: 7fa38a7b4484fa4076834c0cb01a46415bad0ac9
   v1_c_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
   v1_c_workbench_source_digest: 4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
   registered_untracked_reference_directory: reference/
@@ -432,7 +437,7 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: active_v1_c_stage_1_accepted_waiting_real_canary_authorization
+  status: active_v1_c_real_canary_authorized_full_pilot_conditional
   prior_status: concluded_inconclusive_not_completed
   active_goal: true
   current_candidate_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
@@ -614,20 +619,26 @@ v1:
   V1_C_candidate_commit_authorized: consumed
   V1_C_focused_audit_authorized: consumed
   V1_C_focused_reaudit_disposition: PASS_FOCUSED_REAUDIT
-  V1_C_execution_baseline_authorized: consumed_by_resulting_HEAD_of_this_revision
-  V1_C_execution_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_execution_baseline_authorized: consumed
+  V1_C_execution_baseline_commit: cc71cdb8952178ef1d7422f44359d6ca08473b18
+  V1_C_execution_baseline_tree: 7fa38a7b4484fa4076834c0cb01a46415bad0ac9
   V1_C_canary_manifest: fixtures/manifests/v1/v1c-real-canary-execution.json
   V1_C_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
   V1_C_workbench_source_digest: 4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
   V1_C_official_provider_checkpoint: PASS_CURRENT_OFFICIAL_PROVIDER_CHECKPOINT
-  V1_C_real_canary_authorized: false
+  V1_C_real_canary_authorized: true
   V1_C_real_canary_started: false
   V1_C_full_pilot_authorized: false
+  V1_C_full_pilot_conditionally_pre_authorized: true_after_valid_Main_reviewed_Canary
   V1_C_full_pilot_started: false
-  V1_C_credential_reads_authorized: 0
-  V1_C_external_network_authorized: false
-  V1_C_real_provider_calls_authorized: 0
-  V1_C_real_model_calls_authorized: 0
+  V1_C_credential_reads_authorized: one_opaque_Canary_process_resolution
+  V1_C_external_network_authorized: fixed_DeepSeek_endpoint_Canary_only
+  V1_C_real_provider_calls_authorized: bounded_by_Canary_request_cap_8_and_USD_0_10
+  V1_C_real_model_calls_authorized: bounded_by_Canary_request_cap_8_and_USD_0_10
+  V1_C_whole_real_sequence_hard_cap_usd: 2.00
+  V1_C_canary_hard_cap_usd: 0.10
+  V1_C_conditional_full_pilot_hard_cap_usd: 1.90
+  V1_C_closeout_commit_authorized: true_after_terminal_disposition
   V1_C_pi_core_patch_authorized: false
   V1_C_private_pi_import_authorized: false
   V1_C_dependency_install_authorized: false
@@ -1293,12 +1304,12 @@ next_checkpoint:
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
   - V1_C_stage_1_corrected_candidate_and_focused_reaudit_accepted
   - V1_C_audited_execution_baseline_and_one_cell_Canary_manifest_frozen
-  - stop_before_credential_network_or_real_Canary_without_separate_user_authorization
+  - launch_fresh_no_source_edit_real_Canary_from_exact_authorization_baseline
+  - Main_review_Canary_and_activate_conditional_full_Pilot_only_if_valid
+  - stop_automatically_on_any_Pause_Condition
   - stop_before_V2
 
-open_user_decisions:
-  - V1_C_real_canary_after_audited_execution_baseline
-  - V1_C_full_pilot_after_valid_canary
+open_user_decisions: []
 ```
 
 ## Current Constraints
@@ -1416,6 +1427,8 @@ unknown-usage accounting and passed fresh focused re-audit. Corrected Candidate
 `PASS_V1_C_STAGE1_AUDITED_CANDIDATE`; the resulting Main-owned revision
 freezes the audited Execution Baseline and the disjoint one-cell Canary
 Manifest. Official DeepSeek profile/schema compatibility and zero-call
-preflight pass. Credential access, real network/Provider/model calls, Canary
-execution and the full Pilot remain separately unauthorized. V2 remains
+preflight pass. The user has authorized the fresh one-cell real Canary under
+USD 0.10 and conditionally pre-authorized the disjoint USD 1.90 full Pilot only
+after a valid Main-reviewed Canary. Real-execution Sessions have no source-edit
+authority and must stop on the first Contract Pause Condition. V2 remains
 unauthorized.
