@@ -5,17 +5,18 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_full_pilot_authorized_not_started
-  status: V1_C_CANARY_ACCEPTED_FULL_PILOT_AUTHORIZED_V2_NOT_AUTHORIZED
+  phase: v1_c_full_pilot_preinitialization_pause_accepted_one_time_continuation_authorized
+  status: V1_C_FULL_PILOT_UNSTARTED_CONTINUATION_BASELINE_PENDING_V2_NOT_AUTHORIZED
 
 active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
 last_executed_goal:
-  id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-  status: closed_inconclusive_not_completed
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
-  disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
-  replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
+  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  status: active_preinitialization_pause_accepted_continuation_authorized
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
+  paused_authorization_baseline_commit: e1dc93ffd65edca04d47d493b24fda833151e685
+  continuation_baseline_commit: resulting_HEAD_of_this_revision
 
 last_closed_goal:
   id: V1_B_FROZEN_BOUNDED_REAL_PILOT
@@ -33,7 +34,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_full_pilot_authorized_not_started
+  status: active_one_time_preinitialization_continuation_authorized_not_started
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -612,7 +613,7 @@ v1:
   V1_B_v2_authorized: false
   V1_C_precontract_research: docs/reports/V1_C_PRECONTRACT_RESEARCH.md
   V1_C_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  V1_C_contract_status: accepted_activated_full_pilot_authorized
+  V1_C_contract_status: accepted_activated_preinitialization_pause_accepted_one_time_continuation_authorized
   V1_C_contract_accepted: true
   V1_C_activation_authorized: true
   V1_C_control_baseline_commit_authorized: consumed
@@ -647,6 +648,17 @@ v1:
   V1_C_full_pilot_authorized: true
   V1_C_full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
   V1_C_full_pilot_started: false
+  V1_C_full_pilot_preinitialization_session_id: 019fd348-8055-75b2-8139-ab43a37fdc26
+  V1_C_full_pilot_preinitialization_disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
+  V1_C_full_pilot_preinitialization_root_cause: session_local_opaque_preload_semantics_drift
+  V1_C_full_pilot_preinitialization_initial_cells_started: 0
+  V1_C_full_pilot_preinitialization_real_calls: 0
+  V1_C_full_pilot_preinitialization_cost_usd: 0
+  V1_C_full_pilot_continuation_authorized: one_and_only_one
+  V1_C_full_pilot_continuation_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_full_pilot_continuation_owner: fresh_no_source_edit_execution_session
+  V1_C_full_pilot_continuation_helper_sha256: 2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438
+  V1_C_full_pilot_further_preinitialization_continuation_authorized: false
   V1_C_full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution.json
   V1_C_full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
   V1_C_full_pilot_initial_cells: 24
@@ -1273,6 +1285,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  - docs/reports/V1_C_FULL_PILOT_PAUSE_MAIN_REVIEW_AND_CONTINUATION_PROPOSAL.md
+  - docs/reports/V1_C_FULL_PILOT_PAUSE_REPORT.md
   - docs/reports/V1_C_CANARY_MAIN_ACCEPTANCE_AND_FULL_PILOT_BASELINE_DECISION.md
   - docs/reports/V1_C_CANARY_EXECUTION_REPORT.md
   - docs/reports/V1_C_PRECONTRACT_RESEARCH.md
@@ -1408,11 +1422,19 @@ open_user_decisions: []
   V1-B remains historically closed with no further correction, retry, fallback
   or replacement authority. V1-C Stage 1 and its focused re-audit are complete.
   The real Canary is accepted as terminal, integrity-valid and comparable; its
-  exact tracked cost is USD `0.00042865199999999996`. A disjoint 24-cell full
-  Pilot is now authorized under USD 1.90 in a fresh no-source-edit Session.
-  Retry, fallback, replacement, source repair and V2 remain unauthorized. V1
-  still has no completed Baseline/Skill-only/Skill+Runtime comparison until the
-  full Pilot produces a valid aggregate.
+  exact tracked cost is USD `0.00042865199999999996`. The first fresh full-Pilot
+  Session stopped before Workbench initialization because its ignored opaque
+  credential preload drifted from the already accepted Canary parsing semantics.
+  No Pilot root or Run was created and network/Provider/model calls and cost were
+  all zero. The user accepts that fail-closed pause and authorizes one and only
+  one fresh preinitialization continuation from a Main-owned baseline using the
+  exact accepted Canary helper semantics and SHA-256
+  `2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438`.
+  The Manifest, source, 24 cells, budgets and all original Pause Conditions remain
+  frozen. Retry, fallback, replacement, source repair and V2 remain unauthorized.
+  V1 still has no completed Baseline/Skill-only/Skill+Runtime comparison until the
+  full Pilot produces a valid aggregate. A second preinitialization failure closes
+  V1-C inconclusive; it does not authorize another repair or execution loop.
 
 ## Expected Next Handoff
 

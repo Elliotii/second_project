@@ -1,7 +1,7 @@
 # V1-C Goal Contract — Bounded Budget-stop Correction and Comparison Completion
 
 ```yaml
-status: accepted_activated_canary_accepted_full_pilot_authorized
+status: accepted_activated_preinitialization_pause_accepted_one_time_continuation_authorized
 goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 version: V1
 project: Agent Harness Reliability Workbench
@@ -37,6 +37,16 @@ real_canary_run_id: v1c-canary-run-01-parse-duration-r1-a
 real_canary_actual_cost_usd: 0.00042865199999999996
 full_pilot_authorized: true
 full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
+full_pilot_first_execution_authority: consumed_preinitialization_pause
+full_pilot_first_execution_session_id: 019fd348-8055-75b2-8139-ab43a37fdc26
+full_pilot_first_execution_disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
+full_pilot_first_execution_initial_cells_started: 0
+full_pilot_first_execution_real_calls: 0
+full_pilot_first_execution_cost_usd: 0
+preinitialization_continuation_authorized: one_and_only_one
+preinitialization_continuation_baseline_commit: resulting_HEAD_of_this_revision
+preinitialization_continuation_helper_sha256: 2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438
+further_preinitialization_continuation_authorized: false
 full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution.json
 full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
 full_pilot_initial_cells: 24
@@ -631,6 +641,21 @@ user_decisions_required:
     options: [authorize_remaining_sequence_up_to_usd_1_90, stop_after_canary]
     recommendation: authorize_only_if_canary_is_terminal_integrity_valid_and_comparable
     consequence: permits_the_new_24_cell_A_B_C_descriptive_comparison
+
+  - decision: authorize_one_time_preinitialization_continuation
+    status: consumed_authorized_2026_08_06
+    evidence:
+      - docs/reports/V1_C_FULL_PILOT_PAUSE_REPORT.md
+      - docs/reports/V1_C_FULL_PILOT_PAUSE_MAIN_REVIEW_AND_CONTINUATION_PROPOSAL.md
+    accepted_pause: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
+    root_cause: session_local_opaque_preload_semantics_drift
+    initial_cells_started: 0
+    real_calls: 0
+    pilot_cost_usd: 0
+    authority: one_fresh_no_source_edit_preinitialization_continuation
+    frozen_helper_sha256: 2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438
+    consequence: same_unstarted_manifest_and_full_budget_remain_available
+    exit_if_repeated: close_V1_C_inconclusive_without_another_execution_loop
 ```
 
 本 Contract 已由用户接受并激活。Stage 1 corrected Candidate 和 fresh focused re-audit 已由
