@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_concluded_inconclusive
-  status: V1_CONCLUDED_INCONCLUSIVE_V2_NOT_AUTHORIZED
+  phase: v1_c_active_zero_call_stage_1_not_started
+  status: V1_C_ACTIVE_STAGE1_ZERO_REAL_CALL_V2_NOT_AUTHORIZED
 
-active_goal: null
+active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
 last_executed_goal:
   id: V1_B_FROZEN_BOUNDED_REAL_PILOT
@@ -32,9 +32,9 @@ last_completed_goal:
   implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
 
 next_goal:
-  id: null
-  status: none_authorized
-  contract: null
+  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  status: active_stage_1_not_started
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -297,6 +297,10 @@ completed_work:
   - V1_B_authorized_original_and_replacement_sequence_exhausted
   - V1_B_closed_inconclusive_not_completed
   - V1_concluded_inconclusive_not_completed
+  - V1_C_precontract_research_completed_and_accepted_for_contract_drafting
+  - V1_C_goal_contract_accepted_and_formalized
+  - V1_C_activation_and_control_baseline_authorized_by_user
+  - V1_C_zero_real_call_stage_1_authorized_by_user
   - V2_remains_not_authorized
 
 workspace:
@@ -347,6 +351,8 @@ workspace:
   v1_b_replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
   v1_b_replacement_execution_baseline_tree: 4fe46f3955b069f52dd5f581d794b860ef159b4e
   v1_b_closeout_commit: resulting_HEAD_of_this_revision
+  v1_c_control_baseline_commit: resulting_HEAD_of_this_revision
+  v1_c_control_baseline_tracked_files_clean_required: true
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -410,9 +416,10 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: concluded_inconclusive_not_completed
-  active_goal: false
-  current_candidate_goal: null
+  status: active_v1_c_bounded_completion_after_v1_b_inconclusive
+  prior_status: concluded_inconclusive_not_completed
+  active_goal: true
+  current_candidate_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
   formal_goal_contract_created: true
   activation_authorized: consumed_for_V1_A
   activation_authorized_at: 2026-08-03
@@ -571,8 +578,31 @@ v1:
   V1_closeout: docs/reports/V1_CLOSEOUT.md
   V1_definition_of_done: not_met
   V1_policy_recommendation: INCONCLUSIVE
-  V1_further_execution_authorized: false
+  V1_B_further_execution_authorized: false
   V1_B_v2_authorized: false
+  V1_C_precontract_research: docs/reports/V1_C_PRECONTRACT_RESEARCH.md
+  V1_C_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  V1_C_contract_status: accepted_activated
+  V1_C_contract_accepted: true
+  V1_C_activation_authorized: true
+  V1_C_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  V1_C_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_stage_1_owner: dedicated_v1_c_stage_1_implementation_session
+  V1_C_stage_1_authorized: true_zero_real_calls
+  V1_C_stage_1_started: false
+  V1_C_stage_1_completed: false
+  V1_C_candidate_commit_authorized: false
+  V1_C_focused_audit_authorized: false
+  V1_C_execution_baseline_authorized: false
+  V1_C_credential_reads_authorized: 0
+  V1_C_external_network_authorized: false
+  V1_C_real_provider_calls_authorized: 0
+  V1_C_real_model_calls_authorized: 0
+  V1_C_pi_core_patch_authorized: false
+  V1_C_private_pi_import_authorized: false
+  V1_C_dependency_install_authorized: false
+  V1_C_dedicated_session_git_commit_authorized: false
+  V1_C_v2_authorized: false
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -1181,6 +1211,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  - docs/reports/V1_C_PRECONTRACT_RESEARCH.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_B_PAUSE_RECOVERY_AMENDMENT.md
@@ -1229,11 +1261,16 @@ next_checkpoint:
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
-  - V1_concluded_inconclusive_and_not_marked_complete
-  - no_active_goal_and_no_further_V1_B_execution_authority
+  - V1_C_accepted_and_activated_for_zero_call_stage_1_only
+  - create_and_verify_V1_C_control_baseline
+  - start_dedicated_V1_C_stage_1_from_exact_control_baseline
+  - stop_after_stage_1_report_for_main_review
   - stop_before_V2
 
-open_user_decisions: []
+open_user_decisions:
+  - V1_C_candidate_commit_and_focused_audit_after_stage_1_main_review
+  - V1_C_real_canary_after_audited_execution_baseline
+  - V1_C_full_pilot_after_valid_canary
 ```
 
 ## Current Constraints
@@ -1305,10 +1342,13 @@ open_user_decisions: []
   rewrite it. V1-B is closed inconclusive, not completed. Both authorized real
   Pilot identities paused before a terminal/comparable Run existed; their
   actual costs remain unknown and conservative accounting totals USD 0.20.
-  No further correction, retry, fallback, replacement, credential/network use
-  or real-model call is authorized. V1 is concluded inconclusive and does not
-  claim a completed Baseline/Skill-only/Skill+Runtime comparison. V2 bounded
-  multi-path recovery remains the Portfolio North Star but is not authorized.
+  V1-B remains historically closed with no further correction, retry, fallback
+  or replacement authority. V1-C is active only for its dedicated zero-call
+  Stage 1 correction. Candidate Commit, focused audit, Credential/network use,
+  real Canary, full Pilot and every real-model call remain separately
+  unauthorized. V1 still has no completed Baseline/Skill-only/Skill+Runtime
+  comparison. V2 bounded multi-path recovery remains the Portfolio North Star
+  but is not authorized.
 
 ## Expected Next Handoff
 
@@ -1336,8 +1376,15 @@ response produced a pause state that the frozen Inspector rejected. Across
 both Pilots there are zero terminal/comparable Runs. Actual cost is unknown;
 fail-closed accounting totals USD 0.20 and remains below the USD 2 cap.
 
-V1 therefore ends as `V1_CONCLUDED_INCONCLUSIVE_NOT_COMPLETED`. V1-A's
-deterministic substrate remains accepted, but V1 has no valid A/B/C aggregate,
-no Skill/Runtime winner and no observed real Recovery effect. `active_goal` is
-`null`. The next interaction must begin with a new user decision; V2 research,
-Contract drafting, activation and implementation remain unauthorized.
+V1-B remains closed as `V1_CONCLUDED_INCONCLUSIVE_NOT_COMPLETED` historical
+evidence. V1-A's deterministic substrate remains accepted, but V1 still has no
+valid A/B/C aggregate, no Skill/Runtime winner and no observed real Recovery
+effect.
+
+V1-C is now the active Goal. Its accepted Contract authorizes only a dedicated
+zero-real-call Stage 1 correction of the request-cap/synthetic-failure
+attribution boundary. The dedicated Session must begin from the exact Control
+Baseline Commit, execute Gates A–I, submit its Implementation Report and
+Closeout Draft, and stop for Main review. Candidate Commit, focused audit,
+Credential/network use, real Canary and full Pilot are later independent
+control points. V2 remains unauthorized.
