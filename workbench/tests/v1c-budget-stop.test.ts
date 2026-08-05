@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import type { ExecutionManifestV1B, LocalBudgetStopSignalV1C, RunResultV1, TerminalCellEvidenceV1B } from "../src/contracts/v1-types.ts";
+import type { ExecutionManifestV1B, LocalBudgetStopSignalV1C, PauseEvidenceV1B, RunResultV1, TerminalCellEvidenceV1B } from "../src/contracts/v1-types.ts";
 import { buildExecutionManifestV1B, buildFullPilotExecutionManifestV1C, buildRealCanaryExecutionManifestV1C, buildStage1ExecutionManifestV1C, v1bManifestIdentity, validateExecutionManifestV1B } from "../src/experiment/v1.ts";
 import { fileSha256, sha256, stableJson } from "../src/hash.ts";
 import { aggregatePilotV1B, inspectV1RunCell } from "../src/inspect-v1.ts";
@@ -42,7 +42,7 @@ function diagnosticCopies(terminal: TerminalCellEvidenceV1B, runResult: RunResul
 	];
 }
 
-function coherentDiagnosticRewrite(pilotRoot: string, manifest: ExecutionManifestV1B, mutate: (input: { terminal: TerminalCellEvidenceV1B; runResult: RunResultV1; signals: LocalBudgetStopSignalV1C[]; events: Array<{ schema_version: number; seq: number; timestamp: string; type: string; data: Record<string, unknown> }> }) => void): void {
+function coherentDiagnosticRewrite(pilotRoot: string, manifest: ExecutionManifestV1B, mutate: (input: { terminal: TerminalCellEvidenceV1B; runResult: RunResultV1; signals: LocalBudgetStopSignalV1C[]; events: Array<{ schema_version: number; seq: number; timestamp: string; type: string; data: Record<string, any> }> }) => void, options: { repairSequence?: boolean } = {}): void {
 	const cell = manifest.cells[0]!;
 	const runRoot = resolve(pilotRoot, "runs", cell.planned_run_id);
 	const markerPath = resolve(runRoot, "terminal.json");
@@ -54,7 +54,7 @@ function coherentDiagnosticRewrite(pilotRoot: string, manifest: ExecutionManifes
 	const runResult = JSON.parse(readFileSync(runResultPath, "utf8")) as RunResultV1;
 	const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
 	mutate({ terminal, runResult, signals: diagnosticCopies(terminal, runResult), events });
-	events.forEach((event, index) => { event.seq = index + 1; });
+	if (options.repairSequence !== false) events.forEach((event, index) => { event.seq = index + 1; });
 	writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`, "utf8");
 	writeStable(runResultPath, runResult);
 	for (const ref of terminal.artifact_refs) {
@@ -65,6 +65,31 @@ function coherentDiagnosticRewrite(pilotRoot: string, manifest: ExecutionManifes
 	marker.run_result_ref.sha256 = fileSha256(runResultPath); marker.run_result_ref.size_bytes = readFileSync(runResultPath).length;
 	marker.terminal_evidence_ref.sha256 = fileSha256(terminalPath); marker.terminal_evidence_ref.size_bytes = readFileSync(terminalPath).length;
 	writeStable(markerPath, marker);
+}
+
+function coherentPauseRewrite(pilotRoot: string, manifest: ExecutionManifestV1B, mutate: (input: { pause: PauseEvidenceV1B; events: Array<{ schema_version: number; seq: number; timestamp: string; type: string; data: Record<string, any> }> }) => void): void {
+	const cell = manifest.cells[2]!;
+	const runRoot = resolve(pilotRoot, "runs", cell.planned_run_id);
+	const pausePath = resolve(runRoot, "pause-evidence.json");
+	const journalPath = resolve(runRoot, "journal.jsonl");
+	const ledgerPath = resolve(pilotRoot, "ledger.jsonl");
+	const pause = JSON.parse(readFileSync(pausePath, "utf8")) as PauseEvidenceV1B;
+	const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+	mutate({ pause, events });
+	events.forEach((event, index) => { event.seq = index + 1; });
+	const pauseEvent = events.find((event) => event.type === "attempt_paused")!;
+	const pauseIndex = events.indexOf(pauseEvent);
+	const prefix = `${events.slice(0, pauseIndex).map(stableJson).join("\n")}\n`;
+	pause.journal_prefix_sha256 = sha256(prefix);
+	writeStable(pausePath, pause);
+	const pauseRef = { path: "pause-evidence.json", sha256: fileSha256(pausePath), size_bytes: readFileSync(pausePath).length };
+	pauseEvent.data.journal_prefix_sha256 = pause.journal_prefix_sha256;
+	pauseEvent.data.pause_evidence_ref = pauseRef;
+	writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`, "utf8");
+	const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+	const paused = ledger.findLast((entry) => entry.cell_id === cell.cell_id && entry.state === "paused")!;
+	paused.pause_evidence_ref = pauseRef; paused.journal_sha256 = fileSha256(journalPath);
+	writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`, "utf8");
 }
 
 test("V1-C Gate B tracks the legacy one-response then pre-dispatch cap misclassification", async () => {
@@ -252,4 +277,66 @@ test("V1-C MR-001 public surface preflights future real identities and fails clo
 	await assert.rejects(() => runNextV1B({ projectRoot: PROJECT_ROOT, manifestPath: stage1ManifestPath, pilotRoot: stage1PilotRoot, stage2ExecutionAuthority: { authority_id: "v1b-public-pi-one-run", credential_profile_name: "DEEPSEEK_API_KEY", authorized: true, resolver: { resolve: async () => { credentialReads++; return "unused"; } } } }), FixedProviderBoundaryErrorV1B);
 	assert.equal(credentialReads, 0);
 	assert.equal(existsSync(stage1PilotRoot), false);
+});
+
+test("V1-C audit P1-001 accepts an Attempt-aware C-child unknown-usage pause and rejects cross-Attempt drift", async () => {
+	const manifest = buildStage1ExecutionManifestV1C(PROJECT_ROOT, { initialProviderRequestsMax: 8 });
+	const pilotRoot = root("audit-p1-001-child-pause"); initializePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot, manifest });
+	await runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot });
+	await runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot });
+	await assert.rejects(() => runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot, fakeScenario: { initial: "fail", child: "pass" }, deterministicPausePhase: "after_provider_request_reservation_usage_unavailable", deterministicPauseRequestOrdinal: 2 }), V1BTypedPauseError);
+	const cell = manifest.cells[2]!;
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot, plannedRunId: cell.planned_run_id });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	assert.equal(inspected.pause_integrity_valid, true); assert.equal(inspected.terminal_valid, false); assert.equal(inspected.comparable, false);
+	const pause = inspected.pause_evidence!;
+	assert.equal(pause.attempt_id, `${cell.planned_run_id}-a2`); assert.equal(pause.request_ordinal, 2);
+	assert.deepEqual(pause.conservative_usage_charge, { provider_requests: 1, tool_calls: 0, tokens: pause.pending_provider_reservation!.tokens, active_execution_time_ms: 0, cost_usd: pause.pending_provider_reservation!.cost_usd, verifier_runs: 0, child_attempts: 0 });
+	assert.equal(pause.budget_usage_after_conservative_charge.provider_requests, pause.accumulated_known_usage.provider_requests + 1);
+	const events = readFileSync(resolve(pilotRoot, "runs", cell.planned_run_id, "journal.jsonl"), "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+	assert.equal(events.some((event) => event.type === "verifier_completed" && event.data.attempt_id === pause.attempt_id), false);
+	assert.deepEqual(events.filter((event) => event.type === "provider_request_reserved").map((event) => [event.data.attempt_id, event.data.request_ordinal]), [[`${cell.planned_run_id}-a1`, 1], [`${cell.planned_run_id}-a2`, 1], [`${cell.planned_run_id}-a2`, 2]]);
+	const mutations: Array<[string, (input: { events: Array<{ type: string; data: Record<string, any> }> }) => void]> = [
+		["wrong-attempt", ({ events: values }) => { values.find((event) => event.type === "provider_usage_committed" && event.data.attempt_id.endsWith("-a2"))!.data.attempt_id = `${cell.planned_run_id}-a1`; }],
+		["ordinal-drift", ({ events: values }) => { const reservation = values.find((event) => event.type === "provider_request_reserved" && event.data.attempt_id.endsWith("-a2") && event.data.request_ordinal === 1)!; reservation.data.request_ordinal = 3; reservation.data.counter_transition.provider_requests = { before: 2, after: 3 }; const commit = values.find((event) => event.type === "provider_usage_committed" && event.data.attempt_id.endsWith("-a2"))!; commit.data.request_ordinal = 3; }],
+		["missing-commit", ({ events: values }) => { const index = values.findIndex((event) => event.type === "provider_usage_committed" && event.data.attempt_id.endsWith("-a2")); values.splice(index, 1); }],
+		["coherent-cross-attempt", ({ events: values }) => { const reservation = values.find((event) => event.type === "provider_request_reserved" && event.data.attempt_id.endsWith("-a2") && event.data.request_ordinal === 1)!; const commit = values.find((event) => event.type === "provider_usage_committed" && event.data.attempt_id.endsWith("-a2"))!; reservation.data.attempt_id = `${cell.planned_run_id}-a1`; commit.data.attempt_id = `${cell.planned_run_id}-a1`; }],
+		["prior-provider-after-verifier", ({ events: values }) => { const initialAttemptId = `${cell.planned_run_id}-a1`; const reservationIndex = values.findIndex((event) => event.type === "provider_request_reserved" && event.data.attempt_id === initialAttemptId); const commitIndex = values.findIndex((event) => event.type === "provider_usage_committed" && event.data.attempt_id === initialAttemptId); const moved = [values[reservationIndex]!, values[commitIndex]!]; values.splice(commitIndex, 1); values.splice(reservationIndex, 1); const childStartIndex = values.findIndex((event) => event.type === "attempt_started" && event.data.ordinal === 2); values.splice(childStartIndex, 0, ...moved); }],
+	];
+	for (const [label, mutate] of mutations) {
+		const copy = root(`audit-p1-001-${label}`); cpSync(pilotRoot, copy, { recursive: true }); coherentPauseRewrite(copy, manifest, mutate);
+		const rejected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: copy, plannedRunId: cell.planned_run_id });
+		assert.equal(rejected.integrity_valid, false, label);
+	}
+});
+
+test("V1-C audit P1-002 rejects coherently rebound terminal Journal envelope and critical-event drift", async () => {
+	const source = await runFirstV1C();
+	const mutations: Array<[string, (events: Array<{ seq: number; type: string; data: Record<string, any> }>) => void, boolean]> = [
+		["sequence", (events) => { events[0]!.seq = 999; }, false],
+		["missing-settled", (events) => { events.splice(events.findIndex((event) => event.type === "attempt_settled"), 1); }, true],
+		["duplicate-verifier", (events) => { const event = events.find((value) => value.type === "verifier_completed")!; events.splice(events.indexOf(event) + 1, 0, structuredClone(event)); }, true],
+		["reordered-settled-verifier", (events) => { const settled = events.findIndex((event) => event.type === "attempt_settled"); const verifier = events.findIndex((event) => event.type === "verifier_completed"); [events[settled], events[verifier]] = [events[verifier]!, events[settled]!]; }, true],
+	];
+	for (const [label, mutate, repairSequence] of mutations) {
+		const copy = root(`audit-p1-002-${label}`); cpSync(source.pilotRoot, copy, { recursive: true });
+		coherentDiagnosticRewrite(copy, source.manifest, ({ events }) => mutate(events), { repairSequence });
+		const rejected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: copy, plannedRunId: source.manifest.cells[0]!.planned_run_id });
+		assert.equal(rejected.integrity_valid, false, label); assert.match(rejected.errors.join("; "), /journal|critical|order|missing|duplicate/i, label);
+	}
+});
+
+test("V1-C audit P1-003 rejects unusable Stage 2 authority before Pilot or credential side effects", async () => {
+	const manifest = buildRealCanaryExecutionManifestV1C(PROJECT_ROOT, { executionBaselineCommit: TEST_EXECUTION_BASELINE_COMMIT });
+	const manifestPath = `${root("audit-p1-003-manifest")}.json`; writeStable(manifestPath, manifest);
+	let credentialReads = 0;
+	const cases = [
+		{ label: "unauthorized", authority: { authority_id: "v1b-public-pi-one-run" as const, credential_profile_name: "DEEPSEEK_API_KEY" as const, authorized: false, resolver: { resolve: async () => { credentialReads++; return "unused"; } } } },
+		{ label: "missing-resolver", authority: { authority_id: "v1b-public-pi-one-run" as const, credential_profile_name: "DEEPSEEK_API_KEY" as const, authorized: true } },
+	];
+	for (const value of cases) {
+		const pilotRoot = root(`audit-p1-003-${value.label}`);
+		await assert.rejects(() => runNextV1B({ projectRoot: PROJECT_ROOT, manifestPath, pilotRoot, stage2ExecutionAuthority: value.authority }), (error: Error) => error instanceof FixedProviderBoundaryErrorV1B && error.message === "V1-B fixed provider boundary failed");
+		assert.equal(credentialReads, 0); assert.equal(existsSync(pilotRoot), false);
+	}
 });

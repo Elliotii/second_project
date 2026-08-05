@@ -46,6 +46,13 @@ interface TerminalMarkerV1B {
 	final_workspace_ref: WorkspaceTreeRefV1B;
 }
 
+interface JournalEventV1B {
+	schema_version: number;
+	seq: number;
+	type: string;
+	data: Record<string, any>;
+}
+
 const FORBIDDEN_PERSISTED_EVIDENCE_V1B = /(?:"(?:authorization|proxy[_-]?authorization|reasoning(?:_content)?|thinking|thoughtsignature|signature)"\s*:|bearer\s+[A-Za-z0-9._-]+|FAKE_(?:SENSITIVE|RESOLVER|PROVIDER|FACTORY)[A-Za-z0-9_-]*)/i;
 const USAGE_KEYS = ["provider_requests", "tool_calls", "tokens", "active_execution_time_ms", "cost_usd", "verifier_runs", "child_attempts"] as const;
 
@@ -56,6 +63,28 @@ function addUsage(left: BudgetUsageV1B, right: BudgetUsageV1B): BudgetUsageV1B {
 function usageEqual(left: BudgetUsageV1B, right: BudgetUsageV1B): boolean { return USAGE_KEYS.every((key) => Math.abs(left[key] - right[key]) <= Number.EPSILON); }
 function capValue(caps: BudgetCapsV1B, key: keyof BudgetUsageV1B): number { return key === "active_execution_time_ms" ? caps.wall_time_ms : caps[key]; }
 function verifierStatusAllowed(value: string): boolean { return ["passed", "failed", "invalid", "infrastructure_error", "cancelled"].includes(value); }
+
+function validateJournalEnvelopes(events: readonly JournalEventV1B[], label: string, errors: string[]): void {
+	if (events.some((event, index) => event.schema_version !== 1 || event.seq !== index + 1)) errors.push(`${label} journal envelope schema/sequence drift`);
+}
+
+function validateTerminalJournalStructure(events: readonly JournalEventV1B[], terminal: TerminalCellEvidenceV1B, errors: string[]): void {
+	const starts = events.filter((event) => event.type === "attempt_started");
+	if (starts.length !== terminal.attempts.length || new Set(starts.map((event) => event.data.attempt_id)).size !== starts.length) errors.push("terminal attempt_started missing/duplicate");
+	for (const [index, attempt] of terminal.attempts.entries()) {
+		const started = starts.filter((event) => event.data.attempt_id === attempt.attempt_id);
+		const settled = events.filter((event) => event.type === "attempt_settled" && event.data.attempt_id === attempt.attempt_id);
+		const verified = events.filter((event) => event.type === "verifier_completed" && event.data.attempt_id === attempt.attempt_id);
+		if (started.length !== 1 || settled.length !== 1 || verified.length !== 1) { errors.push(`terminal critical Attempt events missing/duplicated: ${attempt.attempt_id}`); continue; }
+		const startIndex = events.indexOf(started[0]!); const settledIndex = events.indexOf(settled[0]!); const verifierIndex = events.indexOf(verified[0]!);
+		const nextStartIndex = index + 1 < starts.length ? events.indexOf(starts[index + 1]!) : Number.POSITIVE_INFINITY;
+		if (startIndex < 0 || settledIndex <= startIndex || verifierIndex <= settledIndex || verifierIndex >= nextStartIndex || started[0]!.data.ordinal !== attempt.ordinal || started[0]!.data.parent_attempt_id !== attempt.parent_attempt_id) errors.push(`terminal Attempt critical-event order/identity drift: ${attempt.attempt_id}`);
+		for (const event of events.filter((candidate) => ["provider_request_reserved", "provider_usage_committed", "local_budget_stop_recorded", "local_budget_stop_consumed"].includes(candidate.type) && candidate.data.attempt_id === attempt.attempt_id)) if (events.indexOf(event) <= startIndex || events.indexOf(event) >= settledIndex) errors.push(`terminal Attempt provider/stop event order drift: ${attempt.attempt_id}`);
+	}
+	const dispositionType = terminal.disposition === "terminal" ? "run_terminal" : "run_invalid";
+	const dispositions = events.filter((event) => event.type === "run_terminal" || event.type === "run_invalid");
+	if (dispositions.length !== 1 || dispositions[0]?.type !== dispositionType || events.at(-1) !== dispositions[0]) errors.push("terminal Run disposition event missing/duplicated/reordered");
+}
 
 function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionManifestV1B; cell: ExecutionManifestV1B["cells"][number]; transitions: ReturnType<typeof readPilotLedgerV1B>; errors: string[] }): PauseEvidenceV1B | null {
 	const { pilotRoot, manifest, cell, transitions, errors } = input;
@@ -78,30 +107,62 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	if (paused.cause_id !== `pause_${pause.phase}`) errors.push("pause evidence typed cause relation drift");
 	const raw = journalBytes.toString("utf8");
 	const lines = raw.split(/\r?\n/).filter(Boolean);
-	const events = lines.map((line) => JSON.parse(line) as { seq: number; type: string; data: Record<string, any> });
-	if (events.some((event, index) => event.seq !== index + 1)) errors.push("paused journal sequence drift");
+	const events = lines.map((line) => JSON.parse(line) as JournalEventV1B);
+	validateJournalEnvelopes(events, "paused", errors);
 	const pauseEvents = events.filter((event) => event.type === "attempt_paused");
 	if (pauseEvents.length !== 1 || events.at(-1)?.type !== "attempt_paused") errors.push("attempt_paused journal event missing/duplicated/reordered");
 	const prefix = `${lines.slice(0, -1).join("\n")}${lines.length > 1 ? "\n" : ""}`;
 	if (sha256(prefix) !== pause.journal_prefix_sha256) errors.push("pause evidence journal-prefix digest drift");
 	const last = pauseEvents[0]?.data;
 	if (!last || last.manifest_id !== manifest.manifest_id || last.cell_id !== cell.cell_id || last.planned_run_id !== cell.planned_run_id || last.run_id !== cell.planned_run_id || last.attempt_id !== pause.attempt_id || last.phase !== pause.phase || stableJson(last.pause_evidence_ref) !== stableJson(paused.pause_evidence_ref) || last.journal_prefix_sha256 !== pause.journal_prefix_sha256) errors.push("attempt_paused identity/digest relation drift");
-	const attemptStarted = events.filter((event) => event.type === "attempt_started").at(-1)?.data;
-	if (!attemptStarted || attemptStarted.attempt_id !== pause.attempt_id) errors.push("pause evidence Attempt identity drift");
+	const attemptStarts = events.filter((event) => event.type === "attempt_started");
+	const attemptIds = new Set(attemptStarts.map((event) => event.data.attempt_id));
+	if (attemptStarts.length < 1 || attemptStarts.length > 2 || attemptIds.size !== attemptStarts.length || attemptStarts.some((event, index) => event.data.ordinal !== index + 1 || event.data.parent_attempt_id !== (index === 0 ? null : attemptStarts[index - 1]!.data.attempt_id))) errors.push("paused Attempt start identity/lineage drift");
+	const activeAttempt = attemptStarts.at(-1);
+	if (!activeAttempt || activeAttempt.data.attempt_id !== pause.attempt_id) errors.push("pause evidence active Attempt identity drift");
 	const v1c = manifest.schema_version === "v1c-execution-manifest-v1";
 	const reservations = events.filter((event) => event.type === "provider_request_reserved");
-	if ((!v1c && reservations.length > 1) || reservations.some((event, index) => event.data.request_ordinal !== index + 1)) errors.push(v1c ? "paused Provider request ordinal sequence drift" : "paused Run violates single-request authority");
-	if (pause.request_ordinal !== (reservations.at(-1)?.data.request_ordinal ?? null)) errors.push("pause request ordinal/reservation relation drift");
+	if (!v1c && reservations.length > 1) errors.push("paused Run violates single-request authority");
+	const reservationsByAttempt = new Map<string, JournalEventV1B[]>();
+	const reservationIds = new Set<string>();
 	for (const event of reservations) {
 		if (event.data.phase !== "provider_request_reserved_before_dispatch") errors.push("provider reservation phase invalid");
-		const attemptIndex = events.findIndex((candidate) => candidate.type === "attempt_started" && candidate.data.attempt_id === event.data.attempt_id);
+		const attempt = attemptStarts.find((candidate) => candidate.data.attempt_id === event.data.attempt_id);
+		const attemptIndex = attempt ? events.indexOf(attempt) : -1;
 		const reservationIndex = events.indexOf(event);
 		const pauseIndex = events.findIndex((candidate) => candidate.type === "attempt_paused");
-		if (attemptIndex < 0 || reservationIndex <= attemptIndex || pauseIndex <= reservationIndex || event.data.attempt_id !== pause.attempt_id || event.data.session_id !== pause.session_id || event.data.workspace_id !== pause.workspace_id || v1c && event.data.run_id !== pause.run_id) errors.push("provider reservation write-before-dispatch identity/order drift");
+		const attemptReservations = reservationsByAttempt.get(event.data.attempt_id) ?? [];
+		attemptReservations.push(event); reservationsByAttempt.set(event.data.attempt_id, attemptReservations);
+		const reservationId = event.data.reservation?.reservation_id;
+		if (attemptIndex < 0 || reservationIndex <= attemptIndex || pauseIndex <= reservationIndex || event.data.session_id !== pause.session_id || event.data.workspace_id !== pause.workspace_id || v1c && event.data.run_id !== pause.run_id || typeof reservationId !== "string" || reservationIds.has(reservationId)) errors.push("provider reservation write-before-dispatch identity/order drift");
+		if (typeof reservationId === "string") reservationIds.add(reservationId);
+		const expectedOrdinal = attemptReservations.length;
+		if (event.data.request_ordinal !== expectedOrdinal) errors.push("paused Provider request ordinal sequence drift");
 		for (const key of ["provider_requests", "network_calls", "provider_calls", "model_calls"] as const) {
 			const transition = event.data.counter_transition?.[key];
 			if (!transition || !Number.isSafeInteger(transition.before) || !Number.isSafeInteger(transition.after) || transition.before < 0 || transition.after < transition.before || transition.after - transition.before > 1) errors.push(`provider reservation ${key} counter transition invalid`);
 		}
+		const providerTransition = event.data.counter_transition?.provider_requests;
+		if (!providerTransition || providerTransition.before !== expectedOrdinal - 1 || providerTransition.after !== expectedOrdinal) errors.push("provider reservation Attempt-scoped request transition drift");
+		const externalBefore = manifest.execution_mode === "stage2_real" ? reservations.indexOf(event) : 0;
+		const externalAfter = manifest.execution_mode === "stage2_real" ? externalBefore + 1 : 0;
+		for (const key of ["network_calls", "provider_calls", "model_calls"] as const) if (event.data.counter_transition?.[key]?.before !== externalBefore || event.data.counter_transition?.[key]?.after !== externalAfter) errors.push(`provider reservation Run-wide ${key} transition drift`);
+	}
+	const finalReservation = reservations.at(-1);
+	if (reservations.length > 0 && (pause.request_ordinal !== finalReservation?.data.request_ordinal || finalReservation?.data.attempt_id !== pause.attempt_id)) errors.push("pause request ordinal/active-Attempt reservation relation drift");
+	for (const [index, attempt] of attemptStarts.entries()) {
+		const attemptId = attempt.data.attempt_id;
+		const attemptIndex = events.indexOf(attempt);
+		const nextStartIndex = index + 1 < attemptStarts.length ? events.indexOf(attemptStarts[index + 1]!) : Number.POSITIVE_INFINITY;
+		const settled = events.filter((event) => event.type === "attempt_settled" && event.data.attempt_id === attemptId);
+		const verified = events.filter((event) => event.type === "verifier_completed" && event.data.attempt_id === attemptId);
+		if (attemptId !== pause.attempt_id) {
+			if (settled.length !== 1 || verified.length !== 1 || events.indexOf(settled[0]!) <= events.indexOf(attempt) || events.indexOf(verified[0]!) <= events.indexOf(settled[0]!) || events.indexOf(verified[0]!) >= nextStartIndex) errors.push(`paused prior Attempt completion/order drift: ${attemptId}`);
+		} else if (pause.pending_provider_reservation && (settled.length !== 0 || verified.length !== 0)) errors.push("paused active Attempt contains settled/Verifier event after pending reservation");
+		const providerBoundary = attemptId === pause.attempt_id ? pauseEvents[0] : settled[0];
+		const providerBoundaryIndex = providerBoundary ? events.indexOf(providerBoundary) : -1;
+		const providerEvents = events.filter((event) => ["provider_request_reserved", "provider_usage_committed", "local_budget_stop_recorded", "local_budget_stop_consumed"].includes(event.type) && event.data.attempt_id === attemptId);
+		if (providerBoundaryIndex < 0 || providerEvents.some((event) => events.indexOf(event) <= attemptIndex || events.indexOf(event) >= providerBoundaryIndex)) errors.push(`paused Attempt Provider-event boundary drift: ${attemptId}`);
 	}
 	for (const [key, value] of Object.entries(pause.counter_snapshot)) if (!Number.isSafeInteger(value) || value < 0 || value > (v1c && key !== "credential_reads" ? Math.max(1, reservations.length) : 1)) errors.push("pause counter snapshot invalid");
 	const stage2 = manifest.execution_mode === "stage2_real";
@@ -122,8 +183,9 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 			: stableJson(pause.counter_snapshot) === stableJson(zeroCounters);
 		if (!validPostReservationSnapshot) errors.push("post-reservation pause counter snapshot/mode drift");
 		const transition = reservations.at(-1)?.data.counter_transition;
-		const expectedBefore = reservations.length - 1;
-		if (!transition || transition.provider_requests.before !== expectedBefore || transition.provider_requests.after !== reservations.length) errors.push("post-reservation provider request transition is not exact ordinal transition");
+		const activeReservations = reservationsByAttempt.get(pause.attempt_id) ?? [];
+		const expectedBefore = activeReservations.length - 1;
+		if (!transition || transition.provider_requests.before !== expectedBefore || transition.provider_requests.after !== activeReservations.length) errors.push("post-reservation provider request transition is not exact Attempt ordinal transition");
 		for (const key of ["network_calls", "provider_calls", "model_calls"] as const) {
 			const expectedAfter = stage2 ? reservations.length : 0;
 			const expectedExternalBefore = stage2 ? reservations.length - 1 : 0;
@@ -132,7 +194,6 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	}
 	if (!["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(phase) && reservations.length !== 0) errors.push("pre-reservation phase carries reservation event");
 	if (pause.pending_provider_reservation) {
-		const finalReservation = reservations.at(-1);
 		if (reservations.length === 0 || pause.pending_provider_reservation.reservation_id !== finalReservation?.data.reservation?.reservation_id) errors.push("pending reservation/journal relation drift");
 		const pending = pause.pending_provider_reservation;
 		if (pending.tokens !== finalReservation?.data.reservation?.token_cap || Math.abs(pending.cost_usd - (finalReservation?.data.reservation?.cost_usd_cap ?? Number.NaN)) > Number.EPSILON || pending.provider_requests !== 1) errors.push("pending reservation cap/ordinal relation drift");
@@ -142,8 +203,17 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	if (v1c) {
 		if (commits.length !== Math.max(0, reservations.length - (pause.pending_provider_reservation ? 1 : 0))) errors.push("V1-C paused Provider commit count drift");
 		for (const [index, commit] of commits.entries()) {
-			const reservation = reservations[index];
-			if (!reservation || commit.data.schema_version !== "v1c-provider-usage-committed-v1" || commit.data.protocol_id !== "v1c_typed_predispatch_budget_stop_v1" || commit.data.run_id !== pause.run_id || commit.data.attempt_id !== pause.attempt_id || commit.data.session_id !== pause.session_id || commit.data.workspace_id !== pause.workspace_id || commit.data.request_ordinal !== index + 1 || commit.data.reservation_id !== reservation.data.reservation?.reservation_id || events.indexOf(commit) <= events.indexOf(reservation)) errors.push("V1-C paused Provider commit identity/order drift");
+			const matches = reservations.filter((reservation) => reservation.data.attempt_id === commit.data.attempt_id && reservation.data.request_ordinal === commit.data.request_ordinal && reservation.data.reservation?.reservation_id === commit.data.reservation_id);
+			const reservation = matches[0];
+			const nextAttemptIndex = attemptStarts.findIndex((attempt) => events.indexOf(attempt) > events.indexOf(commit));
+			const boundary = nextAttemptIndex >= 0 ? events.indexOf(attemptStarts[nextAttemptIndex]!) : events.findIndex((event) => event.type === "attempt_paused");
+			const transition = commit.data.transition;
+			const priorTransition = commits[index - 1]?.data.transition;
+			if (matches.length !== 1 || !reservation || commit.data.schema_version !== "v1c-provider-usage-committed-v1" || commit.data.protocol_id !== "v1c_typed_predispatch_budget_stop_v1" || commit.data.run_id !== pause.run_id || !attemptIds.has(commit.data.attempt_id) || commit.data.session_id !== pause.session_id || commit.data.workspace_id !== pause.workspace_id || events.indexOf(commit) <= events.indexOf(reservation) || events.indexOf(commit) >= boundary || transition?.provider_requests?.before !== index || transition?.provider_requests?.after !== index + 1 || transition?.tokens?.before !== (priorTransition?.tokens?.after ?? 0) || transition?.cost_usd?.before !== (priorTransition?.cost_usd?.after ?? 0) || !Number.isSafeInteger(transition?.tokens?.after) || transition.tokens.after < transition.tokens.before || !Number.isFinite(transition?.cost_usd?.after) || transition.cost_usd.after < transition.cost_usd.before) errors.push("V1-C paused Provider commit identity/accounting/order drift");
+		}
+		for (const reservation of reservations) {
+			const matching = commits.filter((commit) => commit.data.attempt_id === reservation.data.attempt_id && commit.data.request_ordinal === reservation.data.request_ordinal && commit.data.reservation_id === reservation.data.reservation?.reservation_id);
+			if (reservation === finalReservation && pause.pending_provider_reservation ? matching.length !== 0 : matching.length !== 1) errors.push("V1-C paused reservation/commit one-to-one relation drift");
 		}
 		const lastCommit = commits.at(-1)?.data.transition;
 		if (pause.accumulated_known_usage.provider_requests !== commits.length || pause.accumulated_known_usage.tokens !== (lastCommit?.tokens?.after ?? 0) || Math.abs(pause.accumulated_known_usage.cost_usd - (lastCommit?.cost_usd?.after ?? 0)) > Number.EPSILON) errors.push("V1-C paused accumulated known usage/commit chain drift");
@@ -252,7 +322,8 @@ function validateTaxonomy(terminal: TerminalCellEvidenceV1B, runResult: RunResul
 }
 
 function validateRuntimeDiagnosticsV1C(runRoot: string, manifest: ExecutionManifestV1B, terminal: TerminalCellEvidenceV1B, runResult: RunResultV1, errors: string[]): void {
-	const events = readFileSync(resolve(runRoot, "journal.jsonl"), "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as { type: string; data: Record<string, any> });
+	const events = readFileSync(resolve(runRoot, "journal.jsonl"), "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as JournalEventV1B);
+	validateTerminalJournalStructure(events, terminal, errors);
 	const recorded = events.filter((event) => event.type === "local_budget_stop_recorded");
 	const consumed = events.filter((event) => event.type === "local_budget_stop_consumed");
 	const commits = events.filter((event) => event.type === "provider_usage_committed");
@@ -306,6 +377,8 @@ export function inspectV1RunCell(options: { projectRoot: string; pilotRoot: stri
 		if (transitions.length !== 3 || transitions[0]?.state !== "planned" || transitions[1]?.state !== "started" || !["terminal", "invalid"].includes(transitions[2]?.state ?? "")) throw new Error("Inspector ledger transition is not planned->started->terminal|invalid");
 		if (transitions[2]!.run_result_ref !== `runs/${cell.planned_run_id}/run-result.json`) throw new Error("Inspector ledger RunResult relation drift");
 		const runRoot = resolve(options.pilotRoot, "runs", cell.planned_run_id);
+		const terminalJournalEvents = readFileSync(resolve(runRoot, "journal.jsonl"), "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as JournalEventV1B);
+		validateJournalEnvelopes(terminalJournalEvents, "terminal", errors);
 		const marker = readJson<TerminalMarkerV1B>(resolve(runRoot, "terminal.json"));
 		if (marker.manifest_id !== manifest.manifest_id || marker.cell_id !== cell.cell_id || marker.planned_run_id !== cell.planned_run_id) errors.push("Inspector terminal marker identity drift");
 		for (const [label, ref] of [["run result", marker.run_result_ref], ["terminal evidence", marker.terminal_evidence_ref]] as const) errors.push(...validateArtifactRef(runRoot, ref).map((error) => `${label}: ${error}`));

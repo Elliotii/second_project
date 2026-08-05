@@ -111,7 +111,7 @@ export async function runNextV1B(options: { projectRoot: string; manifestPath?: 
 	if (manifest.execution_mode === "stage1_zero_call" && options.stage2ExecutionAuthority) throw new FixedProviderBoundaryErrorV1B();
 	if (manifest.execution_mode === "stage2_real" && !options.stage2ExecutionAuthority) throw new FixedProviderBoundaryErrorV1B();
 	const input = options.stage2ExecutionAuthority;
-	if (input && (input.authority_id !== "v1b-public-pi-one-run" || input.credential_profile_name !== manifest.credential_profile_name)) throw new FixedProviderBoundaryErrorV1B();
+	if (input && (input.authority_id !== "v1b-public-pi-one-run" || input.credential_profile_name !== manifest.credential_profile_name || manifest.schema_version === "v1c-execution-manifest-v1" && (input.authorized !== true || !input.resolver))) throw new FixedProviderBoundaryErrorV1B();
 	const replacementSequence = replacementSequenceFor({ ...options, manifest }, true);
 	replacementSequence?.assertCurrent();
 	if (!existing) initializePilotV1B({ projectRoot: options.projectRoot, pilotRoot: options.pilotRoot, manifest });

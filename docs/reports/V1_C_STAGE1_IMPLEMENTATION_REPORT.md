@@ -5,13 +5,19 @@ goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 stage: stage_1_zero_real_call_implementation
 session_role: dedicated_v1_c_stage_1_implementation_session
 report_date: 2026-08-05
-correction_id: V1_C_MR_001_REAL_MANIFEST_READINESS
+correction_id: V1_C_P1_001R_PRIOR_ATTEMPT_PROVIDER_EVENT_BOUNDARY
+prior_correction_ids:
+  - V1_C_MR_001_REAL_MANIFEST_READINESS
+  - V1_C_AUDIT_P1_001_THROUGH_P1_003
 control_baseline_commit: 016006e72e5baf4f558f1f63f1ffafcf122e119c
 control_baseline_tree: 87704958ee787d804a9848b607293de411c532ef
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 recommended_disposition: PASS_STAGE_1_CANDIDATE
 candidate_commit: null
-independent_audit: not_started
+rejected_candidate_commit: e021662e2f4b6d2721f9b0378ac2efa64b706963
+rejected_candidate_tree: e0eebb93562fdc24e616ba3ff7c795a2f956084d
+independent_audit: completed_needs_bounded_correction
+audit_report: C:/Users/HUAWEI/.codex/worktrees/7906/project2/docs/reports/V1_C_FOCUSED_INDEPENDENT_AUDIT_REPORT.md
 real_model_calls: 0
 real_provider_calls: 0
 credential_reads: 0
@@ -23,8 +29,10 @@ external_network_calls: 0
 - **Fact:** Gate A identity and authority checks passed before source changes. Project HEAD/tree exactly matched the accepted control baseline; the project and pinned Pi checkout were clean.
 - **Fact:** The bounded correction and deterministic evidence required by Gates B-H are present in the working tree. No files were staged or committed.
 - **Fact:** Main Session's first limited review accepted the budget-stop mechanism and identified `V1_C_MR_001_REAL_MANIFEST_READINESS` as a Candidate-freeze blocker. The original Implementation Session completed that bounded correction without changing the accepted runtime core.
+- **Fact:** The focused independent audit returned `NEEDS_BOUNDED_CORRECTION` with P1-001 through P1-003. Main Session rejected Candidate `e021662e2f4b6d2721f9b0378ac2efa64b706963`; it is no longer an acceptable Candidate.
+- **Fact:** The original Implementation Session completed only the three authorized post-audit corrections. The corrected working tree has no Candidate Commit.
 - **Recommendation:** Main Session may review the delta and, if accepted, create the frozen Candidate Commit and dispatch a fresh focused independent Audit Session.
-- **Unconfirmed:** No independent audit, Candidate Commit, audited Execution Baseline, real Canary, or full Pilot has occurred. This report does not accept or close V1-C.
+- **Unconfirmed:** The corrected delta has not been re-audited. No accepted Candidate, audited Execution Baseline, real Canary, or full Pilot exists. This report does not accept or close V1-C.
 
 ## 2. Gate A — identity, reading, and authority
 
@@ -118,6 +126,40 @@ The A/B/C regression creates a single fairness block:
 - **Fact:** Tests use only sentinel commit `1111111111111111111111111111111111111111`. No final real Manifest fixture, final Manifest ID, Candidate Commit, accepted Canary result, or full-Pilot authorization was materialized.
 - **Recommendation:** Main Session should perform a narrow review of MR-001 before Candidate freeze.
 
+### V1_C_AUDIT_P1_001_THROUGH_P1_003
+
+The correction incorporates the three findings in `V1_C_FOCUSED_INDEPENDENT_AUDIT_REPORT.md` without changing the frozen budget-stop producer, Manifest builders, Pi integration, Provider/model, Prompt, Skill, tasks, Verifier, or Tool profile.
+
+#### P1-001 — Attempt-aware paused Inspector
+
+- **Fact:** The paused Inspector now reconstructs one or two Attempts from `attempt_started`, validates lineage and physical ordering, and groups reservations by exact Attempt identity.
+- **Fact:** Provider request ordinals and `provider_requests` reservation transitions restart at 1 for each Attempt. External call transitions and committed usage/token/cost chains remain Run-wide.
+- **Fact:** Completed prior Attempts require exactly one settled and Verifier event before the next Attempt; a current Attempt with a pending reservation cannot contain settled/Verifier evidence.
+- **Fact:** Every committed reservation is matched one-to-one by Run/Attempt/Session/Workspace/ordinal/reservation ID. The last pending reservation has no commit, remains bound to the paused child Attempt, and is charged in full.
+- **Fact:** The tracked positive regression observes initial C Verifier failure, child request 1 commit, and child request 2 genuine unknown-usage pause. Inspector returns integrity/pause validity true, terminal/comparable false, request ordinal 2, no child Verifier, and an exact full pending charge.
+- **Fact:** Coherently rebound wrong-Attempt, ordinal-drift, missing-commit, and cross-Attempt variants are rejected.
+
+#### P1-002 — terminal Journal envelope integrity
+
+- **Fact:** Before terminal semantic checks, every physical Journal line must have `schema_version === 1` and contiguous `seq === 1..N`.
+- **Fact:** Minimal critical-event validation requires one start, settled, and Verifier event per terminal Attempt in order, provider/stop events inside the Attempt boundary, and exactly one final `run_terminal` or `run_invalid` disposition as the last event.
+- **Fact:** Coherently recomputed downstream digests no longer hide bad sequence, missing settled, duplicate Verifier, or reordered settled/Verifier events. All four tracked variants are rejected.
+
+#### P1-003 — usable V1-C Stage 2 authority before side effects
+
+- **Fact:** For a V1-C Stage 2 Manifest, the public surface now requires exact authority/profile identity, `authorized === true`, and a present resolver before replacement claims, Pilot initialization, namespace writes, or credential resolution.
+- **Fact:** The check does not invoke the resolver. `authorized:false` and missing-resolver tests both return the sanitized fixed-boundary error, record zero credential reads, and leave the Pilot root absent.
+- **Fact:** The restriction is V1-C-scoped so the accepted V1-B lazy-authority/history behavior remains unchanged. Absent authority, Stage 1 rejecting Stage 2 authority, and zero-call preflight remain covered.
+
+### V1_C_P1_001R_PRIOR_ATTEMPT_PROVIDER_EVENT_BOUNDARY
+
+- **Fact:** Main Session's ignored coherent-rehash probe moved a completed prior Attempt's reservation and matching commit after `attempt_settled`/`verifier_completed` but before the child `attempt_started`. Before this micro-correction the probe exited 1 because Inspector incorrectly returned integrity valid. That exit 1 is the successful defect reproduction and is retained.
+- **Fact:** The paused Inspector now requires every prior Attempt's reservation, commit, and local-stop Provider event to occur strictly after its unique `attempt_started` and strictly before its unique `attempt_settled`.
+- **Fact:** Provider events belonging to the active paused Attempt must occur strictly after its `attempt_started` and strictly before the final `attempt_paused`.
+- **Fact:** The existing `attempt_settled < verifier_completed < next attempt_started` relation and exact identity, ordinal, reservation-ID, one-to-one commit, usage, and cost checks remain unchanged.
+- **Fact:** The Main ignored probe passes 1/1 after the correction. Its core coherent mutation is also the new `prior-provider-after-verifier` entry in the tracked P1-001 mutation table and is rejected while the legal child-pause positive remains valid.
+- **Recommendation:** Main Session should narrowly review this micro-correction before creating any corrected Candidate Commit or dispatching re-audit.
+
 ## 6. Source delta
 
 No file was changed merely to exhaust the allowlist.
@@ -126,23 +168,41 @@ No file was changed merely to exhaust the allowlist.
 |---|---:|---|
 | `workbench/src/contracts/v1-types.ts` | +49/-5 | Additive V1-C protocol, typed stop/diagnostic schema, and three isolated identity roles |
 | `workbench/src/experiment/v1.ts` | +97/-0 | Stage 1 plus parameterized future Canary/full-Pilot builders and complete reconstruction validation |
-| `workbench/src/inspect-v1.ts` | +65/-11 | Typed-stop, multi-request accounting, ordering, tamper, and V1-B history boundary checks |
+| `workbench/src/inspect-v1.ts` | +144/-17 | Typed stop plus Attempt-aware paused accounting, exact prior/active Provider-event boundaries, and terminal Journal integrity |
 | `workbench/src/pi/pi-run-handle-v1.ts` | +71/-9 | Pre-dispatch typed stop record/consume boundary and exact Provider accounting |
 | `workbench/src/pilot-v1.ts` | +3/-1 | Deterministic test scenario and request-ordinal plumbing |
+| `workbench/src/product-surface-v1.ts` | +1/-1 | V1-C usable Stage 2 authority check before any Pilot side effect |
 | `workbench/src/run-v1.ts` | +17/-9 | Journal events, diagnostics, and deterministic Verifier scenario plumbing |
-| `workbench/tests/v1c-budget-stop.test.ts` | new | Gates B-G plus MR-001 identity, tamper, preflight, and fail-closed deterministic tests |
+| `workbench/tests/v1c-budget-stop.test.ts` | new, 342 Git-numstat lines | Gates B-G, MR-001, P1-001 through P1-003, and P1-001R coherent-order regression |
 | `docs/reports/V1_C_STAGE1_IMPLEMENTATION_REPORT.md` | new | This report |
 | `docs/reports/V1_C_STAGE1_CLOSEOUT_DRAFT.md` | new | Main-review closeout draft |
 
 MR-001 changed only `v1-types.ts`, `experiment/v1.ts`, the V1-C focused test, this report, the Closeout Draft, and the ignored Evidence Index. `workbench/src/product-surface-v1.ts`, the four accepted runtime-core files, V1-B tests, and all fixture manifests remained unchanged. Relative to the first reviewed working tree, MR-001 added 59 lines to `experiment/v1.ts`; the focused test grew from 170 to 239 lines.
 
-Final correction source/test hashes are:
+The exact post-audit correction delta relative to rejected Candidate `e021662e...` is:
+
+| Path | Delta |
+|---|---:|
+| `workbench/src/inspect-v1.ts` | +87/-14 |
+| `workbench/src/product-surface-v1.ts` | +1/-1 |
+| `workbench/tests/v1c-budget-stop.test.ts` | +90/-3 |
+| `docs/reports/V1_C_STAGE1_IMPLEMENTATION_REPORT.md` | modified |
+| `docs/reports/V1_C_STAGE1_CLOSEOUT_DRAFT.md` | modified |
+| `.runs/v1-c/stage1/evidence/EVIDENCE_INDEX.md` | modified, ignored |
+
+No other path changed in the post-audit correction.
+
+The micro-correction delta relative to the reviewed post-audit working tree is exactly +5/-0 in `inspect-v1.ts`, +1/-0 in the focused test, plus updates to the two tracked reports and ignored Evidence Index. `product-surface-v1.ts` and every frozen file remained byte-identical.
+
+Final post-audit source/test hashes are:
 
 | Path | SHA-256 |
 |---|---|
 | `workbench/src/contracts/v1-types.ts` | `fbda8e2176eb9244fed5b39419089e7ffb0f44001b7f80d9750ca3998603f23c` |
 | `workbench/src/experiment/v1.ts` | `48113307740502be05091438588d1faf236bcb364d41318701164fc38ea8c353` |
-| `workbench/tests/v1c-budget-stop.test.ts` | `cbf68de5fa3eb92650bb6c381d2971b2db73e7ba8bc411c9b515b13dd7cd9faf` |
+| `workbench/src/inspect-v1.ts` | `6fdb82ec646e0a6c23b25c2cc9ce302509760eb1096c10a4b11721dcc9065db0` |
+| `workbench/src/product-surface-v1.ts` | `f5d6da0416ac16d2f92508ac805f54562b37441c77b37364ec7729d5aa39ae45` |
+| `workbench/tests/v1c-budget-stop.test.ts` | `514e8bbb37c351758a89e998849f9326556e7c05918205b2722cd228460af858` |
 
 ## 7. Commands and exit codes
 
@@ -167,6 +227,18 @@ Commands were run from the repository root unless a working directory is stated.
 | MR-001 V1-B stage1 + CLI regressions (`workbench/`) | 0 | 31/31 pass |
 | MR-001 final strict TypeScript plus `git diff --check` | 0 | pass |
 | MR-001 final status/core-hash/control/Pi/secret/zero-access/fixture/Pilot-root check | 0 | no violation; secret and nonzero-access `rg` returned expected no-match exit 1 |
+| Post-audit Gate A eight commands | 0 each | exact rejected Candidate SHA/tree; tracked/staged clean; both Pi checkouts pinned and clean |
+| Post-audit strict TypeScript — first and final correction runs | 0 | pass |
+| Post-audit focused V1-C — first and final runs | 0 | 13/13 pass; original 10 retained plus three finding tests |
+| Post-audit V1-B stage1 + CLI — first run | 1 | 27/31; exposed three pre-reservation ordinal overconstraints and one V1-B authority-history regression |
+| Post-audit V1-B stage1 + CLI — final run | 0 | 31/31 pass after bounded narrowing |
+| Post-audit `git diff --check` and final allowlist/protected/control/Pi/secret/raw/zero-access checks | 0 | pass; no protected/control/Pi/access violation |
+| P1-001R ignored Main probe before correction | 1 | expected defect reproduction: Inspector accepted moved prior-Attempt Provider events |
+| P1-001R ignored Main probe after correction | 0 | 1/1 pass; moved prior-Attempt Provider events rejected |
+| P1-001R strict TypeScript | 0 | pass |
+| P1-001R focused V1-C | 0 | 13/13 pass; new coherent mutation runs inside the existing P1-001 test |
+| P1-001R V1-B stage1 + CLI | 0 | 31/31 pass |
+| P1-001R final diff/frozen/product/Pi/control/secret/raw/zero-access checks | 0 | pass |
 
 MR-001 exact verification commands:
 
@@ -210,7 +282,7 @@ git -C D:\AI\AI_Projects\project2\.runs\v0-a\pi status --short
 
 ## 9. Unverified items and Pause Conditions
 
-- **Unconfirmed:** The correction has not been independently audited against a frozen Candidate Commit.
+- **Unconfirmed:** The post-audit correction has not been independently re-audited against a new frozen Candidate Commit. The rejected `e021662e...` audit cannot be treated as a passing audit.
 - **Unconfirmed:** The new builders establish only future Manifest readiness. No real Provider behavior, Canary outcome, or A/B/C Pilot result is established by Stage 1.
 - **Unconfirmed:** Main Session has not accepted the implementation, frozen an Execution Baseline, or authorized later stages.
 - **Recommendation:** Pause if Main review finds a protected-state difference, non-allowlisted delta, schema/history rewrite, raw sensitive persistence, accounting ambiguity, or a need to expand the Contract. Otherwise proceed only to Candidate freeze and focused independent audit.
@@ -225,12 +297,13 @@ CURRENT_STATE_UPDATE_PROPOSAL:
   apply_by: main_session_only
   goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
   active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  proposed_stage_status: stage_1_implementation_candidate_ready_for_main_review
+  proposed_stage_status: stage_1_post_audit_micro_corrected_candidate_ready_for_main_review
   recommended_disposition: PASS_STAGE_1_CANDIDATE
   control_baseline_commit: 016006e72e5baf4f558f1f63f1ffafcf122e119c
   implementation_worktree_committed: false
+  rejected_candidate_commit: e021662e2f4b6d2721f9b0378ac2efa64b706963
   candidate_commit: null
-  independent_audit_status: not_started
+  independent_audit_status: prior_audit_needs_correction_corrected_delta_not_reaudited
   audited_execution_baseline: null
   real_canary_status: not_authorized_not_started
   full_pilot_status: not_authorized_not_started
