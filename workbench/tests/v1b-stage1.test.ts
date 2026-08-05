@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import type { ExecutionManifestV1B, LedgerEntryV1B, RunResultV1, TerminalCellEvidenceV1B } from "../src/contracts/v1-types.ts";
-import { buildExecutionManifestV1B, validateExecutionManifestV1B, v1bManifestIdentity } from "../src/experiment/v1.ts";
+import type { ExecutionManifestV1B, LedgerEntryV1B, PauseEvidenceV1B, PausePhaseV1B, RunResultV1, TerminalCellEvidenceV1B } from "../src/contracts/v1-types.ts";
+import { buildExecutionManifestV1B, buildReplacementExecutionManifestV1B, validateExecutionManifestV1B, validateReplacementSequenceStateV1B, v1bManifestIdentity, V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID } from "../src/experiment/v1.ts";
 import { loadCandidateTaskPackV1 } from "../src/experiment/task-pack-v1.ts";
 import { aggregatePilotV1B, inspectV1RunCell } from "../src/inspect-v1.ts";
 import { initializePilotV1B, readPilotLedgerV1B, runNextPilotCellV1B, simulatePilotV1B, validatePilotLedgerV1B } from "../src/pilot-v1.ts";
@@ -22,7 +22,7 @@ function root(label: string): string {
 }
 
 function trackedManifest(): ExecutionManifestV1B {
-	return JSON.parse(readFileSync(resolve(PROJECT_ROOT, "fixtures/manifests/v1/v1b-stage1-execution.json"), "utf8")) as ExecutionManifestV1B;
+	return buildExecutionManifestV1B(PROJECT_ROOT);
 }
 
 let sharedPilot: Promise<string> | undefined;
@@ -62,7 +62,8 @@ test("V1-B Gate A/B preflight binds corrected baseline and keeps all real-call c
 	assert.equal(manifest.control_baseline_commit, "de75ca7a4d5376713f01ca475bc5ad7637c70443");
 	assert.equal(manifest.control_baseline_tree, "e930e1d0885b52bf911ed78912786723f321f06e");
 	assert.doesNotThrow(() => validateExecutionManifestV1B(manifest, PROJECT_ROOT));
-	const result = preflightV1B({ projectRoot: PROJECT_ROOT, pilotRoot: root("preflight") });
+	const manifestPath = resolve(root("preflight-manifest"), "manifest.json"); mkdirSync(resolve(manifestPath, ".."), { recursive: true }); writeStable(manifestPath, manifest);
+	const result = preflightV1B({ projectRoot: PROJECT_ROOT, manifestPath, pilotRoot: root("preflight") });
 	assert.deepEqual(result.real_call_counters, { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 });
 	assert.equal(result.next_cell_id, "v1b-cell-01");
 });
@@ -278,7 +279,7 @@ test("V1-B F-004 typed taxonomy closes invalid denominators, pause and threshold
 test("V1-B F-005 reserve failure is atomic and Inspector rejects tampered reservation chains", async () => {
 	const manifest = trackedManifest(); const task = loadCandidateTaskPackV1(PROJECT_ROOT)[0]!; const { skill } = await loadExactOneSkillV1({ projectRoot: PROJECT_ROOT, skillRoot: "fixtures/skills/v1", expected: expectedSkillIdentityV1(PROJECT_ROOT) });
 	const makeHandle = (runCaps: ExecutionManifestV1B["budgets"]["arm_c_run"]) => { const authority = createOneRunProviderAuthorityV1B({ authorized: true, resolver: { resolve: async () => "unused" } }); return createPublicPiRunCompositionV1B({ authority, factory: { create: (access) => createPiRunHandleV1({ mode: "stage1_fake", workspaceRoot: resolve(PROJECT_ROOT, task.workspace_source_ref), task, skill, access, attemptCaps: manifest.budgets.initial_attempt, runCaps, pilotCaps: manifest.budgets.pilot, pilotUsage: emptyBudgetUsageV1B(), realCallCounters: { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 }, workspaceId: "atomic-budget-test" }) } }); };
-	const providerDenied = makeHandle({ ...manifest.budgets.arm_c_run, provider_requests: 0 }); const beforeProvider = providerDenied.usage(); await assert.rejects(() => providerDenied.runAttempt({ attemptId: "atomic-a1", prompt: "test", invocation: "prompt", fakeMode: "fail" }), FixedProviderBoundaryErrorV1B); assert.deepEqual(providerDenied.usage(), beforeProvider); await providerDenied.close();
+	const providerDenied = makeHandle({ ...manifest.budgets.arm_c_run, provider_requests: 0 }); const beforeProvider = providerDenied.usage(); await assert.rejects(() => providerDenied.runAttempt({ attemptId: "atomic-a1", prompt: "test", invocation: "prompt", fakeMode: "fail" }), /typed sanitized boundary/); assert.deepEqual(providerDenied.usage(), beforeProvider); await providerDenied.close();
 	for (const caps of [{ ...manifest.budgets.arm_c_run, wall_time_ms: manifest.budgets.initial_attempt.wall_time_ms - 1 }, { ...manifest.budgets.arm_c_run, verifier_runs: 0 }]) { const handle = makeHandle(caps); const before = handle.usage(); assert.throws(() => handle.reserveChild(), /reserve|budget|cap/); assert.deepEqual(handle.usage(), before); await handle.close(); }
 	const source = await completePilot(); const cell = manifest.cells[0]!;
 	for (const [label, mutate] of [
@@ -301,4 +302,125 @@ test("V1-B tracked real route fails closed before started state when Stage 2 dep
 	initializePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot, manifest });
 	await assert.rejects(() => runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot }), /real execution dependencies/);
 	assert.equal(readPilotLedgerV1B(pilotRoot).filter((entry) => entry.state === "started").length, 0);
+});
+
+async function pausedPilot(phase: PausePhaseV1B, mode: "stage1_zero_call" | "stage2_real" = "stage1_zero_call", resolver: () => Promise<string> = async () => "non-secret-fake"): Promise<{ pilotRoot: string; manifest: ExecutionManifestV1B; resolverReads: () => number }> {
+	const pilotRoot = root(`pause-${phase}`);
+	const manifest = buildExecutionManifestV1B(PROJECT_ROOT, { executionMode: mode, executionBaselineCommit: "f".repeat(40), realExecutionAuthorized: mode === "stage2_real" });
+	initializePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot, manifest });
+	let reads = 0;
+	await assert.rejects(() => runNextPilotCellV1B({
+		projectRoot: PROJECT_ROOT, pilotRoot, deterministicPausePhase: phase,
+		...(mode === "stage2_real" ? { realExecution: { createAuthority: () => createOneRunProviderAuthorityV1B({ authorized: true, resolver: { resolve: async () => { reads++; return await resolver(); } } }) } } : {}),
+	}), /typed boundary/);
+	return { pilotRoot, manifest, resolverReads: () => reads };
+}
+
+test("V1-B pause phases before and during credential resolution are typed, sanitized and reservation-free", async () => {
+	const before = await pausedPilot("before_credential_resolution", "stage2_real");
+	assert.equal(before.resolverReads(), 0);
+	const first = before.manifest.cells[0]!;
+	let inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: before.pilotRoot, plannedRunId: first.planned_run_id });
+	assert.deepEqual({ valid: inspected.integrity_valid, pause: inspected.pause_integrity_valid, terminal: inspected.terminal_valid, comparable: inspected.comparable }, { valid: true, pause: true, terminal: false, comparable: false });
+	assert.equal(inspected.pause_evidence!.pending_provider_reservation, null);
+	assert.deepEqual(inspected.pause_evidence!.counter_snapshot, { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 });
+
+	const marker = "FAKE_SENSITIVE_CREDENTIAL_FAILURE";
+	const credential = await pausedPilot("credential_resolution_failure_before_dispatch", "stage2_real", async () => { throw new Error(marker); });
+	inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: credential.pilotRoot, plannedRunId: credential.manifest.cells[0]!.planned_run_id });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	assert.equal(inspected.pause_evidence!.phase, "credential_resolution_failure_before_dispatch");
+	assert.equal(inspected.pause_evidence!.pending_provider_reservation, null);
+	assert.doesNotMatch(readFileSync(resolve(credential.pilotRoot, "runs", credential.manifest.cells[0]!.planned_run_id, "pause-evidence.json"), "utf8"), new RegExp(marker));
+
+	const other = await pausedPilot("other_bounded_runtime_failure");
+	inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: other.pilotRoot, plannedRunId: other.manifest.cells[0]!.planned_run_id });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	assert.equal(inspected.pause_evidence!.phase, "other_bounded_runtime_failure");
+});
+
+test("V1-B post-credential pre-reservation failure remains zero-dispatch and carries no pending charge", async () => {
+	const paused = await pausedPilot("after_credential_before_provider_request_reservation", "stage2_real");
+	assert.equal(paused.resolverReads(), 1);
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: paused.pilotRoot, plannedRunId: paused.manifest.cells[0]!.planned_run_id });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	assert.deepEqual(inspected.pause_evidence!.counter_snapshot, { credential_reads: 1, network_calls: 0, provider_calls: 0, model_calls: 0 });
+	assert.equal(inspected.pause_evidence!.pending_provider_reservation, null);
+});
+
+test("V1-B synthetic post-reservation failure writes before dispatch, charges the complete reservation and stops the Pilot", async () => {
+	const paused = await pausedPilot("after_provider_request_reservation_usage_unavailable");
+	const cell = paused.manifest.cells[0]!;
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: paused.pilotRoot, plannedRunId: cell.planned_run_id });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	const evidence = inspected.pause_evidence!;
+	assert.deepEqual(evidence.counter_snapshot, { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 });
+	assert.equal(evidence.pending_provider_reservation!.cost_usd, 0.10);
+	assert.equal(evidence.conservative_usage_charge.cost_usd, evidence.pending_provider_reservation!.cost_usd);
+	assert.equal(evidence.conservative_usage_charge.tokens, evidence.pending_provider_reservation!.tokens);
+	const journal = readFileSync(resolve(paused.pilotRoot, "runs", cell.planned_run_id, "journal.jsonl"), "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+	assert.deepEqual(journal.slice(-2).map((event) => event.type), ["provider_request_reserved", "attempt_paused"]);
+	assert.deepEqual(readPilotLedgerV1B(paused.pilotRoot).filter((entry) => entry.state !== "planned").map((entry) => entry.state), ["started", "paused"]);
+	const aggregate = aggregatePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot: paused.pilotRoot });
+	assert.deepEqual({ paused: aggregate.paused_runs, terminal: aggregate.terminal_runs, comparable: aggregate.comparable_runs, cost: aggregate.totals.cost_usd }, { paused: 1, terminal: 0, comparable: 0, cost: 0.10 });
+	await assert.rejects(() => runNextPilotCellV1B({ projectRoot: PROJECT_ROOT, pilotRoot: paused.pilotRoot }), /paused/);
+});
+
+test("V1-B invalid or unknown Provider response usage pauses with the full conservative reservation", async () => {
+	const paused = await pausedPilot("invalid_or_unknown_usage_after_provider_response");
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: paused.pilotRoot, plannedRunId: paused.manifest.cells[0]!.planned_run_id });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	assert.equal(inspected.pause_evidence!.phase, "invalid_or_unknown_usage_after_provider_response");
+	assert.equal(inspected.pause_evidence!.budget_usage_after_conservative_charge.cost_usd, 0.10);
+	assert.equal(inspected.terminal, null);
+});
+
+test("V1-B paused Inspector rejects missing, duplicate, reordered, tampered and coherently rehashed evidence", async () => {
+	const source = await pausedPilot("after_provider_request_reservation_usage_unavailable");
+	const cell = source.manifest.cells[0]!;
+	const copies = ["missing", "duplicate", "reordered", "tampered", "coherent"].map((label) => { const copy = root(`pause-${label}`); cpSync(source.pilotRoot, copy, { recursive: true }); return [label, copy] as const; });
+	for (const [label, copy] of copies) {
+		const runRoot = resolve(copy, "runs", cell.planned_run_id); const pausePath = resolve(runRoot, "pause-evidence.json"); const journalPath = resolve(runRoot, "journal.jsonl"); const ledgerPath = resolve(copy, "ledger.jsonl");
+		if (label === "missing") unlinkSync(pausePath);
+		if (label === "duplicate") { const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); events.push({ ...events.at(-1), seq: events.length + 1 }); writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`); const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); ledger.at(-1).journal_sha256 = fileSha256(journalPath); writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`); }
+		if (label === "reordered") { const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); [events[events.length - 2], events[events.length - 1]] = [events[events.length - 1], events[events.length - 2]]; events.forEach((event, index) => event.seq = index + 1); writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`); const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); ledger.at(-1).journal_sha256 = fileSha256(journalPath); writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`); }
+		if (label === "tampered") { const pause = JSON.parse(readFileSync(pausePath, "utf8")); pause.counter_snapshot.network_calls = 9; writeStable(pausePath, pause); }
+		if (label === "coherent") {
+			const pause = JSON.parse(readFileSync(pausePath, "utf8")) as PauseEvidenceV1B; pause.phase = "before_credential_resolution"; writeStable(pausePath, pause);
+			const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); events.at(-1).data.phase = pause.phase; events.at(-1).data.pause_evidence_ref = { path: "pause-evidence.json", sha256: fileSha256(pausePath), size_bytes: readFileSync(pausePath).length }; writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`);
+			const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); ledger.at(-1).cause_id = `pause_${pause.phase}`; ledger.at(-1).pause_evidence_ref = events.at(-1).data.pause_evidence_ref; ledger.at(-1).journal_sha256 = fileSha256(journalPath); writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`);
+		}
+		const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: copy, plannedRunId: cell.planned_run_id }); assert.equal(inspected.integrity_valid, false, label);
+	}
+});
+
+test("V1-B paused evidence rejects secret, error, payload and reasoning markers even under coherent digest repair", async () => {
+	const source = await pausedPilot("before_credential_resolution", "stage2_real"); const cell = source.manifest.cells[0]!;
+	const copy = root("pause-protected-marker"); cpSync(source.pilotRoot, copy, { recursive: true }); const runRoot = resolve(copy, "runs", cell.planned_run_id); const pausePath = resolve(runRoot, "pause-evidence.json"); const journalPath = resolve(runRoot, "journal.jsonl"); const ledgerPath = resolve(copy, "ledger.jsonl");
+	const pause = JSON.parse(readFileSync(pausePath, "utf8")); pause.forbidden_payload = { authorization: "Bearer FAKE_SENSITIVE_PAUSE", reasoning: "blocked" }; writeStable(pausePath, pause);
+	const events = readFileSync(journalPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); events.at(-1).data.pause_evidence_ref = { path: "pause-evidence.json", sha256: fileSha256(pausePath), size_bytes: readFileSync(pausePath).length }; writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`);
+	const ledger = readFileSync(ledgerPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line)); ledger.at(-1).pause_evidence_ref = events.at(-1).data.pause_evidence_ref; ledger.at(-1).journal_sha256 = fileSha256(journalPath); writeFileSync(ledgerPath, `${ledger.map(stableJson).join("\n")}\n`);
+	const inspected = inspectV1RunCell({ projectRoot: PROJECT_ROOT, pilotRoot: copy, plannedRunId: cell.planned_run_id }); assert.equal(inspected.integrity_valid, false); assert.match(inspected.errors.join("; "), /secret\/reasoning/);
+});
+
+test("V1-B replacement revision freezes predecessor, USD1.90, new 24-cell IDs, cross-sequence starts and eight children", () => {
+	const manifest = buildReplacementExecutionManifestV1B(PROJECT_ROOT, { executionBaselineCommit: "f".repeat(40) });
+	assert.doesNotThrow(() => validateExecutionManifestV1B(manifest, PROJECT_ROOT));
+	assert.equal(manifest.replacement_revision!.predecessor_manifest_id, V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID);
+	assert.equal(manifest.budgets.pilot.cost_usd, 1.90); assert.equal(manifest.cells.length, 24); assert.ok(manifest.cells.every((cell) => cell.planned_run_id.startsWith("v1b-replacement-run-")));
+	for (const mutate of [
+		(value: ExecutionManifestV1B) => { value.budgets.pilot.cost_usd = 1.91; },
+		(value: ExecutionManifestV1B) => { value.replacement_revision!.predecessor_manifest_id = "f".repeat(64) as typeof V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID; },
+		(value: ExecutionManifestV1B) => { value.cells[0]!.planned_run_id = "v1b-run-01-parse-duration-r1-a"; },
+		(value: ExecutionManifestV1B) => { value.cells.push(structuredClone(value.cells[0]!)); },
+		(value: ExecutionManifestV1B) => { value.policy.retry_same_run = true as false; },
+		(value: ExecutionManifestV1B) => { value.replacement_revision!.replacement_child_attempts_max = 9 as 8; },
+	]) { const drift = structuredClone(manifest); mutate(drift); drift.manifest_id = v1bManifestIdentity(drift); assert.throws(() => validateExecutionManifestV1B(drift, PROJECT_ROOT), /Manifest|replacement|forbidden|drift/); }
+	const baseState = { predecessor_manifest_id: V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID, predecessor_started_run_ids: ["v1b-run-01-parse-duration-r1-a"], replacement_started_run_ids: manifest.cells.map((cell) => cell.planned_run_id), replacement_child_attempts: 8, retry_same_run: false, fallback: false, automatic_replacement: false };
+	assert.doesNotThrow(() => validateReplacementSequenceStateV1B(manifest, baseState));
+	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, replacement_started_run_ids: [...baseState.replacement_started_run_ids, "v1b-replacement-run-25-extra"] }), /cap|membership/);
+	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, replacement_started_run_ids: [...baseState.replacement_started_run_ids.slice(0, -1), baseState.predecessor_started_run_ids[0]!] }), /reused/);
+	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, predecessor_manifest_id: "wrong" }), /predecessor/);
+	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, replacement_child_attempts: 9 }), /child/);
+	assert.throws(() => validateReplacementSequenceStateV1B(manifest, { ...baseState, fallback: true }), /retry\/fallback/);
 });

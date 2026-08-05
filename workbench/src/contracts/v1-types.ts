@@ -42,7 +42,7 @@ export interface ExecutionManifestV1B {
 	schema_version: "v1b-execution-manifest-v1";
 	manifest_id: string;
 	experiment_id: "v1-b-bounded-pilot";
-	experiment_revision: 1;
+	experiment_revision: 1 | 2;
 	execution_mode: "stage1_zero_call" | "stage2_real";
 	created_at: string;
 	control_baseline_commit: "de75ca7a4d5376713f01ca475bc5ad7637c70443";
@@ -82,6 +82,15 @@ export interface ExecutionManifestV1B {
 			"evidence_invalid", "global_budget_stop", "paused_unclassified",
 		];
 	};
+	replacement_revision?: {
+		predecessor_manifest_id: "43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76";
+		conservative_prior_debit_usd: 0.10;
+		replacement_pilot_cost_cap_usd: 1.90;
+		predecessor_started_initial_runs: 1;
+		sequence_started_initial_runs_max: 25;
+		replacement_initial_runs_max: 24;
+		replacement_child_attempts_max: 8;
+	};
 	cells: ExecutionCellV1B[];
 }
 
@@ -96,6 +105,69 @@ export interface LedgerEntryV1B {
 	state: LedgerStateV1B;
 	cause_id: string | null;
 	run_result_ref: string | null;
+	pause_evidence_ref?: { path: "pause-evidence.json"; sha256: string; size_bytes: number };
+	journal_sha256?: string;
+}
+
+export const V1B_PAUSE_PHASES = [
+	"before_credential_resolution",
+	"credential_resolution_failure_before_dispatch",
+	"after_credential_before_provider_request_reservation",
+	"after_provider_request_reservation_usage_unavailable",
+	"invalid_or_unknown_usage_after_provider_response",
+	"other_bounded_runtime_failure",
+] as const;
+export type PausePhaseV1B = (typeof V1B_PAUSE_PHASES)[number];
+
+export interface RealCallCountersV1B {
+	credential_reads: number;
+	network_calls: number;
+	provider_calls: number;
+	model_calls: number;
+}
+
+export interface ProviderRequestReservationEventV1B {
+	schema_version: 1;
+	attempt_id: string;
+	session_id: string;
+	workspace_id: string;
+	request_ordinal: number;
+	phase: "provider_request_reserved_before_dispatch";
+	counter_transition: {
+		provider_requests: { before: number; after: number };
+		network_calls: { before: number; after: number };
+		provider_calls: { before: number; after: number };
+		model_calls: { before: number; after: number };
+	};
+	reservation: { reservation_id: string; token_cap: number; cost_usd_cap: number };
+}
+
+export interface PauseSnapshotV1B {
+	phase: PausePhaseV1B;
+	attempt_id: string;
+	session_id: string;
+	workspace_id: string;
+	request_ordinal: number | null;
+	counter_snapshot: RealCallCountersV1B;
+	accumulated_known_usage: BudgetUsageV1B;
+	pending_provider_reservation: {
+		reservation_id: string;
+		provider_requests: number;
+		tokens: number;
+		cost_usd: number;
+	} | null;
+	conservative_usage_charge: BudgetUsageV1B;
+	budget_usage_after_conservative_charge: BudgetUsageV1B;
+}
+
+export interface PauseEvidenceV1B extends PauseSnapshotV1B {
+	schema_version: 1;
+	manifest_id: string;
+	cell_id: string;
+	planned_run_id: string;
+	run_id: string;
+	journal_prefix_sha256: string;
+	created_at: string;
 }
 
 export interface AttemptEvidenceV1B {

@@ -1,8 +1,8 @@
 import { appendFileSync, existsSync, mkdirSync, openSync, closeSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { BudgetUsageV1B, ExecutionCellV1B, ExecutionManifestV1B, LedgerEntryV1B, LedgerStateV1B, TerminalCellEvidenceV1B } from "./contracts/v1-types.ts";
+import type { BudgetUsageV1B, ExecutionCellV1B, ExecutionManifestV1B, LedgerEntryV1B, LedgerStateV1B, PauseEvidenceV1B, PausePhaseV1B, TerminalCellEvidenceV1B } from "./contracts/v1-types.ts";
 import { writeOnceJson } from "./evidence/artifacts.ts";
-import { stableJson } from "./hash.ts";
+import { fileSha256, stableJson } from "./hash.ts";
 import { validateExecutionManifestV1B } from "./experiment/v1.ts";
 import { emptyBudgetUsageV1B } from "./pi/pi-run-handle-v1.ts";
 import { executeV1RunCell, V1BTypedPauseError, type ExecuteV1RunCellOptions, type ExecuteV1RunCellResult } from "./run-v1.ts";
@@ -21,10 +21,10 @@ export function readPilotLedgerV1B(pilotRoot: string): LedgerEntryV1B[] {
 	return readFileSync(ledgerPath(pilotRoot), "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as LedgerEntryV1B);
 }
 
-function appendLedger(pilotRoot: string, manifest: ExecutionManifestV1B, cell: ExecutionCellV1B, state: LedgerStateV1B, causeId: string | null, runResultRef: string | null): LedgerEntryV1B {
+function appendLedger(pilotRoot: string, manifest: ExecutionManifestV1B, cell: ExecutionCellV1B, state: LedgerStateV1B, causeId: string | null, runResultRef: string | null, pause?: { ref: NonNullable<LedgerEntryV1B["pause_evidence_ref"]>; journalSha256: string }): LedgerEntryV1B {
 	const entries = readPilotLedgerV1B(pilotRoot);
 	validatePilotLedgerV1B(manifest, entries);
-	const entry: LedgerEntryV1B = { schema_version: 1, seq: entries.length + 1, timestamp: new Date().toISOString(), manifest_id: manifest.manifest_id, cell_id: cell.cell_id, planned_run_id: cell.planned_run_id, state, cause_id: causeId, run_result_ref: runResultRef };
+	const entry: LedgerEntryV1B = { schema_version: 1, seq: entries.length + 1, timestamp: new Date().toISOString(), manifest_id: manifest.manifest_id, cell_id: cell.cell_id, planned_run_id: cell.planned_run_id, state, cause_id: causeId, run_result_ref: runResultRef, ...(pause ? { pause_evidence_ref: pause.ref, journal_sha256: pause.journalSha256 } : {}) };
 	appendFileSync(ledgerPath(pilotRoot), `${stableJson(entry)}\n`, "utf8");
 	return entry;
 }
@@ -51,6 +51,8 @@ export function validatePilotLedgerV1B(manifest: ExecutionManifestV1B, entries: 
 		if (entry.state === "terminal" && entry.cause_id !== null) throw new Error("valid terminal ledger transition carries invalid cause");
 		if (entry.state === "invalid" && !entry.cause_id) throw new Error("invalid ledger transition lacks typed cause");
 		if (entry.state === "paused" && !entry.cause_id) throw new Error("paused ledger transition lacks cause");
+		if (entry.state !== "paused" && (entry.pause_evidence_ref || entry.journal_sha256)) throw new Error("non-paused ledger transition carries pause evidence");
+		if (entry.state === "paused" && prior.at(-1) === "started" && (!entry.pause_evidence_ref || !entry.journal_sha256)) throw new Error("started pause lacks typed evidence relation");
 		prior.push(entry.state); states.set(entry.cell_id, prior);
 	}
 	let missingPrior = false;
@@ -71,6 +73,10 @@ function aggregateUsage(pilotRoot: string, manifest: ExecutionManifestV1B, entri
 		const cell = manifest.cells.find((value) => value.cell_id === entry.cell_id)!;
 		const terminal = JSON.parse(readFileSync(resolve(pilotRoot, "runs", cell.planned_run_id, "terminal-evidence.json"), "utf8")) as TerminalCellEvidenceV1B;
 		for (const key of Object.keys(usage) as Array<keyof BudgetUsageV1B>) usage[key] += terminal.budget_usage[key];
+	}
+	for (const entry of entries.filter((value) => value.state === "paused" && value.pause_evidence_ref)) {
+		const pause = JSON.parse(readFileSync(resolve(pilotRoot, "runs", entry.planned_run_id, entry.pause_evidence_ref!.path), "utf8")) as PauseEvidenceV1B;
+		for (const key of Object.keys(usage) as Array<keyof BudgetUsageV1B>) usage[key] += pause.budget_usage_after_conservative_charge[key];
 	}
 	return usage;
 }
@@ -115,6 +121,7 @@ export async function runNextPilotCellV1B(options: {
 	pilotRoot: string;
 	realExecution?: { createAuthority(cell: ExecutionCellV1B): OneRunProviderAuthorityV1B };
 	deterministicInjection?: ExecuteV1RunCellOptions["deterministicInjection"];
+	deterministicPausePhase?: PausePhaseV1B;
 }): Promise<ExecuteV1RunCellResult | null> {
 	const state = loadPilotStateV1B(options);
 	const cell = state.next_cell;
@@ -152,12 +159,15 @@ export async function runNextPilotCellV1B(options: {
 	appendLedger(options.pilotRoot, state.manifest, cell, "started", null, null);
 	const runRoot = resolve(options.pilotRoot, "runs", cell.planned_run_id);
 	try {
-		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}) });
+		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}), ...(options.deterministicPausePhase ? { deterministicPausePhase: options.deterministicPausePhase } : {}) });
 		appendLedger(options.pilotRoot, state.manifest, cell, result.terminal.disposition === "invalid" ? "invalid" : "terminal", result.terminal.cause_id, `runs/${cell.planned_run_id}/run-result.json`);
 		return result;
 	} catch (error) {
 		const cause = error instanceof V1BTypedPauseError ? error.causeId : "paused_unclassified";
-		appendLedger(options.pilotRoot, state.manifest, cell, "paused", cause, null);
+		const pauseRef = error instanceof V1BTypedPauseError ? error.pauseEvidenceRef : undefined;
+		if (!pauseRef) throw error;
+		const journalPath = resolve(runRoot, "journal.jsonl");
+		appendLedger(options.pilotRoot, state.manifest, cell, "paused", cause, null, { ref: pauseRef, journalSha256: fileSha256(journalPath) });
 		throw error;
 	}
 }

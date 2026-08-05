@@ -150,6 +150,7 @@ const V1B_BLOCKS = [
 ] as const;
 
 const ARM_STRATEGY = Object.freeze({ A: "baseline", B: "skill_only", C: "skill_plus_runtime_control" } as const);
+export const V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID = "43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76" as const;
 
 export function v1bManifestIdentity(manifest: ExecutionManifestV1B): string {
 	return digestObject({ ...manifest, manifest_id: "" });
@@ -159,15 +160,54 @@ export function v1bSourceDigest(projectRoot: string): string {
 	return digestObject(V1B_SOURCE_DOMAIN.map((path) => ({ path, sha256: fileSha256(resolve(projectRoot, path)) })));
 }
 
-function v1bCells(): ExecutionCellV1B[] {
+function v1bCells(replacement = false): ExecutionCellV1B[] {
 	const cells: ExecutionCellV1B[] = [];
 	for (const [blockIndex, [task, repetition, arms]] of V1B_BLOCKS.entries()) {
 		for (const [slotIndex, arm] of arms.entries()) {
 			const order = cells.length + 1;
-			cells.push({ cell_id: `v1b-cell-${String(order).padStart(2, "0")}`, planned_run_id: `v1b-run-${String(order).padStart(2, "0")}-${task.slice(3)}-r${repetition}-${arm.toLowerCase()}`, task_id: task, repetition, order_slot: order, block: blockIndex + 1, block_slot: (slotIndex + 1) as 1 | 2 | 3, arm, strategy_id: ARM_STRATEGY[arm] });
+			cells.push({ cell_id: `${replacement ? "v1b-replacement-cell" : "v1b-cell"}-${String(order).padStart(2, "0")}`, planned_run_id: `${replacement ? "v1b-replacement-run" : "v1b-run"}-${String(order).padStart(2, "0")}-${task.slice(3)}-r${repetition}-${arm.toLowerCase()}`, task_id: task, repetition, order_slot: order, block: blockIndex + 1, block_slot: (slotIndex + 1) as 1 | 2 | 3, arm, strategy_id: ARM_STRATEGY[arm] });
 		}
 	}
 	return cells;
+}
+
+export function buildReplacementExecutionManifestV1B(projectRoot: string, options: { executionBaselineCommit: string }): ExecutionManifestV1B {
+	const manifest = buildExecutionManifestV1B(projectRoot, { executionMode: "stage2_real", executionBaselineCommit: options.executionBaselineCommit, realExecutionAuthorized: true });
+	manifest.experiment_revision = 2;
+	manifest.created_at = "2026-08-05T00:00:00.000Z";
+	manifest.cells = v1bCells(true);
+	manifest.budgets.pilot.cost_usd = 1.90;
+	manifest.replacement_revision = {
+		predecessor_manifest_id: V1B_REPLACEMENT_PREDECESSOR_MANIFEST_ID,
+		conservative_prior_debit_usd: 0.10,
+		replacement_pilot_cost_cap_usd: 1.90,
+		predecessor_started_initial_runs: 1,
+		sequence_started_initial_runs_max: 25,
+		replacement_initial_runs_max: 24,
+		replacement_child_attempts_max: 8,
+	};
+	manifest.manifest_id = v1bManifestIdentity(manifest);
+	return manifest;
+}
+
+export function validateReplacementSequenceStateV1B(manifest: ExecutionManifestV1B, state: {
+	predecessor_manifest_id: string;
+	predecessor_started_run_ids: readonly string[];
+	replacement_started_run_ids: readonly string[];
+	replacement_child_attempts: number;
+	retry_same_run: boolean;
+	fallback: boolean;
+	automatic_replacement: boolean;
+}): void {
+	const revision = manifest.replacement_revision;
+	if (!revision || state.predecessor_manifest_id !== revision.predecessor_manifest_id) throw new Error("V1-B replacement predecessor mismatch");
+	const allStarted = [...state.predecessor_started_run_ids, ...state.replacement_started_run_ids];
+	if (new Set(allStarted).size !== allStarted.length) throw new Error("V1-B replacement sequence reused Run ID");
+	const replacementMembers = new Set(manifest.cells.map((cell) => cell.planned_run_id));
+	if (state.replacement_started_run_ids.some((runId) => !replacementMembers.has(runId)) || state.predecessor_started_run_ids.some((runId) => replacementMembers.has(runId))) throw new Error("V1-B replacement sequence Run membership drift");
+	if (state.predecessor_started_run_ids.length !== revision.predecessor_started_initial_runs || state.replacement_started_run_ids.length > revision.replacement_initial_runs_max || allStarted.length > revision.sequence_started_initial_runs_max) throw new Error("V1-B replacement sequence started-Run cap exceeded");
+	if (!Number.isSafeInteger(state.replacement_child_attempts) || state.replacement_child_attempts < 0 || state.replacement_child_attempts > revision.replacement_child_attempts_max) throw new Error("V1-B replacement child cap exceeded");
+	if (state.retry_same_run || state.fallback || state.automatic_replacement) throw new Error("V1-B replacement retry/fallback/replacement drift");
 }
 
 export function buildExecutionManifestV1B(projectRoot: string, options: {
@@ -199,14 +239,16 @@ export function buildExecutionManifestV1B(projectRoot: string, options: {
 }
 
 export function validateExecutionManifestV1B(manifest: ExecutionManifestV1B, projectRoot: string, options: { requireCurrentSource?: boolean } = {}): void {
-	if (manifest.schema_version !== "v1b-execution-manifest-v1" || manifest.experiment_id !== "v1-b-bounded-pilot" || manifest.experiment_revision !== 1 || manifest.pi_commit !== PI_COMMIT || manifest.pi_version !== "0.82.1") throw new Error("V1-B Manifest metadata invalid");
+	if (manifest.schema_version !== "v1b-execution-manifest-v1" || manifest.experiment_id !== "v1-b-bounded-pilot" || ![1, 2].includes(manifest.experiment_revision) || manifest.pi_commit !== PI_COMMIT || manifest.pi_version !== "0.82.1") throw new Error("V1-B Manifest metadata invalid");
 	if (manifest.manifest_id !== v1bManifestIdentity(manifest)) throw new Error("V1-B Manifest identity drift");
-	if (manifest.cells.length !== 24 || stableJson(manifest.cells) !== stableJson(v1bCells())) throw new Error("V1-B Manifest frozen 24-cell order drift");
+	if (manifest.cells.length !== 24 || stableJson(manifest.cells) !== stableJson(v1bCells(manifest.experiment_revision === 2))) throw new Error("V1-B Manifest frozen 24-cell order drift");
 	if (new Set(manifest.cells.map((cell) => cell.cell_id)).size !== 24 || new Set(manifest.cells.map((cell) => cell.planned_run_id)).size !== 24) throw new Error("V1-B Manifest duplicate membership");
 	if (manifest.real_execution_authorized !== (manifest.execution_mode === "stage2_real")) throw new Error("V1-B Manifest execution authority mismatch");
 	if (manifest.policy.alternate_model_fallback || manifest.policy.retry_same_run || manifest.policy.automatic_replacement) throw new Error("V1-B Manifest forbidden retry/fallback policy");
 	if (options.requireCurrentSource !== false && manifest.workbench_source_digest !== v1bSourceDigest(projectRoot)) throw new Error("V1-B Manifest source drift");
-	const expected = buildExecutionManifestV1B(projectRoot, { executionMode: manifest.execution_mode, executionBaselineCommit: manifest.execution_baseline_commit, realExecutionAuthorized: manifest.real_execution_authorized });
+	const expected = manifest.experiment_revision === 2
+		? buildReplacementExecutionManifestV1B(projectRoot, { executionBaselineCommit: manifest.execution_baseline_commit })
+		: buildExecutionManifestV1B(projectRoot, { executionMode: manifest.execution_mode, executionBaselineCommit: manifest.execution_baseline_commit, realExecutionAuthorized: manifest.real_execution_authorized });
 	if (stableJson(manifest) !== stableJson(expected)) throw new Error("V1-B complete frozen Manifest binding drift");
 }
 

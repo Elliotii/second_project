@@ -8,6 +8,8 @@ import type {
 	ExecutionCellV1B,
 	ExecutionManifestV1B,
 	FailureClassV1B,
+	PauseEvidenceV1B,
+	PausePhaseV1B,
 	RunResultV1,
 	TaskSpecV1,
 	TerminalCellEvidenceV1B,
@@ -22,6 +24,7 @@ import { readProtectedBytes } from "./pi/tool-profile.ts";
 import {
 	createOneRunProviderAuthorityV1B,
 	createPublicPiRunCompositionV1B,
+	V1BPauseBoundaryError,
 	type OneRunProviderAuthorityV1B,
 } from "./provider/fixed-provider-v1.ts";
 import { expectedSkillIdentityV1, loadExactOneSkillV1 } from "./skill/runtime-v1.ts";
@@ -49,6 +52,7 @@ export interface ExecuteV1RunCellOptions {
 		kind: "infrastructure_invalid" | "evidence_invalid" | "treatment_guardrail_failure" | "global_budget_stop" | "unknown" | "workspace_forbidden_marker";
 		cause_id: string;
 	};
+	deterministicPausePhase?: PausePhaseV1B;
 }
 
 export interface ExecuteV1RunCellResult {
@@ -61,9 +65,11 @@ export interface ExecuteV1RunCellResult {
 export class V1BTypedPauseError extends Error {
 	readonly failureClass: "global_budget_stop" | "paused_unclassified";
 	readonly causeId: string;
-	constructor(failureClass: "global_budget_stop" | "paused_unclassified", causeId: string) {
+	readonly pauseEvidenceRef?: { path: "pause-evidence.json"; sha256: string; size_bytes: number };
+	constructor(failureClass: "global_budget_stop" | "paused_unclassified", causeId: string, pauseEvidenceRef?: { path: "pause-evidence.json"; sha256: string; size_bytes: number }) {
 		super("V1-B execution paused at a typed boundary"); this.name = "V1BTypedPauseError";
 		this.failureClass = failureClass; this.causeId = causeId;
+		this.pauseEvidenceRef = pauseEvidenceRef;
 	}
 }
 
@@ -225,7 +231,16 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 	const runCaps = options.cell.arm === "C" ? options.manifest.budgets.arm_c_run : options.manifest.budgets.arm_a_or_b_run;
 	const counters = { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 };
 	const authority = stage1 ? createOneRunProviderAuthorityV1B({ authorized: true, resolver: { resolve: async () => { throw new Error("Stage 1 must not resolve credentials"); } } }) : options.realExecution!.authority;
-	const handle = createPublicPiRunCompositionV1B({ authority, factory: { create: (access) => createPiRunHandleV1({ mode: stage1 ? "stage1_fake" : "stage2_real", workspaceRoot, task, skill: loaded.skill, access, attemptCaps: options.manifest.budgets.initial_attempt, runCaps, pilotCaps: options.manifest.budgets.pilot, pilotUsage: options.pilotUsage, realCallCounters: counters, workspaceId }) } });
+	const handle = createPublicPiRunCompositionV1B({ authority, factory: { create: (access) => createPiRunHandleV1({
+		mode: stage1 ? "stage1_fake" : "stage2_real", workspaceRoot, task, skill: loaded.skill, access,
+		attemptCaps: options.manifest.budgets.initial_attempt, runCaps, pilotCaps: options.manifest.budgets.pilot,
+		pilotUsage: options.pilotUsage, realCallCounters: counters, workspaceId,
+		...(options.deterministicPausePhase ? { deterministicPausePhase: options.deterministicPausePhase } : {}),
+		onProviderRequestReserved: (event) => journal(options.runRoot, seq, "provider_request_reserved", {
+			manifest_id: options.manifest.manifest_id, cell_id: options.cell.cell_id, planned_run_id: options.cell.planned_run_id,
+			run_id: options.cell.planned_run_id, ...event,
+		}),
+	}) } });
 	const scenario = options.fakeScenario ?? defaultScenario(options.cell);
 	const initialAttemptId = `${options.cell.planned_run_id}-a1`;
 	const attempts: AttemptEvidenceV1B[] = [];
@@ -298,6 +313,26 @@ export async function executeV1RunCell(options: ExecuteV1RunCellOptions): Promis
 		writeOnceJson(options.runRoot, "terminal.json", terminalMarker);
 		if (stage1 && stableJson(counters) !== stableJson(ZERO_REAL_CALL_COUNTERS_V1B)) throw new Error("Stage 1 real-call counter changed");
 		return { run_result: runResult, terminal, run_root: options.runRoot, real_call_counters: counters };
+	} catch (error) {
+		const snapshot = error instanceof V1BPauseBoundaryError
+			? error.pause
+			: handle.createPauseSnapshot("other_bounded_runtime_failure");
+		const journalPrefix = readFileSync(resolve(options.runRoot, "journal.jsonl"));
+		const pauseEvidence: PauseEvidenceV1B = {
+			schema_version: 1, manifest_id: options.manifest.manifest_id, cell_id: options.cell.cell_id,
+			planned_run_id: options.cell.planned_run_id, run_id: options.cell.planned_run_id,
+			...snapshot, journal_prefix_sha256: sha256(journalPrefix), created_at: new Date().toISOString(),
+		};
+		assertSafeEvidenceBytes("pause-evidence.json", `${stableJson(pauseEvidence)}\n`);
+		const ref = writeOnceJson(options.runRoot, "pause-evidence.json", pauseEvidence);
+		const pauseRef = { path: "pause-evidence.json" as const, sha256: ref.sha256, size_bytes: ref.size_bytes };
+		journal(options.runRoot, seq, "attempt_paused", {
+			manifest_id: options.manifest.manifest_id, cell_id: options.cell.cell_id, planned_run_id: options.cell.planned_run_id,
+			run_id: options.cell.planned_run_id, attempt_id: pauseEvidence.attempt_id, phase: pauseEvidence.phase,
+			pause_evidence_ref: pauseRef, journal_prefix_sha256: pauseEvidence.journal_prefix_sha256,
+		});
+		assertSafeEvidenceBytes("journal.jsonl", readFileSync(resolve(options.runRoot, "journal.jsonl")));
+		throw new V1BTypedPauseError("paused_unclassified", `pause_${pauseEvidence.phase}`, pauseRef);
 	} finally {
 		await handle.close();
 	}

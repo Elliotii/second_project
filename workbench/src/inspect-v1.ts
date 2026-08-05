@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { formatSkillInvocation } from "@earendil-works/pi-agent-core";
 import type { ArtifactRefV0B, VerifierResultV0B } from "./contracts/v0b-types.ts";
@@ -7,10 +7,12 @@ import type {
 	BudgetReservationEvidenceV1B,
 	BudgetUsageV1B,
 	ExecutionManifestV1B,
+	PauseEvidenceV1B,
 	RunResultV1,
 	TerminalCellEvidenceV1B,
 	WorkspaceTreeRefV1B,
 } from "./contracts/v1-types.ts";
+import { V1B_PAUSE_PHASES } from "./contracts/v1-types.ts";
 import { validateArtifactRef } from "./evidence/artifacts.ts";
 import { digestObject, fileSha256, sha256, stableJson } from "./hash.ts";
 import { deriveManifestBindingsV1, validateExecutionManifestV1B } from "./experiment/v1.ts";
@@ -24,6 +26,10 @@ export interface InspectRunResultV1B {
 	errors: string[];
 	run_result: RunResultV1 | null;
 	terminal: TerminalCellEvidenceV1B | null;
+	pause_evidence: PauseEvidenceV1B | null;
+	pause_integrity_valid: boolean;
+	terminal_valid: boolean;
+	comparable: boolean;
 }
 
 interface TerminalMarkerV1B {
@@ -50,6 +56,59 @@ function addUsage(left: BudgetUsageV1B, right: BudgetUsageV1B): BudgetUsageV1B {
 function usageEqual(left: BudgetUsageV1B, right: BudgetUsageV1B): boolean { return USAGE_KEYS.every((key) => Math.abs(left[key] - right[key]) <= Number.EPSILON); }
 function capValue(caps: BudgetCapsV1B, key: keyof BudgetUsageV1B): number { return key === "active_execution_time_ms" ? caps.wall_time_ms : caps[key]; }
 function verifierStatusAllowed(value: string): boolean { return ["passed", "failed", "invalid", "infrastructure_error", "cancelled"].includes(value); }
+
+function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionManifestV1B; cell: ExecutionManifestV1B["cells"][number]; transitions: ReturnType<typeof readPilotLedgerV1B>; errors: string[] }): PauseEvidenceV1B | null {
+	const { pilotRoot, manifest, cell, transitions, errors } = input;
+	if (transitions.length !== 3 || transitions[0]?.state !== "planned" || transitions[1]?.state !== "started" || transitions[2]?.state !== "paused") throw new Error("Inspector paused ledger transition is not planned->started->paused");
+	const paused = transitions[2]!;
+	if (!paused.pause_evidence_ref || !paused.journal_sha256 || paused.run_result_ref !== null) throw new Error("Inspector paused ledger evidence relation missing");
+	const runRoot = resolve(pilotRoot, "runs", cell.planned_run_id);
+	for (const forbidden of ["terminal.json", "terminal-evidence.json", "run-result.json"]) if (existsSync(resolve(runRoot, forbidden))) errors.push(`paused Run contains forbidden terminal evidence: ${forbidden}`);
+	errors.push(...validateArtifactRef(runRoot, refEnvelope(paused.pause_evidence_ref)).map((error) => `pause evidence: ${error}`));
+	const pausePath = resolve(runRoot, paused.pause_evidence_ref.path);
+	const journalPath = resolve(runRoot, "journal.jsonl");
+	const pause = readJson<PauseEvidenceV1B>(pausePath);
+	const journalBytes = readFileSync(journalPath);
+	assertActualBytesSafe("pause-evidence.json", readFileSync(pausePath));
+	assertActualBytesSafe("paused journal.jsonl", journalBytes);
+	assertActualBytesSafe("paused ledger entry", Buffer.from(stableJson(paused)));
+	if (fileSha256(journalPath) !== paused.journal_sha256) errors.push("paused ledger journal digest drift");
+	if (pause.schema_version !== 1 || pause.manifest_id !== manifest.manifest_id || pause.cell_id !== cell.cell_id || pause.planned_run_id !== cell.planned_run_id || pause.run_id !== cell.planned_run_id) errors.push("pause evidence Manifest/cell/Run identity drift");
+	if (!V1B_PAUSE_PHASES.includes(pause.phase)) errors.push("pause evidence phase enum invalid");
+	if (paused.cause_id !== `pause_${pause.phase}`) errors.push("pause evidence typed cause relation drift");
+	const raw = journalBytes.toString("utf8");
+	const lines = raw.split(/\r?\n/).filter(Boolean);
+	const events = lines.map((line) => JSON.parse(line) as { seq: number; type: string; data: Record<string, any> });
+	if (events.some((event, index) => event.seq !== index + 1)) errors.push("paused journal sequence drift");
+	const pauseEvents = events.filter((event) => event.type === "attempt_paused");
+	if (pauseEvents.length !== 1 || events.at(-1)?.type !== "attempt_paused") errors.push("attempt_paused journal event missing/duplicated/reordered");
+	const prefix = `${lines.slice(0, -1).join("\n")}${lines.length > 1 ? "\n" : ""}`;
+	if (sha256(prefix) !== pause.journal_prefix_sha256) errors.push("pause evidence journal-prefix digest drift");
+	const last = pauseEvents[0]?.data;
+	if (!last || last.manifest_id !== manifest.manifest_id || last.cell_id !== cell.cell_id || last.planned_run_id !== cell.planned_run_id || last.run_id !== cell.planned_run_id || last.attempt_id !== pause.attempt_id || last.phase !== pause.phase || stableJson(last.pause_evidence_ref) !== stableJson(paused.pause_evidence_ref) || last.journal_prefix_sha256 !== pause.journal_prefix_sha256) errors.push("attempt_paused identity/digest relation drift");
+	const attemptStarted = events.filter((event) => event.type === "attempt_started").at(-1)?.data;
+	if (!attemptStarted || attemptStarted.attempt_id !== pause.attempt_id) errors.push("pause evidence Attempt identity drift");
+	const reservations = events.filter((event) => event.type === "provider_request_reserved");
+	if (reservations.length > 1 || reservations.some((event, index) => event.data.request_ordinal !== index + 1)) errors.push("paused Run violates single-request authority");
+	if (pause.request_ordinal !== (reservations.at(-1)?.data.request_ordinal ?? null)) errors.push("pause request ordinal/reservation relation drift");
+	for (const event of reservations) {
+		if (event.data.phase !== "provider_request_reserved_before_dispatch") errors.push("provider reservation phase invalid");
+		for (const key of ["provider_requests", "network_calls", "provider_calls", "model_calls"] as const) {
+			const transition = event.data.counter_transition?.[key];
+			if (!transition || !Number.isSafeInteger(transition.before) || !Number.isSafeInteger(transition.after) || transition.before < 0 || transition.after < transition.before || transition.after - transition.before > 1) errors.push(`provider reservation ${key} counter transition invalid`);
+		}
+	}
+	for (const value of Object.values(pause.counter_snapshot)) if (!Number.isSafeInteger(value) || value < 0 || value > 1) errors.push("pause counter snapshot invalid");
+	if (pause.pending_provider_reservation) {
+		if (reservations.length !== 1 || pause.pending_provider_reservation.reservation_id !== reservations[0]!.data.reservation?.reservation_id) errors.push("pending reservation/journal relation drift");
+		const pending = pause.pending_provider_reservation;
+		if (pause.conservative_usage_charge.provider_requests !== pending.provider_requests || pause.conservative_usage_charge.tokens !== pending.tokens || Math.abs(pause.conservative_usage_charge.cost_usd - pending.cost_usd) > Number.EPSILON) errors.push("conservative charge does not equal pending reservation");
+	} else if (!usageEqual(pause.conservative_usage_charge, zeroUsage()) || reservations.length !== 0) errors.push("pre-reservation pause carries dispatch/reservation charge");
+	if (!usageEqual(pause.budget_usage_after_conservative_charge, addUsage(pause.accumulated_known_usage, pause.conservative_usage_charge))) errors.push("pause conservative accounting chain invalid");
+	if (["before_credential_resolution", "credential_resolution_failure_before_dispatch", "after_credential_before_provider_request_reservation"].includes(pause.phase) && pause.pending_provider_reservation !== null) errors.push("pre-reservation pause phase carries pending reservation");
+	if (["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(pause.phase) && pause.pending_provider_reservation === null) errors.push("post-reservation pause phase lacks pending reservation");
+	return pause;
+}
 
 function assertActualBytesSafe(label: string, bytes: Buffer): void {
 	if (FORBIDDEN_PERSISTED_EVIDENCE_V1B.test(bytes.toString("utf8"))) throw new Error(`Inspector secret/reasoning byte scan rejected ${label}`);
@@ -152,12 +211,17 @@ export function inspectV1RunCell(options: { projectRoot: string; pilotRoot: stri
 	const errors: string[] = [];
 	let runResult: RunResultV1 | null = null;
 	let terminal: TerminalCellEvidenceV1B | null = null;
+	let pauseEvidence: PauseEvidenceV1B | null = null;
 	try {
 		const manifest = readJson<ExecutionManifestV1B>(resolve(options.pilotRoot, "manifest.json")); validateExecutionManifestV1B(manifest, options.projectRoot);
 		const bindings = deriveManifestBindingsV1(options.projectRoot);
 		const ledger = readPilotLedgerV1B(options.pilotRoot); validatePilotLedgerV1B(manifest, ledger);
 		const cell = manifest.cells.find((value) => value.planned_run_id === options.plannedRunId); if (!cell) throw new Error("Inspector Run is not a Manifest member");
 		const transitions = ledger.filter((entry) => entry.cell_id === cell.cell_id);
+		if (transitions.at(-1)?.state === "paused" && transitions.some((entry) => entry.state === "started")) {
+			pauseEvidence = inspectPausedRunV1B({ pilotRoot: options.pilotRoot, manifest, cell, transitions, errors });
+			return { integrity_valid: errors.length === 0, errors, run_result: null, terminal: null, pause_evidence: errors.length === 0 ? pauseEvidence : null, pause_integrity_valid: errors.length === 0, terminal_valid: false, comparable: false };
+		}
 		if (transitions.length !== 3 || transitions[0]?.state !== "planned" || transitions[1]?.state !== "started" || !["terminal", "invalid"].includes(transitions[2]?.state ?? "")) throw new Error("Inspector ledger transition is not planned->started->terminal|invalid");
 		if (transitions[2]!.run_result_ref !== `runs/${cell.planned_run_id}/run-result.json`) throw new Error("Inspector ledger RunResult relation drift");
 		const runRoot = resolve(options.pilotRoot, "runs", cell.planned_run_id);
@@ -218,7 +282,7 @@ export function inspectV1RunCell(options: { projectRoot: string; pilotRoot: stri
 		if (runResult.evidence.provider_requests !== terminal.budget_usage.provider_requests || runResult.evidence.tool_calls !== terminal.budget_usage.tool_calls || runResult.evidence.tokens !== terminal.budget_usage.tokens || runResult.evidence.wall_time_ms !== terminal.budget_usage.active_execution_time_ms || runResult.evidence.cost_usd !== terminal.budget_usage.cost_usd) errors.push("RunResult budget relation drift");
 		validateTaxonomy(terminal, runResult, transitions[2]!.state, errors); validateReservations(terminal, manifest, errors);
 	} catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
-	return { integrity_valid: errors.length === 0, errors, run_result: errors.length === 0 ? runResult : null, terminal: errors.length === 0 ? terminal : null };
+	return { integrity_valid: errors.length === 0, errors, run_result: errors.length === 0 ? runResult : null, terminal: errors.length === 0 ? terminal : null, pause_evidence: null, pause_integrity_valid: false, terminal_valid: errors.length === 0, comparable: errors.length === 0 && terminal?.exclusion_preauthorized !== true };
 }
 
 export function aggregatePilotV1B(options: { projectRoot: string; pilotRoot: string }) {
@@ -231,7 +295,15 @@ export function aggregatePilotV1B(options: { projectRoot: string; pilotRoot: str
 	let pilotUsage = zeroUsage();
 	for (const cell of manifest.cells) {
 		by_arm[cell.arm].planned++; const transitions = ledger.filter((entry) => entry.cell_id === cell.cell_id); if (transitions.some((entry) => entry.state === "started")) by_arm[cell.arm].started++;
-		const final = transitions.at(-1)?.state; if (final !== "terminal" && final !== "invalid") continue;
+		const final = transitions.at(-1)?.state;
+		if (final === "paused" && transitions.some((entry) => entry.state === "started")) {
+			const inspected = inspectV1RunCell({ projectRoot: options.projectRoot, pilotRoot: options.pilotRoot, plannedRunId: cell.planned_run_id });
+			if (!inspected.integrity_valid || !inspected.pause_integrity_valid || inspected.terminal_valid || inspected.comparable || !inspected.pause_evidence) throw new Error(`Pilot aggregate rejected paused ${cell.cell_id}: ${inspected.errors.join("; ")}`);
+			for (const key of Object.keys(totals) as Array<keyof typeof totals>) totals[key] += inspected.pause_evidence.budget_usage_after_conservative_charge[key];
+			pilotUsage = addUsage(pilotUsage, inspected.pause_evidence.budget_usage_after_conservative_charge);
+			continue;
+		}
+		if (final !== "terminal" && final !== "invalid") continue;
 		const inspected = inspectV1RunCell({ projectRoot: options.projectRoot, pilotRoot: options.pilotRoot, plannedRunId: cell.planned_run_id }); if (!inspected.integrity_valid || !inspected.terminal) throw new Error(`Pilot aggregate rejected ${cell.cell_id}: ${inspected.errors.join("; ")}`);
 		const terminal = inspected.terminal; terminals.set(cell.cell_id, terminal);
 		const pilotRecords = terminal.reservations.filter((entry) => entry.level === "pilot"); if (!usageEqual(pilotRecords[0]!.before, pilotUsage)) throw new Error(`Pilot reservation chain drift before ${cell.cell_id}`); pilotUsage = pilotRecords.at(-1)!.after;

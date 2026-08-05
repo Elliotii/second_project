@@ -1,3 +1,5 @@
+import type { PauseSnapshotV1B } from "../contracts/v1-types.ts";
+
 export const DEEPSEEK_FIXED_PROFILE_V1 = Object.freeze({
 	provider: "deepseek", model: "deepseek-v4-flash", endpoint: "https://api.deepseek.com/chat/completions",
 	alternate_model: false, fallback: false, retry: false, requires_v1b_preflight_revalidation: true,
@@ -75,6 +77,15 @@ export class FixedProviderBoundaryErrorV1B extends Error {
 	constructor() {
 		super("V1-B fixed provider boundary failed");
 		this.name = "FixedProviderBoundaryErrorV1B";
+	}
+}
+
+export class V1BPauseBoundaryError extends Error {
+	readonly pause: PauseSnapshotV1B;
+	constructor(pause: PauseSnapshotV1B) {
+		super("V1-B execution paused at a typed sanitized boundary");
+		this.name = "V1BPauseBoundaryError";
+		this.pause = structuredClone(pause);
 	}
 }
 

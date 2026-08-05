@@ -19,6 +19,9 @@ import type {
 	BudgetReservationEvidenceV1B,
 	BudgetUsageV1B,
 	InitialDispatchEvidenceV1B,
+	PausePhaseV1B,
+	PauseSnapshotV1B,
+	ProviderRequestReservationEventV1B,
 	TaskSpecV1,
 } from "../contracts/v1-types.ts";
 import { sha256, stableJson } from "../hash.ts";
@@ -28,6 +31,7 @@ import { SYSTEM_PROMPT } from "../prompts/base.ts";
 import {
 	DEEPSEEK_FIXED_PROFILE_V1,
 	FixedProviderBoundaryErrorV1B,
+	V1BPauseBoundaryError,
 	assertKnownUsageV1B,
 	type OneRunProviderAccessV1B,
 	type PublicPiRunHandleV1B,
@@ -62,6 +66,7 @@ export interface PiRunHandleV1 extends PublicPiRunHandleV1B {
 	reserveVerifier(): void;
 	reserveChild(): void;
 	takeReservations(): BudgetReservationEvidenceV1B[];
+	createPauseSnapshot(phase: PausePhaseV1B): PauseSnapshotV1B;
 	usage(): { run: BudgetUsageV1B; pilot: BudgetUsageV1B };
 	debugIdentity(): { harness_instance_id: string | null; session_id: string; workspace_id: string; closed: boolean };
 }
@@ -77,6 +82,8 @@ export interface PiRunHandleOptionsV1 {
 	pilotCaps: BudgetCapsV1B;
 	pilotUsage: BudgetUsageV1B;
 	realCallCounters: { credential_reads: number; network_calls: number; provider_calls: number; model_calls: number };
+	onProviderRequestReserved?: (event: ProviderRequestReservationEventV1B) => void;
+	deterministicPausePhase?: PausePhaseV1B;
 	sessionId?: string;
 	workspaceId: string;
 }
@@ -160,7 +167,7 @@ class ThreeLevelBudgetV1B {
 		return records;
 	}
 
-	reserveProvider(): void {
+	reserveProvider(): BudgetReservationEvidenceV1B {
 		if (this.pendingProvider) throw new Error("concurrent provider reservation rejected");
 		const tokens = Math.min(this.attemptCaps.tokens - this.attempt.tokens, this.runCaps.tokens - this.run.tokens, this.pilotCaps.tokens - this.pilot.tokens);
 		const cost = Math.min(this.attemptCaps.cost_usd - this.attempt.cost_usd, this.runCaps.cost_usd - this.run.cost_usd, this.pilotCaps.cost_usd - this.pilot.cost_usd);
@@ -168,6 +175,29 @@ class ThreeLevelBudgetV1B {
 		const reserved = emptyBudgetUsageV1B(); reserved.provider_requests = 1; reserved.tokens = tokens; reserved.cost_usd = cost;
 		const actual = emptyBudgetUsageV1B(); actual.provider_requests = 1;
 		this.pendingProvider = { records: this.reserveAll("provider_request", reserved, actual) };
+		return structuredClone(this.pendingProvider.records.find((record) => record.level === "run")!);
+	}
+
+	createPauseSnapshot(phase: PausePhaseV1B, identity: { attempt_id: string; session_id: string; workspace_id: string; request_ordinal: number | null }, counters: PiRunHandleOptionsV1["realCallCounters"]): PauseSnapshotV1B {
+		const pendingRun = this.pendingProvider?.records.find((record) => record.level === "run") ?? null;
+		const accumulatedKnown = pendingRun ? cloneUsage(pendingRun.before) : this.runUsage();
+		const conservativeCharge = emptyBudgetUsageV1B();
+		if (this.pendingProvider) {
+			const proposals = this.pendingProvider.records.map((record) => this.propose(record.level, record.kind, record.before, record.cap, record.reserved, record.reserved, record.scope_id, record.reservation_id));
+			for (const proposal of proposals) {
+				const target = proposal.level === "attempt" ? this.attempt : proposal.level === "run" ? this.run : this.pilot;
+				Object.assign(target, proposal.after);
+				const index = this.reservations.findIndex((record) => record.reservation_id === proposal.reservation_id && record.level === proposal.level);
+				this.reservations[index] = proposal;
+			}
+			Object.assign(conservativeCharge, pendingRun!.reserved);
+			this.pendingProvider = null;
+		}
+		return {
+			phase, ...identity, counter_snapshot: structuredClone(counters), accumulated_known_usage: accumulatedKnown,
+			pending_provider_reservation: pendingRun ? { reservation_id: pendingRun.reservation_id, provider_requests: pendingRun.reserved.provider_requests, tokens: pendingRun.reserved.tokens, cost_usd: pendingRun.reserved.cost_usd } : null,
+			conservative_usage_charge: conservativeCharge, budget_usage_after_conservative_charge: this.runUsage(),
+		};
 	}
 
 	commitProvider(message: AssistantMessage): void {
@@ -220,6 +250,7 @@ class ThreeLevelBudgetV1B {
 	attemptUsage(): BudgetUsageV1B { return cloneUsage(this.attempt); }
 	runUsage(): BudgetUsageV1B { return cloneUsage(this.run); }
 	pilotUsage(): BudgetUsageV1B { return cloneUsage(this.pilot); }
+	hasPendingProvider(): boolean { return this.pendingProvider !== null; }
 	takeReservations(): BudgetReservationEvidenceV1B[] { const result = structuredClone(this.reservations); this.reservations.length = 0; return result; }
 }
 
@@ -280,12 +311,33 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 	let offTool: (() => void) | undefined;
 	let pendingRequestModel: unknown;
 	let pendingRequestOptions: unknown;
+	let activeAttemptId = "attempt-unset";
+	let pendingPauseSnapshot: PauseSnapshotV1B | null = null;
+	const pause = (phase: PausePhaseV1B): V1BPauseBoundaryError => {
+		if (pendingPauseSnapshot) return new V1BPauseBoundaryError(pendingPauseSnapshot);
+		pendingPauseSnapshot = budget.createPauseSnapshot(phase, { attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId, request_ordinal: currentProviderRequests === 0 ? null : currentProviderRequests }, options.realCallCounters);
+		return new V1BPauseBoundaryError(pendingPauseSnapshot);
+	};
 
 	const attach = (value: AgentHarness<any, Skill, any, any>): void => {
 		harness = value;
 		harnessInstanceId = `v1b-harness-${randomUUID()}`;
 		offProvider = value.on("before_provider_request", (event) => {
-			budget.reserveProvider(); currentProviderRequests++;
+			const before = { ...options.realCallCounters };
+			const reservation = budget.reserveProvider(); currentProviderRequests++;
+			const externalDelta = options.mode === "stage2_real" ? 1 : 0;
+			options.onProviderRequestReserved?.({
+				schema_version: 1, attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId, request_ordinal: currentProviderRequests,
+				phase: "provider_request_reserved_before_dispatch",
+				counter_transition: {
+					provider_requests: { before: currentProviderRequests - 1, after: currentProviderRequests },
+					network_calls: { before: before.network_calls, after: before.network_calls + externalDelta },
+					provider_calls: { before: before.provider_calls, after: before.provider_calls + externalDelta },
+					model_calls: { before: before.model_calls, after: before.model_calls + externalDelta },
+				},
+				reservation: { reservation_id: reservation.reservation_id, token_cap: reservation.reserved.tokens, cost_usd_cap: reservation.reserved.cost_usd },
+			});
+			if (options.deterministicPausePhase === "after_provider_request_reservation_usage_unavailable") throw pause(options.deterministicPausePhase);
 			if (options.mode === "stage2_real") { options.realCallCounters.network_calls++; options.realCallCounters.provider_calls++; options.realCallCounters.model_calls++; }
 			pendingRequestModel = projectSafeEvidenceV1B(event.model);
 			pendingRequestOptions = projectSafeEvidenceV1B(event.streamOptions);
@@ -306,7 +358,10 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 		});
 		offTool = value.on("tool_call", () => { budget.reserveTool(); currentToolCalls++; return undefined; });
 		unsubscribe = value.subscribe((event) => {
-			if (event.type === "message_end" && event.message.role === "assistant") budget.commitProvider(event.message);
+			if (event.type === "message_end" && event.message.role === "assistant") {
+				if (options.deterministicPausePhase === "invalid_or_unknown_usage_after_provider_response") throw pause(options.deterministicPausePhase);
+				try { budget.commitProvider(event.message); } catch { throw pause("invalid_or_unknown_usage_after_provider_response"); }
+			}
 			if (event.type === "settled") settledObserved = true;
 		});
 	};
@@ -326,16 +381,24 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 	};
 
 	const createRealHarness = async (): Promise<void> => {
-		const credential = await options.access.resolveCredential();
+		if (options.deterministicPausePhase === "before_credential_resolution") throw pause(options.deterministicPausePhase);
+		let credential: string;
+		try { credential = await options.access.resolveCredential(); } catch { throw pause("credential_resolution_failure_before_dispatch"); }
 		options.realCallCounters.credential_reads++;
-		const credentials = new InMemoryCredentialStore();
-		await credentials.modify(DEEPSEEK_FIXED_PROFILE_V1.provider, async () => ({ type: "api_key", key: credential }));
-		const models = createModels({ credentials });
-		const provider = deepseekProvider();
-		models.setProvider(provider);
-		const model = models.getModel(DEEPSEEK_FIXED_PROFILE_V1.provider, DEEPSEEK_FIXED_PROFILE_V1.model);
-		if (!model) throw new Error("fixed DeepSeek model missing");
-		attach(new AgentHarness({ models, session, model, resources: { skills: [options.skill] }, tools: profile.tools, toolContext: profile.context, systemPrompt: SYSTEM_PROMPT, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: options.attemptCaps.wall_time_ms } }));
+		try {
+			const credentials = new InMemoryCredentialStore();
+			await credentials.modify(DEEPSEEK_FIXED_PROFILE_V1.provider, async () => ({ type: "api_key", key: credential }));
+			const models = createModels({ credentials });
+			const provider = deepseekProvider();
+			models.setProvider(provider);
+			const model = models.getModel(DEEPSEEK_FIXED_PROFILE_V1.provider, DEEPSEEK_FIXED_PROFILE_V1.model);
+			if (!model) throw new Error("fixed DeepSeek model missing");
+			attach(new AgentHarness({ models, session, model, resources: { skills: [options.skill] }, tools: profile.tools, toolContext: profile.context, systemPrompt: SYSTEM_PROMPT, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: options.attemptCaps.wall_time_ms } }));
+			if (options.deterministicPausePhase === "after_credential_before_provider_request_reservation") throw pause(options.deterministicPausePhase);
+		} catch (error) {
+			if (error instanceof V1BPauseBoundaryError) throw error;
+			throw pause("after_credential_before_provider_request_reservation");
+		}
 	};
 
 	if (options.mode === "stage1_fake") createFakeHarness();
@@ -345,10 +408,11 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 		workspaceId: options.workspaceId,
 		async runAttempt(input) {
 			if (closed || running) throw new FixedProviderBoundaryErrorV1B();
-			running = true; budget.beginAttempt(input.attemptId); currentProviderRequests = 0; currentToolCalls = 0; settledObserved = false; initialDispatch = null;
+			running = true; activeAttemptId = input.attemptId; budget.beginAttempt(input.attemptId); currentProviderRequests = 0; currentToolCalls = 0; settledObserved = false; initialDispatch = null; pendingPauseSnapshot = null;
 			const started = Date.now();
 			try {
 				if (!harness) await createRealHarness();
+				if (options.deterministicPausePhase === "other_bounded_runtime_failure") throw pause(options.deterministicPausePhase);
 				if (options.mode === "stage1_fake") {
 					const responses = fakeResponses(input.fakeMode ?? "fail", input.attemptId, input.fakePatch);
 					registration!.setResponses(responses.map((response) => (context, requestOptions, _state, requestModel) => {
@@ -367,8 +431,10 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 				const duration = Math.max(0, Date.now() - started); budget.finishAttempt(duration);
 				const usage = budget.attemptUsage();
 				return { settled: true, attempt_id: input.attemptId, final_text: assistantText(response), provider_requests: currentProviderRequests, tool_calls: currentToolCalls, tokens: usage.tokens, cost_usd: usage.cost_usd, wall_time_ms: duration, session_entry_count: (await session.getEntries()).length, initial_dispatch: initialDispatch, reservations: budget.takeReservations() };
-			} catch {
-				throw new FixedProviderBoundaryErrorV1B();
+			} catch (error) {
+				if (error instanceof V1BPauseBoundaryError) throw error;
+				if (pendingPauseSnapshot) throw new V1BPauseBoundaryError(pendingPauseSnapshot);
+				throw pause(budget.hasPendingProvider() ? "after_provider_request_reservation_usage_unavailable" : "other_bounded_runtime_failure");
 			} finally {
 				running = false;
 			}
@@ -376,6 +442,7 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 		reserveVerifier: () => budget.reserveVerifier(),
 		reserveChild: () => budget.reserveChild(),
 		takeReservations: () => budget.takeReservations(),
+		createPauseSnapshot: (phase) => budget.createPauseSnapshot(phase, { attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId, request_ordinal: currentProviderRequests === 0 ? null : currentProviderRequests }, options.realCallCounters),
 		usage: () => ({ run: budget.runUsage(), pilot: budget.pilotUsage() }),
 		async close() {
 			if (running) throw new FixedProviderBoundaryErrorV1B();
