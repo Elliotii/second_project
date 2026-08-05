@@ -1,7 +1,7 @@
 # V1-C Goal Contract — Bounded Budget-stop Correction and Comparison Completion
 
 ```yaml
-status: accepted_activated_preinitialization_pause_accepted_one_time_continuation_authorized
+status: accepted_activated_aggregate_normalizer_reaudit_accepted_fresh_full_pilot_restart_authorized
 goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 version: V1
 project: Agent Harness Reliability Workbench
@@ -43,12 +43,30 @@ full_pilot_first_execution_disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZAT
 full_pilot_first_execution_initial_cells_started: 0
 full_pilot_first_execution_real_calls: 0
 full_pilot_first_execution_cost_usd: 0
-preinitialization_continuation_authorized: one_and_only_one
-preinitialization_continuation_baseline_commit: resulting_HEAD_of_this_revision
+preinitialization_continuation_authorized: consumed_after_mechanical_launch_correction
+preinitialization_continuation_baseline_commit: a751e57e6fd22ef278eb0ddcd01aa52932fd19d7
 preinitialization_continuation_helper_sha256: 2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438
-further_preinitialization_continuation_authorized: false
+preinitialization_continuation_session_id: 019fd369-e5b9-7373-8f6c-1a93993fcf80
+preinitialization_mechanical_correction: accepted_double_dot_slash_import_specifier
+preinitialization_continuation_initial_cells_completed: 4
+preinitialization_continuation_child_attempts: 1
+preinitialization_continuation_cost_usd: 0.0038111696
+preinitialization_continuation_disposition: PAUSE_AFTER_CELL_04_AGGREGATE_NORMALIZER_DEFECT
+further_preinitialization_continuation_authorized: not_applicable_mechanical_preproduct_errors_do_not_consume_pilot_retry
 full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution.json
 full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
+partial_pilot_status: immutable_superseded_diagnostic_prefix_excluded_from_formal_comparison
+aggregate_normalizer_candidate_commit: 5b87b98e431663595e9bd26a54589defbabcd3b1
+aggregate_normalizer_candidate_tree: a238d838c4197aae1ef35dd70507b680160e0c65
+aggregate_normalizer_reaudit_disposition: PASS_FOCUSED_REAUDIT
+restart_full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution-r2.json
+restart_full_pilot_manifest_id: c1587d04277a327bf0bd54bcf5abf6194663513f7c5960d3425bcbd322e78e14
+restart_execution_baseline_commit: 5b87b98e431663595e9bd26a54589defbabcd3b1
+restart_workbench_source_digest: 2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63ff10e6d6ff08c7ad3
+restart_pilot_root: .runs/v1-c/full-pilot-r2/pilot
+restart_control_baseline_commit: resulting_HEAD_of_this_revision
+restart_initial_cells_started: 0
+restart_authorized_by_user: true
 full_pilot_initial_cells: 24
 full_pilot_child_attempts_max: 8
 full_pilot_remaining_hard_cap_usd: 1.90
@@ -597,6 +615,59 @@ V1-C 只有在以下全部满足时才可按完成处置：
 
 后续 Candidate、Audit、Execution Baseline、Credential/Network/Real Calls、Canary 和 Full Pilot 仍按
 Gates 分别授权；前一 Gate 的权限不会自动流入后一 Gate。
+
+## 13A. Binding 2026-08-06 Aggregate-normalizer Correction and Restart Amendment
+
+This additive amendment supersedes only the earlier rule that any second
+pre-product launch failure automatically closes V1-C. It does not change the
+24-cell design, treatments, tasks, budgets, Provider/model, Verifier, Recovery,
+Pi route, or V2 prohibition.
+
+Accepted facts:
+
+- the missing `./` in the preload module specifier was a mechanical launch
+  error before Credential, Pilot state, network, Provider, or model access;
+- after that mechanical correction, the original Pilot produced four terminal,
+  integrity-valid and comparable Runs, including one real C-arm bounded
+  Recovery, for exact Pilot cost USD `0.0038111696`;
+- the old Start Prompt digest containing `...e84bf56...` was a one-character
+  transcription error; the historical runtime evidence consistently binds
+  `4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604`;
+- the tracked aggregate normalizer omitted the duplicate frozen treatment under
+  `provider_payload.messages`;
+- Candidate `5b87b98e431663595e9bd26a54589defbabcd3b1`, tree
+  `a238d838c4197aae1ef35dd70507b680160e0c65`, corrects only that analyzer
+  boundary and passed `PASS_FOCUSED_REAUDIT` with no P1/P2/P3 finding;
+- the corrected Workbench source digest is
+  `2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63ff10e6d6ff08c7ad3`.
+
+Binding continuation rules:
+
+1. Mechanical pre-product command/path errors with zero side effects may be
+   corrected in place and do not consume a Pilot retry or force closeout.
+2. The four historical Runs remain immutable diagnostic evidence but are not
+   members of the formal restarted comparison denominator.
+3. The restarted comparison uses additive Manifest
+   `fixtures/manifests/v1/v1c-full-pilot-execution-r2.json`, Manifest ID
+   `c1587d04277a327bf0bd54bcf5abf6194663513f7c5960d3425bcbd322e78e14`,
+   and a new Pilot root `.runs/v1-c/full-pilot-r2/pilot`.
+4. The canonical Pilot identity is the new immutable Manifest ID. Repeated
+   cell/run labels remain scoped by that Manifest and the disjoint Pilot root;
+   historical artifacts are never overwritten or merged.
+5. The prior real Canary remains accepted because the correction changes only
+   the read-only aggregate analyzer and its test; Run production, Provider,
+   budget, Tool, Session, Workspace, Verifier, Outcome, and Recovery bytes are
+   unchanged. No second real Canary is required.
+6. A fresh no-source-edit Execution Session must start at a Main-owned clean
+   baseline, execute one Manifest cell per process, and stop on the existing
+   product/evidence/secret/budget Pause Conditions.
+7. A pre-product mechanical error is corrected rather than counted as a Run;
+   a failure after Credential resolution, Pilot initialization, dispatch, or
+   evidence mutation remains governed by the existing fail-closed rules.
+
+The user explicitly accepted this corrected route and authorized continuation.
+V1-C remains active until the restarted 24-cell aggregate is accepted or a
+material Pause Condition makes the comparison genuinely non-completable.
 
 ## 14. User Decisions Required
 

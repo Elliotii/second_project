@@ -5,18 +5,18 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_full_pilot_preinitialization_pause_accepted_one_time_continuation_authorized
-  status: V1_C_FULL_PILOT_UNSTARTED_CONTINUATION_BASELINE_PENDING_V2_NOT_AUTHORIZED
+  phase: v1_c_corrected_full_pilot_restart_baseline_preparation
+  status: V1_C_AGGREGATE_NORMALIZER_REAUDIT_ACCEPTED_FRESH_24_CELL_PILOT_PENDING_V2_NOT_AUTHORIZED
 
 active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
 last_executed_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_preinitialization_pause_accepted_continuation_authorized
+  status: active_corrected_full_pilot_restart_pending
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
-  paused_authorization_baseline_commit: e1dc93ffd65edca04d47d493b24fda833151e685
-  continuation_baseline_commit: resulting_HEAD_of_this_revision
+  disposition: PASS_V1_C_AGGREGATE_NORMALIZER_FOCUSED_REAUDIT
+  prior_partial_pilot_baseline_commit: a751e57e6fd22ef278eb0ddcd01aa52932fd19d7
+  corrected_candidate_commit: 5b87b98e431663595e9bd26a54589defbabcd3b1
 
 last_closed_goal:
   id: V1_B_FROZEN_BOUNDED_REAL_PILOT
@@ -34,7 +34,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_one_time_preinitialization_continuation_authorized_not_started
+  status: active_fresh_24_cell_pilot_restart_baseline_pending
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -384,6 +384,11 @@ workspace:
   v1_c_canary_actual_cost_usd: 0.00042865199999999996
   v1_c_full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
   v1_c_full_pilot_authorization_baseline_commit: resulting_HEAD_of_this_revision
+  v1_c_aggregate_normalizer_candidate_commit: 5b87b98e431663595e9bd26a54589defbabcd3b1
+  v1_c_aggregate_normalizer_candidate_tree: a238d838c4197aae1ef35dd70507b680160e0c65
+  v1_c_aggregate_normalizer_reaudit: PASS_FOCUSED_REAUDIT
+  v1_c_corrected_workbench_source_digest: 2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63ff10e6d6ff08c7ad3
+  v1_c_restart_manifest_id: c1587d04277a327bf0bd54bcf5abf6194663513f7c5960d3425bcbd322e78e14
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -447,14 +452,14 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: active_v1_c_full_pilot_authorized_not_started
+  status: active_v1_c_corrected_full_pilot_restart_pending
   prior_status: concluded_inconclusive_not_completed
   active_goal: true
   current_candidate_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
   formal_goal_contract_created: true
   activation_authorized: consumed_for_V1_A
   activation_authorized_at: 2026-08-03
-  implementation_owner: fresh_v1_c_full_pilot_execution_session
+  implementation_owner: future_fresh_v1_c_full_pilot_restart_execution_session
   implementation_authorized: consumed_completed_v1_c_stage_1
   implementation_started: true
   implementation_completed: true
@@ -613,7 +618,7 @@ v1:
   V1_B_v2_authorized: false
   V1_C_precontract_research: docs/reports/V1_C_PRECONTRACT_RESEARCH.md
   V1_C_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  V1_C_contract_status: accepted_activated_preinitialization_pause_accepted_one_time_continuation_authorized
+  V1_C_contract_status: accepted_activated_aggregate_normalizer_reaudit_accepted_fresh_pilot_restart_pending
   V1_C_contract_accepted: true
   V1_C_activation_authorized: true
   V1_C_control_baseline_commit_authorized: consumed
@@ -647,20 +652,35 @@ v1:
   V1_C_real_canary_tokens: 12147
   V1_C_full_pilot_authorized: true
   V1_C_full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
-  V1_C_full_pilot_started: false
+  V1_C_full_pilot_started: partial_prefix_4_of_24_superseded_for_formal_comparison
   V1_C_full_pilot_preinitialization_session_id: 019fd348-8055-75b2-8139-ab43a37fdc26
   V1_C_full_pilot_preinitialization_disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
   V1_C_full_pilot_preinitialization_root_cause: session_local_opaque_preload_semantics_drift
   V1_C_full_pilot_preinitialization_initial_cells_started: 0
   V1_C_full_pilot_preinitialization_real_calls: 0
   V1_C_full_pilot_preinitialization_cost_usd: 0
-  V1_C_full_pilot_continuation_authorized: one_and_only_one
-  V1_C_full_pilot_continuation_baseline_commit: resulting_HEAD_of_this_revision
-  V1_C_full_pilot_continuation_owner: fresh_no_source_edit_execution_session
+  V1_C_full_pilot_continuation_authorized: consumed_after_mechanical_launch_correction
+  V1_C_full_pilot_continuation_baseline_commit: a751e57e6fd22ef278eb0ddcd01aa52932fd19d7
+  V1_C_full_pilot_continuation_owner: 019fd369-e5b9-7373-8f6c-1a93993fcf80
   V1_C_full_pilot_continuation_helper_sha256: 2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438
-  V1_C_full_pilot_further_preinitialization_continuation_authorized: false
+  V1_C_full_pilot_further_preinitialization_continuation_authorized: superseded_by_mechanical_error_reclassification
   V1_C_full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution.json
   V1_C_full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
+  V1_C_partial_pilot_valid_prefix: 4_terminal_integrity_valid_comparable_runs
+  V1_C_partial_pilot_child_attempts: 1
+  V1_C_partial_pilot_cost_usd: 0.0038111696
+  V1_C_partial_pilot_formal_comparison_status: superseded_diagnostic_evidence_not_in_restart_denominator
+  V1_C_aggregate_normalizer_candidate_commit: 5b87b98e431663595e9bd26a54589defbabcd3b1
+  V1_C_aggregate_normalizer_candidate_tree: a238d838c4197aae1ef35dd70507b680160e0c65
+  V1_C_aggregate_normalizer_reaudit_disposition: PASS_FOCUSED_REAUDIT
+  V1_C_restart_workbench_source_digest: 2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63ff10e6d6ff08c7ad3
+  V1_C_restart_full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution-r2.json
+  V1_C_restart_full_pilot_manifest_id: c1587d04277a327bf0bd54bcf5abf6194663513f7c5960d3425bcbd322e78e14
+  V1_C_restart_full_pilot_root: .runs/v1-c/full-pilot-r2/pilot
+  V1_C_restart_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_restart_initial_cells_started: 0
+  V1_C_restart_execution_owner: future_fresh_no_source_edit_execution_session
+  V1_C_restart_authorization: accepted_by_user_continue_corrected_plan
   V1_C_full_pilot_initial_cells: 24
   V1_C_full_pilot_child_attempts_max: 8
   V1_C_credential_reads_authorized: one_opaque_resolution_per_started_full_pilot_cell_max_24
@@ -1285,6 +1305,14 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  - docs/reports/V1_C_AGGREGATE_NORMALIZER_MAIN_ACCEPTANCE_AND_PILOT_RESTART_DECISION.md
+  - docs/reports/V1_C_CORRECTED_FULL_PILOT_RESTART_BASELINE_PREFLIGHT.md
+  - docs/reports/V1_C_AGGREGATE_NORMALIZER_FOCUSED_REAUDIT_REPORT.md
+  - docs/reports/V1_C_AGGREGATE_NORMALIZER_BOUNDED_CORRECTION_REPORT.md
+  - docs/reports/V1_C_FULL_PILOT_CONTINUATION_PAUSE_REPORT.md
+  - docs/reports/V1_C_PILOT_EXECUTION_REPORT.md
+  - docs/reports/V1_C_AGGREGATE_REPORT.md
+  - fixtures/manifests/v1/v1c-full-pilot-execution-r2.json
   - docs/reports/V1_C_FULL_PILOT_PAUSE_MAIN_REVIEW_AND_CONTINUATION_PROPOSAL.md
   - docs/reports/V1_C_FULL_PILOT_PAUSE_REPORT.md
   - docs/reports/V1_C_CANARY_MAIN_ACCEPTANCE_AND_FULL_PILOT_BASELINE_DECISION.md
@@ -1341,8 +1369,10 @@ next_checkpoint:
   - V1_C_stage_1_corrected_candidate_and_focused_reaudit_accepted
   - V1_C_audited_execution_baseline_and_one_cell_Canary_manifest_frozen
   - V1_C_real_Canary_accepted_as_terminal_integrity_valid_comparable_task_pass
-  - V1_C_disjoint_full_Pilot_manifest_and_authority_frozen
-  - launch_fresh_no_source_edit_full_Pilot_from_exact_authorization_baseline
+  - V1_C_historical_four_run_prefix_preserved_as_superseded_diagnostic_evidence
+  - V1_C_aggregate_normalizer_candidate_and_focused_reaudit_accepted
+  - V1_C_corrected_disjoint_R2_full_Pilot_manifest_frozen
+  - launch_fresh_no_source_edit_R2_full_Pilot_from_exact_authorization_baseline
   - execute_one_cell_at_a_time_and_stop_on_first_Pause_Condition
   - stop_automatically_on_any_Pause_Condition
   - stop_before_V2

@@ -1,8 +1,8 @@
-# V1 Version Closeout
+# V1 Version Interim Closeout — Superseded by Active V1-C
 
 ```yaml
 version: V1
-status: concluded_inconclusive_not_completed
+status: historical_interim_superseded_by_active_v1_c
 closeout_date: 2026-08-05
 policy_recommendation: INCONCLUSIVE
 v1_a: closed_accepted_PASS_V1_A_DETERMINISTIC_SUBSTRATE
@@ -10,8 +10,17 @@ v1_b: closed_inconclusive_authorized_sequence_exhausted
 valid_A_B_C_comparison: false
 v1_definition_of_done: not_met
 active_goal_after_closeout: null
+v1_c_active: true
+current_comparison_status: corrected_fresh_24_cell_pilot_pending
 v2_authorized: false
 ```
+
+> This document records the V1-B-era interim conclusion. It is not the current
+> V1 terminal state. The user subsequently authorized V1-C to correct the
+> observed budget/evidence boundary and complete the original A/B/C comparison.
+> Current authority is defined by `CURRENT_STATE.md`, the formal V1-C Contract,
+> and the latest accepted V1-C Main decision. V1 remains active and no final
+> Skill-only versus Runtime Control conclusion exists yet.
 
 ## Version conclusion
 

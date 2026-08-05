@@ -2,112 +2,131 @@
 
 ## Executive result
 
-**Fact - execution-session disposition:**
-`PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY`.
+**Fact - Session disposition:**
+`PAUSE_V1_C_FULL_PILOT_SOURCE_DIGEST_AUTHORITY_CONFLICT_AFTER_CELL_04`.
 
-Gate A passed, but the first bounded process exited 1 inside the opaque preload on the sanitized error
-`opaque credential boundary rejected assignment count`. The CLI did not load, the Pilot root remained
-absent, and zero of 24 initial cells started.
+Main and the user authorized the mechanical correction from
+`--import .runs/v1-c/full-pilot/opaque-credential-preload.mjs` to
+`--import ./.runs/v1-c/full-pilot/opaque-credential-preload.mjs`. All six immediate re-entry checks
+passed without reading the Credential file. The corrected product surface initialized the Pilot and
+completed cells 01 through 04 in frozen Manifest order.
 
-The Session made zero network/Provider/model requests, zero Tool calls, ran zero Verifiers, created zero
-child Attempts and incurred exact Pilot cost USD 0. It did not retry, fall back, replace, replay or enter
-V2.
-
-## Gate A evidence
-
-### Identity and clean state
-
-All identity commands exited 0. Observed identities were:
+Before cell 05, the Session detected an authority/evidence conflict:
 
 ```text
-git rev-parse HEAD
-  e1dc93ffd65edca04d47d493b24fda833151e685
-git rev-parse HEAD^{tree}
-  1cbcab69ba037c108812e0ca16946d2eee98cc78
-git rev-parse HEAD^1
-  2aff5ccdcc7aa780cc4bf68f9030d6123c750d7b
-git rev-parse cc71cdb8952178ef1d7422f44359d6ca08473b18^{tree}
-  7fa38a7b4484fa4076834c0cb01a46415bad0ac9
-git rev-parse 962b42a281d3092f0faf399b9f6f1ecaa0212f31^{tree}
-  d828f9fdb23c7099cdb1e4d5a993ff5579422dd4
-git status --short --untracked-files=all
-  empty
-git diff --cached --name-only
-  empty
+Continuation Start Prompt workbench_source_digest:
+  4d12e4588917949ee84bf56c83ec67f7cb8093a304c8a3ab9980c97188174604
+Tracked Manifest, Pilot Manifest and all four Run evidence records:
+  4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
 ```
 
-Both `D:/AI/AI_Projects/project2/.upstream/pi` and the registered run Pi target resolved to
-`027a5847901b5dde30270abaa1041046cd2b4b55` with clean status.
+The root HEAD/tree, tracked source and both Pi targets remained unchanged. The conflict therefore is
+not observed post-launch source drift; it is a mismatch between the separately frozen prompt value and
+the baseline-derived tracked evidence identity. It falls under the Contract's evidence-conflict Pause
+Condition. The Session did not launch cell 05 or reinterpret the mismatch as another mechanical launch
+correction.
 
-The fresh worktree lacked ignored dependencies. After resolving and validating their targets, only the
-authorized junctions were created:
+## Re-entry and frozen-boundary checks
+
+The following checks exited 0 before the corrected launch:
+
+- helper SHA-256 remained exactly
+  `2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438`;
+- `.runs/v1-c/full-pilot/pilot` was absent;
+- all 24 planned Run IDs were unique and unused;
+- the parent process had no inherited `DEEPSEEK_API_KEY`;
+- tracked delta was limited to the already authorized reports and the Git index was empty;
+- primary and registered Run Pi targets were clean at
+  `027a5847901b5dde30270abaa1041046cd2b4b55`.
+
+The deterministic Gate A suite was not repeated, as directed. Root identity remained:
 
 ```text
-workbench/node_modules -> D:/AI/AI_Projects/project2/workbench/node_modules
-.runs/v0-a/pi -> D:/AI/AI_Projects/project2/.runs/v0-a/pi
+HEAD    a751e57e6fd22ef278eb0ddcd01aa52932fd19d7
+tree    58409e16af6e2fdac322ac3d7508997e3b480167
+parent  e1dc93ffd65edca04d47d493b24fda833151e685
 ```
 
-No package manager, install or download was used.
+## Per-cell execution evidence
 
-### Manifest and provider boundary
+Every `run-next` process used the corrected helper specifier and selected exactly the next Manifest
+cell. A tracked `v1b inspect` followed each process before the next cell began.
 
-The full Pilot Manifest reconstructed exactly from
-`buildFullPilotExecutionManifestV1C()`. Its recomputed Manifest ID and source digest matched the frozen
-values. It contained 24 unique cells and 24 unique Run IDs, was disjoint from the Canary, retained the
-eight-child ceiling and exact Pilot caps, and its worktree blob matched the HEAD blob byte-for-byte.
+| Cell | Arm | Final result | Attempts | Child | Requests | Tools | Tokens | Active ms | Cost USD |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 01 `parse-duration-r1-a` | A | pass | 1 | 0 | 8 | 10 | 12,747 | 17,387 | 0.0004718056 |
+| 02 `parse-duration-r1-b` | B | pass | 1 | 0 | 8 | 9 | 13,492 | 18,273 | 0.00057750560000000006 |
+| 03 `parse-duration-r1-c` | C | initial fail, eligible Recovery, final pass | 2 | 1 | 16 | 17 | 54,263 | 84,100 | 0.0024027136 |
+| 04 `bounded-index-r1-a` | A | pass | 1 | 0 | 8 | 10 | 10,911 | 11,703 | 0.00035914480000000004 |
 
-The local pinned Provider descriptor matched the same-day Main checkpoint: `deepseek-v4-flash`,
-`https://api.deepseek.com`, OpenAI completions, `/chat/completions`, thinking off at the Workbench,
-no retry/fallback, prices `0.14/0.28/0.0028/0`, 1,000,000 context and 384,000 maximum tokens.
+**Fact:** All four Runs are terminal, integrity-valid, comparable and `task_pass`. All Attempts are
+settled. Each Run preserved protected paths, passed the secret scan and has known usage and cost.
 
-### Deterministic verification
+**Fact:** Cell 03's initial Verifier failed. It was a C initial Attempt, Recovery was eligible and budget
+was available, exactly one child Attempt started, and the common final Verifier passed. No A or B Run
+received runtime treatment.
 
-| Command | Exit | Result |
-| --- | ---: | --- |
-| `node .runs/v0-a/pi/node_modules/typescript/bin/tsc -p workbench/tsconfig.json` | 0 | strict TypeScript passed |
-| `node --test workbench/tests/v1c-budget-stop.test.ts` | 0 | 13/13 passed |
-| `node --test workbench/tests/v1b-stage1.test.ts workbench/tests/v1b-cli.test.ts` | 0 | 31/31 passed |
-| `node workbench/src/cli.ts v1b preflight --manifest fixtures/manifests/v1/v1c-full-pilot-execution.json --pilot-root .runs/v1-c/full-pilot/preflight-only` | 0 | ready; next cell 01; counters 0/0/0/0 |
-
-The Pilot root and preflight-only root were absent after preflight. The parent shell contained no
-inherited Credential.
-
-## Execution counters
+## Exact accounting at pause
 
 | Counter | Observed |
 | --- | ---: |
-| Credential-file read attempts inside preload | 1 |
-| Accepted Credential resolutions in product surface | 0 |
-| Initial Manifest cells started | 0 |
-| Network calls | 0 |
-| Provider/model requests | 0 |
-| Tool calls | 0 |
-| Tokens | 0 |
-| Active execution time | 0 ms |
-| Verifier Runs | 0 |
-| Child Attempts | 0 |
-| Pilot cost | USD 0 |
+| Corrected `run-next` processes | 4 |
+| Credential-file reads | 4 |
+| Network calls | 40 |
+| Provider calls | 40 |
+| Model calls | 40 |
+| Tool calls | 46 |
+| Tokens | 91,413 |
+| Active execution time | 131,463 ms |
+| Verifier Runs | 5 |
+| Initial cells | 4 |
+| Child Attempts | 1 |
+| Invalid Runs | 0 |
+| Full-Pilot cost | USD 0.0038111696 |
 
-The accepted Canary remains separate at USD `0.00042865199999999996`; the observed whole V1-C real
-sequence total therefore remains that same amount, below USD 2.00.
+The accepted Canary remains separate at USD `0.00042865199999999996`. The observed whole V1-C real
+sequence cost is USD `0.0042398216`, below the USD 2.00 hard cap. No pending reservation or unknown
+usage/cost was observed.
 
-## Source, protected and secret delta
+## Inspector, lineage and aggregate checks
 
-**Fact:** Product source/protected delta is zero. The only tracked additions are the four Contract-listed
-execution/aggregate/closeout/pause reports. The ignored delta is the two authorized junctions, the one
-non-secret preload and `.runs/v1-c/full-pilot/EVIDENCE_INDEX.md`.
+The tracked Inspector exited 0 for every created Run. For each Run it cross-checked the Pilot Manifest,
+Ledger/Journal, Run/Attempt, Session/Workspace, Verifier, Outcome, protected-path and secret-scan
+evidence. All four terminal chains were valid.
 
-**Fact:** No secret value entered command text, stdout, stderr, evidence or reports. The rejected preload
-removed any possibility of passing a Credential to the CLI; the parent shell remained Credential-free.
+The tracked aggregate command was invoked read-only after the pause and exited 1 with
+`A/B delta is not exactly the frozen Skill treatment in block 1`. Block 1 is complete (cells 01-03), so
+this is an independent fairness/control rejection, not an artifact of the incomplete second block.
 
-**Unconfirmed:** There are no per-Run protected-path or evidence scans because no Run existed.
+A sanitized field-path comparison reproduced the aggregate normalization and found one remaining A/B
+difference after the context user text and payload digest were normalized:
 
-## Remaining unverified
+```text
+$.provider_payload.messages[1].content[0].text
+```
 
-- all 24 real cells and every A/B/C result;
-- real full-Pilot usage/cost accounting beyond zero dispatch;
-- Run Inspector, fairness and aggregate behavior on this Pilot identity;
-- Recovery eligibility/start/success in the full Pilot;
-- any Policy recommendation or Goal completion claim.
+The tracked `normalizedExactDispatch()` normalizes the treatment text in `context.messages` but leaves
+the corresponding frozen treatment text in `provider_payload.messages`. Therefore the aggregate rejects
+the completed A/B pair. This is a tracked aggregate-path defect/evidence conflict; source repair is not
+authorized and no aggregate or Policy result was accepted.
 
-No additional real request is authorized in this Session after the Pause Condition.
+## Gate A self-audit correction
+
+**Fact:** The earlier Gate A reconstruction check established equality between the reconstructed and
+tracked Manifest but did not compare their source digest byte-for-byte against the separately supplied
+Start Prompt constant. The Session incorrectly reported that the prompt digest matched. The per-Run
+digest assertion after cell 04 exposed this omission.
+
+**Recommendation:** Main must decide whether the Start Prompt digest was a governance typo or whether
+the tracked baseline/Manifest is outside the intended authority. Main must also disposition the
+independent aggregate fairness-control rejection. Fixing `normalizedExactDispatch()` would be source
+repair and is outside this Session. No additional product process is authorized until both issues are
+resolved explicitly.
+
+## Delta and remaining unverified
+
+Product source/protected delta is zero. Tracked changes remain limited to the four authorized reports;
+the Git index is empty. The helper bytes are unchanged. Pi and root identities remain frozen.
+
+Unverified work includes cells 05-24, a functioning fixed 24-cell aggregate, the remaining fairness
+blocks, further Recovery observations and any comparative promotion decision.
