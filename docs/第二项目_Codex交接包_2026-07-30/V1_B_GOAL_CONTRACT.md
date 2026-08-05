@@ -1,7 +1,7 @@
 # V1-B Goal Contract — Frozen Bounded Real Pilot
 
 ```yaml
-status: accepted_activated_stage_2_authorized_on_resulting_execution_baseline
+status: accepted_active_paused_bounded_correction_authorized
 goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
 version: V1
 project: Agent Harness Reliability Workbench
@@ -34,23 +34,38 @@ focused_reaudit_disposition: PASS_FOCUSED_V1_B_STAGE1_REAUDIT
 candidate_commit_authorized: consumed
 focused_audit_authorized: consumed
 execution_baseline_authorized: true
-execution_baseline_commit: resulting_HEAD_of_this_revision
-stage_2_authorized: true_bounded_pilot
+execution_baseline_commit: 19617319c13a9eecbb325682c920e79d1517b89d
+execution_baseline_tree: 48d2bee79a551fe53ac36ed12decea2357765645
+stage_2_authorized: original_pilot_consumed_and_paused
 credential_reads_authorized: opaque_DEEPSEEK_API_KEY_only
 external_network_authorized: true_DeepSeek_API_only
 real_model_calls_authorized: bounded_by_frozen_manifest_and_USD2_cap
 real_provider_calls_authorized: bounded_by_frozen_manifest_and_USD2_cap
 whole_pilot_cost_authorized_usd: 2
+original_stage_2_status: paused_on_first_cell
+original_stage_2_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
+original_started_initial_runs: 1
+original_actual_cost_usd: unknown
+pause_recovery_amendment: docs/第二项目_Codex交接包_2026-07-30/V1_B_PAUSE_RECOVERY_AMENDMENT.md
+pause_recovery_amendment_accepted: true
+pause_path_correction_authorized: one_zero_call_cycle
+pause_path_correction_owner: original_v1_b_preparation_session
+focused_pause_path_reaudit_authorized: true_after_corrected_candidate
+replacement_pilot_authorized: true_after_reaudit_and_new_execution_baseline
+conservative_prior_cost_debit_usd: 0.10
+replacement_pilot_cost_authorized_usd: 1.90
+authorized_sequence_started_initial_runs_max: 25
+replacement_child_attempts_max: 8
 pi_core_patch_authorized: false
 private_pi_import_authorized: false
 dependency_install_authorized: false
 dedicated_session_git_commit_authorized: false
 ```
 
-> 本文件是用户已接受并已激活的 V1-B 正式 Goal Contract。Stage 1 corrected
-> Candidate 已通过 focused independent re-audit。用户现已授权 Main Session创建
-> deterministic Execution Baseline，并授权新的 no-source-edit Stage 2 Session按冻结
-> Manifest逐 cell运行一次 USD2 hard-cap Pilot；本授权不扩展技术 Scope，不授权 V2。
+> 本文件是用户已接受并已激活的 V1-B 正式 Goal Contract。原 Stage 2 Pilot在第一
+> cell 上按规则暂停，V1-B 尚未关闭。用户已接受 Pause Recovery Amendment：允许
+> 一次零调用 pause-path evidence 修正、focused re-audit、新 Execution Baseline和
+> 一次新身份 replacement Pilot；原证据不可改写，V2 未授权。
 
 ## 1. Goal Mission
 
@@ -964,3 +979,29 @@ Main Session接受 corrected Candidate 和 focused re-audit
 → Main Session有限验收并在已授权范围内完成 V1-B/V1 closeout commit
 → 停止；不得进入 V2
 ```
+
+## 24. Accepted Pause Recovery Amendment
+
+The original Stage 2 Session returned `PAUSE_V1_B_PILOT` after the first cell
+started once and paused. No terminal result, retry, fallback, replacement or
+later cell exists. Actual external cost is `unknown` because the frozen pause
+path did not persist sufficient counter/reservation/usage evidence.
+
+The user accepted `V1_B_PAUSE_RECOVERY_AMENDMENT.md` on 2026-08-05. It is a
+binding, narrower continuation of this Contract and authorizes:
+
+```text
+Pause Evidence Baseline
+→ original Preparation Session zero-call correction
+→ Main Review and corrected Candidate
+→ fresh focused re-audit
+→ new Execution Baseline
+→ fresh replacement Stage 2 Pilot
+→ Main acceptance/closeout or automatic pause
+```
+
+The replacement uses new identity and Run IDs, charges USD 0.10 as a
+conservative prior debit, caps new actual cost at USD 1.90 and permits at most
+25 started initial Runs across the original and replacement Pilots. It does not
+authorize same-Run retry, fallback, automatic replacement, V1-C, V2 or a
+general durable runtime.
