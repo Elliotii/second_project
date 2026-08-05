@@ -1,5 +1,9 @@
 # V1-C Closeout Draft
 
+> Historical interim draft, superseded by `V1_C_R2_CLOSEOUT_DRAFT.md` and the
+> accepted `V1_C_CLOSEOUT.md`. It describes the earlier four-Run prefix pause
+> and is not the current V1-C disposition.
+
 ## Proposed current disposition
 
 `PAUSE_V1_C_FULL_PILOT_SOURCE_DIGEST_AUTHORITY_CONFLICT_AFTER_CELL_04`

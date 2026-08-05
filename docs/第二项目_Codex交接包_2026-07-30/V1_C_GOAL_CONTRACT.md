@@ -1,7 +1,7 @@
 # V1-C Goal Contract — Bounded Budget-stop Correction and Comparison Completion
 
 ```yaml
-status: accepted_activated_r2_cell04_outer_timeout_accepted_continuation_from_cell05_authorized
+status: closed_accepted
 goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 version: V1
 project: Agent Harness Reliability Workbench
@@ -11,7 +11,7 @@ derived_from: docs/reports/V1_C_PRECONTRACT_RESEARCH.md
 accepted_by_user: 2026-08-05
 contract_accepted: true
 activation_authorized_by_user: 2026-08-05
-active_goal: true
+active_goal: false
 implementation_authorized: consumed_completed_zero_real_call_stage_1
 implementation_owner: dedicated_v1_c_stage_1_implementation_session
 implementation_started: true
@@ -35,7 +35,7 @@ real_canary_completed: true
 real_canary_disposition: PASS_V1_C_REAL_CANARY
 real_canary_run_id: v1c-canary-run-01-parse-duration-r1-a
 real_canary_actual_cost_usd: 0.00042865199999999996
-full_pilot_authorized: true
+full_pilot_authorized: consumed_completed
 full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
 full_pilot_first_execution_authority: consumed_preinitialization_pause
 full_pilot_first_execution_session_id: 019fd348-8055-75b2-8139-ab43a37fdc26
@@ -66,28 +66,39 @@ restart_workbench_source_digest: 2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63
 restart_pilot_root: .runs/v1-c/full-pilot-r2/pilot
 restart_control_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
 restart_execution_prompt: docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
-restart_execution_session_status: paused_after_cell04_outer_timeout_main_review_accepted_continue_from_cell05
-restart_initial_cells_started: 4
-restart_terminal_integrity_valid_comparable_cells: 4
+restart_execution_session_status: completed_main_review_accepted
+restart_initial_cells_started: 24
+restart_terminal_integrity_valid_comparable_cells: 24
 restart_cell04_outer_launcher_exit: 124
 restart_cell04_product_process_exit: unknown_unrecoverable
 restart_cell04_retry_authorized: false
 restart_replacement_authorized: false
-restart_continuation_from_cell05_authorized: true
+restart_continuation_from_cell05_authorized: consumed_completed
 restart_future_outer_wait_ms_min: 900000
 restart_continuation_decision: docs/reports/V1_C_R2_CELL04_OUTER_TIMEOUT_MAIN_REVIEW_AND_CONTINUATION_DECISION.md
-restart_authorized_by_user: true
+restart_authorized_by_user: consumed_completed
 full_pilot_initial_cells: 24
 full_pilot_child_attempts_max: 8
 full_pilot_remaining_hard_cap_usd: 1.90
 whole_real_sequence_hard_cap_usd: 2.00
-closeout_commit_authorized: true_after_terminal_disposition
+execution_disposition: PASS_VALID_V1_C_R2_PILOT
+goal_disposition: PASS_V1_C_COMPARISON_COMPLETION
+policy_result: SKILL_ONLY_DESCRIPTIVELY_BETTER
+skill_only_decision: PROMOTE_WITHIN_FROZEN_PROTOCOL
+runtime_control_decision: REJECT_CURRENT_TREATMENT_AS_V1_DEFAULT
+final_r2_cost_usd: 0.0105276024
+final_r2_membership: planned_24_terminal_24_comparable_24_invalid_0
+final_r2_arm_results: A_7_of_8_B_8_of_8_C_initial_and_final_7_of_8
+final_r2_recovery: eligible_1_started_1_succeeded_0
+closeout: docs/reports/V1_C_CLOSEOUT.md
+main_acceptance: docs/reports/V1_C_R2_MAIN_ACCEPTANCE_AND_V1_POLICY_DECISION.md
+closeout_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
 stage_1_real_model_calls_authorized: 0
 stage_1_real_provider_calls_authorized: 0
-credential_reads_authorized: one_opaque_resolution_per_started_full_pilot_cell_max_24
-external_network_authorized: fixed_DeepSeek_endpoint_full_pilot_only
-real_provider_calls_authorized: bounded_by_full_pilot_manifest_and_USD_1_90
-real_model_calls_authorized: bounded_by_full_pilot_manifest_and_USD_1_90
+credential_reads_authorized: consumed_no_further_reads
+external_network_authorized: consumed_no_further_network
+real_provider_calls_authorized: consumed_no_further_calls
+real_model_calls_authorized: consumed_no_further_calls
 main_session_control_baseline_commit_authorized: consumed
 dedicated_session_git_commit_authorized: false
 pi_core_patch_authorized: false
@@ -97,13 +108,12 @@ external_download_authorized: false
 v2_authorized: false
 ```
 
-> 本文件是用户已经接受并激活的 V1-C 正式 Goal Contract。Dedicated Stage 1 已完成零真实
-> 调用实现，corrected Candidate 和 fresh focused re-audit 已被 Main Session接受；本次
-> resulting HEAD 冻结 audited Execution Baseline、单 Cell Canary Manifest 和零调用 Provider
-> checkpoint。fresh no-source-edit 真实 Canary 已完成，并由 Main 接受为 terminal、
-> integrity-valid、comparable 的 `PASS_V1_C_REAL_CANARY`。先前的条件性预授权因此已激活为
-> 独立 24-cell、最多 8 child、USD 1.90 full Pilot；该 Pilot 尚未开始。V2、源码临场修复、
-> retry、fallback 和 replacement 仍未授权。
+> 本文件是用户已接受、执行并关闭的 V1-C 正式 Goal Contract。Dedicated Stage 1、corrected
+> Candidate、fresh focused re-audit 和 real Canary 均已通过；R2 full Pilot 完成 24/24
+> terminal、integrity-valid、comparable Runs。Main 接受
+> `PASS_VALID_V1_C_R2_PILOT` 并以 `PASS_V1_C_COMPARISON_COMPLETION` 关闭 Goal。Skill-only
+> 只在冻结协议内提升，当前 same-Session Runtime Control 不作为 V1 默认。V2、额外真实调用、
+> retry、fallback 和 replacement 均未授权。
 
 ## 1. Goal Mission
 
@@ -676,8 +686,8 @@ Binding continuation rules:
    evidence mutation remains governed by the existing fail-closed rules.
 
 The user explicitly accepted this corrected route and authorized continuation.
-V1-C remains active until the restarted 24-cell aggregate is accepted or a
-material Pause Condition makes the comparison genuinely non-completable.
+This condition is now satisfied: Main accepted the restarted 24-cell aggregate,
+and V1-C is no longer active.
 
 ### 13.1 R2 cell-04 outer-timeout continuation amendment
 
@@ -700,6 +710,23 @@ known, product-process exit is unknown, and no claim may convert it to exit `0`.
 All other Pause Conditions, no-retry/no-fallback/no-replacement rules, frozen
 treatments, USD `1.90` cap and V2 prohibition remain unchanged. The binding Main
 decision is `docs/reports/V1_C_R2_CELL04_OUTER_TIMEOUT_MAIN_REVIEW_AND_CONTINUATION_DECISION.md`.
+
+### 13.2 Accepted R2 result and Goal closeout
+
+The continued R2 Pilot completed all 24 cells. Main independently reran all 24
+Inspectors and the aggregate: 24 Runs are terminal, integrity-valid and
+comparable; 22 passed, two failed and zero are invalid. All eight fairness
+blocks passed. A finished 7/8, B Skill-only 8/8, and C-initial/C-final 7/8.
+The only eligible C Recovery started once and did not succeed. Exact tracked
+cost was USD `0.0105276024`.
+
+Main accepts `PASS_VALID_V1_C_R2_PILOT` and closes the Goal as
+`PASS_V1_C_COMPARISON_COMPLETION`. Skill-only is promoted only within the
+frozen protocol. The current same-Session Runtime Control treatment is rejected
+as the V1 default because it produced no observed final improvement and higher
+resource cost; this is not a general rejection of runtime verification or future
+multi-path recovery. No further V1-C calls or corrections are authorized, and
+V2 remains unauthorized.
 
 ## 14. User Decisions Required
 

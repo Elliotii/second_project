@@ -5,37 +5,37 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_r2_full_pilot_bounded_continuation
-  status: V1_C_R2_CELL04_OUTER_TIMEOUT_ACCEPTED_CELL05_CONTINUATION_AUTHORIZED_V2_NOT_AUTHORIZED
+  phase: v1_completed
+  status: V1_C_CLOSED_ACCEPTED_SKILL_ONLY_DESCRIPTIVE_LEAD_V2_NOT_AUTHORIZED
 
-active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+active_goal: null
 
 last_executed_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_r2_continuation_from_cell_05_authorized
+  status: closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  disposition: PASS_V1_C_AGGREGATE_NORMALIZER_FOCUSED_REAUDIT
-  prior_partial_pilot_baseline_commit: a751e57e6fd22ef278eb0ddcd01aa52932fd19d7
-  corrected_candidate_commit: 5b87b98e431663595e9bd26a54589defbabcd3b1
+  disposition: PASS_V1_C_COMPARISON_COMPLETION
+  execution_disposition: PASS_VALID_V1_C_R2_PILOT
+  policy_result: SKILL_ONLY_DESCRIPTIVELY_BETTER
 
 last_closed_goal:
-  id: V1_B_FROZEN_BOUNDED_REAL_PILOT
-  status: closed_inconclusive_not_completed
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
-  disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
-  closeout: docs/reports/V1_B_CLOSEOUT.md
+  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  status: closed_accepted
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  disposition: PASS_V1_C_COMPARISON_COMPLETION
+  closeout: docs/reports/V1_C_CLOSEOUT.md
 
 last_completed_goal:
-  id: V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
+  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_A_GOAL_CONTRACT.md
-  disposition: PASS_V1_A_DETERMINISTIC_SUBSTRATE
-  implementation_baseline_commit: 784bd1ec06c2aa9ed554a7da661bdf582097bcdf
+  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  disposition: PASS_V1_C_COMPARISON_COMPLETION
+  execution_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
 
 next_goal:
-  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_r2_continue_existing_manifest_from_next_unstarted_cell
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  id: V2_FAILURE_AWARE_BOUNDED_MULTI_PATH_RECOVERY
+  status: candidate_not_authorized_requires_post_v1_compatibility_and_precontract_review
+  contract: null
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -320,6 +320,14 @@ completed_work:
   - V1_C_full_Pilot_conditional_preauthorization_activated
   - V1_C_disjoint_24_cell_full_Pilot_manifest_materialized
   - V1_C_final_closeout_commit_authorized
+  - V1_C_R2_completed_24_terminal_integrity_valid_comparable_runs
+  - V1_C_R2_all_8_fairness_blocks_passed
+  - V1_C_R2_skill_only_8_of_8_baseline_7_of_8_runtime_7_of_8
+  - V1_C_R2_one_runtime_recovery_started_and_not_succeeded
+  - V1_C_R2_main_review_all_24_inspectors_and_aggregate_passed
+  - V1_C_closeout_strict_typescript_and_focused_40_of_40_regression_passed
+  - V1_C_closed_accepted_PASS_V1_C_COMPARISON_COMPLETION
+  - V1_closed_accepted_with_skill_only_descriptive_lead
   - V2_remains_not_authorized
 
 workspace:
@@ -452,19 +460,19 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: active_v1_c_corrected_full_pilot_restart_pending
+  status: closed_accepted
   prior_status: concluded_inconclusive_not_completed
-  active_goal: true
-  current_candidate_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  active_goal: false
+  current_candidate_goal: null
   formal_goal_contract_created: true
   activation_authorized: consumed_for_V1_A
   activation_authorized_at: 2026-08-03
-  implementation_owner: future_fresh_v1_c_full_pilot_restart_execution_session
+  implementation_owner: completed_dedicated_sessions
   implementation_authorized: consumed_completed_v1_c_stage_1
   implementation_started: true
   implementation_completed: true
-  real_model_calls_authorized: bounded_by_full_pilot_manifest_and_USD_1_90
-  external_network_authorized: fixed_DeepSeek_endpoint_full_pilot_only
+  real_model_calls_authorized: 0_after_closeout
+  external_network_authorized: false_after_closeout
   pi_core_patch_authorized: false
   runtime_surface: direct_public_emitted_AgentHarness
   strategies:
@@ -474,6 +482,7 @@ v1:
   accepted_goal_sequence:
     - V1_A_DETERMINISTIC_SKILL_AND_EXPERIMENT_SUBSTRATE
     - V1_B_FROZEN_BOUNDED_REAL_PILOT
+    - V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
   primary_source_gate: satisfied
   primary_source: SkillOS_arXiv_2605_06614v1
   primary_source_binding_correction: training_signal_is_distinct_from_diagnostic_judge_and_formal_external_outcome
@@ -496,7 +505,7 @@ v1:
     final_pause_path_reaudit: PASS_FOCUSED_V1_B_P1_004_REAUDIT
   focused_V1_A_audit_required: satisfied
   V1_B_contract_before_V1_A_acceptance: prohibition_satisfied_V1_A_now_accepted
-  pi_sdk_extension_effect_on_V1: none_deferred_non_blocking_compatibility_checkpoint
+  pi_sdk_extension_effect_on_V1: none_during_v1_post_v1_bounded_compatibility_trigger_now_met
   planning_baseline_commit_authorized: consumed
   planning_baseline_commit: 7617ce3f56bc8844a0e7eb3605b4327aa6412932
   V1_A_contract_draft_authorized: true_after_planning_baseline_verification
@@ -612,13 +621,13 @@ v1:
   V1_B_closeout_disposition: CLOSE_V1_B_INCONCLUSIVE_AUTHORIZED_SEQUENCE_EXHAUSTED
   V1_B_closeout: docs/reports/V1_B_CLOSEOUT.md
   V1_closeout: docs/reports/V1_CLOSEOUT.md
-  V1_definition_of_done: not_met
-  V1_policy_recommendation: INCONCLUSIVE
+  V1_definition_of_done: met_by_accepted_v1_c_r2_comparison
+  V1_policy_recommendation: PROMOTE_SKILL_ONLY_WITHIN_FROZEN_PROTOCOL_REJECT_CURRENT_RUNTIME_TREATMENT_AS_DEFAULT
   V1_B_further_execution_authorized: false
   V1_B_v2_authorized: false
   V1_C_precontract_research: docs/reports/V1_C_PRECONTRACT_RESEARCH.md
   V1_C_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  V1_C_contract_status: accepted_activated_aggregate_normalizer_reaudit_accepted_fresh_pilot_restart_pending
+  V1_C_contract_status: closed_accepted
   V1_C_contract_accepted: true
   V1_C_activation_authorized: true
   V1_C_control_baseline_commit_authorized: consumed
@@ -650,9 +659,9 @@ v1:
   V1_C_real_canary_provider_requests: 8
   V1_C_real_canary_tool_calls: 10
   V1_C_real_canary_tokens: 12147
-  V1_C_full_pilot_authorized: true
+  V1_C_full_pilot_authorized: consumed_completed
   V1_C_full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
-  V1_C_full_pilot_started: partial_prefix_4_of_24_superseded_for_formal_comparison
+  V1_C_full_pilot_started: completed_R2_24_of_24_historical_prefix_superseded_for_formal_comparison
   V1_C_full_pilot_preinitialization_session_id: 019fd348-8055-75b2-8139-ab43a37fdc26
   V1_C_full_pilot_preinitialization_disposition: PAUSE_V1_C_FULL_PILOT_BEFORE_INITIALIZATION_CREDENTIAL_BOUNDARY
   V1_C_full_pilot_preinitialization_root_cause: session_local_opaque_preload_semantics_drift
@@ -679,34 +688,41 @@ v1:
   V1_C_restart_full_pilot_root: .runs/v1-c/full-pilot-r2/pilot
   V1_C_restart_control_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
   V1_C_restart_execution_prompt: docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
-  V1_C_restart_execution_session_status: paused_after_cell_04_outer_runner_timeout_main_review_accepted_continuation_from_cell_05
-  V1_C_restart_initial_cells_started: 4
-  V1_C_restart_terminal_integrity_valid_comparable_cells: 4
-  V1_C_restart_passed_cells: 3
-  V1_C_restart_failed_cells: 1
+  V1_C_restart_execution_session_status: completed_main_review_accepted
+  V1_C_restart_initial_cells_started: 24
+  V1_C_restart_terminal_integrity_valid_comparable_cells: 24
+  V1_C_restart_passed_cells: 22
+  V1_C_restart_failed_cells: 2
   V1_C_restart_invalid_cells: 0
-  V1_C_restart_completed_fairness_blocks: 1
+  V1_C_restart_completed_fairness_blocks: 8
   V1_C_restart_child_attempts: 1
-  V1_C_restart_cost_usd_after_cell_04: 0.0037360792
+  V1_C_restart_final_cost_usd: 0.0105276024
   V1_C_restart_cell_04_outer_launcher_exit: 124
   V1_C_restart_cell_04_product_process_exit: unknown_unrecoverable
   V1_C_restart_cell_04_product_evidence: terminal_integrity_valid_comparable_usage_known
   V1_C_restart_cell_04_retry_authorized: false
   V1_C_restart_replacement_authorized: false
-  V1_C_restart_continuation_from_cell_05_authorized: true
+  V1_C_restart_continuation_from_cell_05_authorized: consumed_completed
   V1_C_restart_continuation_decision: docs/reports/V1_C_R2_CELL04_OUTER_TIMEOUT_MAIN_REVIEW_AND_CONTINUATION_DECISION.md
   V1_C_restart_execution_owner: dedicated_no_source_edit_session_019fd3c1_add6_7030_9357_2e76540a6c13
   V1_C_restart_authorization: accepted_by_user_continue_corrected_plan
   V1_C_full_pilot_initial_cells: 24
   V1_C_full_pilot_child_attempts_max: 8
-  V1_C_credential_reads_authorized: one_opaque_resolution_per_started_full_pilot_cell_max_24
-  V1_C_external_network_authorized: fixed_DeepSeek_endpoint_full_pilot_only
-  V1_C_real_provider_calls_authorized: bounded_by_full_pilot_manifest_request_caps_and_USD_1_90
-  V1_C_real_model_calls_authorized: bounded_by_full_pilot_manifest_request_caps_and_USD_1_90
+  V1_C_credential_reads_authorized: consumed_no_further_reads
+  V1_C_external_network_authorized: consumed_no_further_network
+  V1_C_real_provider_calls_authorized: consumed_no_further_calls
+  V1_C_real_model_calls_authorized: consumed_no_further_calls
   V1_C_whole_real_sequence_hard_cap_usd: 2.00
   V1_C_canary_hard_cap_usd: 0.10
   V1_C_conditional_full_pilot_hard_cap_usd: 1.90
-  V1_C_closeout_commit_authorized: true_after_terminal_disposition
+  V1_C_execution_disposition: PASS_VALID_V1_C_R2_PILOT
+  V1_C_goal_disposition: PASS_V1_C_COMPARISON_COMPLETION
+  V1_C_policy_result: SKILL_ONLY_DESCRIPTIVELY_BETTER
+  V1_C_skill_only_decision: PROMOTE_WITHIN_FROZEN_PROTOCOL
+  V1_C_runtime_control_decision: REJECT_CURRENT_TREATMENT_AS_V1_DEFAULT
+  V1_C_closeout: docs/reports/V1_C_CLOSEOUT.md
+  V1_C_main_acceptance: docs/reports/V1_C_R2_MAIN_ACCEPTANCE_AND_V1_POLICY_DECISION.md
+  V1_C_closeout_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
   V1_C_pi_core_patch_authorized: false
   V1_C_private_pi_import_authorized: false
   V1_C_dependency_install_authorized: false
@@ -1389,11 +1405,12 @@ next_checkpoint:
   - V1_C_historical_four_run_prefix_preserved_as_superseded_diagnostic_evidence
   - V1_C_aggregate_normalizer_candidate_and_focused_reaudit_accepted
   - V1_C_corrected_disjoint_R2_full_Pilot_manifest_frozen
-  - preserve_R2_cell_04_outer_timeout_and_terminal_product_evidence_without_retry
-  - continue_original_no_source_edit_R2_session_from_cell_05_with_safe_outer_wait
-  - execute_one_cell_at_a_time_and_stop_on_any_new_Pause_Condition
-  - stop_automatically_on_any_Pause_Condition
-  - stop_before_V2
+  - V1_C_R2_accepted_as_valid_24_cell_descriptive_comparison
+  - Skill_only_promoted_within_frozen_protocol
+  - current_same_session_Runtime_Control_not_promoted
+  - preserve_all_V1_B_and_V1_C_historical_and_R2_evidence
+  - review_post_V1_Pi_SDK_Extension_compatibility_checkpoint_before_any_V2_contract
+  - stop_before_V2_without_new_user_authorization
 
 open_user_decisions: []
 ```
@@ -1461,28 +1478,19 @@ open_user_decisions: []
   initial Verifier, so real Recovery remains unobserved. No additional V0-C
   Run, credential/network use, real-model call, source change or repair is
   authorized.
-- V0 and V1-A are closed and accepted. V1-A's independently re-audited
-  Implementation Baseline is
-  `784bd1ec06c2aa9ed554a7da661bdf582097bcdf`. Do not reopen or silently
-  rewrite it. V1-B is closed inconclusive, not completed. Both authorized real
-  Pilot identities paused before a terminal/comparable Run existed; their
-  actual costs remain unknown and conservative accounting totals USD 0.20.
-  V1-B remains historically closed with no further correction, retry, fallback
-  or replacement authority. V1-C Stage 1 and its focused re-audit are complete.
-  The real Canary is accepted as terminal, integrity-valid and comparable; its
-  exact tracked cost is USD `0.00042865199999999996`. The first fresh full-Pilot
-  Session stopped before Workbench initialization because its ignored opaque
-  credential preload drifted from the already accepted Canary parsing semantics.
-  No Pilot root or Run was created and network/Provider/model calls and cost were
-  all zero. The user accepts that fail-closed pause and authorizes one and only
-  one fresh preinitialization continuation from a Main-owned baseline using the
-  exact accepted Canary helper semantics and SHA-256
-  `2d83b0e1e3eafecb774a3e6faf4f6ac1ec29984ee256dc750a06805e3f577438`.
-  The Manifest, source, 24 cells, budgets and all original Pause Conditions remain
-  frozen. Retry, fallback, replacement, source repair and V2 remain unauthorized.
-  V1 still has no completed Baseline/Skill-only/Skill+Runtime comparison until the
-  full Pilot produces a valid aggregate. A second preinitialization failure closes
-  V1-C inconclusive; it does not authorize another repair or execution loop.
+- V0 and V1 are closed and accepted. V1-A's independently re-audited
+  Implementation Baseline remains
+  `784bd1ec06c2aa9ed554a7da661bdf582097bcdf`; V1-B remains historically closed
+  inconclusive and cannot be rewritten. V1-C completed the separate corrected
+  R2 comparison: 24/24 Runs are terminal, integrity-valid and comparable; A
+  passed 7/8, B Skill-only 8/8, and C initial/final 7/8. All eight fairness
+  blocks passed, zero Runs were invalid, and the one C Recovery did not succeed.
+  Exact R2 cost is USD `0.0105276024`. Skill-only is promoted only within the
+  frozen protocol; the current same-Session Runtime Control treatment is not
+  promoted as the V1 default. Cell 04's outer exit `124` and unknown product
+  exit remain disclosed, with complete terminal product evidence and no retry
+  or replacement. No further V1 call or correction is authorized. V2 remains
+  unauthorized.
 
 ## Expected Next Handoff
 
@@ -1510,22 +1518,15 @@ response produced a pause state that the frozen Inspector rejected. Across
 both Pilots there are zero terminal/comparable Runs. Actual cost is unknown;
 fail-closed accounting totals USD 0.20 and remains below the USD 2 cap.
 
-V1-B remains closed as `V1_CONCLUDED_INCONCLUSIVE_NOT_COMPLETED` historical
-evidence. V1-A's deterministic substrate remains accepted, but V1 still has no
-valid A/B/C aggregate, no Skill/Runtime winner and no observed real Recovery
-effect.
+V1-B remains closed as historical inconclusive evidence. V1-C is now closed and
+accepted with `PASS_V1_C_COMPARISON_COMPLETION`. The corrected R2 Pilot supplied
+the valid A/B/C aggregate missing from V1-B: 24/24 terminal and comparable,
+22 passed, two failed, zero invalid, eight passing fairness blocks, one
+unsuccessful C Recovery and exact cost USD `0.0105276024`.
 
-V1-C is the active Goal. Its zero-real-call Stage 1 corrected the
-request-cap/synthetic-failure attribution boundary, preserved conservative
-unknown-usage accounting and passed fresh focused re-audit. Corrected Candidate
-`962b42a281d3092f0faf399b9f6f1ecaa0212f31` is accepted as
-`PASS_V1_C_STAGE1_AUDITED_CANDIDATE`; the resulting Main-owned revision
-freezes the audited Execution Baseline and the disjoint one-cell Canary
-Manifest. Official DeepSeek profile/schema compatibility and zero-call
-preflight pass. The Canary completed as a terminal, integrity-valid, comparable
-`task_pass` with eight Provider/model requests and exact tracked cost USD
-`0.00042865199999999996`; Main accepts it as `PASS_V1_C_REAL_CANARY`. The
-conditional authorization is therefore activated for the disjoint 24-cell,
-maximum-eight-child full Pilot under USD 1.90. Its fresh execution Session has
-no source-edit authority, runs one cell at a time and must stop on the first
-Contract Pause Condition. V2 remains unauthorized.
+V1 therefore closes with a bounded Skill-only descriptive lead. The next Main
+decision is not another V1 execution loop. Before any V2 Contract, revisit the
+already recorded read-only Pi SDK/Extension compatibility checkpoint for real
+Pi Skill exposure and clean Session / Workspace reuse. V2 remains a candidate
+Portfolio North Star and has no research, Contract, activation or implementation
+authority yet.
