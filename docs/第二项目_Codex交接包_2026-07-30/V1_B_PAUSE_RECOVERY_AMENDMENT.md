@@ -18,6 +18,15 @@ authorized_sequence_started_initial_runs_max: 25
 correction_real_calls_authorized: 0
 focused_reaudit_required: true
 replacement_stage_2_authorized_after_reaudit_and_execution_baseline: true
+normal_correction_cycles_consumed: 2
+P1_004_micro_correction_exception: accepted_consumed_one_time_only
+final_candidate_commit: 6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e
+final_candidate_tree: 7ab79aa4073baab1c7570424701ebf1302b34837
+final_focused_reaudit: PASS_FOCUSED_V1_B_P1_004_REAUDIT
+further_correction_authorized: false
+replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+replacement_manifest_id: 4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29
+replacement_sequence_authority_id: c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1
 v2_authorized: false
 ```
 
@@ -111,7 +120,8 @@ All existing Contract Pause Conditions remain binding. In addition, stop if:
 - conservative cost cannot be cross-checked by Inspector;
 - replacement identity permits arbitrary retries or more than one authorized
   replacement Pilot;
-- the correction requires more than two total bounded correction cycles;
+- any further correction is required after the consumed one-time P1-004
+  micro-correction exception;
 - the replacement Pilot would exceed USD 1.90 or 25 started initial Runs across
   the authorized sequence;
 - continuation requires entering V2/V3.
@@ -122,3 +132,25 @@ This amendment permits no claim about Skill/Runtime effectiveness until a valid
 replacement Pilot completes. It permits only the factual claim that the first
 Pilot paused with insufficient pause-path evidence and that the replacement
 uses conservative bounded accounting.
+
+## 8. Accepted correction outcome and final continuation boundary
+
+The first corrected Candidate failed focused audit on three P1 findings. The
+second normal correction closed P1-002 and P1-003 but exposed P1-004: the
+Inspector rejected the Producer's valid real-mode post-reservation/pre-dispatch
+pause state. The user authorized one and only one P1-004 micro-correction
+exception.
+
+That exception was consumed with zero credential, network, Provider and model
+access. Final Candidate `6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e`, tree
+`7ab79aa4073baab1c7570424701ebf1302b34837`, passed
+`PASS_FOCUSED_V1_B_P1_004_REAUDIT`; P1-002 and P1-003 remained closed. No fourth
+correction is authorized.
+
+The only remaining implementation path is the frozen replacement Pilot from
+the resulting replacement Execution Baseline, using Manifest ID
+`4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29` and
+write-once sequence authority ID
+`c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1`. Any new
+source defect, identity conflict, budget uncertainty or other Pause Condition
+stops V1-B; it does not authorize another repair.

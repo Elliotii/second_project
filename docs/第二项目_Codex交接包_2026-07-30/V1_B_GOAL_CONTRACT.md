@@ -1,7 +1,7 @@
 # V1-B Goal Contract — Frozen Bounded Real Pilot
 
 ```yaml
-status: accepted_active_paused_bounded_correction_authorized
+status: accepted_active_replacement_stage_2_authorized_pending_fresh_session
 goal_id: V1_B_FROZEN_BOUNDED_REAL_PILOT
 version: V1
 project: Agent Harness Reliability Workbench
@@ -28,19 +28,19 @@ stage_1_started: true
 stage_1_completed: true
 stage_1_thread_id: 019fcc0a-16e1-7791-98ef-ba2eaff857b8
 rejected_candidate_commit: 951e9161300eacd408e232aa6d1fa66ac02d0e10
-corrected_candidate_commit: a11690e5827d9d540b731156799566bea21c689e
-corrected_candidate_tree: 282c4dc93d31131fa0b20fc70c48831409664eee
-focused_reaudit_disposition: PASS_FOCUSED_V1_B_STAGE1_REAUDIT
+corrected_candidate_commit: 6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e
+corrected_candidate_tree: 7ab79aa4073baab1c7570424701ebf1302b34837
+focused_reaudit_disposition: PASS_FOCUSED_V1_B_P1_004_REAUDIT
 candidate_commit_authorized: consumed
 focused_audit_authorized: consumed
 execution_baseline_authorized: true
 execution_baseline_commit: 19617319c13a9eecbb325682c920e79d1517b89d
 execution_baseline_tree: 48d2bee79a551fe53ac36ed12decea2357765645
-stage_2_authorized: original_pilot_consumed_and_paused
+stage_2_authorized: replacement_authorized_pending_fresh_execution_session
 credential_reads_authorized: opaque_DEEPSEEK_API_KEY_only
 external_network_authorized: true_DeepSeek_API_only
-real_model_calls_authorized: bounded_by_frozen_manifest_and_USD2_cap
-real_provider_calls_authorized: bounded_by_frozen_manifest_and_USD2_cap
+real_model_calls_authorized: replacement_manifest_only_under_USD1_90_actual_cap
+real_provider_calls_authorized: replacement_manifest_only_under_USD1_90_actual_cap
 whole_pilot_cost_authorized_usd: 2
 original_stage_2_status: paused_on_first_cell
 original_stage_2_manifest_id: 43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76
@@ -48,10 +48,17 @@ original_started_initial_runs: 1
 original_actual_cost_usd: unknown
 pause_recovery_amendment: docs/第二项目_Codex交接包_2026-07-30/V1_B_PAUSE_RECOVERY_AMENDMENT.md
 pause_recovery_amendment_accepted: true
-pause_path_correction_authorized: one_zero_call_cycle
+pause_path_correction_authorized: consumed_two_cycles_plus_one_time_P1_004_micro_exception
 pause_path_correction_owner: original_v1_b_preparation_session
-focused_pause_path_reaudit_authorized: true_after_corrected_candidate
-replacement_pilot_authorized: true_after_reaudit_and_new_execution_baseline
+focused_pause_path_reaudit_authorized: consumed_PASS_FOCUSED_V1_B_P1_004_REAUDIT
+further_pause_path_corrections_authorized: false
+replacement_pilot_authorized: true_from_resulting_replacement_execution_baseline
+replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+replacement_manifest_path: fixtures/manifests/v1/v1b-stage2-replacement-execution.json
+replacement_manifest_id: 4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29
+replacement_sequence_authority_path: fixtures/manifests/v1/v1b-stage2-replacement-sequence-authority.json
+replacement_sequence_authority_id: c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1
+replacement_source_digest: b1fa032d42c4e381c880b8092bddb5a625169ea44ee2e0ea238da1595d0edf92
 conservative_prior_cost_debit_usd: 0.10
 replacement_pilot_cost_authorized_usd: 1.90
 authorized_sequence_started_initial_runs_max: 25
@@ -63,9 +70,9 @@ dedicated_session_git_commit_authorized: false
 ```
 
 > 本文件是用户已接受并已激活的 V1-B 正式 Goal Contract。原 Stage 2 Pilot在第一
-> cell 上按规则暂停，V1-B 尚未关闭。用户已接受 Pause Recovery Amendment：允许
-> 一次零调用 pause-path evidence 修正、focused re-audit、新 Execution Baseline和
-> 一次新身份 replacement Pilot；原证据不可改写，V2 未授权。
+> cell 上按规则暂停，V1-B 尚未关闭。Pause Recovery Amendment 的返修、P1-004
+> 单次例外与 focused re-audit 已完成并通过；当前只等待从 replacement Execution
+> Baseline 启动 fresh no-source-edit Stage 2。原证据不可改写，V2 未授权。
 
 ## 1. Goal Mission
 
@@ -1005,3 +1012,39 @@ conservative prior debit, caps new actual cost at USD 1.90 and permits at most
 25 started initial Runs across the original and replacement Pilots. It does not
 authorize same-Run retry, fallback, automatic replacement, V1-C, V2 or a
 general durable runtime.
+
+## 25. Final Pause-path Acceptance and Replacement Execution Baseline
+
+The two normal bounded correction cycles closed P1-002 and P1-003 but exposed
+P1-004 in the Inspector's real-mode post-reservation pause interpretation. The
+user then authorized exactly one P1-004 micro-correction exception. That
+exception was consumed by the original Preparation Session with zero
+credential, network, Provider and model access.
+
+Main review accepted final Candidate
+`6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e`, tree
+`7ab79aa4073baab1c7570424701ebf1302b34837`. The fresh focused re-audit returned
+`PASS_FOCUSED_V1_B_P1_004_REAUDIT`; P1-004 passed its positive and adversarial
+checks, and P1-002/P1-003 remained closed. No fourth correction is authorized.
+
+The replacement Pilot is frozen by:
+
+```yaml
+source_candidate_commit: 6a4f6529c4cb2a3e5c726d3bc8cf6beb515b720e
+source_digest: b1fa032d42c4e381c880b8092bddb5a625169ea44ee2e0ea238da1595d0edf92
+replacement_execution_baseline_commit: resulting_HEAD_of_this_revision
+replacement_manifest: fixtures/manifests/v1/v1b-stage2-replacement-execution.json
+replacement_manifest_id: 4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29
+replacement_sequence_authority: fixtures/manifests/v1/v1b-stage2-replacement-sequence-authority.json
+replacement_sequence_authority_id: c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1
+conservative_prior_debit_usd: 0.10
+replacement_actual_cost_cap_usd: 1.90
+authorized_sequence_started_initial_runs_max: 25
+replacement_child_attempts_max: 8
+```
+
+After the resulting baseline SHA is confirmed, Main Session may generate an
+exact-SHA launch Prompt and start one fresh no-source-edit Stage 2 Session. The
+Session must run Gates K/L/M before any real call, then execute only the frozen
+replacement sequence one cell at a time. Any Contract or Amendment exit
+condition pauses the Goal immediately.

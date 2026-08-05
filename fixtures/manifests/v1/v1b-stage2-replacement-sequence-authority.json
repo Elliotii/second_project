@@ -1,0 +1,41 @@
+{
+  "schema_version": "v1b-replacement-sequence-authority-v1",
+  "sequence_id": "c58112fff77b0836a44668395d6ab97ece10996583254c9029c143ab84e01bd1",
+  "predecessor_manifest_id": "43d03fd0a41e69a17814f54dd429624bc81a87e7fcb8a5cca68f8bae24c63f76",
+  "predecessor_paused_run_id": "v1b-run-01-parse-duration-r1-a",
+  "predecessor_started_run_ids": [
+    "v1b-run-01-parse-duration-r1-a"
+  ],
+  "conservative_prior_debit_usd": 0.1,
+  "prior_replacement_manifest_ids": [],
+  "replacement_manifest_id": "4f04542ea59b59110e2d9d62e08067932bf868884e05c153cd5a6bed08575b29",
+  "replacement_run_ids": [
+    "v1b-replacement-run-01-parse-duration-r1-a",
+    "v1b-replacement-run-02-parse-duration-r1-b",
+    "v1b-replacement-run-03-parse-duration-r1-c",
+    "v1b-replacement-run-04-bounded-index-r1-a",
+    "v1b-replacement-run-05-bounded-index-r1-c",
+    "v1b-replacement-run-06-bounded-index-r1-b",
+    "v1b-replacement-run-07-state-transition-r1-b",
+    "v1b-replacement-run-08-state-transition-r1-a",
+    "v1b-replacement-run-09-state-transition-r1-c",
+    "v1b-replacement-run-10-stable-format-r1-b",
+    "v1b-replacement-run-11-stable-format-r1-c",
+    "v1b-replacement-run-12-stable-format-r1-a",
+    "v1b-replacement-run-13-parse-duration-r2-c",
+    "v1b-replacement-run-14-parse-duration-r2-a",
+    "v1b-replacement-run-15-parse-duration-r2-b",
+    "v1b-replacement-run-16-bounded-index-r2-c",
+    "v1b-replacement-run-17-bounded-index-r2-b",
+    "v1b-replacement-run-18-bounded-index-r2-a",
+    "v1b-replacement-run-19-state-transition-r2-a",
+    "v1b-replacement-run-20-state-transition-r2-b",
+    "v1b-replacement-run-21-state-transition-r2-c",
+    "v1b-replacement-run-22-stable-format-r2-b",
+    "v1b-replacement-run-23-stable-format-r2-c",
+    "v1b-replacement-run-24-stable-format-r2-a"
+  ],
+  "retry_same_run": false,
+  "fallback": false,
+  "automatic_replacement": false
+}
