@@ -217,8 +217,9 @@ blocks_v0_charter: false
 ```yaml
 candidate: Youtu-Agent
 current_local_status: absent
-canonical_repository: unverified
-license: unverified
+canonical_repository: https://github.com/TencentCloudADP/youtu-agent
+canonical_repository_status: web_verified_2026-08-06_not_pinned
+license: MIT_web_verified_recheck_at_acquisition
 serves_versions: [V2, V3]
 recommended_timing: before_V2_contract_or_V3_experience_design
 blocks_v0_or_v1: false
@@ -237,7 +238,7 @@ blocks_v0_or_v1: false
 - 当前没有 multi-path Runtime 或 Experience Repository 需求；
 - 提前研究容易把 V0 变成 Eval/训练平台；
 - V2 需要的最小 lineage 已可由 `Run/Attempt/strategy_id/parent_attempt_id` 保留；
-- 版本和许可证仍需在实际获取时核验。
+- canonical repository 与 MIT License 已在 2026-08-06 通过公开仓库页面核验，但实际获取时仍须固定 Commit/Version 并重新核验许可证和依赖边界。
 
 有界研究停止条件：只要能回答 Environment、Rollout、Judge、Experience、Candidate、Promotion 六类对象如何关联，以及哪些模块可独立移植，就停止；不研究全量训练、分布式调度或平台 UI。
 
@@ -355,6 +356,36 @@ pi_sdk_extension_compatibility:
 “成熟”。Permission Extension 不能被表述为 OS Sandbox；Pi Session 不能替代
 Run/Attempt/Workspace/Outcome；Extension 修改后的 Tool Result 不能覆盖原始执行证据。
 
+### 8.2 2026-08-06 联网候选快照（均未本地化）
+
+本节只登记“未来遇到具体问题时去哪里研究”，不授权下载、依赖安装、代码复用或版本路线变更。公开仓库状态会变化；进入研究 Session 时必须重新固定 Commit/Tag、License 与所读模块。
+
+| 来源 | 公开来源与许可证快照 | 服务版本 | 只回答的问题 | 建议复用级别 | 触发与硬停止 |
+| --- | --- | --- | --- | --- | --- |
+| SWE-ReX | <https://github.com/SWE-agent/swe-rex>；MIT | V2.5 | Shell/Process lifecycle、cancel、Exit Code、残留进程、local/remote Runtime 抽象 | behavioral reference；有证据后才比较 adapter/dependency | 本地执行边界出现具体不足；输出最小 Runtime contract 后停止 |
+| Inspect AI | <https://github.com/UKGovernmentBEIS/inspect_ai>；MIT | V2/V3 | Task/Solver/Scorer/Sandbox/Log/Sample identity 如何分层 | architecture adaptation / interoperability reference | 自有 Eval 合同或规模不足；不研究完整 UI/生态 |
+| OpenHands Core | <https://github.com/OpenHands/OpenHands>；Core MIT，`enterprise/` 除外 | V2/V2.5 | Action/Observation、Event Stream、Runtime/Sandbox client-server 生命周期 | source-pattern comparison only | 具体 Sandbox/remote Runtime fork 出现；排除企业目录并在边界映射后停止 |
+| AgentRx | <https://github.com/microsoft/AgentRx>；MIT | V3 | Trajectory IR、Invariant Check、Judge 和根因分类如何保持可审计 | architecture adaptation；后续才判断 module port | V2 有真实失败轨迹且 V3 需要 typed diagnosis；不沿用其完整 Provider/Auth 栈 |
+| EvoSkill | <https://github.com/sentient-agi/EvoSkill>；Apache-2.0 | V3 | 失败轨迹如何产生多个 Skill/Prompt 变体、版本化并经 held-out 选择 | source audit / possible module port | V3 Contract 前；形成与 typed intervention/Promotion Gate 的差异表后停止 |
+| CODESKILL | <https://arxiv.org/abs/2605.25430>；论文 | V3 | 多粒度 Skill 提取、维护策略、可验证下游反馈 | primary research only | V3 Curator 研究；不训练 Curator、不把论文结果当项目证据 |
+| AutoSkill | <https://github.com/ECNU-ICALK/AutoSkill>；当前仓库页面未发现明确 License | V3 | discard/improve/merge/create 和 Skill 版本更新 | behavioral research only until licensed | 仅在与 EvoSkill/CODESKILL 比较维护生命周期时；不得复制/移植 |
+| HarnessFix | <https://github.com/HarnessFix/HarnessFix>；当前仓库页面未显示 License | V3 | HTIR、Harness 层归因、Flaw Record、scoped repair operator | competitive/design reference only | V3 前一次有界对照；无 License 前不得复制，得到差异矩阵即停止 |
+| Promptfoo | <https://github.com/promptfoo/promptfoo>；MIT | V3 | 声明式测试矩阵、回归、输出比较与 CI gate | behavioral reference；规模触发后再比较 dependency | 自有 Candidate 回归矩阵不够用；不采用其 Web/Red-team 全平台 |
+| DSPy | <https://github.com/stanfordnlp/dspy>；MIT | V3/V4 | Metric、数据拆分、候选程序/Prompt 优化与 tracking | conceptual/optimizer reference | Curator 候选量需要自动优化；不把 Prompt 编译等同 Harness 演进 |
+| Harbor / Terminal-Bench | <https://github.com/harbor-framework/harbor>；Apache-2.0 | V3 | 标准 Task/Environment/Agent/Trial/Verifier 与并行回归 | adapter/dependency after scale trigger | 内部任务不足或需公开 Benchmark；不迁移训练/平台生态 |
+| Darwin Gödel Machine | <https://github.com/jennyzzt/dgm>；Apache-2.0 | V4 | Archive、变体 lineage、Benchmark 选择及自修改风险 | research/negative-boundary reference | V4 前；只提炼 Archive/验证，不采用自修改稳定内核 |
+
+与当前路线最关键的判断是：
+
+```text
+成熟项目可复用运行、评测、诊断或候选治理模式
+≠ 直接采用完整框架
+≠ 外部结果证明本项目有效
+≠ 允许 Curator 修改 Verifier、安全边界或 Promotion Authority
+```
+
+V2 Contract 前的默认研究顺序仍为：先完成固定 Pi SDK/Extension/Worktree compatibility checkpoint，再判断本地 Workbench 是否存在具体缺口；只有缺口成立时才选择 SWE-ReX、Inspect AI 或 OpenHands 中**唯一最相关的一项**做专用有界研究。V3 前再以 AgentRx + EvoSkill/CODESKILL 为主线，HarnessFix 为高相关竞争对照；其余来源按规模或明确设计分叉触发。
+
 ---
 
 ## 9. 复用、移植与归因规则
@@ -402,9 +433,12 @@ allowed_when_provenance_and_license_pass:
 | 2 | V1 Charter 前 | Skill primary-paper + cc/Pi/mirror comparison | Skill contract inputs | 不实现 Skill registry |
 | 3 | V2 Charter 前 | Same-session vs clean-session recovery pattern audit | route invariants + smallest experiment | 不建 Router/Experience platform |
 | 3A | V1 选出可进入真实 Pi 的 Policy 后，或 V2 Contract 前 | Pi SDK / Extension / Worktree bounded compatibility audit | adopt/adapter/port/reference/reject matrix | 不改变 V1、不安装未审计 Package、不实现通用插件或权限平台 |
-| 4 | V2 需要外部框架 | Youtu Environment/Rollout/Judge audit | bounded comparison matrix | 不研究训练平台 |
-| 5 | V3 前 | Experience/meta-evolution primary-source audit | experience/promotion inputs | 不实现自治 Curator |
-| 6 | Pilot 任务规模触发 | Harbor/Terminal-Bench packaging audit | adapter decision | 不迁移 benchmark ecosystem |
+| 3B | 3A 或 V2 Precontract 发现具体 Runtime/Eval 缺口 | SWE-ReX / Inspect AI / OpenHands 三选一 focused source audit | 最小 contract + adopt/adapter/reference/reject | 只研究一个来源，不引入依赖、不实现 Sandbox 平台 |
+| 4 | V2 需要外部 Environment/Rollout/Judge 对照 | Youtu-Agent focused audit | bounded comparison matrix | 不研究训练平台 |
+| 5 | V2 已产生可复核失败轨迹，V3 Precontract 前 | AgentRx diagnosis + EvoSkill/CODESKILL candidate-governance audit；HarnessFix 仅作竞争对照 | diagnosis-to-typed-intervention map + promotion inputs | 不实现自治 Curator；不复制无明确 License 的代码 |
+| 5A | Candidate regression 或优化规模超出简单内部实现 | Promptfoo 或 DSPy 二选一 focused audit | eval/optimizer boundary decision | 不把 Prompt 优化扩张为全 Harness 自改 |
+| 6 | Pilot/Regression 任务规模触发 | Harbor/Terminal-Bench packaging audit | adapter decision | 不迁移 benchmark ecosystem |
+| 7 | V3 已有 Candidate 生命周期和足够历史数据 | DGM archive/selection bounded audit | V4 archive/routing/retirement invariants | 不采用开放式自修改 Core |
 
 主 Session保留最终决定权；专用研究 Session 只回答一个合同问题并返回报告。
 
