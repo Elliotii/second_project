@@ -239,22 +239,58 @@ function readFrozenSkillWrapper(projectRoot: string, expectedDigest: string): { 
 	return { wrapper, sourceSize: Buffer.byteLength(source) };
 }
 
-function lastUserText(dispatch: TerminalCellEvidenceV1B["initial_dispatch"]): string {
-	const messages = dispatch.context.messages as Array<{ role?: string; content?: unknown }>;
-	const user = messages.findLast((entry) => entry.role === "user");
-	if (!user) throw new Error("fairness dispatch lacks user message");
+type FairnessMessageV1B = { role?: string; content?: unknown };
+
+function fairnessMessages(value: unknown, label: string): FairnessMessageV1B[] {
+	if (!Array.isArray(value)) throw new Error(`fairness ${label} messages shape invalid`);
+	return value as FairnessMessageV1B[];
+}
+
+function lastUserMessage(value: unknown, label: string): FairnessMessageV1B {
+	const user = fairnessMessages(value, label).findLast((entry) => entry.role === "user");
+	if (!user) throw new Error(`fairness ${label} lacks user message`);
+	return user;
+}
+
+function lastUserText(value: unknown, label: string): string {
+	const user = lastUserMessage(value, label);
 	if (typeof user.content === "string") return user.content;
-	if (!Array.isArray(user.content)) throw new Error("fairness user content shape invalid");
+	if (!Array.isArray(user.content)) throw new Error(`fairness ${label} user content shape invalid`);
 	return user.content.flatMap((part) => part && typeof part === "object" && (part as { type?: string }).type === "text" ? [String((part as { text?: unknown }).text ?? "")] : []).join("");
 }
 
+function providerPayloadMessages(dispatch: TerminalCellEvidenceV1B["initial_dispatch"]): unknown[] | null {
+	const payload = dispatch.provider_payload;
+	if (payload === null || payload === undefined) return null;
+	if (typeof payload !== "object" || Array.isArray(payload) || !("messages" in payload)) throw new Error("fairness provider payload messages shape invalid");
+	return fairnessMessages((payload as { messages?: unknown }).messages, "provider payload");
+}
+
+function replaceLastUserTreatment(value: unknown, label: string): void {
+	const user = lastUserMessage(value, label);
+	if (typeof user.content === "string") {
+		user.content = "<V1B_EXACT_TREATMENT_TEXT>";
+		return;
+	}
+	if (!Array.isArray(user.content)) throw new Error(`fairness ${label} user content shape invalid`);
+	let replacements = 0;
+	user.content = user.content.map((part) => {
+		if (!part || typeof part !== "object" || (part as { type?: string }).type !== "text") return part;
+		replacements++;
+		return { ...part, text: "<V1B_EXACT_TREATMENT_TEXT>" };
+	});
+	if (replacements === 0) throw new Error(`fairness ${label} user content lacks text treatment`);
+}
+
 function normalizedExactDispatch(terminal: TerminalCellEvidenceV1B, expectedText: string): string {
-	if (lastUserText(terminal.initial_dispatch) !== expectedText) throw new Error("initial Skill treatment text is not the frozen expected value");
+	const contextMessages = terminal.initial_dispatch.context.messages;
+	const providerMessages = providerPayloadMessages(terminal.initial_dispatch);
+	if (lastUserText(contextMessages, "context") !== expectedText) throw new Error("initial context Skill treatment text is not the frozen expected value");
+	if (providerMessages && lastUserText(providerMessages, "provider payload") !== expectedText) throw new Error("initial provider payload Skill treatment text is not the frozen expected value");
 	const value = structuredClone(terminal.initial_dispatch);
-	const messages = value.context.messages as Array<{ role?: string; content?: unknown }>;
-	const user = messages.findLast((entry) => entry.role === "user")!;
-	if (typeof user.content === "string") user.content = "<V1B_EXACT_TREATMENT_TEXT>";
-	else user.content = (user.content as Array<Record<string, unknown>>).map((part) => part.type === "text" ? { ...part, text: "<V1B_EXACT_TREATMENT_TEXT>" } : part);
+	replaceLastUserTreatment(value.context.messages, "context");
+	const normalizedProviderMessages = providerPayloadMessages(value);
+	if (normalizedProviderMessages) replaceLastUserTreatment(normalizedProviderMessages, "provider payload");
 	value.payload_sha256 = "<DIGEST>";
 	return stableJson(value);
 }

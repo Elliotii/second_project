@@ -48,13 +48,31 @@ function coherentRewrite(pilotRoot: string, plannedRunId: string, mutate: (value
 	writeStable(terminalPath, terminal); marker.run_result_ref.sha256 = fileSha256(runResultPath); marker.run_result_ref.size_bytes = readFileSync(runResultPath).length; marker.terminal_evidence_ref.sha256 = fileSha256(terminalPath); marker.terminal_evidence_ref.size_bytes = readFileSync(terminalPath).length; writeStable(markerPath, marker);
 }
 
-function setLastUserText(terminal: TerminalCellEvidenceV1B, text: string): void {
-	const messages = terminal.initial_dispatch.context.messages as Array<{ role?: string; content?: unknown }>;
-	const user = messages.findLast((entry) => entry.role === "user")!;
+function setLastUserTextInMessages(messages: unknown[], text: string): void {
+	const typedMessages = messages as Array<{ role?: string; content?: unknown }>;
+	const user = typedMessages.findLast((entry) => entry.role === "user")!;
 	if (typeof user.content === "string") user.content = text;
 	else user.content = (user.content as Array<Record<string, unknown>>).map((part) => part.type === "text" ? { ...part, text } : part);
+}
+
+function rehashInitialDispatch(terminal: TerminalCellEvidenceV1B): void {
 	const dispatch = { model: terminal.initial_dispatch.model, context: terminal.initial_dispatch.context, options: terminal.initial_dispatch.options, provider_payload: terminal.initial_dispatch.provider_payload };
 	terminal.initial_dispatch.payload_sha256 = sha256(stableJson(dispatch));
+}
+
+function setLastUserText(terminal: TerminalCellEvidenceV1B, text: string): void {
+	setLastUserTextInMessages(terminal.initial_dispatch.context.messages, text);
+	rehashInitialDispatch(terminal);
+}
+
+function duplicateRealProviderPayload(terminal: TerminalCellEvidenceV1B): void {
+	terminal.initial_dispatch.provider_payload = {
+		system: terminal.initial_dispatch.context.systemPrompt,
+		messages: structuredClone(terminal.initial_dispatch.context.messages),
+		tools: structuredClone(terminal.initial_dispatch.context.tools),
+		stream: true,
+	};
+	rehashInitialDispatch(terminal);
 }
 
 test("V1-B Gate A/B preflight binds corrected baseline and keeps all real-call counters zero", () => {
@@ -248,6 +266,19 @@ test("V1-B F-003 proves A/B delta is exactly the frozen public Skill treatment",
 	const readTerminal = (run: string) => JSON.parse(readFileSync(resolve(source, "runs", run, "terminal-evidence.json"), "utf8")) as TerminalCellEvidenceV1B;
 	const text = (terminal: TerminalCellEvidenceV1B) => { const user = (terminal.initial_dispatch.context.messages as Array<{ role?: string; content?: Array<{ type?: string; text?: string }> }>).findLast((entry) => entry.role === "user")!; return user.content!.filter((part) => part.type === "text").map((part) => part.text ?? "").join(""); };
 	const aText = text(readTerminal(aCell.planned_run_id)); const bText = text(readTerminal(bCell.planned_run_id));
+	const realShaped = root("f003-real-shaped"); cpSync(source, realShaped, { recursive: true });
+	for (const cell of [aCell, bCell, cCell]) coherentRewrite(realShaped, cell.planned_run_id, ({ terminal, runResult }) => { duplicateRealProviderPayload(terminal); runResult.evidence.initial_payload_digest = terminal.initial_dispatch.payload_sha256; });
+	assert.doesNotThrow(() => aggregatePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot: realShaped }));
+	for (const [label, mutate] of [
+		["provider-only-treatment", (terminal: TerminalCellEvidenceV1B) => { const payload = terminal.initial_dispatch.provider_payload as { messages: unknown[] }; setLastUserTextInMessages(payload.messages, "arbitrary provider-only treatment"); rehashInitialDispatch(terminal); }],
+		["context-only-treatment", (terminal: TerminalCellEvidenceV1B) => { setLastUserText(terminal, "arbitrary context-only treatment"); }],
+		["arbitrary-duplicated-treatment", (terminal: TerminalCellEvidenceV1B) => { setLastUserTextInMessages(terminal.initial_dispatch.context.messages, "arbitrary duplicated treatment"); const payload = terminal.initial_dispatch.provider_payload as { messages: unknown[] }; setLastUserTextInMessages(payload.messages, "arbitrary duplicated treatment"); rehashInitialDispatch(terminal); }],
+		["non-treatment-provider-drift", (terminal: TerminalCellEvidenceV1B) => { (terminal.initial_dispatch.provider_payload as Record<string, unknown>).stream = false; rehashInitialDispatch(terminal); }],
+	] as const) {
+		const copy = root(`f003-real-shaped-${label}`); cpSync(realShaped, copy, { recursive: true });
+		for (const cell of [bCell, cCell]) coherentRewrite(copy, cell.planned_run_id, ({ terminal, runResult }) => { mutate(terminal); runResult.evidence.initial_payload_digest = terminal.initial_dispatch.payload_sha256; });
+		assert.throws(() => aggregatePilotV1B({ projectRoot: PROJECT_ROOT, pilotRoot: copy }), /Skill treatment|A\/B delta/, label);
+	}
 	for (const [label, replacement] of [["arbitrary", "arbitrary treatment"], ["missing-wrapper", aText], ["extra-text", `${bText}\nEXTRA`], ["wrong-body", bText.replace("Inspect the provided TypeScript task", "Ignore the frozen Skill and guess")]] as const) {
 		const copy = root(`f003-${label}`); cpSync(source, copy, { recursive: true });
 		for (const cell of [bCell, cCell]) coherentRewrite(copy, cell.planned_run_id, ({ terminal, runResult }) => { setLastUserText(terminal, replacement); runResult.evidence.initial_payload_digest = terminal.initial_dispatch.payload_sha256; });
