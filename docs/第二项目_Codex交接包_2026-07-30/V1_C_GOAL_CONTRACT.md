@@ -1,7 +1,7 @@
 # V1-C Goal Contract — Bounded Budget-stop Correction and Comparison Completion
 
 ```yaml
-status: accepted_activated_aggregate_normalizer_reaudit_accepted_fresh_full_pilot_restart_authorized
+status: accepted_activated_r2_cell04_outer_timeout_accepted_continuation_from_cell05_authorized
 goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 version: V1
 project: Agent Harness Reliability Workbench
@@ -66,8 +66,16 @@ restart_workbench_source_digest: 2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63
 restart_pilot_root: .runs/v1-c/full-pilot-r2/pilot
 restart_control_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
 restart_execution_prompt: docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
-restart_execution_session_status: ready_to_dispatch_from_exact_baseline
-restart_initial_cells_started: 0
+restart_execution_session_status: paused_after_cell04_outer_timeout_main_review_accepted_continue_from_cell05
+restart_initial_cells_started: 4
+restart_terminal_integrity_valid_comparable_cells: 4
+restart_cell04_outer_launcher_exit: 124
+restart_cell04_product_process_exit: unknown_unrecoverable
+restart_cell04_retry_authorized: false
+restart_replacement_authorized: false
+restart_continuation_from_cell05_authorized: true
+restart_future_outer_wait_ms_min: 900000
+restart_continuation_decision: docs/reports/V1_C_R2_CELL04_OUTER_TIMEOUT_MAIN_REVIEW_AND_CONTINUATION_DECISION.md
 restart_authorized_by_user: true
 full_pilot_initial_cells: 24
 full_pilot_child_attempts_max: 8
@@ -670,6 +678,28 @@ Binding continuation rules:
 The user explicitly accepted this corrected route and authorized continuation.
 V1-C remains active until the restarted 24-cell aggregate is accepted or a
 material Pause Condition makes the comparison genuinely non-completable.
+
+### 13.1 R2 cell-04 outer-timeout continuation amendment
+
+R2 cells 01–04 are terminal, integrity-valid and comparable; block 1 passes
+the frozen fairness checks and all Provider usage/cost is known. Cell 04's outer
+command runner returned `124` because of an incorrectly short five-second host
+wait after product execution had begun. Its product process subsequently wrote
+complete terminal evidence, but its own exit code is unrecoverable.
+
+Main accepts this as a one-time Session/orchestration observation defect, not as
+a product Run retry or replacement condition. Cell 04 remains in the formal R2
+denominator and must never be rerun. The original dedicated R2 Execution Session
+may continue only from Manifest-selected cell 05 after reproducing the read-only
+Inspector/aggregate results. Every future product command uses an outer runner
+wait of at least `900000` ms without changing any Manifest budget. Any repeated
+post-side-effect launcher anomaly stops the Pilot with no further exception.
+
+The exact limitation remains mandatory in final reporting: outer exit `124` is
+known, product-process exit is unknown, and no claim may convert it to exit `0`.
+All other Pause Conditions, no-retry/no-fallback/no-replacement rules, frozen
+treatments, USD `1.90` cap and V2 prohibition remain unchanged. The binding Main
+decision is `docs/reports/V1_C_R2_CELL04_OUTER_TIMEOUT_MAIN_REVIEW_AND_CONTINUATION_DECISION.md`.
 
 ## 14. User Decisions Required
 

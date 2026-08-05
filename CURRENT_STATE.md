@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_corrected_full_pilot_restart_baseline_preparation
-  status: V1_C_AGGREGATE_NORMALIZER_REAUDIT_ACCEPTED_FRESH_24_CELL_PILOT_PENDING_V2_NOT_AUTHORIZED
+  phase: v1_c_r2_full_pilot_bounded_continuation
+  status: V1_C_R2_CELL04_OUTER_TIMEOUT_ACCEPTED_CELL05_CONTINUATION_AUTHORIZED_V2_NOT_AUTHORIZED
 
 active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
 last_executed_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_corrected_full_pilot_restart_pending
+  status: active_r2_continuation_from_cell_05_authorized
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
   disposition: PASS_V1_C_AGGREGATE_NORMALIZER_FOCUSED_REAUDIT
   prior_partial_pilot_baseline_commit: a751e57e6fd22ef278eb0ddcd01aa52932fd19d7
@@ -34,7 +34,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_fresh_24_cell_pilot_restart_baseline_pending
+  status: active_r2_continue_existing_manifest_from_next_unstarted_cell
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -679,9 +679,23 @@ v1:
   V1_C_restart_full_pilot_root: .runs/v1-c/full-pilot-r2/pilot
   V1_C_restart_control_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
   V1_C_restart_execution_prompt: docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
-  V1_C_restart_execution_session_status: ready_to_dispatch_from_exact_baseline
-  V1_C_restart_initial_cells_started: 0
-  V1_C_restart_execution_owner: future_fresh_no_source_edit_execution_session
+  V1_C_restart_execution_session_status: paused_after_cell_04_outer_runner_timeout_main_review_accepted_continuation_from_cell_05
+  V1_C_restart_initial_cells_started: 4
+  V1_C_restart_terminal_integrity_valid_comparable_cells: 4
+  V1_C_restart_passed_cells: 3
+  V1_C_restart_failed_cells: 1
+  V1_C_restart_invalid_cells: 0
+  V1_C_restart_completed_fairness_blocks: 1
+  V1_C_restart_child_attempts: 1
+  V1_C_restart_cost_usd_after_cell_04: 0.0037360792
+  V1_C_restart_cell_04_outer_launcher_exit: 124
+  V1_C_restart_cell_04_product_process_exit: unknown_unrecoverable
+  V1_C_restart_cell_04_product_evidence: terminal_integrity_valid_comparable_usage_known
+  V1_C_restart_cell_04_retry_authorized: false
+  V1_C_restart_replacement_authorized: false
+  V1_C_restart_continuation_from_cell_05_authorized: true
+  V1_C_restart_continuation_decision: docs/reports/V1_C_R2_CELL04_OUTER_TIMEOUT_MAIN_REVIEW_AND_CONTINUATION_DECISION.md
+  V1_C_restart_execution_owner: dedicated_no_source_edit_session_019fd3c1_add6_7030_9357_2e76540a6c13
   V1_C_restart_authorization: accepted_by_user_continue_corrected_plan
   V1_C_full_pilot_initial_cells: 24
   V1_C_full_pilot_child_attempts_max: 8
@@ -1375,8 +1389,9 @@ next_checkpoint:
   - V1_C_historical_four_run_prefix_preserved_as_superseded_diagnostic_evidence
   - V1_C_aggregate_normalizer_candidate_and_focused_reaudit_accepted
   - V1_C_corrected_disjoint_R2_full_Pilot_manifest_frozen
-  - launch_fresh_no_source_edit_R2_full_Pilot_from_exact_authorization_baseline
-  - execute_one_cell_at_a_time_and_stop_on_first_Pause_Condition
+  - preserve_R2_cell_04_outer_timeout_and_terminal_product_evidence_without_retry
+  - continue_original_no_source_edit_R2_session_from_cell_05_with_safe_outer_wait
+  - execute_one_cell_at_a_time_and_stop_on_any_new_Pause_Condition
   - stop_automatically_on_any_Pause_Condition
   - stop_before_V2
 
