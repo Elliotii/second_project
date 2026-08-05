@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_real_canary_authorized_not_started
-  status: V1_C_REAL_CANARY_AUTHORIZED_FULL_PILOT_CONDITIONAL_V2_NOT_AUTHORIZED
+  phase: v1_c_full_pilot_authorized_not_started
+  status: V1_C_CANARY_ACCEPTED_FULL_PILOT_AUTHORIZED_V2_NOT_AUTHORIZED
 
 active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
@@ -33,7 +33,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_real_canary_authorized_not_started
+  status: active_full_pilot_authorized_not_started
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -314,6 +314,10 @@ completed_work:
   - V1_C_audited_execution_baseline_created_at_cc71cdb8952178ef1d7422f44359d6ca08473b18
   - V1_C_real_Canary_opaque_credential_network_and_calls_authorized_under_USD_0_10
   - V1_C_full_Pilot_conditionally_pre_authorized_after_valid_Main_reviewed_Canary_under_USD_1_90
+  - V1_C_real_Canary_completed_terminal_integrity_valid_comparable_and_task_pass
+  - V1_C_real_Canary_accepted_as_PASS_V1_C_REAL_CANARY
+  - V1_C_full_Pilot_conditional_preauthorization_activated
+  - V1_C_disjoint_24_cell_full_Pilot_manifest_materialized
   - V1_C_final_closeout_commit_authorized
   - V2_remains_not_authorized
 
@@ -374,6 +378,11 @@ workspace:
   v1_c_audited_execution_baseline_tree: 7fa38a7b4484fa4076834c0cb01a46415bad0ac9
   v1_c_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
   v1_c_workbench_source_digest: 4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
+  v1_c_canary_run_id: v1c-canary-run-01-parse-duration-r1-a
+  v1_c_canary_disposition: PASS_V1_C_REAL_CANARY
+  v1_c_canary_actual_cost_usd: 0.00042865199999999996
+  v1_c_full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
+  v1_c_full_pilot_authorization_baseline_commit: resulting_HEAD_of_this_revision
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -437,19 +446,19 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: active_v1_c_real_canary_authorized_full_pilot_conditional
+  status: active_v1_c_full_pilot_authorized_not_started
   prior_status: concluded_inconclusive_not_completed
   active_goal: true
   current_candidate_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
   formal_goal_contract_created: true
   activation_authorized: consumed_for_V1_A
   activation_authorized_at: 2026-08-03
-  implementation_owner: dedicated_v1_a_implementation_session
-  implementation_authorized: consumed_and_completed_zero_real_calls
+  implementation_owner: fresh_v1_c_full_pilot_execution_session
+  implementation_authorized: consumed_completed_v1_c_stage_1
   implementation_started: true
   implementation_completed: true
-  real_model_calls_authorized: 0
-  external_network_authorized: false
+  real_model_calls_authorized: bounded_by_full_pilot_manifest_and_USD_1_90
+  external_network_authorized: fixed_DeepSeek_endpoint_full_pilot_only
   pi_core_patch_authorized: false
   runtime_surface: direct_public_emitted_AgentHarness
   strategies:
@@ -603,7 +612,7 @@ v1:
   V1_B_v2_authorized: false
   V1_C_precontract_research: docs/reports/V1_C_PRECONTRACT_RESEARCH.md
   V1_C_goal_contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  V1_C_contract_status: accepted_activated
+  V1_C_contract_status: accepted_activated_full_pilot_authorized
   V1_C_contract_accepted: true
   V1_C_activation_authorized: true
   V1_C_control_baseline_commit_authorized: consumed
@@ -626,15 +635,26 @@ v1:
   V1_C_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
   V1_C_workbench_source_digest: 4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
   V1_C_official_provider_checkpoint: PASS_CURRENT_OFFICIAL_PROVIDER_CHECKPOINT
-  V1_C_real_canary_authorized: true
-  V1_C_real_canary_started: false
-  V1_C_full_pilot_authorized: false
-  V1_C_full_pilot_conditionally_pre_authorized: true_after_valid_Main_reviewed_Canary
+  V1_C_real_canary_authorized: consumed_completed
+  V1_C_real_canary_started: true
+  V1_C_real_canary_disposition: PASS_V1_C_REAL_CANARY
+  V1_C_real_canary_run_id: v1c-canary-run-01-parse-duration-r1-a
+  V1_C_real_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
+  V1_C_real_canary_actual_cost_usd: 0.00042865199999999996
+  V1_C_real_canary_provider_requests: 8
+  V1_C_real_canary_tool_calls: 10
+  V1_C_real_canary_tokens: 12147
+  V1_C_full_pilot_authorized: true
+  V1_C_full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
   V1_C_full_pilot_started: false
-  V1_C_credential_reads_authorized: one_opaque_Canary_process_resolution
-  V1_C_external_network_authorized: fixed_DeepSeek_endpoint_Canary_only
-  V1_C_real_provider_calls_authorized: bounded_by_Canary_request_cap_8_and_USD_0_10
-  V1_C_real_model_calls_authorized: bounded_by_Canary_request_cap_8_and_USD_0_10
+  V1_C_full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution.json
+  V1_C_full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
+  V1_C_full_pilot_initial_cells: 24
+  V1_C_full_pilot_child_attempts_max: 8
+  V1_C_credential_reads_authorized: one_opaque_resolution_per_started_full_pilot_cell_max_24
+  V1_C_external_network_authorized: fixed_DeepSeek_endpoint_full_pilot_only
+  V1_C_real_provider_calls_authorized: bounded_by_full_pilot_manifest_request_caps_and_USD_1_90
+  V1_C_real_model_calls_authorized: bounded_by_full_pilot_manifest_request_caps_and_USD_1_90
   V1_C_whole_real_sequence_hard_cap_usd: 2.00
   V1_C_canary_hard_cap_usd: 0.10
   V1_C_conditional_full_pilot_hard_cap_usd: 1.90
@@ -1253,6 +1273,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  - docs/reports/V1_C_CANARY_MAIN_ACCEPTANCE_AND_FULL_PILOT_BASELINE_DECISION.md
+  - docs/reports/V1_C_CANARY_EXECUTION_REPORT.md
   - docs/reports/V1_C_PRECONTRACT_RESEARCH.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_VERSION_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_B_GOAL_CONTRACT.md
@@ -1304,8 +1326,10 @@ next_checkpoint:
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
   - V1_C_stage_1_corrected_candidate_and_focused_reaudit_accepted
   - V1_C_audited_execution_baseline_and_one_cell_Canary_manifest_frozen
-  - launch_fresh_no_source_edit_real_Canary_from_exact_authorization_baseline
-  - Main_review_Canary_and_activate_conditional_full_Pilot_only_if_valid
+  - V1_C_real_Canary_accepted_as_terminal_integrity_valid_comparable_task_pass
+  - V1_C_disjoint_full_Pilot_manifest_and_authority_frozen
+  - launch_fresh_no_source_edit_full_Pilot_from_exact_authorization_baseline
+  - execute_one_cell_at_a_time_and_stop_on_first_Pause_Condition
   - stop_automatically_on_any_Pause_Condition
   - stop_before_V2
 
@@ -1382,12 +1406,13 @@ open_user_decisions: []
   Pilot identities paused before a terminal/comparable Run existed; their
   actual costs remain unknown and conservative accounting totals USD 0.20.
   V1-B remains historically closed with no further correction, retry, fallback
-  or replacement authority. V1-C is active only for its dedicated zero-call
-  Stage 1 correction. Candidate Commit, focused audit, Credential/network use,
-  real Canary, full Pilot and every real-model call remain separately
-  unauthorized. V1 still has no completed Baseline/Skill-only/Skill+Runtime
-  comparison. V2 bounded multi-path recovery remains the Portfolio North Star
-  but is not authorized.
+  or replacement authority. V1-C Stage 1 and its focused re-audit are complete.
+  The real Canary is accepted as terminal, integrity-valid and comparable; its
+  exact tracked cost is USD `0.00042865199999999996`. A disjoint 24-cell full
+  Pilot is now authorized under USD 1.90 in a fresh no-source-edit Session.
+  Retry, fallback, replacement, source repair and V2 remain unauthorized. V1
+  still has no completed Baseline/Skill-only/Skill+Runtime comparison until the
+  full Pilot produces a valid aggregate.
 
 ## Expected Next Handoff
 
@@ -1427,8 +1452,10 @@ unknown-usage accounting and passed fresh focused re-audit. Corrected Candidate
 `PASS_V1_C_STAGE1_AUDITED_CANDIDATE`; the resulting Main-owned revision
 freezes the audited Execution Baseline and the disjoint one-cell Canary
 Manifest. Official DeepSeek profile/schema compatibility and zero-call
-preflight pass. The user has authorized the fresh one-cell real Canary under
-USD 0.10 and conditionally pre-authorized the disjoint USD 1.90 full Pilot only
-after a valid Main-reviewed Canary. Real-execution Sessions have no source-edit
-authority and must stop on the first Contract Pause Condition. V2 remains
-unauthorized.
+preflight pass. The Canary completed as a terminal, integrity-valid, comparable
+`task_pass` with eight Provider/model requests and exact tracked cost USD
+`0.00042865199999999996`; Main accepts it as `PASS_V1_C_REAL_CANARY`. The
+conditional authorization is therefore activated for the disjoint 24-cell,
+maximum-eight-child full Pilot under USD 1.90. Its fresh execution Session has
+no source-edit authority, runs one cell at a time and must stop on the first
+Contract Pause Condition. V2 remains unauthorized.

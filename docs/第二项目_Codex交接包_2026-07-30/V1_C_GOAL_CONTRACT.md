@@ -1,7 +1,7 @@
 # V1-C Goal Contract — Bounded Budget-stop Correction and Comparison Completion
 
 ```yaml
-status: accepted_activated_real_canary_authorized_full_pilot_conditional
+status: accepted_activated_canary_accepted_full_pilot_authorized
 goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 version: V1
 project: Agent Harness Reliability Workbench
@@ -31,15 +31,25 @@ canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc48
 official_provider_checkpoint: PASS_CURRENT_OFFICIAL_PROVIDER_CHECKPOINT
 real_canary_authorized: true
 real_canary_hard_cap_usd: 0.10
-full_pilot_authorized: false
-full_pilot_conditionally_pre_authorized: true_after_valid_Main_reviewed_Canary
+real_canary_completed: true
+real_canary_disposition: PASS_V1_C_REAL_CANARY
+real_canary_run_id: v1c-canary-run-01-parse-duration-r1-a
+real_canary_actual_cost_usd: 0.00042865199999999996
+full_pilot_authorized: true
+full_pilot_conditionally_pre_authorized: consumed_activated_after_PASS_V1_C_REAL_CANARY
+full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution.json
+full_pilot_manifest_id: e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1
+full_pilot_initial_cells: 24
+full_pilot_child_attempts_max: 8
 full_pilot_remaining_hard_cap_usd: 1.90
 whole_real_sequence_hard_cap_usd: 2.00
 closeout_commit_authorized: true_after_terminal_disposition
 stage_1_real_model_calls_authorized: 0
 stage_1_real_provider_calls_authorized: 0
-credential_reads_authorized: one_opaque_Canary_process_resolution
-external_network_authorized: fixed_DeepSeek_endpoint_Canary_only
+credential_reads_authorized: one_opaque_resolution_per_started_full_pilot_cell_max_24
+external_network_authorized: fixed_DeepSeek_endpoint_full_pilot_only
+real_provider_calls_authorized: bounded_by_full_pilot_manifest_and_USD_1_90
+real_model_calls_authorized: bounded_by_full_pilot_manifest_and_USD_1_90
 main_session_control_baseline_commit_authorized: consumed
 dedicated_session_git_commit_authorized: false
 pi_core_patch_authorized: false
@@ -52,8 +62,9 @@ v2_authorized: false
 > 本文件是用户已经接受并激活的 V1-C 正式 Goal Contract。Dedicated Stage 1 已完成零真实
 > 调用实现，corrected Candidate 和 fresh focused re-audit 已被 Main Session接受；本次
 > resulting HEAD 冻结 audited Execution Baseline、单 Cell Canary Manifest 和零调用 Provider
-> checkpoint。用户已授权 fresh no-source-edit 真实 Canary，并仅在 Canary 经 Main 复核为
-> terminal、integrity-valid、comparable 后条件性预授权独立 full Pilot。V2、源码临场修复、
+> checkpoint。fresh no-source-edit 真实 Canary 已完成，并由 Main 接受为 terminal、
+> integrity-valid、comparable 的 `PASS_V1_C_REAL_CANARY`。先前的条件性预授权因此已激活为
+> 独立 24-cell、最多 8 child、USD 1.90 full Pilot；该 Pilot 尚未开始。V2、源码临场修复、
 > retry、fallback 和 replacement 仍未授权。
 
 ## 1. Goal Mission
@@ -433,7 +444,8 @@ Prompt、Skill、Verifier、Tool、Provider/model 和 attempt budgets 不得改�
 
 ## 8. Real-call and Cost Authority
 
-本 Contract 的当前真实权限为 0。未来必须单独授权，并建议冻结为：
+本 Contract 的 Stage 1 真实权限曾冻结为 0。用户后续已授权 one-cell Canary，并在 Main
+Session 接受该 Canary 为 `PASS_V1_C_REAL_CANARY` 后激活独立 full Pilot 权限。当前冻结为：
 
 ```yaml
 v1_c_total_real_sequence_hard_cap_usd: 2.00
@@ -607,14 +619,14 @@ user_decisions_required:
     consequence: prepares_but_does_not_authorize_the_real_Canary
 
   - decision: authorize_real_canary
-    status: authorized_2026_08_06
+    status: consumed_completed_and_accepted_PASS_V1_C_REAL_CANARY_2026_08_06
     evidence: passed_focused_audit_and_audited_execution_baseline
     options: [authorize_up_to_usd_0_10, do_not_authorize]
     recommendation: decide_only_after_audit
     consequence: validates_one_new_identity_real_cell_but_not_arm_comparison
 
   - decision: authorize_full_pilot
-    status: conditionally_pre_authorized_2026_08_06_after_valid_Main_reviewed_Canary
+    status: consumed_activated_2026_08_06_after_PASS_V1_C_REAL_CANARY
     evidence: main_accepted_valid_canary
     options: [authorize_remaining_sequence_up_to_usd_1_90, stop_after_canary]
     recommendation: authorize_only_if_canary_is_terminal_integrity_valid_and_comparable
@@ -623,6 +635,7 @@ user_decisions_required:
 
 本 Contract 已由用户接受并激活。Stage 1 corrected Candidate 和 fresh focused re-audit 已由
 Main Session接受；audited Execution Baseline 为
-`cc71cdb8952178ef1d7422f44359d6ca08473b18`。用户已授权单 Cell 真实 Canary 的 opaque
-Credential、固定 DeepSeek 网络/Provider/model 调用和 USD 0.10 上限，并条件性预授权合格
-Canary 后的独立 USD 1.90 full Pilot。V2 仍未授权。
+`cc71cdb8952178ef1d7422f44359d6ca08473b18`。单 Cell 真实 Canary 已被接受为
+`PASS_V1_C_REAL_CANARY`，其实际成本为 USD `0.00042865199999999996`。用户先前的条件性
+授权已激活为独立 USD 1.90 full Pilot；其 Manifest ID 为
+`e32b11a162fec752e95ff48bf2b1021f20109a8e804aa025131568d49f50e8a1`。V2 仍未授权。
