@@ -88,21 +88,22 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	if (!last || last.manifest_id !== manifest.manifest_id || last.cell_id !== cell.cell_id || last.planned_run_id !== cell.planned_run_id || last.run_id !== cell.planned_run_id || last.attempt_id !== pause.attempt_id || last.phase !== pause.phase || stableJson(last.pause_evidence_ref) !== stableJson(paused.pause_evidence_ref) || last.journal_prefix_sha256 !== pause.journal_prefix_sha256) errors.push("attempt_paused identity/digest relation drift");
 	const attemptStarted = events.filter((event) => event.type === "attempt_started").at(-1)?.data;
 	if (!attemptStarted || attemptStarted.attempt_id !== pause.attempt_id) errors.push("pause evidence Attempt identity drift");
+	const v1c = manifest.schema_version === "v1c-execution-manifest-v1";
 	const reservations = events.filter((event) => event.type === "provider_request_reserved");
-	if (reservations.length > 1 || reservations.some((event, index) => event.data.request_ordinal !== index + 1)) errors.push("paused Run violates single-request authority");
+	if ((!v1c && reservations.length > 1) || reservations.some((event, index) => event.data.request_ordinal !== index + 1)) errors.push(v1c ? "paused Provider request ordinal sequence drift" : "paused Run violates single-request authority");
 	if (pause.request_ordinal !== (reservations.at(-1)?.data.request_ordinal ?? null)) errors.push("pause request ordinal/reservation relation drift");
 	for (const event of reservations) {
 		if (event.data.phase !== "provider_request_reserved_before_dispatch") errors.push("provider reservation phase invalid");
 		const attemptIndex = events.findIndex((candidate) => candidate.type === "attempt_started" && candidate.data.attempt_id === event.data.attempt_id);
 		const reservationIndex = events.indexOf(event);
 		const pauseIndex = events.findIndex((candidate) => candidate.type === "attempt_paused");
-		if (attemptIndex < 0 || reservationIndex <= attemptIndex || pauseIndex <= reservationIndex || event.data.attempt_id !== pause.attempt_id || event.data.session_id !== pause.session_id || event.data.workspace_id !== pause.workspace_id) errors.push("provider reservation write-before-dispatch identity/order drift");
+		if (attemptIndex < 0 || reservationIndex <= attemptIndex || pauseIndex <= reservationIndex || event.data.attempt_id !== pause.attempt_id || event.data.session_id !== pause.session_id || event.data.workspace_id !== pause.workspace_id || v1c && event.data.run_id !== pause.run_id) errors.push("provider reservation write-before-dispatch identity/order drift");
 		for (const key of ["provider_requests", "network_calls", "provider_calls", "model_calls"] as const) {
 			const transition = event.data.counter_transition?.[key];
 			if (!transition || !Number.isSafeInteger(transition.before) || !Number.isSafeInteger(transition.after) || transition.before < 0 || transition.after < transition.before || transition.after - transition.before > 1) errors.push(`provider reservation ${key} counter transition invalid`);
 		}
 	}
-	for (const value of Object.values(pause.counter_snapshot)) if (!Number.isSafeInteger(value) || value < 0 || value > 1) errors.push("pause counter snapshot invalid");
+	for (const [key, value] of Object.entries(pause.counter_snapshot)) if (!Number.isSafeInteger(value) || value < 0 || value > (v1c && key !== "credential_reads" ? Math.max(1, reservations.length) : 1)) errors.push("pause counter snapshot invalid");
 	const stage2 = manifest.execution_mode === "stage2_real";
 	const zeroCounters = { credential_reads: 0, network_calls: 0, provider_calls: 0, model_calls: 0 };
 	const credentialOnly = { credential_reads: 1, network_calls: 0, provider_calls: 0, model_calls: 0 };
@@ -113,24 +114,40 @@ function inspectPausedRunV1B(input: { pilotRoot: string; manifest: ExecutionMani
 	if (phase === "after_credential_before_provider_request_reservation" && (!stage2 || stableJson(pause.counter_snapshot) !== stableJson(credentialOnly))) errors.push("post-credential pause counter matrix drift");
 	if (phase === "other_bounded_runtime_failure" && stableJson(pause.counter_snapshot) !== stableJson(stage2 ? credentialOnly : zeroCounters)) errors.push("other bounded pause counter matrix drift");
 	if (["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(phase)) {
+		const priorDispatchCount = Math.max(0, reservations.length - 1);
+		const beforeCurrentDispatch = { credential_reads: 1, network_calls: priorDispatchCount, provider_calls: priorDispatchCount, model_calls: priorDispatchCount };
+		const afterCurrentDispatch = { credential_reads: 1, network_calls: reservations.length, provider_calls: reservations.length, model_calls: reservations.length };
 		const validPostReservationSnapshot = stage2
-			? [credentialOnly, possibleDispatch].some((expected) => stableJson(pause.counter_snapshot) === stableJson(expected))
+			? (v1c ? [beforeCurrentDispatch, afterCurrentDispatch] : [credentialOnly, possibleDispatch]).some((expected) => stableJson(pause.counter_snapshot) === stableJson(expected))
 			: stableJson(pause.counter_snapshot) === stableJson(zeroCounters);
 		if (!validPostReservationSnapshot) errors.push("post-reservation pause counter snapshot/mode drift");
-		const transition = reservations[0]?.data.counter_transition;
-		if (!transition || transition.provider_requests.before !== 0 || transition.provider_requests.after !== 1) errors.push("post-reservation provider request transition is not exact 0->1");
+		const transition = reservations.at(-1)?.data.counter_transition;
+		const expectedBefore = reservations.length - 1;
+		if (!transition || transition.provider_requests.before !== expectedBefore || transition.provider_requests.after !== reservations.length) errors.push("post-reservation provider request transition is not exact ordinal transition");
 		for (const key of ["network_calls", "provider_calls", "model_calls"] as const) {
-			const expectedAfter = stage2 ? 1 : 0;
-			if (!transition || transition[key].before !== 0 || transition[key].after !== expectedAfter) errors.push(`post-reservation ${key} transition/mode drift`);
+			const expectedAfter = stage2 ? reservations.length : 0;
+			const expectedExternalBefore = stage2 ? reservations.length - 1 : 0;
+			if (!transition || transition[key].before !== expectedExternalBefore || transition[key].after !== expectedAfter) errors.push(`post-reservation ${key} transition/mode drift`);
 		}
 	}
 	if (!["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(phase) && reservations.length !== 0) errors.push("pre-reservation phase carries reservation event");
 	if (pause.pending_provider_reservation) {
-		if (reservations.length !== 1 || pause.pending_provider_reservation.reservation_id !== reservations[0]!.data.reservation?.reservation_id) errors.push("pending reservation/journal relation drift");
+		const finalReservation = reservations.at(-1);
+		if (reservations.length === 0 || pause.pending_provider_reservation.reservation_id !== finalReservation?.data.reservation?.reservation_id) errors.push("pending reservation/journal relation drift");
 		const pending = pause.pending_provider_reservation;
-		if (pending.tokens !== reservations[0]?.data.reservation?.token_cap || Math.abs(pending.cost_usd - (reservations[0]?.data.reservation?.cost_usd_cap ?? Number.NaN)) > Number.EPSILON || pending.provider_requests !== 1) errors.push("pending reservation cap/ordinal relation drift");
+		if (pending.tokens !== finalReservation?.data.reservation?.token_cap || Math.abs(pending.cost_usd - (finalReservation?.data.reservation?.cost_usd_cap ?? Number.NaN)) > Number.EPSILON || pending.provider_requests !== 1) errors.push("pending reservation cap/ordinal relation drift");
 		if (pause.conservative_usage_charge.provider_requests !== pending.provider_requests || pause.conservative_usage_charge.tokens !== pending.tokens || Math.abs(pause.conservative_usage_charge.cost_usd - pending.cost_usd) > Number.EPSILON) errors.push("conservative charge does not equal pending reservation");
 	} else if (!usageEqual(pause.conservative_usage_charge, zeroUsage()) || reservations.length !== 0) errors.push("pre-reservation pause carries dispatch/reservation charge");
+	const commits = events.filter((event) => event.type === "provider_usage_committed");
+	if (v1c) {
+		if (commits.length !== Math.max(0, reservations.length - (pause.pending_provider_reservation ? 1 : 0))) errors.push("V1-C paused Provider commit count drift");
+		for (const [index, commit] of commits.entries()) {
+			const reservation = reservations[index];
+			if (!reservation || commit.data.schema_version !== "v1c-provider-usage-committed-v1" || commit.data.protocol_id !== "v1c_typed_predispatch_budget_stop_v1" || commit.data.run_id !== pause.run_id || commit.data.attempt_id !== pause.attempt_id || commit.data.session_id !== pause.session_id || commit.data.workspace_id !== pause.workspace_id || commit.data.request_ordinal !== index + 1 || commit.data.reservation_id !== reservation.data.reservation?.reservation_id || events.indexOf(commit) <= events.indexOf(reservation)) errors.push("V1-C paused Provider commit identity/order drift");
+		}
+		const lastCommit = commits.at(-1)?.data.transition;
+		if (pause.accumulated_known_usage.provider_requests !== commits.length || pause.accumulated_known_usage.tokens !== (lastCommit?.tokens?.after ?? 0) || Math.abs(pause.accumulated_known_usage.cost_usd - (lastCommit?.cost_usd?.after ?? 0)) > Number.EPSILON) errors.push("V1-C paused accumulated known usage/commit chain drift");
+	} else if (commits.length !== 0) errors.push("V1-B historical protocol rejects V1-C Provider commit events");
 	if (!usageEqual(pause.budget_usage_after_conservative_charge, addUsage(pause.accumulated_known_usage, pause.conservative_usage_charge))) errors.push("pause conservative accounting chain invalid");
 	if (["before_credential_resolution", "credential_resolution_failure_before_dispatch", "after_credential_before_provider_request_reservation"].includes(pause.phase) && pause.pending_provider_reservation !== null) errors.push("pre-reservation pause phase carries pending reservation");
 	if (["after_provider_request_reservation_usage_unavailable", "invalid_or_unknown_usage_after_provider_response"].includes(pause.phase) && pause.pending_provider_reservation === null) errors.push("post-reservation pause phase lacks pending reservation");
@@ -234,6 +251,43 @@ function validateTaxonomy(terminal: TerminalCellEvidenceV1B, runResult: RunResul
 	if (runResult.evidence.invalid_attribution !== terminal.invalid_attribution || runResult.evidence.exclusion_preauthorized !== terminal.exclusion_preauthorized) errors.push("RunResult taxonomy relation drift");
 }
 
+function validateRuntimeDiagnosticsV1C(runRoot: string, manifest: ExecutionManifestV1B, terminal: TerminalCellEvidenceV1B, runResult: RunResultV1, errors: string[]): void {
+	const events = readFileSync(resolve(runRoot, "journal.jsonl"), "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as { type: string; data: Record<string, any> });
+	const recorded = events.filter((event) => event.type === "local_budget_stop_recorded");
+	const consumed = events.filter((event) => event.type === "local_budget_stop_consumed");
+	const commits = events.filter((event) => event.type === "provider_usage_committed");
+	const reservations = events.filter((event) => event.type === "provider_request_reserved");
+	const terminalDiagnostics = terminal.runtime_diagnostics ?? [];
+	const runDiagnostics = runResult.evidence.runtime_diagnostics ?? [];
+	const attemptDiagnostics = terminal.attempts.flatMap((attempt) => attempt.runtime_diagnostics ?? []);
+	if (manifest.schema_version !== "v1c-execution-manifest-v1") {
+		if (recorded.length !== 0 || consumed.length !== 0 || commits.length !== 0 || terminalDiagnostics.length !== 0 || runDiagnostics.length !== 0 || attemptDiagnostics.length !== 0) errors.push("V1-B historical protocol rejects V1-C runtime diagnostics");
+		return;
+	}
+	if (stableJson(terminalDiagnostics) !== stableJson(runDiagnostics) || stableJson(terminalDiagnostics) !== stableJson(attemptDiagnostics)) errors.push("V1-C runtime diagnostic evidence relation drift");
+	if (recorded.length !== terminalDiagnostics.length || consumed.length !== terminalDiagnostics.length) errors.push("V1-C typed local stop record/consumption count drift");
+	for (const signal of terminalDiagnostics) {
+		const attempt = terminal.attempts.find((value) => value.attempt_id === signal.attempt_id);
+		if (signal.schema_version !== "v1c-local-budget-stop-v1" || signal.protocol_id !== "v1c_typed_predispatch_budget_stop_v1" || signal.run_id !== terminal.run_id || signal.session_id !== terminal.session_id || signal.workspace_id !== terminal.workspace_id || !attempt || signal.request_ordinal !== attempt.provider_requests + 1 || signal.phase !== "provider_request_reservation_rejected_before_dispatch" || signal.reason !== "provider_request_cap" || signal.reservation_transition.provider_requests_before !== attempt.provider_requests || signal.reservation_transition.provider_requests_requested_after !== signal.request_ordinal || signal.reservation_transition.pending_before !== false || signal.reservation_transition.pending_after !== false) errors.push("V1-C typed local stop identity/ordinal/transition drift");
+		const matchingRecorded = recorded.filter((event) => stableJson(event.data) === stableJson(signal));
+		const matchingConsumed = consumed.filter((event) => stableJson(event.data) === stableJson(signal));
+		if (matchingRecorded.length !== 1 || matchingConsumed.length !== 1) { errors.push("V1-C typed local stop missing/duplicate/forged"); continue; }
+		const recordedIndex = events.indexOf(matchingRecorded[0]!);
+		const consumedIndex = events.indexOf(matchingConsumed[0]!);
+		const settledIndex = events.findIndex((event) => event.type === "attempt_settled" && event.data.attempt_id === signal.attempt_id);
+		const verifierIndex = events.findIndex((event) => event.type === "verifier_completed" && event.data.attempt_id === signal.attempt_id);
+		if (recordedIndex < 0 || consumedIndex <= recordedIndex || settledIndex <= consumedIndex || verifierIndex <= settledIndex) errors.push("V1-C local stop/settled/Verifier order drift");
+		const attemptReservations = reservations.filter((event) => event.data.attempt_id === signal.attempt_id);
+		if (attemptReservations.length !== attempt?.provider_requests || attemptReservations.some((event, index) => event.data.request_ordinal !== index + 1) || attemptReservations.some((event) => event.data.request_ordinal === signal.request_ordinal)) errors.push("V1-C local stop reservation ordinal relation drift");
+	}
+	if (commits.length !== terminal.attempts.reduce((sum, attempt) => sum + attempt.provider_requests, 0)) errors.push("V1-C terminal Provider commit count drift");
+	for (const commit of commits) {
+		const reservation = reservations.find((event) => event.data.attempt_id === commit.data.attempt_id && event.data.request_ordinal === commit.data.request_ordinal);
+		const runRecord = terminal.reservations.find((record) => record.level === "run" && record.kind === "provider_request" && record.reservation_id === commit.data.reservation_id);
+		if (!reservation || !runRecord || commit.data.schema_version !== "v1c-provider-usage-committed-v1" || commit.data.protocol_id !== "v1c_typed_predispatch_budget_stop_v1" || commit.data.run_id !== terminal.run_id || commit.data.session_id !== terminal.session_id || commit.data.workspace_id !== terminal.workspace_id || commit.data.reservation_id !== reservation.data.reservation?.reservation_id || events.indexOf(commit) <= events.indexOf(reservation) || stableJson(commit.data.transition) !== stableJson({ provider_requests: { before: runRecord.before.provider_requests, after: runRecord.after.provider_requests }, tokens: { before: runRecord.before.tokens, after: runRecord.after.tokens }, cost_usd: { before: runRecord.before.cost_usd, after: runRecord.after.cost_usd } })) errors.push("V1-C terminal Provider commit identity/accounting/order drift");
+	}
+}
+
 export function inspectV1RunCell(options: { projectRoot: string; pilotRoot: string; plannedRunId: string }): InspectRunResultV1B {
 	const errors: string[] = [];
 	let runResult: RunResultV1 | null = null;
@@ -307,7 +361,7 @@ export function inspectV1RunCell(options: { projectRoot: string; pilotRoot: stri
 		if (runResult.attempt_count !== terminal.attempts.length || runResult.child_attempt_count !== terminal.attempts.length - 1 || runResult.verifier_status !== terminal.final_verifier_status) errors.push("RunResult terminal relation drift");
 		if (stableJson(runResult.evidence.attempts) !== stableJson(terminal.attempts.map((attempt) => ({ attempt_id: attempt.attempt_id, ordinal: attempt.ordinal, parent_attempt_id: attempt.parent_attempt_id }))) || runResult.evidence.session_id !== terminal.session_id || runResult.evidence.workspace_id !== terminal.workspace_id || runResult.evidence.initial_payload_digest !== terminal.initial_dispatch.payload_sha256) errors.push("RunResult Attempt/session/workspace/dispatch relation drift");
 		if (runResult.evidence.provider_requests !== terminal.budget_usage.provider_requests || runResult.evidence.tool_calls !== terminal.budget_usage.tool_calls || runResult.evidence.tokens !== terminal.budget_usage.tokens || runResult.evidence.wall_time_ms !== terminal.budget_usage.active_execution_time_ms || runResult.evidence.cost_usd !== terminal.budget_usage.cost_usd) errors.push("RunResult budget relation drift");
-		validateTaxonomy(terminal, runResult, transitions[2]!.state, errors); validateReservations(terminal, manifest, errors);
+		validateTaxonomy(terminal, runResult, transitions[2]!.state, errors); validateReservations(terminal, manifest, errors); validateRuntimeDiagnosticsV1C(runRoot, manifest, terminal, runResult, errors);
 	} catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
 	return { integrity_valid: errors.length === 0, errors, run_result: errors.length === 0 ? runResult : null, terminal: errors.length === 0 ? terminal : null, pause_evidence: null, pause_integrity_valid: false, terminal_valid: errors.length === 0, comparable: errors.length === 0 && terminal?.exclusion_preauthorized !== true };
 }

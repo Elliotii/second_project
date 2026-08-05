@@ -122,7 +122,9 @@ export async function runNextPilotCellV1B(options: {
 	realExecution?: { createAuthority(cell: ExecutionCellV1B): OneRunProviderAuthorityV1B };
 	replacementSequence?: { assertCurrent(): void; beforeInitialStart(runId: string): void; beforeChildStart(runId: string, attemptId: string): void };
 	deterministicInjection?: ExecuteV1RunCellOptions["deterministicInjection"];
+	fakeScenario?: ExecuteV1RunCellOptions["fakeScenario"];
 	deterministicPausePhase?: PausePhaseV1B;
+	deterministicPauseRequestOrdinal?: number;
 }): Promise<ExecuteV1RunCellResult | null> {
 	const state = loadPilotStateV1B(options);
 	const cell = state.next_cell;
@@ -164,7 +166,7 @@ export async function runNextPilotCellV1B(options: {
 	appendLedger(options.pilotRoot, state.manifest, cell, "started", null, null);
 	const runRoot = resolve(options.pilotRoot, "runs", cell.planned_run_id);
 	try {
-		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(options.replacementSequence ? { replacementSequence: options.replacementSequence } : {}), ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}), ...(options.deterministicPausePhase ? { deterministicPausePhase: options.deterministicPausePhase } : {}) });
+		const result = await executeV1RunCell({ projectRoot: options.projectRoot, manifest: state.manifest, cell, runRoot, pilotUsage: state.pilot_usage, ...(options.replacementSequence ? { replacementSequence: options.replacementSequence } : {}), ...(realAuthority ? { realExecution: { authority: realAuthority } } : {}), ...(options.fakeScenario ? { fakeScenario: options.fakeScenario } : {}), ...(options.deterministicInjection ? { deterministicInjection: options.deterministicInjection } : {}), ...(options.deterministicPausePhase ? { deterministicPausePhase: options.deterministicPausePhase } : {}), ...(options.deterministicPauseRequestOrdinal !== undefined ? { deterministicPauseRequestOrdinal: options.deterministicPauseRequestOrdinal } : {}) });
 		appendLedger(options.pilotRoot, state.manifest, cell, result.terminal.disposition === "invalid" ? "invalid" : "terminal", result.terminal.cause_id, `runs/${cell.planned_run_id}/run-result.json`);
 		return result;
 	} catch (error) {

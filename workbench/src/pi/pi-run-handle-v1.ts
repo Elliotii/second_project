@@ -19,9 +19,11 @@ import type {
 	BudgetReservationEvidenceV1B,
 	BudgetUsageV1B,
 	InitialDispatchEvidenceV1B,
+	LocalBudgetStopSignalV1C,
 	PausePhaseV1B,
 	PauseSnapshotV1B,
 	ProviderRequestReservationEventV1B,
+	ProviderUsageCommittedEventV1C,
 	TaskSpecV1,
 } from "../contracts/v1-types.ts";
 import { sha256, stableJson } from "../hash.ts";
@@ -51,6 +53,7 @@ export interface PiAttemptSettlementV1B {
 	session_entry_count: number;
 	initial_dispatch: InitialDispatchEvidenceV1B;
 	reservations: BudgetReservationEvidenceV1B[];
+	runtime_diagnostics: LocalBudgetStopSignalV1C[];
 }
 
 export interface PiRunHandleV1 extends PublicPiRunHandleV1B {
@@ -82,8 +85,14 @@ export interface PiRunHandleOptionsV1 {
 	pilotCaps: BudgetCapsV1B;
 	pilotUsage: BudgetUsageV1B;
 	realCallCounters: { credential_reads: number; network_calls: number; provider_calls: number; model_calls: number };
+	runId?: string;
+	budgetStopProtocol?: "v1c_typed_predispatch_budget_stop_v1";
 	onProviderRequestReserved?: (event: ProviderRequestReservationEventV1B) => void;
+	onProviderUsageCommitted?: (event: ProviderUsageCommittedEventV1C) => void;
+	onLocalBudgetStopRecorded?: (signal: LocalBudgetStopSignalV1C) => void;
+	onLocalBudgetStopConsumed?: (signal: LocalBudgetStopSignalV1C) => void;
 	deterministicPausePhase?: PausePhaseV1B;
+	deterministicPauseRequestOrdinal?: number;
 	sessionId?: string;
 	workspaceId: string;
 }
@@ -169,6 +178,7 @@ class ThreeLevelBudgetV1B {
 
 	reserveProvider(): BudgetReservationEvidenceV1B {
 		if (this.pendingProvider) throw new Error("concurrent provider reservation rejected");
+		if (this.attempt.provider_requests + 1 > this.attemptCaps.provider_requests || this.run.provider_requests + 1 > this.runCaps.provider_requests || this.pilot.provider_requests + 1 > this.pilotCaps.provider_requests) throw new ProviderRequestCapDeniedV1C();
 		const tokens = Math.min(this.attemptCaps.tokens - this.attempt.tokens, this.runCaps.tokens - this.run.tokens, this.pilotCaps.tokens - this.pilot.tokens);
 		const cost = Math.min(this.attemptCaps.cost_usd - this.attempt.cost_usd, this.runCaps.cost_usd - this.run.cost_usd, this.pilotCaps.cost_usd - this.pilot.cost_usd);
 		if (tokens < 0 || cost < 0) throw new Error("provider token/cost reserve unavailable");
@@ -200,7 +210,7 @@ class ThreeLevelBudgetV1B {
 		};
 	}
 
-	commitProvider(message: AssistantMessage): void {
+	commitProvider(message: AssistantMessage): BudgetReservationEvidenceV1B {
 		if (!this.pendingProvider) throw new Error("provider usage arrived without reservation");
 		const usage = assertKnownUsageV1B({ input_tokens: message.usage.input + message.usage.cacheRead + message.usage.cacheWrite, output_tokens: message.usage.output, cost_usd: message.usage.cost.total });
 		const proposals = this.pendingProvider.records.map((record) => {
@@ -215,6 +225,7 @@ class ThreeLevelBudgetV1B {
 			this.reservations[index] = proposal;
 		}
 		this.pendingProvider = null;
+		return structuredClone(proposals.find((record) => record.level === "run")!);
 	}
 
 	reserveTool(): void {
@@ -252,6 +263,14 @@ class ThreeLevelBudgetV1B {
 	pilotUsage(): BudgetUsageV1B { return cloneUsage(this.pilot); }
 	hasPendingProvider(): boolean { return this.pendingProvider !== null; }
 	takeReservations(): BudgetReservationEvidenceV1B[] { const result = structuredClone(this.reservations); this.reservations.length = 0; return result; }
+}
+
+class ProviderRequestCapDeniedV1C extends Error {
+	constructor() { super("provider request cap denied"); this.name = "ProviderRequestCapDeniedV1C"; }
+}
+
+class LocalBudgetStopHookErrorV1C extends Error {
+	constructor() { super("typed local budget stop"); this.name = "LocalBudgetStopHookErrorV1C"; }
 }
 
 function fakeResponses(mode: FakeAttemptModeV1B, attemptId: string, patch: string | undefined) {
@@ -313,6 +332,8 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 	let pendingRequestOptions: unknown;
 	let activeAttemptId = "attempt-unset";
 	let pendingPauseSnapshot: PauseSnapshotV1B | null = null;
+	let localBudgetStop: { signal: LocalBudgetStopSignalV1C; consumed: boolean } | null = null;
+	let runtimeDiagnostics: LocalBudgetStopSignalV1C[] = [];
 	const pause = (phase: PausePhaseV1B): V1BPauseBoundaryError => {
 		if (pendingPauseSnapshot) return new V1BPauseBoundaryError(pendingPauseSnapshot);
 		pendingPauseSnapshot = budget.createPauseSnapshot(phase, { attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId, request_ordinal: currentProviderRequests === 0 ? null : currentProviderRequests }, options.realCallCounters);
@@ -324,10 +345,27 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 		harnessInstanceId = `v1b-harness-${randomUUID()}`;
 		offProvider = value.on("before_provider_request", (event) => {
 			const before = { ...options.realCallCounters };
-			const reservation = budget.reserveProvider(); currentProviderRequests++;
+			let reservation: BudgetReservationEvidenceV1B;
+			try {
+				reservation = budget.reserveProvider();
+			} catch (error) {
+				if (options.budgetStopProtocol !== "v1c_typed_predispatch_budget_stop_v1" || !(error instanceof ProviderRequestCapDeniedV1C)) throw error;
+				if (localBudgetStop && !localBudgetStop.consumed) throw new LocalBudgetStopHookErrorV1C();
+				const requestOrdinal = currentProviderRequests + 1;
+				const signal: LocalBudgetStopSignalV1C = {
+					schema_version: "v1c-local-budget-stop-v1", protocol_id: options.budgetStopProtocol,
+					run_id: options.runId ?? "run-unset", attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId,
+					request_ordinal: requestOrdinal, phase: "provider_request_reservation_rejected_before_dispatch", reason: "provider_request_cap",
+					reservation_transition: { provider_requests_before: currentProviderRequests, provider_requests_requested_after: requestOrdinal, pending_before: false, pending_after: false },
+				};
+				localBudgetStop = { signal, consumed: false };
+				options.onLocalBudgetStopRecorded?.(structuredClone(signal));
+				throw new LocalBudgetStopHookErrorV1C();
+			}
+			currentProviderRequests++;
 			const externalDelta = options.mode === "stage2_real" ? 1 : 0;
 			options.onProviderRequestReserved?.({
-				schema_version: 1, attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId, request_ordinal: currentProviderRequests,
+				schema_version: 1, attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId, ...(options.runId ? { run_id: options.runId } : {}), request_ordinal: currentProviderRequests,
 				phase: "provider_request_reserved_before_dispatch",
 				counter_transition: {
 					provider_requests: { before: currentProviderRequests - 1, after: currentProviderRequests },
@@ -337,7 +375,7 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 				},
 				reservation: { reservation_id: reservation.reservation_id, token_cap: reservation.reserved.tokens, cost_usd_cap: reservation.reserved.cost_usd },
 			});
-			if (options.deterministicPausePhase === "after_provider_request_reservation_usage_unavailable") throw pause(options.deterministicPausePhase);
+			if (options.deterministicPausePhase === "after_provider_request_reservation_usage_unavailable" && (options.deterministicPauseRequestOrdinal === undefined || options.deterministicPauseRequestOrdinal === currentProviderRequests)) throw pause(options.deterministicPausePhase);
 			if (options.mode === "stage2_real") { options.realCallCounters.network_calls++; options.realCallCounters.provider_calls++; options.realCallCounters.model_calls++; }
 			pendingRequestModel = projectSafeEvidenceV1B(event.model);
 			pendingRequestOptions = projectSafeEvidenceV1B(event.streamOptions);
@@ -359,8 +397,32 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 		offTool = value.on("tool_call", () => { budget.reserveTool(); currentToolCalls++; return undefined; });
 		unsubscribe = value.subscribe((event) => {
 			if (event.type === "message_end" && event.message.role === "assistant") {
-				if (options.deterministicPausePhase === "invalid_or_unknown_usage_after_provider_response") throw pause(options.deterministicPausePhase);
-				try { budget.commitProvider(event.message); } catch { throw pause("invalid_or_unknown_usage_after_provider_response"); }
+				if (budget.hasPendingProvider()) {
+					if (options.deterministicPausePhase === "invalid_or_unknown_usage_after_provider_response" && (options.deterministicPauseRequestOrdinal === undefined || options.deterministicPauseRequestOrdinal === currentProviderRequests)) throw pause(options.deterministicPausePhase);
+					try {
+						const committed = budget.commitProvider(event.message);
+						if (options.budgetStopProtocol === "v1c_typed_predispatch_budget_stop_v1") options.onProviderUsageCommitted?.({
+							schema_version: "v1c-provider-usage-committed-v1", protocol_id: options.budgetStopProtocol,
+							run_id: options.runId ?? "run-unset", attempt_id: activeAttemptId, session_id: sessionId, workspace_id: options.workspaceId,
+							request_ordinal: currentProviderRequests, reservation_id: committed.reservation_id,
+							transition: {
+								provider_requests: { before: committed.before.provider_requests, after: committed.after.provider_requests },
+								tokens: { before: committed.before.tokens, after: committed.after.tokens },
+								cost_usd: { before: committed.before.cost_usd, after: committed.after.cost_usd },
+							},
+						});
+					} catch { throw pause("invalid_or_unknown_usage_after_provider_response"); }
+				} else if (options.budgetStopProtocol === "v1c_typed_predispatch_budget_stop_v1" && localBudgetStop && !localBudgetStop.consumed) {
+					const signal = localBudgetStop.signal;
+					if (signal.run_id !== (options.runId ?? "run-unset") || signal.attempt_id !== activeAttemptId || signal.session_id !== sessionId || signal.workspace_id !== options.workspaceId || signal.request_ordinal !== currentProviderRequests + 1 || signal.reservation_transition.provider_requests_before !== currentProviderRequests || signal.reservation_transition.provider_requests_requested_after !== signal.request_ordinal) throw pause("other_bounded_runtime_failure");
+					localBudgetStop.consumed = true;
+					runtimeDiagnostics.push(structuredClone(signal));
+					options.onLocalBudgetStopConsumed?.(structuredClone(signal));
+				} else if (options.budgetStopProtocol === "v1c_typed_predispatch_budget_stop_v1") {
+					throw pause("other_bounded_runtime_failure");
+				} else {
+					try { budget.commitProvider(event.message); } catch { throw pause("invalid_or_unknown_usage_after_provider_response"); }
+				}
 			}
 			if (event.type === "settled") settledObserved = true;
 		});
@@ -408,7 +470,7 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 		workspaceId: options.workspaceId,
 		async runAttempt(input) {
 			if (closed || running) throw new FixedProviderBoundaryErrorV1B();
-			running = true; activeAttemptId = input.attemptId; budget.beginAttempt(input.attemptId); currentProviderRequests = 0; currentToolCalls = 0; settledObserved = false; initialDispatch = null; pendingPauseSnapshot = null;
+			running = true; activeAttemptId = input.attemptId; budget.beginAttempt(input.attemptId); currentProviderRequests = 0; currentToolCalls = 0; settledObserved = false; initialDispatch = null; pendingPauseSnapshot = null; localBudgetStop = null; runtimeDiagnostics = [];
 			const started = Date.now();
 			try {
 				if (!harness) await createRealHarness();
@@ -427,10 +489,10 @@ export function createPiRunHandleV1(options: PiRunHandleOptionsV1): PiRunHandleV
 				const response = input.invocation === "skill" ? await harness!.skill(options.skill.name, input.prompt) : await harness!.prompt(input.prompt);
 				await harness!.waitForIdle();
 				if (!settledObserved || !initialDispatch) throw new Error("Attempt did not produce settled initial dispatch evidence");
-				if (registration?.getPendingResponseCount() !== 0) throw new Error("Faux response queue did not drain");
+				if (registration?.getPendingResponseCount() !== 0 && runtimeDiagnostics.length === 0) throw new Error("Faux response queue did not drain");
 				const duration = Math.max(0, Date.now() - started); budget.finishAttempt(duration);
 				const usage = budget.attemptUsage();
-				return { settled: true, attempt_id: input.attemptId, final_text: assistantText(response), provider_requests: currentProviderRequests, tool_calls: currentToolCalls, tokens: usage.tokens, cost_usd: usage.cost_usd, wall_time_ms: duration, session_entry_count: (await session.getEntries()).length, initial_dispatch: initialDispatch, reservations: budget.takeReservations() };
+				return { settled: true, attempt_id: input.attemptId, final_text: assistantText(response), provider_requests: currentProviderRequests, tool_calls: currentToolCalls, tokens: usage.tokens, cost_usd: usage.cost_usd, wall_time_ms: duration, session_entry_count: (await session.getEntries()).length, initial_dispatch: initialDispatch, reservations: budget.takeReservations(), runtime_diagnostics: structuredClone(runtimeDiagnostics) };
 			} catch (error) {
 				if (error instanceof V1BPauseBoundaryError) throw error;
 				if (pendingPauseSnapshot) throw new V1BPauseBoundaryError(pendingPauseSnapshot);

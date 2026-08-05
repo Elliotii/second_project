@@ -172,6 +172,82 @@ function v1bCells(replacement = false): ExecutionCellV1B[] {
 	return cells;
 }
 
+function v1cStage1Cells(): ExecutionCellV1B[] {
+	return v1bCells().map((cell, index) => ({
+		...cell,
+		cell_id: `v1c-stage1-cell-${String(index + 1).padStart(2, "0")}`,
+		planned_run_id: cell.planned_run_id.replace(/^v1b-run-/, "v1c-stage1-run-"),
+	}));
+}
+
+function v1cRealCanaryCells(): ExecutionCellV1B[] {
+	const source = v1bCells()[0]!;
+	return [{ ...source, cell_id: "v1c-canary-cell-01", planned_run_id: "v1c-canary-run-01-parse-duration-r1-a" }];
+}
+
+function v1cFullPilotCells(): ExecutionCellV1B[] {
+	return v1bCells().map((cell, index) => ({
+		...cell,
+		cell_id: `v1c-full-pilot-cell-${String(index + 1).padStart(2, "0")}`,
+		planned_run_id: cell.planned_run_id.replace(/^v1b-run-/, "v1c-full-pilot-run-"),
+	}));
+}
+
+function validExecutionBaselineCommitV1C(value: string): boolean {
+	return /^[0-9a-f]{40}$/.test(value) && value !== "0".repeat(40);
+}
+
+function applyV1CIdentity(manifest: ExecutionManifestV1B, identity: {
+	experimentId: "v1-c-stage1-deterministic-template" | "v1-c-real-canary" | "v1-c-bounded-pilot";
+	identityRole: "stage1_template" | "real_canary" | "full_pilot";
+	kind: "stage1_deterministic_template" | "real_canary_template" | "full_pilot_template";
+	canaryOrPilotIdentity: boolean;
+}): void {
+	manifest.schema_version = "v1c-execution-manifest-v1";
+	manifest.experiment_id = identity.experimentId;
+	manifest.created_at = "2026-08-05T00:00:00.000Z";
+	manifest.control_baseline_commit = "016006e72e5baf4f558f1f63f1ffafcf122e119c";
+	manifest.control_baseline_tree = "87704958ee787d804a9848b607293de411c532ef";
+	manifest.protocol_id = "v1c_budget_stop_correction";
+	manifest.identity_role = identity.identityRole;
+	manifest.v1c_revision = { kind: identity.kind, budget_stop_protocol: "v1c_typed_predispatch_budget_stop_v1", canary_or_pilot_identity: identity.canaryOrPilotIdentity };
+}
+
+export function buildStage1ExecutionManifestV1C(projectRoot: string, options: { initialProviderRequestsMax?: 1 | 8 } = {}): ExecutionManifestV1B {
+	const requestCap = options.initialProviderRequestsMax ?? 1;
+	const manifest = buildExecutionManifestV1B(projectRoot);
+	applyV1CIdentity(manifest, { experimentId: "v1-c-stage1-deterministic-template", identityRole: "stage1_template", kind: "stage1_deterministic_template", canaryOrPilotIdentity: false });
+	manifest.execution_baseline_commit = manifest.control_baseline_commit;
+	manifest.budgets.initial_attempt.provider_requests = requestCap;
+	manifest.budgets.arm_a_or_b_run.provider_requests = requestCap;
+	manifest.budgets.arm_c_run.provider_requests = requestCap * 2;
+	manifest.budgets.pilot.provider_requests = requestCap * 32;
+	manifest.cells = v1cStage1Cells();
+	manifest.manifest_id = v1bManifestIdentity(manifest);
+	return manifest;
+}
+
+export function buildRealCanaryExecutionManifestV1C(projectRoot: string, options: { executionBaselineCommit: string }): ExecutionManifestV1B {
+	if (!validExecutionBaselineCommitV1C(options.executionBaselineCommit)) throw new Error("V1-C Execution Baseline Commit invalid");
+	const manifest = buildExecutionManifestV1B(projectRoot, { executionMode: "stage2_real", executionBaselineCommit: options.executionBaselineCommit, realExecutionAuthorized: true });
+	applyV1CIdentity(manifest, { experimentId: "v1-c-real-canary", identityRole: "real_canary", kind: "real_canary_template", canaryOrPilotIdentity: true });
+	const canary = { ...manifest.budgets.initial_attempt, provider_requests: 8, tool_calls: 12, tokens: 65_536, wall_time_ms: 300_000, cost_usd: 0.10, verifier_runs: 1, child_attempts: 0 };
+	manifest.budgets = { initial_attempt: { ...canary }, arm_a_or_b_run: { ...canary }, arm_c_run: { ...canary }, pilot: { ...canary } };
+	manifest.cells = v1cRealCanaryCells();
+	manifest.manifest_id = v1bManifestIdentity(manifest);
+	return manifest;
+}
+
+export function buildFullPilotExecutionManifestV1C(projectRoot: string, options: { executionBaselineCommit: string }): ExecutionManifestV1B {
+	if (!validExecutionBaselineCommitV1C(options.executionBaselineCommit)) throw new Error("V1-C Execution Baseline Commit invalid");
+	const manifest = buildExecutionManifestV1B(projectRoot, { executionMode: "stage2_real", executionBaselineCommit: options.executionBaselineCommit, realExecutionAuthorized: true });
+	applyV1CIdentity(manifest, { experimentId: "v1-c-bounded-pilot", identityRole: "full_pilot", kind: "full_pilot_template", canaryOrPilotIdentity: true });
+	manifest.budgets.pilot.cost_usd = 1.90;
+	manifest.cells = v1cFullPilotCells();
+	manifest.manifest_id = v1bManifestIdentity(manifest);
+	return manifest;
+}
+
 export function buildReplacementExecutionManifestV1B(projectRoot: string, options: { executionBaselineCommit: string }): ExecutionManifestV1B {
 	const manifest = buildExecutionManifestV1B(projectRoot, { executionMode: "stage2_real", executionBaselineCommit: options.executionBaselineCommit, realExecutionAuthorized: true });
 	manifest.experiment_revision = 2;
@@ -257,6 +333,27 @@ export function buildExecutionManifestV1B(projectRoot: string, options: {
 }
 
 export function validateExecutionManifestV1B(manifest: ExecutionManifestV1B, projectRoot: string, options: { requireCurrentSource?: boolean } = {}): void {
+	if (manifest.schema_version === "v1c-execution-manifest-v1") {
+		if (manifest.experiment_revision !== 1 || manifest.protocol_id !== "v1c_budget_stop_correction" || manifest.pi_commit !== PI_COMMIT || manifest.pi_version !== "0.82.1" || manifest.replacement_revision || manifest.v1c_revision?.budget_stop_protocol !== "v1c_typed_predispatch_budget_stop_v1" || manifest.control_baseline_commit !== "016006e72e5baf4f558f1f63f1ffafcf122e119c" || manifest.control_baseline_tree !== "87704958ee787d804a9848b607293de411c532ef") throw new Error("V1-C Manifest metadata invalid");
+		if (!validExecutionBaselineCommitV1C(manifest.execution_baseline_commit)) throw new Error("V1-C Execution Baseline Commit invalid");
+		if (manifest.manifest_id !== v1bManifestIdentity(manifest)) throw new Error("V1-C Manifest identity drift");
+		if (manifest.workbench_source_digest !== v1bSourceDigest(projectRoot)) throw new Error("V1-C Manifest current source drift");
+		let expected: ExecutionManifestV1B;
+		if (manifest.identity_role === "stage1_template") {
+			if (manifest.experiment_id !== "v1-c-stage1-deterministic-template" || manifest.execution_mode !== "stage1_zero_call" || manifest.real_execution_authorized || manifest.v1c_revision?.kind !== "stage1_deterministic_template" || manifest.v1c_revision.canary_or_pilot_identity || ![1, 8].includes(manifest.budgets.initial_attempt.provider_requests)) throw new Error("V1-C Stage 1 Manifest identity/budget invalid");
+			expected = buildStage1ExecutionManifestV1C(projectRoot, { initialProviderRequestsMax: manifest.budgets.initial_attempt.provider_requests as 1 | 8 });
+		} else if (manifest.identity_role === "real_canary") {
+			if (manifest.experiment_id !== "v1-c-real-canary" || manifest.execution_mode !== "stage2_real" || !manifest.real_execution_authorized || manifest.v1c_revision?.kind !== "real_canary_template" || !manifest.v1c_revision.canary_or_pilot_identity) throw new Error("V1-C real Canary Manifest identity invalid");
+			expected = buildRealCanaryExecutionManifestV1C(projectRoot, { executionBaselineCommit: manifest.execution_baseline_commit });
+		} else if (manifest.identity_role === "full_pilot") {
+			if (manifest.experiment_id !== "v1-c-bounded-pilot" || manifest.execution_mode !== "stage2_real" || !manifest.real_execution_authorized || manifest.v1c_revision?.kind !== "full_pilot_template" || !manifest.v1c_revision.canary_or_pilot_identity) throw new Error("V1-C full Pilot Manifest identity invalid");
+			expected = buildFullPilotExecutionManifestV1C(projectRoot, { executionBaselineCommit: manifest.execution_baseline_commit });
+		} else {
+			throw new Error("V1-C Manifest identity role invalid");
+		}
+		if (stableJson(manifest) !== stableJson(expected)) throw new Error("V1-C complete reconstructed Manifest binding drift");
+		return;
+	}
 	if (manifest.schema_version !== "v1b-execution-manifest-v1" || manifest.experiment_id !== "v1-b-bounded-pilot" || ![1, 2].includes(manifest.experiment_revision) || manifest.pi_commit !== PI_COMMIT || manifest.pi_version !== "0.82.1") throw new Error("V1-B Manifest metadata invalid");
 	if (manifest.manifest_id !== v1bManifestIdentity(manifest)) throw new Error("V1-B Manifest identity drift");
 	if (manifest.cells.length !== 24 || stableJson(manifest.cells) !== stableJson(v1bCells(manifest.experiment_revision === 2))) throw new Error("V1-B Manifest frozen 24-cell order drift");

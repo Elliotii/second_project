@@ -39,21 +39,22 @@ export interface ExecutionCellV1B {
 }
 
 export interface ExecutionManifestV1B {
-	schema_version: "v1b-execution-manifest-v1";
+	schema_version: "v1b-execution-manifest-v1" | "v1c-execution-manifest-v1";
 	manifest_id: string;
-	experiment_id: "v1-b-bounded-pilot";
+	experiment_id: "v1-b-bounded-pilot" | "v1-c-stage1-deterministic-template" | "v1-c-real-canary" | "v1-c-bounded-pilot";
 	experiment_revision: 1 | 2;
 	execution_mode: "stage1_zero_call" | "stage2_real";
 	created_at: string;
-	control_baseline_commit: "de75ca7a4d5376713f01ca475bc5ad7637c70443";
-	control_baseline_tree: "e930e1d0885b52bf911ed78912786723f321f06e";
+	control_baseline_commit: "de75ca7a4d5376713f01ca475bc5ad7637c70443" | "016006e72e5baf4f558f1f63f1ffafcf122e119c";
+	control_baseline_tree: "e930e1d0885b52bf911ed78912786723f321f06e" | "87704958ee787d804a9848b607293de411c532ef";
 	execution_baseline_commit: string;
 	workbench_source_digest: string;
 	pi_commit: "027a5847901b5dde30270abaa1041046cd2b4b55";
 	pi_version: "0.82.1";
-	protocol_id: "v1_skill_runtime_comparison";
+	protocol_id: "v1_skill_runtime_comparison" | "v1c_budget_stop_correction";
 	credential_profile_name: "DEEPSEEK_API_KEY";
 	real_execution_authorized: boolean;
+	identity_role?: "stage1_template" | "real_canary" | "full_pilot";
 	bindings: {
 		task_pack_digest: string;
 		task_digests: Record<string, string>;
@@ -90,6 +91,11 @@ export interface ExecutionManifestV1B {
 		sequence_started_initial_runs_max: 25;
 		replacement_initial_runs_max: 24;
 		replacement_child_attempts_max: 8;
+	};
+	v1c_revision?: {
+		kind: "stage1_deterministic_template" | "real_canary_template" | "full_pilot_template";
+		budget_stop_protocol: "v1c_typed_predispatch_budget_stop_v1";
+		canary_or_pilot_identity: boolean;
 	};
 	cells: ExecutionCellV1B[];
 }
@@ -156,6 +162,7 @@ export interface ProviderRequestReservationEventV1B {
 	attempt_id: string;
 	session_id: string;
 	workspace_id: string;
+	run_id?: string;
 	request_ordinal: number;
 	phase: "provider_request_reserved_before_dispatch";
 	counter_transition: {
@@ -165,6 +172,40 @@ export interface ProviderRequestReservationEventV1B {
 		model_calls: { before: number; after: number };
 	};
 	reservation: { reservation_id: string; token_cap: number; cost_usd_cap: number };
+}
+
+export interface ProviderUsageCommittedEventV1C {
+	schema_version: "v1c-provider-usage-committed-v1";
+	protocol_id: "v1c_typed_predispatch_budget_stop_v1";
+	run_id: string;
+	attempt_id: string;
+	session_id: string;
+	workspace_id: string;
+	request_ordinal: number;
+	reservation_id: string;
+	transition: {
+		provider_requests: { before: number; after: number };
+		tokens: { before: number; after: number };
+		cost_usd: { before: number; after: number };
+	};
+}
+
+export interface LocalBudgetStopSignalV1C {
+	schema_version: "v1c-local-budget-stop-v1";
+	protocol_id: "v1c_typed_predispatch_budget_stop_v1";
+	run_id: string;
+	attempt_id: string;
+	session_id: string;
+	workspace_id: string;
+	request_ordinal: number;
+	phase: "provider_request_reservation_rejected_before_dispatch";
+	reason: "provider_request_cap";
+	reservation_transition: {
+		provider_requests_before: number;
+		provider_requests_requested_after: number;
+		pending_before: false;
+		pending_after: false;
+	};
 }
 
 export interface PauseSnapshotV1B {
@@ -209,6 +250,7 @@ export interface AttemptEvidenceV1B {
 	cost_usd: number;
 	active_execution_time_ms: number;
 	verifier_status: VerifierStatusV1;
+	runtime_diagnostics?: LocalBudgetStopSignalV1C[];
 }
 
 export type FailureClassV1B =
@@ -273,6 +315,7 @@ export interface TerminalCellEvidenceV1B {
 	workspace_tree_ref: WorkspaceTreeRefV1B;
 	real_call_counters: { credential_reads: number; network_calls: number; provider_calls: number; model_calls: number };
 	artifact_refs: Array<{ path: string; sha256: string; size_bytes: number }>;
+	runtime_diagnostics?: LocalBudgetStopSignalV1C[];
 	created_at: string;
 }
 
@@ -403,6 +446,7 @@ export interface RunResultV1 extends ExperimentMemberV1 {
 		invalid_attribution: "none" | "treatment" | "infrastructure" | "evidence";
 		exclusion_preauthorized: boolean;
 		terminal_refs: string[];
+		runtime_diagnostics?: LocalBudgetStopSignalV1C[];
 	};
 }
 
