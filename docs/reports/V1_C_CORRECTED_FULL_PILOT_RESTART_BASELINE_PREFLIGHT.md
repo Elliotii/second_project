@@ -9,7 +9,7 @@ workbench_source_digest: 2de1b76f7b9304ebe6d75e04ba3fa172f1d433cc219ad63ff10e6d6
 manifest: fixtures/manifests/v1/v1c-full-pilot-execution-r2.json
 manifest_id: c1587d04277a327bf0bd54bcf5abf6194663513f7c5960d3425bcbd322e78e14
 pilot_root: .runs/v1-c/full-pilot-r2/pilot
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
 credential_reads: 0
 network_calls: 0
 provider_calls: 0

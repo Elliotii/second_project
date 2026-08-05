@@ -677,7 +677,9 @@ v1:
   V1_C_restart_full_pilot_manifest: fixtures/manifests/v1/v1c-full-pilot-execution-r2.json
   V1_C_restart_full_pilot_manifest_id: c1587d04277a327bf0bd54bcf5abf6194663513f7c5960d3425bcbd322e78e14
   V1_C_restart_full_pilot_root: .runs/v1-c/full-pilot-r2/pilot
-  V1_C_restart_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_restart_control_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
+  V1_C_restart_execution_prompt: docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
+  V1_C_restart_execution_session_status: ready_to_dispatch_from_exact_baseline
   V1_C_restart_initial_cells_started: 0
   V1_C_restart_execution_owner: future_fresh_no_source_edit_execution_session
   V1_C_restart_authorization: accepted_by_user_continue_corrected_plan
@@ -1305,6 +1307,7 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
+  - docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
   - docs/reports/V1_C_AGGREGATE_NORMALIZER_MAIN_ACCEPTANCE_AND_PILOT_RESTART_DECISION.md
   - docs/reports/V1_C_CORRECTED_FULL_PILOT_RESTART_BASELINE_PREFLIGHT.md
   - docs/reports/V1_C_AGGREGATE_NORMALIZER_FOCUSED_REAUDIT_REPORT.md
