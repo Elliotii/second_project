@@ -1,12 +1,12 @@
 # Current State
 
-> Updated: 2026-08-05
+> Updated: 2026-08-06
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_c_active_zero_call_stage_1_not_started
-  status: V1_C_ACTIVE_STAGE1_ZERO_REAL_CALL_V2_NOT_AUTHORIZED
+  phase: v1_c_stage_1_accepted_execution_baseline_ready_canary_not_authorized
+  status: V1_C_STAGE1_AUDITED_EXECUTION_BASELINE_READY_REAL_CANARY_NOT_AUTHORIZED
 
 active_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 
@@ -33,7 +33,7 @@ last_completed_goal:
 
 next_goal:
   id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
-  status: active_stage_1_not_started
+  status: active_waiting_real_canary_authorization
   contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -301,6 +301,16 @@ completed_work:
   - V1_C_goal_contract_accepted_and_formalized
   - V1_C_activation_and_control_baseline_authorized_by_user
   - V1_C_zero_real_call_stage_1_authorized_by_user
+  - V1_C_zero_real_call_stage_1_completed
+  - V1_C_first_candidate_rejected_after_three_P1_findings
+  - V1_C_bounded_post_audit_corrections_and_main_micro_correction_completed
+  - V1_C_corrected_candidate_commit_created_at_962b42a281d3092f0faf399b9f6f1ecaa0212f31
+  - V1_C_fresh_focused_independent_reaudit_passed
+  - V1_C_corrected_candidate_and_reaudit_accepted
+  - V1_C_stage_1_closed_as_PASS_V1_C_STAGE1_AUDITED_CANDIDATE
+  - V1_C_one_cell_Canary_manifest_materialized_and_zero_call_preflight_passed
+  - V1_C_current_official_DeepSeek_provider_checkpoint_passed
+  - V1_C_audited_execution_baseline_authorized_by_user
   - V2_remains_not_authorized
 
 workspace:
@@ -351,8 +361,14 @@ workspace:
   v1_b_replacement_execution_baseline_commit: f7cf45150724061269179716e1b2f487db1ff5c7
   v1_b_replacement_execution_baseline_tree: 4fe46f3955b069f52dd5f581d794b860ef159b4e
   v1_b_closeout_commit: resulting_HEAD_of_this_revision
-  v1_c_control_baseline_commit: resulting_HEAD_of_this_revision
+  v1_c_control_baseline_commit: 016006e72e5baf4f558f1f63f1ffafcf122e119c
   v1_c_control_baseline_tracked_files_clean_required: true
+  v1_c_rejected_candidate_commit: e021662e2f4b6d2721f9b0378ac2efa64b706963
+  v1_c_corrected_candidate_commit: 962b42a281d3092f0faf399b9f6f1ecaa0212f31
+  v1_c_corrected_candidate_tree: d828f9fdb23c7099cdb1e4d5a993ff5579422dd4
+  v1_c_audited_execution_baseline_commit: resulting_HEAD_of_this_revision
+  v1_c_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
+  v1_c_workbench_source_digest: 4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
   registered_untracked_reference_directory: reference/
 
 pi:
@@ -416,7 +432,7 @@ v1:
   charter_status: accepted
   charter_accepted: true
   charter_formalized_at: 2026-08-03
-  status: active_v1_c_bounded_completion_after_v1_b_inconclusive
+  status: active_v1_c_stage_1_accepted_waiting_real_canary_authorization
   prior_status: concluded_inconclusive_not_completed
   active_goal: true
   current_candidate_goal: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
@@ -585,15 +601,29 @@ v1:
   V1_C_contract_status: accepted_activated
   V1_C_contract_accepted: true
   V1_C_activation_authorized: true
-  V1_C_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  V1_C_control_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_control_baseline_commit_authorized: consumed
+  V1_C_control_baseline_commit: 016006e72e5baf4f558f1f63f1ffafcf122e119c
   V1_C_stage_1_owner: dedicated_v1_c_stage_1_implementation_session
-  V1_C_stage_1_authorized: true_zero_real_calls
-  V1_C_stage_1_started: false
-  V1_C_stage_1_completed: false
-  V1_C_candidate_commit_authorized: false
-  V1_C_focused_audit_authorized: false
-  V1_C_execution_baseline_authorized: false
+  V1_C_stage_1_authorized: consumed_completed_zero_real_calls
+  V1_C_stage_1_started: true
+  V1_C_stage_1_completed: true
+  V1_C_stage_1_disposition: PASS_V1_C_STAGE1_AUDITED_CANDIDATE
+  V1_C_rejected_candidate_commit: e021662e2f4b6d2721f9b0378ac2efa64b706963
+  V1_C_corrected_candidate_commit: 962b42a281d3092f0faf399b9f6f1ecaa0212f31
+  V1_C_corrected_candidate_tree: d828f9fdb23c7099cdb1e4d5a993ff5579422dd4
+  V1_C_candidate_commit_authorized: consumed
+  V1_C_focused_audit_authorized: consumed
+  V1_C_focused_reaudit_disposition: PASS_FOCUSED_REAUDIT
+  V1_C_execution_baseline_authorized: consumed_by_resulting_HEAD_of_this_revision
+  V1_C_execution_baseline_commit: resulting_HEAD_of_this_revision
+  V1_C_canary_manifest: fixtures/manifests/v1/v1c-real-canary-execution.json
+  V1_C_canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
+  V1_C_workbench_source_digest: 4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604
+  V1_C_official_provider_checkpoint: PASS_CURRENT_OFFICIAL_PROVIDER_CHECKPOINT
+  V1_C_real_canary_authorized: false
+  V1_C_real_canary_started: false
+  V1_C_full_pilot_authorized: false
+  V1_C_full_pilot_started: false
   V1_C_credential_reads_authorized: 0
   V1_C_external_network_authorized: false
   V1_C_real_provider_calls_authorized: 0
@@ -1261,14 +1291,12 @@ next_checkpoint:
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
-  - V1_C_accepted_and_activated_for_zero_call_stage_1_only
-  - create_and_verify_V1_C_control_baseline
-  - start_dedicated_V1_C_stage_1_from_exact_control_baseline
-  - stop_after_stage_1_report_for_main_review
+  - V1_C_stage_1_corrected_candidate_and_focused_reaudit_accepted
+  - V1_C_audited_execution_baseline_and_one_cell_Canary_manifest_frozen
+  - stop_before_credential_network_or_real_Canary_without_separate_user_authorization
   - stop_before_V2
 
 open_user_decisions:
-  - V1_C_candidate_commit_and_focused_audit_after_stage_1_main_review
   - V1_C_real_canary_after_audited_execution_baseline
   - V1_C_full_pilot_after_valid_canary
 ```
@@ -1381,10 +1409,13 @@ evidence. V1-A's deterministic substrate remains accepted, but V1 still has no
 valid A/B/C aggregate, no Skill/Runtime winner and no observed real Recovery
 effect.
 
-V1-C is now the active Goal. Its accepted Contract authorizes only a dedicated
-zero-real-call Stage 1 correction of the request-cap/synthetic-failure
-attribution boundary. The dedicated Session must begin from the exact Control
-Baseline Commit, execute Gates A–I, submit its Implementation Report and
-Closeout Draft, and stop for Main review. Candidate Commit, focused audit,
-Credential/network use, real Canary and full Pilot are later independent
-control points. V2 remains unauthorized.
+V1-C is the active Goal. Its zero-real-call Stage 1 corrected the
+request-cap/synthetic-failure attribution boundary, preserved conservative
+unknown-usage accounting and passed fresh focused re-audit. Corrected Candidate
+`962b42a281d3092f0faf399b9f6f1ecaa0212f31` is accepted as
+`PASS_V1_C_STAGE1_AUDITED_CANDIDATE`; the resulting Main-owned revision
+freezes the audited Execution Baseline and the disjoint one-cell Canary
+Manifest. Official DeepSeek profile/schema compatibility and zero-call
+preflight pass. Credential access, real network/Provider/model calls, Canary
+execution and the full Pilot remain separately unauthorized. V2 remains
+unauthorized.

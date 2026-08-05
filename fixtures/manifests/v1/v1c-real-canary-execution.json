@@ -1,0 +1,120 @@
+{
+  "schema_version": "v1c-execution-manifest-v1",
+  "manifest_id": "c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c",
+  "experiment_id": "v1-c-real-canary",
+  "experiment_revision": 1,
+  "execution_mode": "stage2_real",
+  "created_at": "2026-08-05T00:00:00.000Z",
+  "control_baseline_commit": "016006e72e5baf4f558f1f63f1ffafcf122e119c",
+  "control_baseline_tree": "87704958ee787d804a9848b607293de411c532ef",
+  "execution_baseline_commit": "962b42a281d3092f0faf399b9f6f1ecaa0212f31",
+  "workbench_source_digest": "4d12e4588917949ee84bb56c83ec67f7cb8093a304c8a3ab9980c97188174604",
+  "pi_commit": "027a5847901b5dde30270abaa1041046cd2b4b55",
+  "pi_version": "0.82.1",
+  "protocol_id": "v1c_budget_stop_correction",
+  "credential_profile_name": "DEEPSEEK_API_KEY",
+  "real_execution_authorized": true,
+  "bindings": {
+    "task_pack_digest": "23cee2a5085cc1e541ca258abea8b28b410b934e387b97e1aae13220ccd92d20",
+    "task_digests": {
+      "v1-parse-duration": "164923ab6f289879be84f59a2b28e51bcdcea9287a595b7b51bc4ca6e8acbe9a",
+      "v1-bounded-index": "73caaa3efb8b9010e4c6c861da99d5a15f0f50bb3e3b98e5bb0f661904235107",
+      "v1-state-transition": "4111032744d77e011ef7991222642f016d391633d4f18380138b94897d95e2e1",
+      "v1-stable-format": "00726e1ac3edb0440b3b651f32008df4ed984effc349b905f2db5f0ad3843b26"
+    },
+    "workspace_digests": {
+      "v1-parse-duration": "5690aab9c1e7eb3905258c342d7bad4504e23377c18fec9fde39f22f9a99defa",
+      "v1-bounded-index": "44822d2c4d1779654d03d5db359fbf4d8bce16258643f055965f0efdfa8a19ee",
+      "v1-state-transition": "ecbc62cbfb21edef0dbfb05c2c8f3ab2be5e8dd99d0db3df177958f7808c54e4",
+      "v1-stable-format": "408b53fc073e6e802e6e4af218821bd52b5560a306cdc22fa08f1b22073d304d"
+    },
+    "skill_digest": "d41a123a4fa7c5aece7c1efece8fcc3be2040b272a5ab76f14622d3b17fc80af",
+    "strategy_digests": {
+      "baseline": "4e49de731ada794a5695506b466d3b46438fe1d879b6e417860f21319a5e7272",
+      "skill_only": "037096faf6e30970d7deb11d665a9ba7e395b0a886ea72a6b5dc8aa31c442788",
+      "skill_plus_runtime_control": "f403ca2eea94281038a213b12bb1bc5856f8886e21c63861f00a6cff00fed830"
+    },
+    "model_profile_digest": "26b06fdcc8a576d7d1da452d35b51b8795a318526e72c610c417518d1c2bad9f",
+    "base_prompt_digest": "317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf",
+    "tool_profile_digest": "ad036e4d67ffa98be7a02024c59a56f153d2600037d27f6aa4e3fb0de6908781",
+    "verifier_digests": {
+      "v1-parse-duration-verifier": "0924cb0f56e43a56dc74b262539f2ad0700b2cb2a43da26a9415b7e9ffaf21da",
+      "v1-bounded-index-verifier": "05404f5234df8c0360ee64f7a7660f0ad1db4573b627622d6709a194ffe19fa4",
+      "v1-state-transition-verifier": "13014e8c932daef02612d73755b8c72e428f709210aeb80e15515c7653e8b285",
+      "v1-stable-format-verifier": "6e5480d7e62b289435ea54f8869078b603aad0780a85aab6982f3d572198c36f"
+    }
+  },
+  "budgets": {
+    "initial_attempt": {
+      "provider_requests": 8,
+      "tool_calls": 12,
+      "tokens": 65536,
+      "wall_time_ms": 300000,
+      "cost_usd": 0.1,
+      "verifier_runs": 1,
+      "child_attempts": 0
+    },
+    "arm_a_or_b_run": {
+      "provider_requests": 8,
+      "tool_calls": 12,
+      "tokens": 65536,
+      "wall_time_ms": 300000,
+      "cost_usd": 0.1,
+      "verifier_runs": 1,
+      "child_attempts": 0
+    },
+    "arm_c_run": {
+      "provider_requests": 8,
+      "tool_calls": 12,
+      "tokens": 65536,
+      "wall_time_ms": 300000,
+      "cost_usd": 0.1,
+      "verifier_runs": 1,
+      "child_attempts": 0
+    },
+    "pilot": {
+      "provider_requests": 8,
+      "tool_calls": 12,
+      "tokens": 65536,
+      "wall_time_ms": 300000,
+      "cost_usd": 0.1,
+      "verifier_runs": 1,
+      "child_attempts": 0
+    }
+  },
+  "policy": {
+    "alternate_model_fallback": false,
+    "retry_same_run": false,
+    "automatic_replacement": false,
+    "invalid_ratio_pause_threshold": 0.25,
+    "repeated_invalid_cause_pause_count": 2,
+    "failure_taxonomy": [
+      "task_pass",
+      "task_fail",
+      "treatment_guardrail_failure",
+      "infrastructure_invalid",
+      "evidence_invalid",
+      "global_budget_stop",
+      "paused_unclassified"
+    ]
+  },
+  "cells": [
+    {
+      "cell_id": "v1c-canary-cell-01",
+      "planned_run_id": "v1c-canary-run-01-parse-duration-r1-a",
+      "task_id": "v1-parse-duration",
+      "repetition": 1,
+      "order_slot": 1,
+      "block": 1,
+      "block_slot": 1,
+      "arm": "A",
+      "strategy_id": "baseline"
+    }
+  ],
+  "identity_role": "real_canary",
+  "v1c_revision": {
+    "kind": "real_canary_template",
+    "budget_stop_protocol": "v1c_typed_predispatch_budget_stop_v1",
+    "canary_or_pilot_identity": true
+  }
+}

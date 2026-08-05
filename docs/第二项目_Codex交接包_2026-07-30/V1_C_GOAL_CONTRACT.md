@@ -1,7 +1,7 @@
 # V1-C Goal Contract — Bounded Budget-stop Correction and Comparison Completion
 
 ```yaml
-status: accepted_activated_stage_1_not_started
+status: accepted_activated_stage_1_accepted_execution_baseline_ready_canary_not_authorized
 goal_id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
 version: V1
 project: Agent Harness Reliability Workbench
@@ -12,16 +12,29 @@ accepted_by_user: 2026-08-05
 contract_accepted: true
 activation_authorized_by_user: 2026-08-05
 active_goal: true
-implementation_authorized: true_zero_real_call_stage_1_only
+implementation_authorized: consumed_completed_zero_real_call_stage_1
 implementation_owner: dedicated_v1_c_stage_1_implementation_session
-implementation_started: false
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+implementation_started: true
+stage_1_completed: true
+stage_1_disposition: PASS_V1_C_STAGE1_AUDITED_CANDIDATE
+control_baseline_commit_authorized: consumed
+control_baseline_commit: 016006e72e5baf4f558f1f63f1ffafcf122e119c
+rejected_candidate_commit: e021662e2f4b6d2721f9b0378ac2efa64b706963
+corrected_candidate_commit: 962b42a281d3092f0faf399b9f6f1ecaa0212f31
+corrected_candidate_tree: d828f9fdb23c7099cdb1e4d5a993ff5579422dd4
+focused_reaudit_disposition: PASS_FOCUSED_REAUDIT
+audited_execution_baseline_authorized: consumed_by_resulting_HEAD_of_this_revision
+audited_execution_baseline_commit: resulting_HEAD_of_this_revision
+canary_manifest: fixtures/manifests/v1/v1c-real-canary-execution.json
+canary_manifest_id: c26e75989623ae1218be0a3996c59de2ccbce946988396695b38bb9fdc482c4c
+official_provider_checkpoint: PASS_CURRENT_OFFICIAL_PROVIDER_CHECKPOINT
+real_canary_authorized: false
+full_pilot_authorized: false
 stage_1_real_model_calls_authorized: 0
 stage_1_real_provider_calls_authorized: 0
 credential_reads_authorized: 0
 external_network_authorized: false
-main_session_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+main_session_control_baseline_commit_authorized: consumed
 dedicated_session_git_commit_authorized: false
 pi_core_patch_authorized: false
 private_pi_import_authorized: false
@@ -30,11 +43,11 @@ external_download_authorized: false
 v2_authorized: false
 ```
 
-> 本文件是用户已经接受并激活的 V1-C 正式 Goal Contract。当前只授权 dedicated Stage 1 Session
-> 执行 Contract allowlist 内的零真实调用实现和验证；不授权 Credential 读取、网络访问、真实
-> Provider/模型调用或 dedicated-session Git Commit。Contract 接受、Goal
-> Activation、Control Baseline、Candidate Commit、Audit、Execution Baseline、Canary 和完整
-> Pilot 是彼此独立的控制点。
+> 本文件是用户已经接受并激活的 V1-C 正式 Goal Contract。Dedicated Stage 1 已完成零真实
+> 调用实现，corrected Candidate 和 fresh focused re-audit 已被 Main Session接受；本次
+> resulting HEAD 冻结 audited Execution Baseline、单 Cell Canary Manifest 和零调用 Provider
+> checkpoint。Credential、真实网络/Provider/model 调用、真实 Canary 和完整 Pilot 仍未
+> 授权。各控制点的权限继续彼此隔离。
 
 ## 1. Goal Mission
 
@@ -567,16 +580,24 @@ user_decisions_required:
     consequence: scope_is_formal_but_execution_remains_unauthorized
 
   - decision: authorize_activation_and_control_baseline
+    status: consumed_2026_08_05
     evidence: accepted_formal_v1_c_goal_contract
     options: [authorize_later, do_not_authorize]
     recommendation: authorize_only_after_contract_acceptance
     consequence: enables_zero_call_stage_1_only
 
   - decision: authorize_candidate_commit_and_focused_audit
-    evidence: main_reviewed_stage_1_implementation_report
+    status: consumed_corrected_candidate_and_reaudit_accepted_2026_08_06
+    evidence: docs/reports/V1_C_STAGE1_MAIN_ACCEPTANCE_AND_EXECUTION_BASELINE_DECISION.md
     options: [authorize, return_for_correction, close_incomplete]
     recommendation: decide_after_stage_1_evidence
     consequence: freezes_or_rejects_the_high_risk_candidate
+
+  - decision: authorize_audited_execution_baseline_and_zero_call_provider_checkpoint
+    status: consumed_2026_08_06
+    evidence: docs/reports/V1_C_STAGE1_MAIN_ACCEPTANCE_AND_EXECUTION_BASELINE_DECISION.md
+    outcome: resulting_HEAD_and_one_cell_Canary_manifest
+    consequence: prepares_but_does_not_authorize_the_real_Canary
 
   - decision: authorize_real_canary
     evidence: passed_focused_audit_and_audited_execution_baseline
@@ -591,6 +612,7 @@ user_decisions_required:
     consequence: permits_the_new_24_cell_A_B_C_descriptive_comparison
 ```
 
-本 Contract 已由用户接受并激活。Main Session 已获 Control Baseline Commit 权限；dedicated
-Stage 1 Session 仅获零真实调用实现权限。Candidate Commit、focused audit、Execution Baseline、
-Credential、网络、真实 Canary、完整 Pilot 和所有真实调用仍未授权。
+本 Contract 已由用户接受并激活。Stage 1 corrected Candidate 和 fresh focused re-audit 已由
+Main Session接受，audited Execution Baseline 与单 Cell Canary Manifest 已获用户继续授权并由
+本次 resulting HEAD 冻结。Credential、真实网络/Provider/model 调用、真实 Canary、完整 Pilot
+和 V2 仍未授权。
