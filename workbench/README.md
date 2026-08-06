@@ -216,3 +216,53 @@ LF-terminated records, and rejects blank records. Hit-specific line-byte
 correction evidence is generated only under
 `.runs/v2-a/line-byte-corrected-evidence/**`; the earlier evidence, audit,
 corrected-evidence, and re-audit roots remain preserved.
+
+## V2-B Stage 1 thin real composition
+
+V2-B Stage 1 adds an explicit execution port to the accepted V2-A Controller.
+Its real-shaped deterministic route passes each caller-owned public JSONL
+Session directly to `AgentHarness`, preserves the V2-A Seed, isolated A/B
+Workspaces, Session-history-only treatment delta, external Verifier, Selector,
+and read-only Inspector, and records typed Manifest, composition, reservation,
+known/conservative usage, counter, cost, and terminal evidence.
+
+The dormant Stage 2 port reuses the accepted one-Run opaque Credential
+authority and public DeepSeek provider profile. Constructing that port does not
+resolve a Credential or construct/call the Provider. Those actions occur only
+inside an authorized execution call. Stage 1 never invokes that call and its
+Credential, network, external Provider, real-model, and real-cost counters are
+all zero.
+
+```powershell
+npm run v2b:stage1
+node src/cli.ts v2b-stage1 run --run-root <path> --run-id <id> --scenario negative_initial_pass
+node src/cli.ts v2b-stage1 inspect --run-root <path>
+```
+
+After Main creates and freezes the Execution Baseline, the same tracked product
+surface can build the immutable three-Case Stage 2 Manifest. A fresh Stage 2
+Session needs no source, fixture, Prompt, Skill, Verifier, Manifest, or control
+file edit: it can perform the read-only preflight/inspection below and can call
+`run-next` only with separate explicit real authority.
+
+```powershell
+node src/cli.ts v2b-stage2 build-manifest --sequence-id <id> --execution-baseline-commit <sha> --execution-baseline-tree <tree> > <manifest.json>
+node src/cli.ts v2b-stage2 preflight --manifest <manifest.json>
+node src/cli.ts v2b-stage2 inspect --manifest <manifest.json> --sequence-root <path>
+node src/cli.ts v2b-stage2 run-next --manifest <manifest.json> --sequence-root <path> --stage2-real-authority
+```
+
+The Manifest predeclares Primary, conditional Contingency, and Negative. The
+append-only sequence ledger reserves every started Attempt conservatively,
+rejects repetition/replacement/third Cases, enforces Attempt/Group/sequence
+ceilings, and terminalizes an ineligible or invalid route as a typed Pause.
+An evidence-valid Primary pre-dispatch stop with exactly zero Provider requests
+and zero network/Provider/model dispatch preserves a write-once Case Pause and
+may activate only the already-predeclared Contingency; post-dispatch or invalid
+Pause evidence cannot authorize it.
+Credential resolution is late-bound once per started Run, cached only for that
+Run's Primary/A/B composition, and cleared when it closes.
+
+This is deterministic Stage 1 readiness only. It does not authorize Stage 2,
+read a Credential, make a network or real-model call, prove real recovery
+effectiveness, select a V2 winner, or accept/close V2-B or V2.

@@ -224,16 +224,24 @@ function validateSourceAnchor(projectRoot: string, runRoot: string, manifest: Ru
 	return source;
 }
 
-function validateManifest(projectRoot: string, runRoot: string, terminal: RunTerminalV2A, manifest: RunManifestV2A, errors: string[]): void {
+function validateManifest(
+	projectRoot: string,
+	runRoot: string,
+	terminal: RunTerminalV2A,
+	manifest: RunManifestV2A,
+	errors: string[],
+	expectedTaskId: string,
+	expectedRealExecutionAuthorized: boolean,
+): void {
 	const { manifest_id: declaredManifestId, ...manifestBody } = manifest;
 	if (digestObject(manifestBody) !== declaredManifestId || terminal.manifest_id !== declaredManifestId) errors.push("Manifest identity mismatch");
 	if (
 		manifest.schema_version !== "v2a-run-manifest-v2" ||
-		manifest.task_id !== V2A_TASK_ID || manifest.policy_id !== V2A_POLICY_ID || manifest.model_id !== V2A_MODEL_ID ||
+		manifest.task_id !== expectedTaskId || manifest.policy_id !== V2A_POLICY_ID || manifest.model_id !== V2A_MODEL_ID ||
 		manifest.thinking_level !== "off" || manifest.tool_profile_id !== V2A_TOOL_PROFILE_ID || manifest.skill_id !== V2A_SKILL_ID ||
-		manifest.verifier_id !== V2A_VERIFIER_ID || manifest.pi_commit !== V2A_PINNED_PI_COMMIT ||
+		manifest.pi_commit !== V2A_PINNED_PI_COMMIT ||
 		manifest.workbench_revision !== V2A_WORKBENCH_REVISION || manifest.workbench_source_scope !== V2A_WORKBENCH_SOURCE_SCOPE ||
-		manifest.real_execution_authorized !== false || manifest.recovery_candidate_count_on_valid_failure !== 2 ||
+		manifest.real_execution_authorized !== expectedRealExecutionAuthorized || manifest.recovery_candidate_count_on_valid_failure !== 2 ||
 		stableJson(manifest.strategy_ids) !== stableJson(V2A_STRATEGY_ORDER) ||
 		stableJson(manifest.per_attempt_budget) !== stableJson(V2A_ATTEMPT_BUDGET_CAPS) ||
 		stableJson(manifest.per_group_budget) !== stableJson(V2A_GROUP_BUDGET_CAPS)
@@ -257,12 +265,12 @@ function validateManifest(projectRoot: string, runRoot: string, terminal: RunTer
 		errors.push("Manifest frozen Artifact digest mismatch");
 	}
 	try {
-		const task = loadCandidateTaskPackV1(projectRoot).find((candidate) => candidate.task_id === V2A_TASK_ID);
+		const task = loadCandidateTaskPackV1(projectRoot).find((candidate) => candidate.task_id === expectedTaskId);
 		if (!task) throw new Error("frozen task missing");
 		const toolDigest = digestObject({ tool_profile_id: task.tool_profile_id, command_descriptors: task.command_descriptors });
 		const skill = expectedSkillIdentityV1(projectRoot);
 		if (
-			task.tool_profile_id !== V2A_TOOL_PROFILE_ID || task.external_verifier_id !== V2A_VERIFIER_ID ||
+			task.tool_profile_id !== V2A_TOOL_PROFILE_ID || task.external_verifier_id !== manifest.verifier_id ||
 			task.instruction_sha256 !== manifest.task_instruction_sha256 || task.external_verifier_sha256 !== manifest.verifier_sha256 ||
 			skill.source_sha256 !== manifest.skill_sha256 || toolDigest !== manifest.tool_profile_digest
 		) {
@@ -667,7 +675,7 @@ function inspectCandidate(options: {
 	return { derived, initial, sessionId: before && typeof before.header.id === "string" ? before.header.id : null };
 }
 
-export function inspectRunV2A(options: { projectRoot: string; runRoot: string }): InspectResultV2A {
+export function inspectRunV2A(options: { projectRoot: string; runRoot: string; expectedTaskId?: string; expectedRealExecutionAuthorized?: boolean; expectedRealCallCounters?: { credential_reads: number; network_calls: number; external_provider_calls: number; real_model_calls: number } }): InspectResultV2A {
 	const errors = validateRunRootBoundary(options.runRoot);
 	const result = (terminal: RunTerminalV2A | null, seed: RecoverySeedV2A | null, candidates: CandidatePathV2A[], selection: SelectionDecisionV2A | null): InspectResultV2A => ({
 		schema_version: "v2a-inspection-v2",
@@ -684,8 +692,8 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string })
 	const manifest = safeReadJson<RunManifestV2A>(options.runRoot, "config/manifest.json", errors);
 	if (!terminal || !manifest) return result(terminal, null, [], null);
 	if (terminal.schema_version !== "v2a-run-terminal-v2" || terminal.run_id !== manifest.run_id) errors.push("Run terminal/Manifest identity mismatch");
-	if (stableJson(terminal.real_call_counters) !== stableJson({ credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 })) errors.push("real-access counters are not zero");
-	validateManifest(options.projectRoot, options.runRoot, terminal, manifest, errors);
+	if (stableJson(terminal.real_call_counters) !== stableJson(options.expectedRealCallCounters ?? { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 })) errors.push("real-access counters mismatch");
+	validateManifest(options.projectRoot, options.runRoot, terminal, manifest, errors, options.expectedTaskId ?? V2A_TASK_ID, options.expectedRealExecutionAuthorized ?? false);
 	const journal = readJournal(options.runRoot, terminal, errors);
 	const runStartedEvent = eventOf(journal, "run_started");
 	if (

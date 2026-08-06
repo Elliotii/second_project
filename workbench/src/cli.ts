@@ -8,6 +8,8 @@ import { runV0CProductSurface } from "./product-surface-v0c.ts";
 import { aggregateV1B, inspectV1B, preflightV1B, runNextV1B, V1B_STAGE1_MANIFEST_PATH } from "./product-surface-v1.ts";
 import { FixedProviderBoundaryErrorV1B } from "./provider/fixed-provider-v1.ts";
 import { inspectV2A, runV2A, V2A_SCENARIOS } from "./product-surface-v2.ts";
+import { buildStage2ManifestV2B, inspectStage1V2B, inspectStage2SequenceV2B, preflightStage2V2B, readExecutionManifestV2B, runNextStage2V2B, runStage1V2B } from "./product-surface-v2b.ts";
+import { V2B_STAGE1_SCENARIOS } from "./run-v2b.ts";
 import {
 	V0C_OBSERVE_STRATEGY_PATH,
 	V0C_REAL_STRATEGY_PATH,
@@ -54,6 +56,69 @@ function parseArguments(argv: string[]): CliArguments {
 async function main(): Promise<void> {
 	const projectRoot = resolve(import.meta.dirname, "../..");
 	const raw = process.argv.slice(2);
+	if (raw[0] === "v2b-stage2") {
+		const action = raw[1];
+		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };
+		if (action === "build-manifest") {
+			const sequenceId = value("--sequence-id");
+			const commit = value("--execution-baseline-commit");
+			const tree = value("--execution-baseline-tree");
+			if (!sequenceId || !commit || !tree) throw new Error("v2b-stage2 build-manifest requires sequence and Execution Baseline identities");
+			process.stdout.write(`${JSON.stringify(buildStage2ManifestV2B({ projectRoot, sequenceId, executionBaselineCommit: commit, executionBaselineTree: tree }))}\n`);
+			return;
+		}
+		const manifestPath = value("--manifest");
+		if (!manifestPath) throw new Error("v2b-stage2 requires --manifest <path>");
+		const manifest = readExecutionManifestV2B(resolve(projectRoot, manifestPath));
+		if (action === "preflight") {
+			process.stdout.write(`${JSON.stringify(preflightStage2V2B({ projectRoot, manifest }))}\n`);
+			return;
+		}
+		const sequenceRootValue = value("--sequence-root");
+		if (!sequenceRootValue) throw new Error("v2b-stage2 run-next/inspect requires --sequence-root <path>");
+		const sequenceRoot = resolve(projectRoot, sequenceRootValue);
+		if (action === "inspect") {
+			const inspected = inspectStage2SequenceV2B({ projectRoot, sequenceRoot });
+			process.stdout.write(`${JSON.stringify(inspected)}\n`);
+			if (!inspected.integrity_valid) process.exitCode = 1;
+			return;
+		}
+		if (action === "run-next") {
+			if (!raw.includes("--stage2-real-authority")) throw new FixedProviderBoundaryErrorV1B();
+			const result = await runNextStage2V2B({
+				projectRoot, sequenceRoot, manifest,
+				credentialResolver: { resolve: async () => {
+					const credential = process.env["DEEPSEEK_API_KEY"];
+					if (!credential) throw new FixedProviderBoundaryErrorV1B();
+					return credential;
+				} },
+			});
+			process.stdout.write(`${JSON.stringify(result)}\n`);
+			return;
+		}
+		throw new Error("usage: cli.ts v2b-stage2 <build-manifest|preflight|run-next|inspect>");
+	}
+	if (raw[0] === "v2b-stage1") {
+		const action = raw[1];
+		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };
+		const runRootValue = value("--run-root");
+		if (!runRootValue) throw new Error("v2b-stage1 requires --run-root <path>");
+		const runRoot = resolve(projectRoot, runRootValue);
+		if (action === "run") {
+			const runId = value("--run-id");
+			const scenario = value("--scenario");
+			if (!runId || !scenario || !(scenario in V2B_STAGE1_SCENARIOS)) throw new Error("v2b-stage1 run requires --run-id <id> --scenario <known-scenario>");
+			const result = await runStage1V2B({ projectRoot, runRoot, runId, scenario });
+			process.stdout.write(`${JSON.stringify({ run_id: result.run_id, outcome: result.outcome, selected_candidate_id: result.selected_candidate_id, run_root: runRoot, real_call_counters: result.real_call_counters })}\n`);
+		} else if (action === "inspect") {
+			const result = inspectStage1V2B({ projectRoot, runRoot });
+			process.stdout.write(`${JSON.stringify(result)}\n`);
+			if (!result.integrity_valid) process.exitCode = 1;
+		} else {
+			throw new Error("usage: cli.ts v2b-stage1 <run|inspect> --run-root <path> [--run-id <id> --scenario <scenario>]");
+		}
+		return;
+	}
 	if (raw[0] === "v2a") {
 		const action = raw[1];
 		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };

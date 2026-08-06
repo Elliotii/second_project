@@ -62,7 +62,7 @@ export const ZERO_REAL_CALL_COUNTERS_V2A = Object.freeze({
 	real_model_calls: 0,
 } as const);
 
-interface HarnessResultV2A {
+export interface HarnessResultV2A {
 	settled: boolean;
 	terminalReason: "settled" | "budget_stopped" | "runtime_invalid";
 	providerDispatches: number;
@@ -70,6 +70,22 @@ interface HarnessResultV2A {
 	tokens: number;
 	activeExecutionTimeMs: number;
 	contextMessageCount: number;
+}
+
+export interface ExecutionAttemptRequestV2 {
+	session: Session<JsonlSessionMetadata>;
+	workspaceRoot: string;
+	task: TaskSpecV1;
+	skill: Skill;
+	prompt: string;
+	attemptId: string;
+	mode: CandidateModeV2A | "primary_pass" | "primary_fail";
+	patch: string;
+}
+
+export interface ExecutionPortV2 {
+	execute(input: ExecutionAttemptRequestV2): Promise<HarnessResultV2A>;
+	close?(): Promise<void>;
 }
 
 class CandidateBudgetStopV2A extends Error {
@@ -99,7 +115,12 @@ function manifestFor(options: {
 	verifierRef: ArtifactRefV0B;
 	workbenchSourceRef: ArtifactRefV0B;
 	workbenchSourceDigest: string;
+	realExecutionAuthorized: boolean;
 }): RunManifestV2A {
+	if (options.task.task_id !== V2A_TASK_ID && options.task.task_id !== "v1-stable-format") throw new Error("V2 task identity is outside the frozen Case set");
+	if (options.task.external_verifier_id !== V2A_VERIFIER_ID && options.task.external_verifier_id !== "v1-stable-format-verifier") throw new Error("V2 Verifier identity is outside the frozen Case set");
+	const taskId: RunManifestV2A["task_id"] = options.task.task_id;
+	const verifierId: RunManifestV2A["verifier_id"] = options.task.external_verifier_id;
 	const toolProfileDigest = digestObject({
 		tool_profile_id: options.task.tool_profile_id,
 		command_descriptors: options.task.command_descriptors,
@@ -107,7 +128,7 @@ function manifestFor(options: {
 	const body = {
 		schema_version: "v2a-run-manifest-v2" as const,
 		run_id: options.runId,
-		task_id: V2A_TASK_ID,
+		task_id: taskId,
 		policy_id: V2A_POLICY_ID,
 		model_id: V2A_MODEL_ID,
 		thinking_level: "off" as const,
@@ -116,7 +137,7 @@ function manifestFor(options: {
 		skill_id: V2A_SKILL_ID,
 		skill_ref: options.skillRef,
 		skill_sha256: options.skillRef.sha256,
-		verifier_id: V2A_VERIFIER_ID,
+		verifier_id: verifierId,
 		verifier_ref: options.verifierRef,
 		verifier_sha256: options.verifierRef.sha256,
 		task_instruction_ref: options.instructionRef,
@@ -128,7 +149,7 @@ function manifestFor(options: {
 		workbench_source_scope: V2A_WORKBENCH_SOURCE_SCOPE,
 		workbench_source_ref: options.workbenchSourceRef,
 		workbench_source_digest: options.workbenchSourceDigest,
-		real_execution_authorized: false as const,
+		real_execution_authorized: options.realExecutionAuthorized,
 		recovery_candidate_count_on_valid_failure: 2 as const,
 		per_attempt_budget: structuredClone(V2A_ATTEMPT_CAPS),
 		per_group_budget: structuredClone(V2A_GROUP_BUDGET_CAPS),
@@ -211,16 +232,7 @@ function fakeResponses(mode: CandidateModeV2A | "primary_pass" | "primary_fail",
 	];
 }
 
-async function runHarness(options: {
-	session: Session<JsonlSessionMetadata>;
-	workspaceRoot: string;
-	task: TaskSpecV1;
-	skill: Skill;
-	prompt: string;
-	attemptId: string;
-	mode: CandidateModeV2A | "primary_pass" | "primary_fail";
-	patch: string;
-}): Promise<HarnessResultV2A> {
+async function runHarnessDeterministicV2A(options: ExecutionAttemptRequestV2): Promise<HarnessResultV2A> {
 	const models = createModels();
 	const registration = fauxProvider({ provider: "v2a-faux" });
 	models.setProvider(registration.provider);
@@ -304,6 +316,10 @@ async function runHarness(options: {
 		offTool();
 		await harness.abort();
 	}
+}
+
+export function createDeterministicExecutionPortV2A(): ExecutionPortV2 {
+	return Object.freeze({ execute: runHarnessDeterministicV2A });
 }
 
 function sourceInventory(projectRoot: string): SourceInventoryV2A {
@@ -444,6 +460,7 @@ async function executeCandidate(options: {
 	recoveryPrompt: string;
 	strategy: RecoveryStrategyV2A;
 	mode: CandidateModeV2A;
+	executionPort: ExecutionPortV2;
 }): Promise<CandidatePathV2A> {
 	const suffix = options.strategy === "continue_failed_session" ? "a" : "b";
 	const candidatePathId = `${options.seed.recovery_group_id}-candidate-${suffix}`;
@@ -474,7 +491,7 @@ async function executeCandidate(options: {
 		session_digest_before_run: sessionBeforeRef.sha256,
 		session_snapshot_before_run_ref: sessionBeforeRef,
 	});
-	const harness = await runHarness({
+	const harness = await options.executionPort.execute({
 		session,
 		workspaceRoot,
 		task: options.task,
@@ -500,7 +517,7 @@ async function executeCandidate(options: {
 		rawUsage.tokens !== harness.tokens ||
 		(rawUsage.settled !== harness.settled && harness.terminalReason !== "budget_stopped")
 	) {
-		throw new Error("V2-A raw Session usage disagrees with runtime observation");
+		throw new Error(`V2-A raw Session usage disagrees with runtime observation: raw=${stableJson(rawUsage)} runtime=${stableJson(harness)}`);
 	}
 	const finalWorkspaceDigest = treeDigest(workspaceRoot);
 	const workspaceRef = workspaceSnapshot(options.runRoot, workspaceRoot, `candidates/${suffix}/workspace-final.json`, `${candidatePathId}-workspace`);
@@ -590,13 +607,19 @@ async function executeCandidate(options: {
 	return candidate;
 }
 
-export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunTerminalV2A> {
+export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
+	taskId?: string;
+	executionPort?: ExecutionPortV2;
+	realExecutionAuthorized?: boolean;
+	realCallCounters?: { credential_reads: number; network_calls: number; external_provider_calls: number; real_model_calls: number };
+}): Promise<RunTerminalV2A> {
 	if (existsSync(options.runRoot)) throw new Error("V2-A Run root already exists");
 	mkdirSync(options.runRoot, { recursive: true });
 	writeOnceBytes(options.runRoot, "journal.jsonl", "");
 	const sequence = { value: 0 };
-	const task = loadCandidateTaskPackV1(options.projectRoot).find((candidate) => candidate.task_id === V2A_TASK_ID);
+	const task = loadCandidateTaskPackV1(options.projectRoot).find((candidate) => candidate.task_id === (options.taskId ?? V2A_TASK_ID));
 	if (!task) throw new Error("V2-A frozen task is unavailable");
+	const executionPort = options.executionPort ?? createDeterministicExecutionPortV2A();
 	const loadedSkill = await loadExactOneSkillV1({
 		projectRoot: options.projectRoot,
 		skillRoot: "fixtures/skills/v1",
@@ -624,6 +647,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		verifierRef,
 		workbenchSourceRef,
 		workbenchSourceDigest: workbenchSource.digest,
+		realExecutionAuthorized: options.realExecutionAuthorized ?? false,
 	});
 	const manifestRef = writeOnceJson(options.runRoot, "config/manifest.json", manifest);
 	appendJournal(options.runRoot, sequence, "run_started", {
@@ -649,7 +673,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 	});
 	const primaryAttemptId = `${options.runId}-primary-attempt-01`;
 	appendJournal(options.runRoot, sequence, "primary_started", { attempt_id: primaryAttemptId });
-	const primaryHarness = await runHarness({
+	const primaryHarness = await executionPort.execute({
 		session: parentSession,
 		workspaceRoot: primaryWorkspaceRoot,
 		task,
@@ -707,7 +731,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 			candidate_refs: [],
 			selection_ref: null,
 			selected_candidate_id: null,
-			real_call_counters: structuredClone(ZERO_REAL_CALL_COUNTERS_V2A),
+			real_call_counters: structuredClone(options.realCallCounters ?? ZERO_REAL_CALL_COUNTERS_V2A),
 		};
 		writeOnceJson(options.runRoot, "terminal.json", terminal);
 		appendJournal(options.runRoot, sequence, "run_terminal", { outcome: terminal.outcome });
@@ -743,7 +767,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		recovery_group_id: recoveryGroupId,
 		parent_run_id: options.runId,
 		parent_attempt_id: primaryAttemptId,
-		task_id: task.task_id,
+		task_id: manifest.task_id,
 		task_instruction_ref: instructionRef,
 		task_instruction_sha256: instructionRef.sha256,
 		failure_packet_ref: failurePacketRef,
@@ -825,6 +849,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		recoveryPrompt,
 		strategy: "continue_failed_session",
 		mode: modes[0],
+		executionPort,
 	});
 	const candidateB = await executeCandidate({
 		projectRoot: options.projectRoot,
@@ -843,6 +868,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		recoveryPrompt,
 		strategy: "fresh_session_from_failure_seed",
 		mode: modes[1],
+		executionPort,
 	});
 	assertIndependentFiles(seedWorkspaceRoot, candidateAWorkspaceRoot, candidateBWorkspaceRoot);
 	if (candidateA.common_artifact_digest !== candidateB.common_artifact_digest) throw new Error("Candidate common Artifact fairness drift");
@@ -895,7 +921,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		candidate_refs: candidateRefs,
 		selection_ref: selectionRef,
 		selected_candidate_id: selection.selected_candidate_id,
-		real_call_counters: structuredClone(ZERO_REAL_CALL_COUNTERS_V2A),
+		real_call_counters: structuredClone(options.realCallCounters ?? ZERO_REAL_CALL_COUNTERS_V2A),
 	};
 	writeOnceJson(options.runRoot, "terminal.json", terminal);
 	appendJournal(options.runRoot, sequence, "run_terminal", { outcome: terminal.outcome, selected_candidate_id: terminal.selected_candidate_id });

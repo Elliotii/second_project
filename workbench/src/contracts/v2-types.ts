@@ -71,7 +71,7 @@ export interface RecoverySeedV2A {
 	recovery_group_id: string;
 	parent_run_id: string;
 	parent_attempt_id: string;
-	task_id: string;
+	task_id: typeof V2A_TASK_ID | "v1-stable-format";
 	task_instruction_ref: ArtifactRefV0B;
 	task_instruction_sha256: string;
 	failure_packet_ref: ArtifactRefV0B;
@@ -159,7 +159,7 @@ export interface RunManifestV2A {
 	schema_version: "v2a-run-manifest-v2";
 	manifest_id: string;
 	run_id: string;
-	task_id: typeof V2A_TASK_ID;
+	task_id: typeof V2A_TASK_ID | "v1-stable-format";
 	policy_id: typeof V2A_POLICY_ID;
 	model_id: typeof V2A_MODEL_ID;
 	thinking_level: "off";
@@ -168,7 +168,7 @@ export interface RunManifestV2A {
 	skill_id: typeof V2A_SKILL_ID;
 	skill_ref: ArtifactRefV0B;
 	skill_sha256: string;
-	verifier_id: typeof V2A_VERIFIER_ID;
+	verifier_id: typeof V2A_VERIFIER_ID | "v1-stable-format-verifier";
 	verifier_ref: ArtifactRefV0B;
 	verifier_sha256: string;
 	task_instruction_ref: ArtifactRefV0B;
@@ -180,7 +180,7 @@ export interface RunManifestV2A {
 	workbench_source_scope: typeof V2A_WORKBENCH_SOURCE_SCOPE;
 	workbench_source_ref: ArtifactRefV0B;
 	workbench_source_digest: string;
-	real_execution_authorized: false;
+	real_execution_authorized: boolean;
 	recovery_candidate_count_on_valid_failure: 2;
 	per_attempt_budget: BudgetCapsV2A;
 	per_group_budget: {
@@ -215,10 +215,10 @@ export interface RunTerminalV2A {
 	selection_ref: ArtifactRefV0B | null;
 	selected_candidate_id: string | null;
 	real_call_counters: {
-		credential_reads: 0;
-		network_calls: 0;
-		external_provider_calls: 0;
-		real_model_calls: 0;
+		credential_reads: number;
+		network_calls: number;
+		external_provider_calls: number;
+		real_model_calls: number;
 	};
 }
 
