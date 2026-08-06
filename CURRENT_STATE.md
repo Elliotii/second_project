@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_b_stage_1_activated
-  status: V2_B_STAGE_1_ACTIVE_CONTROL_BASELINE_PENDING
+  phase: v2_b_stage_2_authorized
+  status: V2_B_STAGE_1_ACCEPTED_EXECUTION_BASELINE_PENDING
 
 active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 
@@ -33,12 +33,12 @@ last_completed_goal:
 
 current_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_stage_1_authorized_not_started
+  status: active_stage_2_authorized_pending_gate_h
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
 
 next_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_stage_1_authorized_not_started
+  status: active_stage_2_authorized_pending_gate_h
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
 
 retired_goal_candidate:
@@ -374,6 +374,13 @@ completed_work:
   - V2_B_stage_2_new_top_level_session_and_real_access_conditionally_preauthorized_after_Gate_H
   - V2_B_one_focused_top_level_audit_conditionally_preauthorized_on_concrete_high_risk_finding
   - V2_B_main_goal_mode_authorized_through_stage_2_evidence_and_disposition_recommendation
+  - V2_B_stage_1_dedicated_top_level_session_completed_zero_real_access
+  - V2_B_stage_1_two_bounded_main_corrections_completed_without_architecture_or_scope_change
+  - V2_B_stage_1_strict_typescript_and_focused_18_of_18_main_rereview_passed
+  - V2_B_stage_1_PASS_V2_B_STAGE1_THIN_REAL_COMPOSITION_accepted_by_main
+  - V2_B_candidate_implementation_commit_created_at_d1825dc8bab16b6f0418e883a11fff132d8e8e52
+  - V2_B_stage_2_opaque_credential_network_and_real_calls_authorized_after_Gate_H
+  - V2_B_stage_2_new_top_level_execution_session_authorized
 
 workspace:
   git_initialized: true
@@ -849,29 +856,36 @@ v2:
   implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
   implementation_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  V2_B_contract_status: active_stage_1_authorized_not_started
+  V2_B_contract_status: active_stage_2_authorized_pending_gate_h
   V2_B_contract_accepted: true
   V2_B_contract_accepted_at: 2026-08-07
   V2_B_goal_authorized: true
   V2_B_activation_authorized: true
   V2_B_activation_authorized_at: 2026-08-07
-  V2_B_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  V2_B_control_baseline_commit: resulting_HEAD_of_this_revision
-  V2_B_stage_1_owner: new_top_level_v2_b_composition_implementation_session_to_be_created_after_baseline
+  V2_B_control_baseline_commit_authorized: consumed
+  V2_B_control_baseline_commit: 33b347abbd92dc1d1cba3511fd5e69b64c06027d
+  V2_B_stage_1_owner: top_level_task_019fd804-a262-7e70-aa6f-865d2dc478ba
   V2_B_stage_1_implementation_authorized: true
-  V2_B_stage_1_implementation_started: false_at_control_baseline
+  V2_B_stage_1_implementation_started: true
+  V2_B_stage_1_implementation_completed: true
+  V2_B_stage_1_main_corrections: 2
+  V2_B_stage_1_main_disposition: PASS_V2_B_STAGE1_THIN_REAL_COMPOSITION
+  V2_B_stage_1_main_accepted: true
+  V2_B_candidate_commit: d1825dc8bab16b6f0418e883a11fff132d8e8e52
+  V2_B_execution_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  V2_B_execution_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_stage_1_credential_reads_authorized: 0
   V2_B_stage_1_network_authorized: false
   V2_B_stage_1_real_model_calls_authorized: 0
-  V2_B_stage_2_owner: future_new_top_level_v2_b_real_execution_session
-  V2_B_stage_2_execution_authorized: false
-  V2_B_stage_2_execution_conditionally_preauthorized: true_after_stage_1_main_acceptance_and_frozen_execution_baseline
-  V2_B_stage_2_credential_reads_authorized: 0
-  V2_B_stage_2_credential_reads_conditionally_preauthorized: opaque_contract_bounded_after_Gate_H
-  V2_B_stage_2_network_authorized: false
-  V2_B_stage_2_network_conditionally_preauthorized: true_after_Gate_H
-  V2_B_stage_2_real_model_calls_authorized: 0
-  V2_B_stage_2_real_model_calls_conditionally_preauthorized: contract_budget_after_Gate_H
+  V2_B_stage_2_owner: new_top_level_v2_b_real_execution_session_to_be_created_from_execution_baseline
+  V2_B_stage_2_execution_authorized: true_after_execution_baseline_and_gate_h
+  V2_B_stage_2_execution_conditionally_preauthorized: consumed_by_user_authorization
+  V2_B_stage_2_credential_reads_authorized: opaque_contract_bounded_after_Gate_H
+  V2_B_stage_2_credential_reads_conditionally_preauthorized: consumed_by_user_authorization
+  V2_B_stage_2_network_authorized: true_after_Gate_H
+  V2_B_stage_2_network_conditionally_preauthorized: consumed_by_user_authorization
+  V2_B_stage_2_real_model_calls_authorized: contract_budget_after_Gate_H
+  V2_B_stage_2_real_model_calls_conditionally_preauthorized: consumed_by_user_authorization
   V2_B_subagent_execution_authorized: false
   V2_B_specialist_session_form: new_top_level_codex_sessions_only
   V2_B_default_independent_audit: false
@@ -1602,8 +1616,13 @@ next_checkpoint:
   - V2_A_contract_accepted_and_goal_activated
   - preserve_V2_A_accepted_Implementation_Baseline_and_evidence
   - V2_B_contract_activated_for_zero_access_stage_1
-  - create_and_verify_V2_B_control_baseline
-  - create_new_top_level_V2_B_stage_1_implementation_session
+  - V2_B_stage_1_accepted_and_candidate_commit_frozen
+  - create_and_verify_V2_B_execution_baseline
+  - freeze_exact_V2_B_stage_2_manifest
+  - create_new_top_level_V2_B_stage_2_execution_session
+  - run_Gate_H_before_any_real_access
+  - complete_frozen_sequence_or_preserve_contract_pause
+  - main_review_stage_2_evidence_and_recommend_disposition
 
 open_user_decisions:
   - V2_B_final_disposition_after_stage_2_evidence_or_contract_pause
@@ -1734,11 +1753,14 @@ remaining P1-002 line-byte bypass. Candidate
 `de6d30c896079c6ae1164646ae55ead8e6a33c09` closed that last finding, and a fresh
 hit-specific audit passed with zero new findings. The user accepted
 `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`; Gates A–J and DoD 24/24 are accepted,
-`active_goal` is null, and the resulting HEAD of this closeout revision is the V2-A
-Implementation Baseline. The formal V2-B Contract is active for Stage 1. This
-revision's resulting HEAD is the authorized Control Baseline; after it is
-verified, Main will create a new top-level zero-real-access composition Session.
-A different fresh top-level no-source-edit Session is conditionally preauthorized
-for Stage 2 only after Stage 1 acceptance, a frozen Execution Baseline and Gate H.
+the accepted V2-A Implementation Baseline remains fixed. The formal V2-B Contract
+is active. Its new top-level Stage 1 Session completed the zero-real-access thin
+composition, and two bounded Main corrections stayed inside the accepted allowlist.
+Main accepted `PASS_V2_B_STAGE1_THIN_REAL_COMPOSITION` after strict TypeScript and
+an independent 18/18 focused rerun. Candidate commit
+`d1825dc8bab16b6f0418e883a11fff132d8e8e52` is frozen. This revision's resulting
+HEAD is the authorized Execution Baseline. A different fresh top-level no-source-edit
+Stage 2 Session is authorized to perform Gate H and, only after it passes, opaque
+Credential resolution, network access and the frozen bounded real sequence.
 Final V2-B/V2 acceptance, Pi changes, SDK/Extension route switching and V3 remain
 unauthorized.

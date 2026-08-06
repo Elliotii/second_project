@@ -1,7 +1,7 @@
 # V2-B Goal Contract — Thin Real Composition and Frozen Bounded Real Recovery Acceptance
 
 ```yaml
-status: active_stage_1_authorized_not_started
+status: active_stage_2_authorized_pending_gate_h
 goal_id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 version: V2
 drafted_at: 2026-08-07
@@ -11,23 +11,28 @@ contract_accepted: true
 active_goal: true
 activated_at: 2026-08-07
 activation_authorized: true
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit_authorized: consumed
+control_baseline_commit: 33b347abbd92dc1d1cba3511fd5e69b64c06027d
 stage_1_implementation_authorized: true
 stage_1_real_model_calls_authorized: 0
 stage_1_credential_reads_authorized: 0
 stage_1_network_authorized: false
 stage_1_external_provider_calls_authorized: 0
-stage_1_owner: new_top_level_v2_b_composition_implementation_session_to_be_created_after_baseline
-stage_2_execution_authorized: false
-stage_2_execution_conditionally_preauthorized: true_after_stage_1_main_acceptance_and_frozen_execution_baseline
-stage_2_credential_reads_authorized: 0
-stage_2_credential_reads_conditionally_preauthorized: opaque_contract_bounded_after_Gate_H
-stage_2_network_authorized: false
-stage_2_network_conditionally_preauthorized: true_after_Gate_H
-stage_2_real_model_calls_authorized: 0
-stage_2_real_model_calls_conditionally_preauthorized: contract_budget_after_Gate_H
-stage_2_owner: future_new_top_level_v2_b_real_execution_session
+stage_1_owner: top_level_task_019fd804-a262-7e70-aa6f-865d2dc478ba
+stage_1_completed: true
+stage_1_main_disposition: PASS_V2_B_STAGE1_THIN_REAL_COMPOSITION
+stage_1_candidate_commit: d1825dc8bab16b6f0418e883a11fff132d8e8e52
+execution_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+execution_baseline_commit: resulting_HEAD_of_this_revision
+stage_2_execution_authorized: true_after_execution_baseline_and_gate_h
+stage_2_execution_conditionally_preauthorized: consumed_by_user_authorization
+stage_2_credential_reads_authorized: opaque_contract_bounded_after_Gate_H
+stage_2_credential_reads_conditionally_preauthorized: consumed_by_user_authorization
+stage_2_network_authorized: true_after_Gate_H
+stage_2_network_conditionally_preauthorized: consumed_by_user_authorization
+stage_2_real_model_calls_authorized: contract_budget_after_Gate_H
+stage_2_real_model_calls_conditionally_preauthorized: consumed_by_user_authorization
+stage_2_owner: new_top_level_v2_b_real_execution_session_to_be_created_from_execution_baseline
 subagent_execution_authorized: false
 specialist_session_form: new_top_level_codex_sessions_only
 candidate_execution_baseline_commit_conditionally_preauthorized: true_after_stage_1_main_acceptance
@@ -44,10 +49,10 @@ final_v2_acceptance_authorized: false
 v3_authorized: false
 ```
 
-> 本文件已由用户激活 V2-B 的 Stage 1。当前只允许 Main 创建 Control Baseline、开启绑定
-> Version Question 的 Goal，并创建一个新的顶层零真实访问 Stage 1 Session。Stage 2 的
-> Credential、网络和真实调用仅为条件预授权，在 Stage 1 验收、冻结 Execution Baseline 和
-> Gate H 之前均不生效。
+> V2-B Stage 1 已由新的顶层 Session 完成并经 Main 验收；Candidate commit 已冻结。用户已授权
+> Main 创建 Execution Baseline 和另一个 fresh 顶层 Stage 2 Session。Stage 2 必须先通过 Gate H；
+> 在 Gate H 前 Credential、网络和真实调用权限均不生效，且 Stage 2 始终没有源码、Manifest、
+> Verifier、控制状态、暂存或提交权限。
 
 ## 1. Goal Mission
 
