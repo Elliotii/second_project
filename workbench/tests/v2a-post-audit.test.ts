@@ -126,32 +126,38 @@ test("V2A-AUDIT-P1-001 derives Verifier pass from raw result/output, not coheren
 });
 
 test("V2A-AUDIT-P1-002 rejects foreign, changed, aliased and divergent Session lineage after coherent rehash", async () => {
-	for (const variant of ["foreign-parent", "same-count-entry", "aliased-session-id", "divergent-final-prefix"] as const) {
+	for (const variant of ["foreign-parent", "same-count-entry", "aliased-session-id", "divergent-final-prefix", "trailing-parent-entry-space"] as const) {
 		const root = await makeRecoveryRun(`p1-002-${variant}`);
 		const candidatePath = resolve(root, "candidates/a/candidate.json");
 		const candidate = readJson<CandidatePathV2A>(candidatePath);
 		const beforePath = resolve(root, candidate.session_snapshot_before_run_ref.path);
 		const finalPath = resolve(root, candidate.session_ref.path);
-		const before = readJsonl(beforePath);
-		const final = readJsonl(finalPath);
-		if (variant === "foreign-parent") {
-			before[0]!.parentSession = "C:\\forged\\unrelated-parent.jsonl";
-			final[0]!.parentSession = before[0]!.parentSession;
-		} else if (variant === "same-count-entry") {
-			const beforeMessage = before[1]!.message as Record<string, unknown>;
-			const finalMessage = final[1]!.message as Record<string, unknown>;
-			beforeMessage.content = [{ type: "text", text: "forged same-count parent entry" }];
-			finalMessage.content = structuredClone(beforeMessage.content);
-		} else if (variant === "aliased-session-id") {
-			const parent = readJsonl(resolve(root, readTerminal(root).primary_session_ref.path));
-			before[0]!.id = parent[0]!.id;
-			final[0]!.id = parent[0]!.id;
+		if (variant === "trailing-parent-entry-space") {
+			const beforeBytes = readFileSync(beforePath);
+			assert.equal(beforeBytes.at(-1), 0x0a, "fresh producer Session must end in LF");
+			writeFileSync(beforePath, Buffer.concat([beforeBytes.subarray(0, -1), Buffer.from(" "), beforeBytes.subarray(-1)]));
 		} else {
-			const message = final[1]!.message as Record<string, unknown>;
-			message.content = [{ type: "text", text: "divergent final prefix" }];
+			const before = readJsonl(beforePath);
+			const final = readJsonl(finalPath);
+			if (variant === "foreign-parent") {
+				before[0]!.parentSession = "C:\\forged\\unrelated-parent.jsonl";
+				final[0]!.parentSession = before[0]!.parentSession;
+			} else if (variant === "same-count-entry") {
+				const beforeMessage = before[1]!.message as Record<string, unknown>;
+				const finalMessage = final[1]!.message as Record<string, unknown>;
+				beforeMessage.content = [{ type: "text", text: "forged same-count parent entry" }];
+				finalMessage.content = structuredClone(beforeMessage.content);
+			} else if (variant === "aliased-session-id") {
+				const parent = readJsonl(resolve(root, readTerminal(root).primary_session_ref.path));
+				before[0]!.id = parent[0]!.id;
+				final[0]!.id = parent[0]!.id;
+			} else {
+				const message = final[1]!.message as Record<string, unknown>;
+				message.content = [{ type: "text", text: "divergent final prefix" }];
+			}
+			writeJsonl(beforePath, before);
+			writeJsonl(finalPath, final);
 		}
-		writeJsonl(beforePath, before);
-		writeJsonl(finalPath, final);
 		candidate.session_snapshot_before_run_ref = refreshedRef(candidate.session_snapshot_before_run_ref, beforePath);
 		candidate.session_digest_before_run = candidate.session_snapshot_before_run_ref.sha256;
 		candidate.session_ref = refreshedRef(candidate.session_ref, finalPath);
@@ -159,7 +165,11 @@ test("V2A-AUDIT-P1-002 rejects foreign, changed, aliased and divergent Session l
 		updateCandidateJournalRefs(root, "a", candidate, candidateRef);
 		const rejected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: root });
 		assert.equal(rejected.integrity_valid, false, variant);
-		assert.match(rejected.errors.join("; "), /Session|parent|prefix|unique/i);
+		if (variant === "trailing-parent-entry-space") {
+			assert.match(rejected.errors.join("; "), /parent Session entry bytes mismatch|final Session raw byte prefix/i);
+		} else {
+			assert.match(rejected.errors.join("; "), /Session|parent|prefix|unique/i);
+		}
 	}
 });
 

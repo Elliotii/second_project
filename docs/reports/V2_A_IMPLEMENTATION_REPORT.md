@@ -287,3 +287,45 @@ gate_j: pending_fresh_focused_reaudit
 candidate_commit: null
 real_access: 0
 ```
+
+## P1-002 line-byte bounded correction appendix — 2026-08-06
+
+The corrected Candidate re-audit closed P1-001, P1-003, P1-004 and P1-005 but
+reproduced one remaining P1-002 defect: `parseSession()` trimmed the complete
+JSONL text, so a trailing ASCII space on Candidate A's final pre-run parent
+entry could survive coherent ref refresh while exact byte lineage was claimed.
+
+The original Implementation Session completed the one authorized hit-specific
+correction. Inspector now retains complete `Buffer` bytes and exact record byte
+slices, requires the Pi producer's LF-terminated records, rejects blank/CRLF
+records, compares Candidate A parent entries with `Buffer.equals()`, and
+requires the final Session to contain the full verified pre-run raw byte prefix
+plus Attempt bytes. Candidate B remains parentless with zero pre-run entries.
+
+The P1-002 family adds one coherent `trailing-parent-entry-space` regression;
+the five post-audit families now cover 20 variants. Final TypeScript,
+standalone post-audit 5/5 and full V2-A 11/11 checks passed with zero skipped.
+
+New write-once authority:
+
+```yaml
+evidence_root: .runs/v2-a/line-byte-corrected-evidence
+workbench_source_digest: 10f85d0cd4195cb94ce269029a37bf2ed4ea70b5e0e42eb740e060726e1d08ce
+summary_sha256: c80d1cfdd4a6cbf5df116c8152dd7eac4ad417957b1a1a74cf8ed2ec9a3b75b2
+evidence_tree_digest: 194eff335f018e2138285a96d91d41fd4f5b84a945f3487378e952ab85abeb76
+authoritative_runs: 6
+inspector_valid_and_read_only: 6
+real_access: 0
+```
+
+The old evidence, audit, corrected-evidence and re-audit tree digests were
+preserved exactly. The complete record is
+`docs/reports/V2_A_LINE_BYTE_BOUNDED_CORRECTION_REPORT.md`.
+
+```yaml
+line_byte_correction_recommendation: PASS_V2_A_LINE_BYTE_CORRECTION_PENDING_HIT_REAUDIT
+gate_j: pending_fresh_hit_specific_reaudit
+candidate_commit: null
+v2_a_accepted: false
+v2_b_authorized: false
+```

@@ -7,18 +7,18 @@ import { inspectRunV2A, inspectionFingerprintV2A } from "../src/inspect-v2.ts";
 import { executeRunV2A } from "../src/run-v2.ts";
 
 const projectRoot = resolve(import.meta.dirname, "../..");
-const evidenceRoot = resolve(projectRoot, ".runs/v2-a/corrected-evidence");
-if (existsSync(evidenceRoot)) throw new Error("V2-A corrected authoritative Evidence root already exists");
+const evidenceRoot = resolve(projectRoot, ".runs/v2-a/line-byte-corrected-evidence");
+if (existsSync(evidenceRoot)) throw new Error("V2-A line-byte-corrected authoritative Evidence root already exists");
 mkdirSync(evidenceRoot, { recursive: true });
 const expectedSourceDigest = treeDigest(resolve(projectRoot, "workbench/src"));
 
 const scenarios = [
-	{ runId: "v2a-corrected-authoritative-initial-pass", primaryMode: "pass" },
-	{ runId: "v2a-corrected-authoritative-a-pass-b-fail", primaryMode: "fail", candidateModes: ["pass", "fail"] },
-	{ runId: "v2a-corrected-authoritative-a-fail-b-pass", primaryMode: "fail", candidateModes: ["fail", "pass"] },
-	{ runId: "v2a-corrected-authoritative-a-pass-b-pass", primaryMode: "fail", candidateModes: ["pass", "pass"] },
-	{ runId: "v2a-corrected-authoritative-a-fail-b-fail", primaryMode: "fail", candidateModes: ["fail", "fail"] },
-	{ runId: "v2a-corrected-authoritative-a-budget-b-pass", primaryMode: "fail", candidateModes: ["budget_stop", "pass"] },
+	{ runId: "v2a-line-byte-corrected-authoritative-initial-pass", primaryMode: "pass" },
+	{ runId: "v2a-line-byte-corrected-authoritative-a-pass-b-fail", primaryMode: "fail", candidateModes: ["pass", "fail"] },
+	{ runId: "v2a-line-byte-corrected-authoritative-a-fail-b-pass", primaryMode: "fail", candidateModes: ["fail", "pass"] },
+	{ runId: "v2a-line-byte-corrected-authoritative-a-pass-b-pass", primaryMode: "fail", candidateModes: ["pass", "pass"] },
+	{ runId: "v2a-line-byte-corrected-authoritative-a-fail-b-fail", primaryMode: "fail", candidateModes: ["fail", "fail"] },
+	{ runId: "v2a-line-byte-corrected-authoritative-a-budget-b-pass", primaryMode: "fail", candidateModes: ["budget_stop", "pass"] },
 ];
 
 const summaries = [];
@@ -64,7 +64,7 @@ for (const scenario of scenarios) {
 }
 
 const summaryRef = writeOnceJson(evidenceRoot, "SUMMARY.json", {
-	schema_version: "v2a-corrected-deterministic-evidence-summary-v2",
+	schema_version: "v2a-line-byte-corrected-deterministic-evidence-summary-v1",
 	generated_by: "workbench/scripts/run-v2a-deterministic-suite.mjs",
 	pi_commit: "027a5847901b5dde30270abaa1041046cd2b4b55",
 	workbench_source_scope: "workbench/src",
@@ -72,9 +72,9 @@ const summaryRef = writeOnceJson(evidenceRoot, "SUMMARY.json", {
 	runs: summaries,
 });
 const lines = [
-	"# V2-A Corrected Deterministic Evidence Index",
+	"# V2-A Line-byte-corrected Deterministic Evidence Index",
 	"",
-	"This write-once ignored evidence supersedes `.runs/v2-a/evidence/**` for Gate J because the former set predates independent raw-evidence recomputation. It was generated with the public emitted `AgentHarness` and `JsonlSessionRepo`, the Faux Provider, the promoted V1 Skill, and the common external Verifier.",
+	"This write-once ignored evidence supersedes `.runs/v2-a/corrected-evidence/**` for the P1-002 hit re-audit because the former set predates exact JSONL record/prefix byte validation. Earlier evidence, audit, corrected-evidence, and re-audit roots remain preserved. This root was generated with the public emitted `AgentHarness` and `JsonlSessionRepo`, the Faux Provider, the promoted V1 Skill, and the common external Verifier.",
 	"",
 	`- Summary: \`${summaryRef.path}\` (\`${summaryRef.sha256}\`)`,
 	`- Workbench source scope/digest: \`workbench/src\` / \`${expectedSourceDigest}\``,

@@ -124,3 +124,44 @@ network_calls_observed: 0
 pi_core_patch_count: 0
 candidate_commit: null
 ```
+
+## P1-002 line-byte bounded correction appendix — 2026-08-06
+
+This Closeout remains a draft. The corrected Candidate re-audit found one
+remaining Contract-local P1-002 defect: Session JSONL parsing normalized the
+last record's trailing whitespace before its promised byte comparison.
+
+The original Implementation Session has completed the authorized line-byte
+correction. Exact `Buffer` record and prefix bytes now drive Candidate A parent
+history and final Session extension checks; producer LF termination is explicit
+and blank/CRLF records fail closed. The coherent trailing-space reproduction is
+now rejected with an explicit parent-entry or raw-prefix byte mismatch.
+
+The new write-once evidence root is
+`.runs/v2-a/line-byte-corrected-evidence/**`. Its six Runs bind live
+`workbench/src` digest
+`10f85d0cd4195cb94ce269029a37bf2ed4ea70b5e0e42eb740e060726e1d08ce`,
+all inspect valid/read-only, and record zero real access. Earlier evidence,
+audit, corrected-evidence and re-audit roots remain byte-preserved.
+
+Recommended implementation disposition:
+
+`PASS_V2_A_LINE_BYTE_CORRECTION_PENDING_HIT_REAUDIT`
+
+Pending control points are Main's narrow review, a new frozen Candidate
+identity if accepted, and one fresh hit-specific re-audit. Gate J and V2-A
+acceptance remain pending; V2-B and real access remain unauthorized.
+
+```yaml
+proposal_only: true
+proposed_goal_status: line_byte_bounded_correction_complete_pending_main_review_and_hit_reaudit
+proposed_disposition: PASS_V2_A_LINE_BYTE_CORRECTION_PENDING_HIT_REAUDIT
+gate_j: pending
+authoritative_evidence_root: .runs/v2-a/line-byte-corrected-evidence
+authoritative_run_count: 6
+real_model_calls_observed: 0
+external_provider_calls_observed: 0
+credential_reads_observed: 0
+network_calls_observed: 0
+candidate_commit: null
+```

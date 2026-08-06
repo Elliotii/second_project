@@ -41,7 +41,8 @@ interface JournalEventV2A {
 }
 
 interface ParsedSessionV2A {
-	rawLines: string[];
+	rawBytes: Buffer;
+	recordBytes: Buffer[];
 	lines: Array<Record<string, unknown>>;
 	header: Record<string, unknown>;
 	entries: Array<Record<string, unknown>>;
@@ -276,15 +277,31 @@ function validateManifest(projectRoot: string, runRoot: string, terminal: RunTer
 function parseSession(runRoot: string, ref: ArtifactRefV0B, label: string, errors: string[]): ParsedSessionV2A | null {
 	if (!addArtifactErrors(errors, runRoot, label, ref)) return null;
 	try {
-		const rawLines = readFileSync(resolveRunRelative(runRoot, ref.path), "utf8").trim().split(/\r?\n/).filter(Boolean);
-		const lines = rawLines.map((line) => JSON.parse(line) as Record<string, unknown>);
+		const rawBytes = readFileSync(resolveRunRelative(runRoot, ref.path));
+		if (rawBytes.length === 0) throw new Error("Session is empty");
+		if (rawBytes.at(-1) !== 0x0a) throw new Error("Session must end with the producer LF terminator");
+		const recordBytes: Buffer[] = [];
+		let recordStart = 0;
+		for (let index = 0; index < rawBytes.length; index++) {
+			if (rawBytes[index] !== 0x0a) continue;
+			const record = rawBytes.subarray(recordStart, index);
+			if (record.length === 0) throw new Error(`Session contains a blank record at line ${recordBytes.length + 1}`);
+			if (record.at(-1) === 0x0d) throw new Error(`Session record ${recordBytes.length + 1} uses unsupported CRLF bytes`);
+			recordBytes.push(record);
+			recordStart = index + 1;
+		}
+		const lines = recordBytes.map((record) => JSON.parse(record.toString("utf8")) as Record<string, unknown>);
 		const header = lines[0];
 		if (!header || header.type !== "session" || typeof header.id !== "string" || typeof header.cwd !== "string") throw new Error("Session header invalid");
-		return { rawLines, lines, header, entries: lines.slice(1) };
+		return { rawBytes, recordBytes, lines, header, entries: lines.slice(1) };
 	} catch (error) {
 		errors.push(`${label}: ${error instanceof Error ? error.message : String(error)}`);
 		return null;
 	}
+}
+
+function equalRecordBytes(left: readonly Buffer[], right: readonly Buffer[]): boolean {
+	return left.length === right.length && left.every((record, index) => record.equals(right[index]!));
 }
 
 function rawUsage(entries: readonly Record<string, unknown>[]): RawUsageV2A {
@@ -566,8 +583,11 @@ function inspectCandidate(options: {
 			errors.push(`${candidate.candidate_path_id}: pre-run Session cwd mismatch`);
 			sessionValid = false;
 		}
-		if (stableJson(finalSession.rawLines.slice(0, before.rawLines.length)) !== stableJson(before.rawLines) || finalSession.rawLines.length <= before.rawLines.length) {
-			errors.push(`${candidate.candidate_path_id}: final Session does not extend the verified pre-run prefix`);
+		if (
+			finalSession.rawBytes.length <= before.rawBytes.length ||
+			!finalSession.rawBytes.subarray(0, before.rawBytes.length).equals(before.rawBytes)
+		) {
+			errors.push(`${candidate.candidate_path_id}: final Session raw byte prefix does not exactly extend the verified pre-run Session`);
 			sessionValid = false;
 		}
 		if (suffix === "a") {
@@ -576,8 +596,8 @@ function inspectCandidate(options: {
 				errors.push(`${candidate.candidate_path_id}: canonical parent Session path mismatch`);
 				sessionValid = false;
 			}
-			if (stableJson(before.rawLines.slice(1)) !== stableJson(parentSession.rawLines.slice(1))) {
-				errors.push(`${candidate.candidate_path_id}: parent Session entry IDs/bytes mismatch`);
+			if (!equalRecordBytes(before.recordBytes.slice(1), parentSession.recordBytes.slice(1))) {
+				errors.push(`${candidate.candidate_path_id}: parent Session entry bytes mismatch`);
 				sessionValid = false;
 			}
 		} else if ("parentSession" in before.header || before.entries.length !== 0) {

@@ -210,6 +210,9 @@ selected Workspace to the repository, or implement V2-B.
 The V2-A Inspector requires both the Run root and the live project root. It
 recomputes the current `workbench/src` inventory and derives Verifier status,
 Session lineage, initial Workspace equality, Attempt/Group budgets, terminal
-semantics, and selector Hard Gates from raw write-once Artifacts. Corrected
-Gate-J evidence is generated only under `.runs/v2-a/corrected-evidence/**`;
-the earlier `.runs/v2-a/evidence/**` set is preserved but superseded for Gate J.
+semantics, and selector Hard Gates from raw write-once Artifacts. Session JSONL
+inspection preserves exact record and prefix bytes, accepts only the producer's
+LF-terminated records, and rejects blank records. Hit-specific line-byte
+correction evidence is generated only under
+`.runs/v2-a/line-byte-corrected-evidence/**`; the earlier evidence, audit,
+corrected-evidence, and re-audit roots remain preserved.
