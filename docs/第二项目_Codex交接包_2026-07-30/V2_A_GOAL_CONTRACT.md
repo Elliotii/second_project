@@ -1,7 +1,7 @@
 # V2-A Goal Contract — Deterministic Recovery Seed, Isolation and Selection
 
 ```yaml
-status: accepted_activated_implementation_not_started
+status: implementation_complete_main_review_accepted_focused_audit_pending
 goal_id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 version: V2_A
 project: Agent Harness Reliability Workbench
@@ -19,7 +19,10 @@ control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
 control_baseline_commit: resulting_HEAD_of_this_revision
 implementation_owner: dedicated_v2_a_implementation_session
 implementation_authorized: true
-implementation_started: false
+implementation_started: true
+implementation_completed: true
+implementation_session_recommendation: PASS
+main_light_review_disposition: ACCEPT_FOR_FOCUSED_AUDIT
 real_model_calls_authorized: 0
 external_provider_calls_authorized: 0
 credential_reads_authorized: 0
@@ -32,10 +35,11 @@ pi_sdk_rpc_extension_route_authorized: false
 third_party_pi_package_authorized: false
 git_worktree_provider_authorized: false
 dedicated_session_git_commit_authorized: false
-dedicated_session_prompt_authorized: true
+dedicated_session_prompt_authorized: consumed
 bounded_correction_authorized: conditional_within_contract_after_main_review
-candidate_commit_authorized: conditional_after_main_accepts_gates_A_through_I
-focused_independent_audit_authorized: conditional_after_main_candidate_freeze
+candidate_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
+focused_independent_audit_authorized: true_after_exact_candidate_SHA_confirmation
 V2_B_contract_creation_authorized: false
 V2_B_execution_authorized: false
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
@@ -43,10 +47,10 @@ accepted_v1_c_control_closeout_baseline: c37ef6e6676cba245c0929dcdf98401f004fab5
 accepted_v2_charter: docs/第二项目_Codex交接包_2026-07-30/V2_VERSION_CHARTER.md
 ```
 
-> 本文件是用户已接受并已激活的 V2-A 正式 Goal Contract。实现只授权给 dedicated
-> V2-A Implementation Session，且必须保持零凭据、零网络、零外部 Provider/真实模型调用。
-> Candidate Commit 与 focused audit 仅在 Main 完成有界验收且满足合同条件后生效；V2-A
-> 最终接受、V2-B 和任何真实访问仍未授权。
+> 本文件是用户已接受并已激活的 V2-A 正式 Goal Contract。dedicated V2-A Implementation
+> Session 已以零凭据、零网络、零外部 Provider/真实模型调用完成 Gates A–I；Main light review
+> 接受其进入 Candidate freeze。当前 resulting HEAD 是 Candidate Audit Baseline，下一步只执行
+> Gate J focused audit；V2-A 最终接受、V2-B 和任何真实访问仍未授权。
 
 ---
 

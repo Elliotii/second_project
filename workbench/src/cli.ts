@@ -7,6 +7,7 @@ import { dryRunV0B, executeV0BRun } from "./run-v0b.ts";
 import { runV0CProductSurface } from "./product-surface-v0c.ts";
 import { aggregateV1B, inspectV1B, preflightV1B, runNextV1B, V1B_STAGE1_MANIFEST_PATH } from "./product-surface-v1.ts";
 import { FixedProviderBoundaryErrorV1B } from "./provider/fixed-provider-v1.ts";
+import { inspectV2A, runV2A, V2A_SCENARIOS } from "./product-surface-v2.ts";
 import {
 	V0C_OBSERVE_STRATEGY_PATH,
 	V0C_REAL_STRATEGY_PATH,
@@ -53,6 +54,27 @@ function parseArguments(argv: string[]): CliArguments {
 async function main(): Promise<void> {
 	const projectRoot = resolve(import.meta.dirname, "../..");
 	const raw = process.argv.slice(2);
+	if (raw[0] === "v2a") {
+		const action = raw[1];
+		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };
+		const runRootValue = value("--run-root");
+		if (!runRootValue) throw new Error("v2a requires --run-root <path>");
+		const runRoot = resolve(projectRoot, runRootValue);
+		if (action === "run") {
+			const runId = value("--run-id");
+			const scenario = value("--scenario");
+			if (!runId || !scenario || !(scenario in V2A_SCENARIOS)) throw new Error("v2a run requires --run-id <id> --scenario <known-scenario>");
+			const result = await runV2A({ projectRoot, runRoot, runId, scenario });
+			process.stdout.write(`${JSON.stringify({ run_id: result.run_id, outcome: result.outcome, selected_candidate_id: result.selected_candidate_id, run_root: runRoot, real_call_counters: result.real_call_counters })}\n`);
+		} else if (action === "inspect") {
+			const result = inspectV2A({ runRoot });
+			process.stdout.write(`${JSON.stringify(result)}\n`);
+			if (!result.integrity_valid) process.exitCode = 1;
+		} else {
+			throw new Error("usage: cli.ts v2a <run|inspect> --run-root <path> [--run-id <id> --scenario <scenario>]");
+		}
+		return;
+	}
 	if (raw[0] === "v1b") {
 		const action = raw[1];
 		const value = (flag: string): string | undefined => { const index = raw.indexOf(flag); return index >= 0 ? raw[index + 1] : undefined; };

@@ -15,7 +15,9 @@
     "v1a:deterministic": "node scripts/run-v1a-deterministic-suite.mjs",
     "v1b:test": "node --test tests/v1b-stage1.test.ts tests/v1b-cli.test.ts",
     "v1b:preflight": "node src/cli.ts v1b preflight",
-    "v1b:run-next": "node src/cli.ts v1b run-next"
+    "v1b:run-next": "node src/cli.ts v1b run-next",
+    "v2a:test": "node --test tests/v2a-recovery.test.ts tests/v2a-cli.test.ts",
+    "v2a:deterministic": "node scripts/run-v2a-deterministic-suite.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",

@@ -185,3 +185,24 @@ network traffic, external Provider/model calls, source repair during
 execution, Audit acceptance, or a Git commit. The real execution Manifest must
 be rebound by the Main Session to a reviewed Candidate/Execution Baseline
 before any separately authorized Stage 2 Session may use it.
+
+## V2-A deterministic recovery substrate
+
+V2-A adds a zero-call, two-path recovery flow on the same direct public Pi
+`AgentHarness` route. After a valid initial Verifier failure, the Workbench
+freezes an immutable failed-Workspace/parent-Session Recovery Seed, runs both
+`continue_failed_session` and `fresh_session_from_failure_seed` from isolated,
+byte-identical Workspace copies, verifies each path independently, and applies
+the frozen hard-gate-first selector. An initial Verifier pass creates no
+recovery objects.
+
+```powershell
+npm run v2a:test
+npm run v2a:deterministic
+node src/cli.ts v2a run --run-root <path> --run-id <id> --scenario a_pass_b_fail
+node src/cli.ts v2a inspect --run-root <path>
+```
+
+V2-A uses only the Faux Provider and fixed local fixtures. It does not read
+credentials, use the network, call an external Provider/model, apply a
+selected Workspace to the repository, or implement V2-B.

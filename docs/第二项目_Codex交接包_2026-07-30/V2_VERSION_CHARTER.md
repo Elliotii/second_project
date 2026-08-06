@@ -12,16 +12,16 @@ planning_governance_baseline: f81d0db7d5335456e195f11e1b5a8e37077a0a67
 planning_baseline: bd903c963b68ba2b13ab56c20a7515a63f681021
 active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 contract_created: true
-contract_status: accepted_activated_implementation_not_started
-implementation_authorized: true_zero_real_access_dedicated_session_only
+contract_status: implementation_complete_main_review_accepted_focused_audit_pending
+implementation_authorized: consumed_completed_zero_real_access
 real_model_calls_authorized: 0
 credential_reads_authorized: 0
 external_network_authorized: false
 pi_core_patch_authorized: false
 external_download_authorized: false
 control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_activation_revision
-candidate_commit_authorized: conditional_after_main_accepts_V2_A_gates_A_through_I
-focused_audit_authorized: conditional_after_main_candidate_freeze
+candidate_commit_authorized: consumed_by_resulting_HEAD_of_candidate_revision
+focused_audit_authorized: true_after_exact_candidate_SHA_confirmation
 final_V2_A_acceptance_authorized: false
 V2_B_authorized: false
 accepted_goal_count: 2
@@ -606,8 +606,8 @@ accepted_charter_decisions:
 → Main/用户回答 Version Question并收口 V2
 ```
 
-当前控制状态：`active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`。正式 Contract 已接受并
-激活；本次 activation revision 的 resulting HEAD 是 V2-A Control Baseline。精确 SHA 与 tracked/
-Pi cleanliness 核验后，dedicated V2-A Implementation Session 可执行零真实访问的 Gates A–I。
-Main 在接受 Gates A–I 后可按用户条件预授权冻结 Candidate 并启动一次 focused audit。V2-A 最终
-接受、V2-B、凭据、网络、真实调用、Pi 修改和 SDK/Extension 路线切换仍未授权。
+当前控制状态：`active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`。dedicated Implementation
+Session 已从精确 Control Baseline 完成零真实访问的 Gates A–I，Main light review 处置为
+`ACCEPT_FOR_FOCUSED_AUDIT`。本次 candidate revision 的 resulting HEAD 是 Audit Baseline；精确
+SHA 核验后启动一次 fresh focused audit。V2-A 最终接受、V2-B、凭据、网络、真实调用、Pi 修改
+和 SDK/Extension 路线切换仍未授权。

@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v2_a_deterministic_recovery_substrate
-  status: V2_A_ACTIVATED_IMPLEMENTATION_NOT_STARTED
+  status: V2_A_IMPLEMENTATION_COMPLETE_MAIN_REVIEW_ACCEPTED_FOCUSED_AUDIT_NEXT
 
 active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 
@@ -34,7 +34,7 @@ last_completed_goal:
 
 current_goal:
   id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  status: accepted_activated_implementation_not_started
+  status: implementation_complete_main_review_accepted_candidate_freeze
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
   implementation_owner: dedicated_v2_a_implementation_session
   control_baseline_commit: resulting_HEAD_of_this_revision
@@ -347,6 +347,9 @@ completed_work:
   - V2_A_activation_and_control_baseline_authorized_by_user
   - V2_A_dedicated_implementation_session_authorized_with_zero_real_access
   - V2_A_conditional_candidate_focused_audit_and_bounded_correction_authorized
+  - V2_A_dedicated_implementation_completed_gates_A_through_I
+  - V2_A_main_light_review_accepted_for_focused_audit
+  - V2_A_candidate_audit_baseline_authority_condition_satisfied
 
 workspace:
   git_initialized: true
@@ -361,6 +364,7 @@ workspace:
   v2_planning_baseline_commit: bd903c963b68ba2b13ab56c20a7515a63f681021
   v2_a_control_baseline_commit: resulting_HEAD_of_this_revision
   v2_a_control_baseline_tracked_files_clean_required: true
+  v2_a_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
   v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
@@ -759,12 +763,15 @@ v2:
   current_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
   formal_goal_contract_created: true
   goal_contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  goal_contract_status: accepted_activated_implementation_not_started
+  goal_contract_status: implementation_complete_main_review_accepted_focused_audit_pending
   goal_contract_accepted: true
   activation_authorized: true
   implementation_authorized: true
   implementation_owner: dedicated_v2_a_implementation_session
-  implementation_started: false
+  implementation_started: true
+  implementation_completed: true
+  implementation_session_disposition: PASS_pending_Gate_J_and_final_acceptance
+  main_light_review: ACCEPT_FOR_FOCUSED_AUDIT
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -775,10 +782,11 @@ v2:
   planning_baseline_commit: bd903c963b68ba2b13ab56c20a7515a63f681021
   control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
   control_baseline_commit: resulting_HEAD_of_this_revision
-  dedicated_session_prompt_authorized: true_after_control_baseline_confirmation
+  dedicated_session_prompt_authorized: consumed
   bounded_correction_authorized: conditional_within_contract_after_main_review
-  candidate_commit_authorized: conditional_after_main_accepts_gates_A_through_I
-  focused_independent_audit_authorized: conditional_after_main_candidate_freeze
+  candidate_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
+  focused_independent_audit_authorized: true_after_exact_candidate_SHA_confirmation
   final_acceptance_authorized: false
   V2_B_authorized: false
   precontract_research: docs/reports/V2_FAILURE_AWARE_BOUNDED_RECOVERY_PRECONTRACT_RESEARCH.md
@@ -1495,8 +1503,9 @@ next_checkpoint:
   - V2_planning_baseline_verified_at_bd903c963b68ba2b13ab56c20a7515a63f681021
   - V2_A_contract_accepted_and_goal_activated
   - create_and_verify_V2_A_control_baseline_commit
-  - generate_exact_SHA_V2_A_implementation_prompt
-  - dedicated_V2_A_implementation_session_executes_gates_A_through_I
+  - V2_A_implementation_completed_and_main_reviewed
+  - create_and_verify_V2_A_candidate_audit_baseline
+  - launch_fresh_focused_V2_A_audit
 
 open_user_decisions: []
 ```
