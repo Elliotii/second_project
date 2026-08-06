@@ -24,6 +24,6 @@ export async function runV2A(options: { projectRoot: string; runRoot: string; ru
 	});
 }
 
-export function inspectV2A(options: { runRoot: string }) {
-	return inspectRunV2A({ runRoot: resolve(options.runRoot) });
+export function inspectV2A(options: { projectRoot: string; runRoot: string }) {
+	return inspectRunV2A({ projectRoot: resolve(options.projectRoot), runRoot: resolve(options.runRoot) });
 }

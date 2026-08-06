@@ -244,3 +244,46 @@ pi_core_patch_count: 0
 private_pi_import_count: 0
 candidate_commit: null
 ```
+
+## Post-audit bounded correction appendix — 2026-08-06
+
+The focused audit disposition `REVISE_V2_A_BOUNDED` supersedes this report's
+pre-audit PASS recommendation and old Gate-J evidence claim. Main accepted five
+P1 findings and returned one Contract-bounded package to the original
+Implementation Session.
+
+**Fact.** All five findings were corrected without an architecture or
+allowlist change:
+
+- raw VerifierResult/output/source validation now derives verifier gates;
+- A parent history and A/B final Session prefixes are compared byte-exactly,
+  with canonical parent paths and unique parent/A/B IDs;
+- both Candidate initial Workspace inventory/link snapshots are frozen before
+  either Candidate starts;
+- fixed Attempt/Group caps and raw JSONL/Verifier usage drive terminal,
+  budget and selector replay semantics;
+- every Run binds a deterministic `workbench/src` inventory, and Inspector
+  recomputes it from explicit `projectRoot`.
+
+The new `v2a-post-audit.test.ts` suite contains five finding families and all
+required coherent-rehash subvariants. Final V2-A tests are 11/11 with zero
+failed/skipped. Required Workspace/V0-B/V1-A/V1-B/V1-C regressions are all
+green.
+
+Old `.runs/v2-a/evidence/**` is preserved and classified
+`superseded_for_gate_J_due_independent_recomputation_findings`. The new
+write-once authority is `.runs/v2-a/corrected-evidence/**`, containing six
+Runs bound to source digest
+`b5caeb1b5301d4276a9becdcbbd47df122ebfa09313d202528f134721bbb15d6`.
+All six inspect as integrity-valid and read-only.
+
+The authoritative correction record is
+`docs/reports/V2_A_POST_AUDIT_BOUNDED_CORRECTION_REPORT.md`. This appendix does
+not pass Gate J, accept V2-A, create a Candidate commit or authorize V2-B.
+
+```yaml
+correction_recommendation: PASS_V2_A_BOUNDED_CORRECTION_PENDING_REAUDIT
+gate_j: pending_fresh_focused_reaudit
+candidate_commit: null
+real_access: 0
+```

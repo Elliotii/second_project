@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v2_a_deterministic_recovery_substrate
-  status: V2_A_IMPLEMENTATION_COMPLETE_MAIN_REVIEW_ACCEPTED_FOCUSED_AUDIT_NEXT
+  status: V2_A_POST_AUDIT_CORRECTION_MAIN_REVIEW_PASSED_CORRECTED_REAUDIT_NEXT
 
 active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 
@@ -34,10 +34,10 @@ last_completed_goal:
 
 current_goal:
   id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  status: implementation_complete_main_review_accepted_candidate_freeze
+  status: post_audit_bounded_correction_main_review_passed_corrected_candidate_freeze
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
   implementation_owner: dedicated_v2_a_implementation_session
-  control_baseline_commit: resulting_HEAD_of_this_revision
+  control_baseline_commit: 228973b7e7b826468c54b84f28faf8d9c0c33a6d
 
 next_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
@@ -350,6 +350,10 @@ completed_work:
   - V2_A_dedicated_implementation_completed_gates_A_through_I
   - V2_A_main_light_review_accepted_for_focused_audit
   - V2_A_candidate_audit_baseline_authority_condition_satisfied
+  - V2_A_first_candidate_audit_baseline_created_at_ece8856891f950a090f9adabf75ca8c8e707ce53
+  - V2_A_first_focused_audit_returned_five_bounded_P1_findings
+  - V2_A_post_audit_bounded_correction_completed_by_original_implementation_session
+  - V2_A_post_audit_main_narrow_review_accepted_corrected_candidate_for_reaudit
 
 workspace:
   git_initialized: true
@@ -362,9 +366,10 @@ workspace:
   runs_directory: .runs
   formal_workbench_created: true
   v2_planning_baseline_commit: bd903c963b68ba2b13ab56c20a7515a63f681021
-  v2_a_control_baseline_commit: resulting_HEAD_of_this_revision
+  v2_a_control_baseline_commit: 228973b7e7b826468c54b84f28faf8d9c0c33a6d
   v2_a_control_baseline_tracked_files_clean_required: true
-  v2_a_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
+  v2_a_candidate_audit_baseline_commit: ece8856891f950a090f9adabf75ca8c8e707ce53
+  v2_a_corrected_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
   v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
@@ -763,15 +768,20 @@ v2:
   current_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
   formal_goal_contract_created: true
   goal_contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  goal_contract_status: implementation_complete_main_review_accepted_focused_audit_pending
+  goal_contract_status: post_audit_bounded_correction_main_review_passed_corrected_reaudit_pending
   goal_contract_accepted: true
   activation_authorized: true
   implementation_authorized: true
   implementation_owner: dedicated_v2_a_implementation_session
   implementation_started: true
   implementation_completed: true
-  implementation_session_disposition: PASS_pending_Gate_J_and_final_acceptance
+  implementation_session_disposition: PASS_V2_A_BOUNDED_CORRECTION_PENDING_REAUDIT
   main_light_review: ACCEPT_FOR_FOCUSED_AUDIT
+  first_candidate_audit_baseline_commit: ece8856891f950a090f9adabf75ca8c8e707ce53
+  first_focused_audit_disposition: REVISE_V2_A_BOUNDED
+  accepted_first_audit_findings: 5
+  post_audit_bounded_correction_completed: true
+  post_audit_main_narrow_review: ACCEPT_CORRECTED_CANDIDATE_FOR_FOCUSED_REAUDIT
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -780,13 +790,16 @@ v2:
   planning_governance_commit: f81d0db7d5335456e195f11e1b5a8e37077a0a67
   planning_baseline_commit_authorized: consumed
   planning_baseline_commit: bd903c963b68ba2b13ab56c20a7515a63f681021
-  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  control_baseline_commit: resulting_HEAD_of_this_revision
+  control_baseline_commit_authorized: consumed
+  control_baseline_commit: 228973b7e7b826468c54b84f28faf8d9c0c33a6d
   dedicated_session_prompt_authorized: consumed
   bounded_correction_authorized: conditional_within_contract_after_main_review
-  candidate_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
-  focused_independent_audit_authorized: true_after_exact_candidate_SHA_confirmation
+  candidate_commit_authorized: consumed
+  candidate_audit_baseline_commit: ece8856891f950a090f9adabf75ca8c8e707ce53
+  focused_independent_audit_authorized: consumed_with_REVISE_V2_A_BOUNDED
+  corrected_candidate_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  corrected_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
+  focused_independent_reaudit_authorized: true_after_exact_corrected_candidate_SHA_confirmation
   final_acceptance_authorized: false
   V2_B_authorized: false
   precontract_research: docs/reports/V2_FAILURE_AWARE_BOUNDED_RECOVERY_PRECONTRACT_RESEARCH.md
@@ -1502,10 +1515,9 @@ next_checkpoint:
   - V2_version_question_and_two_goal_charter_accepted
   - V2_planning_baseline_verified_at_bd903c963b68ba2b13ab56c20a7515a63f681021
   - V2_A_contract_accepted_and_goal_activated
-  - create_and_verify_V2_A_control_baseline_commit
-  - V2_A_implementation_completed_and_main_reviewed
-  - create_and_verify_V2_A_candidate_audit_baseline
-  - launch_fresh_focused_V2_A_audit
+  - create_and_verify_V2_A_corrected_candidate_audit_baseline
+  - launch_fresh_focused_V2_A_reaudit
+  - main_review_V2_A_reaudit_and_stop_before_final_acceptance
 
 open_user_decisions: []
 ```
@@ -1624,10 +1636,13 @@ unsuccessful C Recovery and exact cost USD `0.0105276024`.
 V1 therefore closes with a bounded Skill-only descriptive lead. The post-V1
 Pi SDK/Extension compatibility checkpoint and V2 bounded Precontract Research
 are complete. The user accepted and Main formalized `V2_VERSION_CHARTER.md`.
-V2-A now has an accepted formal Contract and is activated for a dedicated
-zero-real-access Implementation Session. Main is creating the Control Baseline
-as the resulting HEAD of this revision; only after its exact SHA and cleanliness
-are verified may the dedicated Session begin Gate A. Candidate freeze and one
-focused audit are conditionally preauthorized after Main accepts Gates A–I.
+V2-A has an accepted formal Contract and remains active. The dedicated
+zero-real-access Implementation Session completed Gates A–I from Control Baseline
+`228973b7e7b826468c54b84f28faf8d9c0c33a6d`. The first Candidate
+`ece8856891f950a090f9adabf75ca8c8e707ce53` received five bounded P1 findings in
+focused audit. The original Implementation Session completed one bounded correction,
+and Main narrow review accepted the corrected source and write-once evidence for a
+fresh focused re-audit. The resulting HEAD of this revision is the corrected Candidate
+Audit Baseline; Gate J and final acceptance remain pending.
 V2-A final acceptance, V2-B, credentials, network, real calls, Pi changes and
 SDK/Extension route switching remain unauthorized.

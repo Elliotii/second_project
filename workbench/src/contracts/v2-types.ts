@@ -4,6 +4,16 @@ export const V2A_STRATEGY_ORDER = ["continue_failed_session", "fresh_session_fro
 export type RecoveryStrategyV2A = (typeof V2A_STRATEGY_ORDER)[number];
 export type CandidateModeV2A = "pass" | "fail" | "budget_stop" | "invalid";
 
+export const V2A_PINNED_PI_COMMIT = "027a5847901b5dde30270abaa1041046cd2b4b55" as const;
+export const V2A_WORKBENCH_REVISION = "v2a-deterministic-source-inventory-v1" as const;
+export const V2A_WORKBENCH_SOURCE_SCOPE = "workbench/src" as const;
+export const V2A_POLICY_ID = "v2a_two_path_bounded_recovery" as const;
+export const V2A_MODEL_ID = "v2a-faux/faux-1" as const;
+export const V2A_TOOL_PROFILE_ID = "bounded_tools_v1" as const;
+export const V2A_SKILL_ID = "reliability-completion-v1" as const;
+export const V2A_TASK_ID = "v1-parse-duration" as const;
+export const V2A_VERIFIER_ID = "v1-parse-duration-verifier" as const;
+
 export interface BudgetUsageV2A {
 	faux_provider_dispatches: number;
 	tool_calls: number;
@@ -19,8 +29,44 @@ export interface BudgetCapsV2A {
 	verifier_runs_max: 1;
 }
 
+export const V2A_ATTEMPT_BUDGET_CAPS: BudgetCapsV2A = Object.freeze({
+	faux_provider_dispatches_max: 8,
+	tool_calls_max: 16,
+	verifier_runs_max: 1,
+});
+
+export const V2A_GROUP_BUDGET_CAPS = Object.freeze({
+	candidate_paths_exact_on_valid_failure: 2 as const,
+	faux_provider_dispatches_max: 24 as const,
+	tool_calls_max: 48 as const,
+	verifier_runs_max: 3 as const,
+	real_cost_usd: 0 as const,
+});
+
+export interface SourceInventoryV2A {
+	schema_version: "v2a-source-inventory-v1";
+	scope: typeof V2A_WORKBENCH_SOURCE_SCOPE;
+	root: typeof V2A_WORKBENCH_SOURCE_SCOPE;
+	digest: string;
+	inventory: Array<{ path: string; bytes: number; sha256: string }>;
+}
+
+export interface WorkspaceSnapshotV2A {
+	schema_version: "v2a-workspace-snapshot-v2";
+	workspace_id: string;
+	root: string;
+	digest: string;
+	inventory: Array<{ path: string; bytes: number; sha256: string }>;
+	link_policy: {
+		ordinary_files_only: true;
+		nlink_one_required: true;
+		cross_workspace_identity_unique_required: true;
+	};
+	file_links: Array<{ path: string; nlink: number; file_identity: string }>;
+}
+
 export interface RecoverySeedV2A {
-	schema_version: "v2a-recovery-seed-v1";
+	schema_version: "v2a-recovery-seed-v2";
 	recovery_seed_id: string;
 	recovery_group_id: string;
 	parent_run_id: string;
@@ -39,7 +85,8 @@ export interface RecoverySeedV2A {
 	tool_profile_digest: string;
 	prompt_digest: string;
 	skill_digest: string;
-	pi_commit: "027a5847901b5dde30270abaa1041046cd2b4b55";
+	pi_commit: typeof V2A_PINNED_PI_COMMIT;
+	workbench_source_ref: ArtifactRefV0B;
 	workbench_digest: string;
 	created_before_candidate_attempts: true;
 }
@@ -56,7 +103,7 @@ export interface CandidateHardGatesV2A {
 }
 
 export interface CandidatePathV2A {
-	schema_version: "v2a-candidate-path-v1";
+	schema_version: "v2a-candidate-path-v2";
 	candidate_path_id: string;
 	recovery_group_id: string;
 	recovery_seed_id: string;
@@ -67,6 +114,7 @@ export interface CandidatePathV2A {
 	session_digest_before_run: string;
 	parent_history_entry_count: number;
 	workspace_ref: ArtifactRefV0B;
+	initial_workspace_ref: ArtifactRefV0B;
 	initial_workspace_digest: string;
 	attempt_id: string;
 	settled: boolean;
@@ -108,16 +156,30 @@ export interface SelectionDecisionV2A {
 }
 
 export interface RunManifestV2A {
-	schema_version: "v2a-run-manifest-v1";
+	schema_version: "v2a-run-manifest-v2";
 	manifest_id: string;
 	run_id: string;
-	task_id: string;
-	policy_id: "v2a_two_path_bounded_recovery";
-	model_id: "v2a-faux/faux-1";
-	tool_profile_id: "bounded_tools_v1";
-	skill_id: "reliability-completion-v1";
-	pi_commit: "027a5847901b5dde30270abaa1041046cd2b4b55";
-	workbench_revision: "228973b7e7b826468c54b84f28faf8d9c0c33a6d+v2a-source-delta";
+	task_id: typeof V2A_TASK_ID;
+	policy_id: typeof V2A_POLICY_ID;
+	model_id: typeof V2A_MODEL_ID;
+	thinking_level: "off";
+	tool_profile_id: typeof V2A_TOOL_PROFILE_ID;
+	tool_profile_digest: string;
+	skill_id: typeof V2A_SKILL_ID;
+	skill_ref: ArtifactRefV0B;
+	skill_sha256: string;
+	verifier_id: typeof V2A_VERIFIER_ID;
+	verifier_ref: ArtifactRefV0B;
+	verifier_sha256: string;
+	task_instruction_ref: ArtifactRefV0B;
+	task_instruction_sha256: string;
+	base_prompt_sha256: string;
+	strategy_ids: [RecoveryStrategyV2A, RecoveryStrategyV2A];
+	pi_commit: typeof V2A_PINNED_PI_COMMIT;
+	workbench_revision: typeof V2A_WORKBENCH_REVISION;
+	workbench_source_scope: typeof V2A_WORKBENCH_SOURCE_SCOPE;
+	workbench_source_ref: ArtifactRefV0B;
+	workbench_source_digest: string;
 	real_execution_authorized: false;
 	recovery_candidate_count_on_valid_failure: 2;
 	per_attempt_budget: BudgetCapsV2A;
@@ -139,10 +201,12 @@ export interface ExecuteRunOptionsV2A {
 }
 
 export interface RunTerminalV2A {
-	schema_version: "v2a-run-terminal-v1";
+	schema_version: "v2a-run-terminal-v2";
 	manifest_id: string;
 	run_id: string;
 	primary_attempt_id: string;
+	primary_session_ref: ArtifactRefV0B;
+	primary_verifier_result_ref: ArtifactRefV0B;
 	primary_verifier_status: VerifierResultV0B["status"];
 	outcome: "initial_pass" | "recovery_selected" | "recovery_none";
 	recovery_group_id: string | null;
@@ -159,7 +223,7 @@ export interface RunTerminalV2A {
 }
 
 export interface InspectResultV2A {
-	schema_version: "v2a-inspection-v1";
+	schema_version: "v2a-inspection-v2";
 	run_id: string | null;
 	integrity_valid: boolean;
 	terminal_valid: boolean;

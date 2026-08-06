@@ -1,7 +1,7 @@
 # V2-A Goal Contract — Deterministic Recovery Seed, Isolation and Selection
 
 ```yaml
-status: implementation_complete_main_review_accepted_focused_audit_pending
+status: post_audit_bounded_correction_main_review_passed_corrected_reaudit_pending
 goal_id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 version: V2_A
 project: Agent Harness Reliability Workbench
@@ -16,7 +16,7 @@ activation_authorized: true
 activated_by_user: true
 activated_at: 2026-08-06
 control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit: 228973b7e7b826468c54b84f28faf8d9c0c33a6d
 implementation_owner: dedicated_v2_a_implementation_session
 implementation_authorized: true
 implementation_started: true
@@ -38,7 +38,11 @@ dedicated_session_git_commit_authorized: false
 dedicated_session_prompt_authorized: consumed
 bounded_correction_authorized: conditional_within_contract_after_main_review
 candidate_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
+candidate_audit_baseline_commit: ece8856891f950a090f9adabf75ca8c8e707ce53
+first_focused_audit_disposition: REVISE_V2_A_BOUNDED
+post_audit_bounded_correction_completed: true
+post_audit_main_narrow_review: ACCEPT_CORRECTED_CANDIDATE_FOR_FOCUSED_REAUDIT
+corrected_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
 focused_independent_audit_authorized: true_after_exact_candidate_SHA_confirmation
 V2_B_contract_creation_authorized: false
 V2_B_execution_authorized: false

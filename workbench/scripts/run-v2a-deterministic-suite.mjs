@@ -2,21 +2,23 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { writeOnceBytes, writeOnceJson } from "../src/evidence/artifacts.ts";
+import { treeDigest } from "../src/hash.ts";
 import { inspectRunV2A, inspectionFingerprintV2A } from "../src/inspect-v2.ts";
 import { executeRunV2A } from "../src/run-v2.ts";
 
 const projectRoot = resolve(import.meta.dirname, "../..");
-const evidenceRoot = resolve(projectRoot, ".runs/v2-a/evidence");
-if (existsSync(evidenceRoot)) throw new Error("V2-A authoritative Evidence root already exists");
+const evidenceRoot = resolve(projectRoot, ".runs/v2-a/corrected-evidence");
+if (existsSync(evidenceRoot)) throw new Error("V2-A corrected authoritative Evidence root already exists");
 mkdirSync(evidenceRoot, { recursive: true });
+const expectedSourceDigest = treeDigest(resolve(projectRoot, "workbench/src"));
 
 const scenarios = [
-	{ runId: "v2a-authoritative-initial-pass", primaryMode: "pass" },
-	{ runId: "v2a-authoritative-a-pass-b-fail", primaryMode: "fail", candidateModes: ["pass", "fail"] },
-	{ runId: "v2a-authoritative-a-fail-b-pass", primaryMode: "fail", candidateModes: ["fail", "pass"] },
-	{ runId: "v2a-authoritative-a-pass-b-pass", primaryMode: "fail", candidateModes: ["pass", "pass"] },
-	{ runId: "v2a-authoritative-a-fail-b-fail", primaryMode: "fail", candidateModes: ["fail", "fail"] },
-	{ runId: "v2a-authoritative-a-budget-b-pass", primaryMode: "fail", candidateModes: ["budget_stop", "pass"] },
+	{ runId: "v2a-corrected-authoritative-initial-pass", primaryMode: "pass" },
+	{ runId: "v2a-corrected-authoritative-a-pass-b-fail", primaryMode: "fail", candidateModes: ["pass", "fail"] },
+	{ runId: "v2a-corrected-authoritative-a-fail-b-pass", primaryMode: "fail", candidateModes: ["fail", "pass"] },
+	{ runId: "v2a-corrected-authoritative-a-pass-b-pass", primaryMode: "fail", candidateModes: ["pass", "pass"] },
+	{ runId: "v2a-corrected-authoritative-a-fail-b-fail", primaryMode: "fail", candidateModes: ["fail", "fail"] },
+	{ runId: "v2a-corrected-authoritative-a-budget-b-pass", primaryMode: "fail", candidateModes: ["budget_stop", "pass"] },
 ];
 
 const summaries = [];
@@ -24,7 +26,7 @@ for (const scenario of scenarios) {
 	const runRoot = resolve(evidenceRoot, "runs", scenario.runId);
 	const terminal = await executeRunV2A({ projectRoot, runRoot, ...scenario });
 	const before = inspectionFingerprintV2A(runRoot);
-	const inspected = inspectRunV2A({ runRoot });
+	const inspected = inspectRunV2A({ projectRoot, runRoot });
 	const after = inspectionFingerprintV2A(runRoot);
 	assert.equal(inspected.integrity_valid, true, `${scenario.runId}: ${inspected.errors.join("; ")}`);
 	assert.equal(before, after, `${scenario.runId}: Inspector mutated evidence`);
@@ -35,6 +37,8 @@ for (const scenario of scenarios) {
 		.map((line) => JSON.parse(line))
 		.find((event) => event.type === "primary_settled");
 	const candidateUsage = inspected.candidates.map((candidate) => candidate.budget_usage);
+	const manifest = JSON.parse(readFileSync(resolve(runRoot, "config/manifest.json"), "utf8"));
+	assert.equal(manifest.workbench_source_digest, expectedSourceDigest, `${scenario.runId}: source anchor mismatch`);
 	summaries.push({
 		run_id: terminal.run_id,
 		recovery_group_id: terminal.recovery_group_id,
@@ -43,6 +47,8 @@ for (const scenario of scenarios) {
 		candidate_ids: inspected.candidates.map((candidate) => candidate.candidate_path_id),
 		integrity_valid: inspected.integrity_valid,
 		inspector_read_only: before === after,
+		workbench_source_digest: manifest.workbench_source_digest,
+		initial_workspace_refs: inspected.candidates.map((candidate) => candidate.initial_workspace_ref),
 		counts: {
 			faux_provider_dispatches: Number(primaryEvent?.data?.provider_dispatches ?? 0) + candidateUsage.reduce((sum, usage) => sum + usage.faux_provider_dispatches, 0),
 			tool_calls: Number(primaryEvent?.data?.tool_calls ?? 0) + candidateUsage.reduce((sum, usage) => sum + usage.tool_calls, 0),
@@ -58,17 +64,20 @@ for (const scenario of scenarios) {
 }
 
 const summaryRef = writeOnceJson(evidenceRoot, "SUMMARY.json", {
-	schema_version: "v2a-deterministic-evidence-summary-v1",
+	schema_version: "v2a-corrected-deterministic-evidence-summary-v2",
 	generated_by: "workbench/scripts/run-v2a-deterministic-suite.mjs",
 	pi_commit: "027a5847901b5dde30270abaa1041046cd2b4b55",
+	workbench_source_scope: "workbench/src",
+	workbench_source_digest: expectedSourceDigest,
 	runs: summaries,
 });
 const lines = [
-	"# V2-A Deterministic Evidence Index",
+	"# V2-A Corrected Deterministic Evidence Index",
 	"",
-	"This ignored evidence was generated with the public emitted `AgentHarness` and `JsonlSessionRepo`, the Faux Provider, the promoted V1 Skill, and the common external Verifier.",
+	"This write-once ignored evidence supersedes `.runs/v2-a/evidence/**` for Gate J because the former set predates independent raw-evidence recomputation. It was generated with the public emitted `AgentHarness` and `JsonlSessionRepo`, the Faux Provider, the promoted V1 Skill, and the common external Verifier.",
 	"",
 	`- Summary: \`${summaryRef.path}\` (\`${summaryRef.sha256}\`)`,
+	`- Workbench source scope/digest: \`workbench/src\` / \`${expectedSourceDigest}\``,
 	"- Credential reads: `0`",
 	"- Network calls: `0`",
 	"- External provider calls: `0`",
@@ -87,4 +96,4 @@ const lines = [
 	"",
 ];
 writeOnceBytes(evidenceRoot, "EVIDENCE_INDEX.md", `${lines.join("\n")}\n`);
-process.stdout.write(`${JSON.stringify({ schema_version: 1, summary_ref: summaryRef, authoritative_run_ids: summaries.map((summary) => summary.run_id), gates: { initial_pass_no_branch: "passed", seed_before_candidates: "passed", workspace_isolation: "passed", session_delta: "passed", selector_matrix: "passed", inspector_read_only: "passed" }, counts: { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0, real_cost_usd: 0 } })}\n`);
+process.stdout.write(`${JSON.stringify({ schema_version: 2, summary_ref: summaryRef, workbench_source_digest: expectedSourceDigest, authoritative_run_ids: summaries.map((summary) => summary.run_id), gates: { initial_pass_no_branch: "passed", seed_before_candidates: "passed", immutable_initial_workspaces: "passed", raw_verifier_derivation: "passed", byte_exact_session_lineage: "passed", raw_budget_recomputation: "passed", source_anchor: "passed", workspace_isolation: "passed", session_delta: "passed", selector_matrix: "passed", inspector_read_only: "passed" }, counts: { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0, real_cost_usd: 0 } })}\n`);

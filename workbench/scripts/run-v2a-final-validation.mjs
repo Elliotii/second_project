@@ -6,17 +6,17 @@ import { inspectRunV2A, inspectionFingerprintV2A } from "../src/inspect-v2.ts";
 import { executeRunV2A } from "../src/run-v2.ts";
 
 const projectRoot = resolve(import.meta.dirname, "../..");
-const evidenceRoot = resolve(projectRoot, ".runs/v2-a/evidence");
+const evidenceRoot = resolve(projectRoot, ".runs/v2-a/corrected-evidence");
 const validationRoot = resolve(evidenceRoot, "final-source-validation");
-if (!existsSync(resolve(evidenceRoot, "EVIDENCE_INDEX.md"))) throw new Error("base V2-A Evidence Index is missing");
+if (!existsSync(resolve(evidenceRoot, "EVIDENCE_INDEX.md"))) throw new Error("corrected V2-A Evidence Index is missing");
 if (existsSync(validationRoot)) throw new Error("V2-A final-source validation already exists");
 mkdirSync(validationRoot, { recursive: true });
 
-const runId = "v2a-authoritative-final-source-a-pass-b-fail";
+const runId = "v2a-corrected-authoritative-final-source-a-pass-b-fail";
 const runRoot = resolve(validationRoot, "runs", runId);
 const terminal = await executeRunV2A({ projectRoot, runRoot, runId, primaryMode: "fail", candidateModes: ["pass", "fail"] });
 const before = inspectionFingerprintV2A(runRoot);
-const inspected = inspectRunV2A({ runRoot });
+const inspected = inspectRunV2A({ projectRoot, runRoot });
 const after = inspectionFingerprintV2A(runRoot);
 assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
 assert.equal(before, after, "final-source Inspector mutated evidence");

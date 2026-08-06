@@ -67,7 +67,7 @@ async function main(): Promise<void> {
 			const result = await runV2A({ projectRoot, runRoot, runId, scenario });
 			process.stdout.write(`${JSON.stringify({ run_id: result.run_id, outcome: result.outcome, selected_candidate_id: result.selected_candidate_id, run_root: runRoot, real_call_counters: result.real_call_counters })}\n`);
 		} else if (action === "inspect") {
-			const result = inspectV2A({ runRoot });
+			const result = inspectV2A({ projectRoot, runRoot });
 			process.stdout.write(`${JSON.stringify(result)}\n`);
 			if (!result.integrity_valid) process.exitCode = 1;
 		} else {

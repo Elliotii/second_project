@@ -206,3 +206,10 @@ node src/cli.ts v2a inspect --run-root <path>
 V2-A uses only the Faux Provider and fixed local fixtures. It does not read
 credentials, use the network, call an external Provider/model, apply a
 selected Workspace to the repository, or implement V2-B.
+
+The V2-A Inspector requires both the Run root and the live project root. It
+recomputes the current `workbench/src` inventory and derives Verifier status,
+Session lineage, initial Workspace equality, Attempt/Group budgets, terminal
+semantics, and selector Hard Gates from raw write-once Artifacts. Corrected
+Gate-J evidence is generated only under `.runs/v2-a/corrected-evidence/**`;
+the earlier `.runs/v2-a/evidence/**` set is preserved but superseded for Gate J.

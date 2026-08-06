@@ -44,7 +44,7 @@ test("V2-A initial pass creates no recovery objects or calls", async () => {
 	assert.deepEqual(terminal.candidate_refs, []);
 	for (const path of ["seed", "candidates", "selection.json"]) assert.equal(existsSync(resolve(root, path)), false);
 	const before = inspectionFingerprintV2A(root);
-	const inspected = inspectRunV2A({ runRoot: root });
+	const inspected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: root });
 	const after = inspectionFingerprintV2A(root);
 	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
 	assert.equal(before, after, "Inspector must be read-only");
@@ -55,7 +55,7 @@ test("V2-A end-to-end freezes Seed, runs both isolated paths, preserves only A h
 	const root = runRoot("a-pass-b-fail");
 	const terminal = await executeRunV2A({ projectRoot: PROJECT_ROOT, runRoot: root, runId: "v2a-test-a-pass-b-fail", primaryMode: "fail", candidateModes: ["pass", "fail"] });
 	assert.equal(terminal.outcome, "recovery_selected");
-	const inspected = inspectRunV2A({ runRoot: root });
+	const inspected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: root });
 	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
 	assert.equal(inspected.candidates.length, 2);
 	const [a, b] = inspected.candidates;
@@ -93,7 +93,7 @@ test("V2-A Faux scenario matrix covers both winners, both pass, none, and retain
 	for (const scenario of scenarios) {
 		const root = runRoot(scenario.id);
 		const terminal = await executeRunV2A({ projectRoot: PROJECT_ROOT, runRoot: root, runId: `v2a-test-${scenario.id}`, primaryMode: "fail", candidateModes: scenario.modes });
-		const inspected = inspectRunV2A({ runRoot: root });
+		const inspected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: root });
 		assert.equal(inspected.integrity_valid, true, `${scenario.id}: ${inspected.errors.join("; ")}`);
 		assert.equal(inspected.candidates.length, 2);
 		results.push(inspected.candidates);
@@ -127,10 +127,10 @@ test("V2-A Inspector rejects Seed tamper and selector rejects mixed Recovery Gro
 	const copy = runRoot("tamper-copy");
 	cpSync(source, copy, { recursive: true });
 	writeFileSync(resolve(copy, "seed/workspace/src/subject.ts"), "export function parseDuration(): number { return 999; }\n", "utf8");
-	const rejected = inspectRunV2A({ runRoot: copy });
+	const rejected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: copy });
 	assert.equal(rejected.integrity_valid, false);
-	assert.match(rejected.errors.join("; "), /Seed Workspace tamper|digest mismatch/i);
-	const valid = inspectRunV2A({ runRoot: source });
+	assert.match(rejected.errors.join("; "), /Seed Workspace|current Workspace bytes differ from snapshot|digest mismatch/i);
+	const valid = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: source });
 	const mixed = structuredClone(valid.candidates);
 	mixed[1]!.recovery_group_id = "foreign-recovery-group";
 	assert.throws(() => selectCandidateV2A(valid.recovery_seed!.recovery_group_id, mixed), /cross-group/);
@@ -139,7 +139,7 @@ test("V2-A Inspector rejects Seed tamper and selector rejects mixed Recovery Gro
 	const duplicateTerminal = JSON.parse(readFileSync(resolve(duplicate, "terminal.json"), "utf8"));
 	duplicateTerminal.candidate_refs[1] = structuredClone(duplicateTerminal.candidate_refs[0]);
 	writeFileSync(resolve(duplicate, "terminal.json"), `${JSON.stringify(duplicateTerminal)}\n`, "utf8");
-	const duplicateRejected = inspectRunV2A({ runRoot: duplicate });
+	const duplicateRejected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: duplicate });
 	assert.equal(duplicateRejected.integrity_valid, false);
 	assert.match(duplicateRejected.errors.join("; "), /duplicate|strategy|membership/i);
 	const missing = runRoot("missing-copy");
@@ -147,7 +147,7 @@ test("V2-A Inspector rejects Seed tamper and selector rejects mixed Recovery Gro
 	const missingTerminal = JSON.parse(readFileSync(resolve(missing, "terminal.json"), "utf8"));
 	missingTerminal.candidate_refs[1].path = "candidates/missing.json";
 	writeFileSync(resolve(missing, "terminal.json"), `${JSON.stringify(missingTerminal)}\n`, "utf8");
-	const missingRejected = inspectRunV2A({ runRoot: missing });
+	const missingRejected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot: missing });
 	assert.equal(missingRejected.integrity_valid, false);
 	assert.match(missingRejected.errors.join("; "), /missing|incomplete/i);
 });

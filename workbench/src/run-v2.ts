@@ -17,7 +17,6 @@ import {
 } from "@earendil-works/pi-ai";
 import type { ArtifactRefV0B, TaskSpecV0B, VerifierResultV0B } from "./contracts/v0b-types.ts";
 import type {
-	BudgetCapsV2A,
 	BudgetUsageV2A,
 	CandidateModeV2A,
 	CandidatePathV2A,
@@ -26,6 +25,22 @@ import type {
 	RecoveryStrategyV2A,
 	RunManifestV2A,
 	RunTerminalV2A,
+	SourceInventoryV2A,
+	WorkspaceSnapshotV2A,
+} from "./contracts/v2-types.ts";
+import {
+	V2A_ATTEMPT_BUDGET_CAPS,
+	V2A_GROUP_BUDGET_CAPS,
+	V2A_MODEL_ID,
+	V2A_PINNED_PI_COMMIT,
+	V2A_POLICY_ID,
+	V2A_SKILL_ID,
+	V2A_STRATEGY_ORDER,
+	V2A_TASK_ID,
+	V2A_TOOL_PROFILE_ID,
+	V2A_VERIFIER_ID,
+	V2A_WORKBENCH_REVISION,
+	V2A_WORKBENCH_SOURCE_SCOPE,
 } from "./contracts/v2-types.ts";
 import type { TaskSpecV1 } from "./contracts/v1-types.ts";
 import { artifactRef, writeOnceBytes, writeOnceJson } from "./evidence/artifacts.ts";
@@ -38,14 +53,8 @@ import { expectedSkillIdentityV1, loadExactOneSkillV1 } from "./skill/runtime-v1
 import { runExternalVerifierV0B } from "./verifier/runner.ts";
 import { createTemporaryWorkspace } from "./workspace/temp-copy.ts";
 
-const PI_COMMIT = "027a5847901b5dde30270abaa1041046cd2b4b55" as const;
-const WORKBENCH_REVISION = "228973b7e7b826468c54b84f28faf8d9c0c33a6d+v2a-source-delta" as const;
 const FORBIDDEN_WORKSPACE_VALUE_V2A = /(?:bearer\s+[A-Za-z0-9._-]+|FAKE_(?:SENSITIVE|RESOLVER|PROVIDER|FACTORY)[A-Za-z0-9_-]*)/i;
-export const V2A_ATTEMPT_CAPS: BudgetCapsV2A = Object.freeze({
-	faux_provider_dispatches_max: 8,
-	tool_calls_max: 16,
-	verifier_runs_max: 1,
-});
+export const V2A_ATTEMPT_CAPS = V2A_ATTEMPT_BUDGET_CAPS;
 export const ZERO_REAL_CALL_COUNTERS_V2A = Object.freeze({
 	credential_reads: 0,
 	network_calls: 0,
@@ -82,27 +91,47 @@ function appendJournal(runRoot: string, sequence: { value: number }, type: strin
 	);
 }
 
-function manifestFor(runId: string, taskId: string): RunManifestV2A {
+function manifestFor(options: {
+	runId: string;
+	task: TaskSpecV1;
+	instructionRef: ArtifactRefV0B;
+	skillRef: ArtifactRefV0B;
+	verifierRef: ArtifactRefV0B;
+	workbenchSourceRef: ArtifactRefV0B;
+	workbenchSourceDigest: string;
+}): RunManifestV2A {
+	const toolProfileDigest = digestObject({
+		tool_profile_id: options.task.tool_profile_id,
+		command_descriptors: options.task.command_descriptors,
+	});
 	const body = {
-		schema_version: "v2a-run-manifest-v1" as const,
-		run_id: runId,
-		task_id: taskId,
-		policy_id: "v2a_two_path_bounded_recovery" as const,
-		model_id: "v2a-faux/faux-1" as const,
-		tool_profile_id: "bounded_tools_v1" as const,
-		skill_id: "reliability-completion-v1" as const,
-		pi_commit: PI_COMMIT,
-		workbench_revision: WORKBENCH_REVISION,
+		schema_version: "v2a-run-manifest-v2" as const,
+		run_id: options.runId,
+		task_id: V2A_TASK_ID,
+		policy_id: V2A_POLICY_ID,
+		model_id: V2A_MODEL_ID,
+		thinking_level: "off" as const,
+		tool_profile_id: V2A_TOOL_PROFILE_ID,
+		tool_profile_digest: toolProfileDigest,
+		skill_id: V2A_SKILL_ID,
+		skill_ref: options.skillRef,
+		skill_sha256: options.skillRef.sha256,
+		verifier_id: V2A_VERIFIER_ID,
+		verifier_ref: options.verifierRef,
+		verifier_sha256: options.verifierRef.sha256,
+		task_instruction_ref: options.instructionRef,
+		task_instruction_sha256: options.instructionRef.sha256,
+		base_prompt_sha256: sha256(SYSTEM_PROMPT),
+		strategy_ids: [...V2A_STRATEGY_ORDER] as [RecoveryStrategyV2A, RecoveryStrategyV2A],
+		pi_commit: V2A_PINNED_PI_COMMIT,
+		workbench_revision: V2A_WORKBENCH_REVISION,
+		workbench_source_scope: V2A_WORKBENCH_SOURCE_SCOPE,
+		workbench_source_ref: options.workbenchSourceRef,
+		workbench_source_digest: options.workbenchSourceDigest,
 		real_execution_authorized: false as const,
 		recovery_candidate_count_on_valid_failure: 2 as const,
 		per_attempt_budget: structuredClone(V2A_ATTEMPT_CAPS),
-		per_group_budget: {
-			candidate_paths_exact_on_valid_failure: 2 as const,
-			faux_provider_dispatches_max: 24 as const,
-			tool_calls_max: 48 as const,
-			verifier_runs_max: 3 as const,
-			real_cost_usd: 0 as const,
-		},
+		per_group_budget: structuredClone(V2A_GROUP_BUDGET_CAPS),
 	};
 	return { ...body, manifest_id: digestObject(body) };
 }
@@ -277,15 +306,36 @@ async function runHarness(options: {
 	}
 }
 
+function sourceInventory(projectRoot: string): SourceInventoryV2A {
+	const inventory = treeInventory(resolve(projectRoot, V2A_WORKBENCH_SOURCE_SCOPE));
+	return {
+		schema_version: "v2a-source-inventory-v1",
+		scope: V2A_WORKBENCH_SOURCE_SCOPE,
+		root: V2A_WORKBENCH_SOURCE_SCOPE,
+		digest: digestObject(inventory),
+		inventory,
+	};
+}
+
 function workspaceSnapshot(runRoot: string, workspaceRoot: string, path: string, workspaceId: string): ArtifactRefV0B {
 	const inventory = treeInventory(workspaceRoot);
-	return writeOnceJson(runRoot, path, {
-		schema_version: "v2a-workspace-snapshot-v1",
+	const snapshot: WorkspaceSnapshotV2A = {
+		schema_version: "v2a-workspace-snapshot-v2",
 		workspace_id: workspaceId,
 		root: portable(relative(runRoot, workspaceRoot)),
 		digest: digestObject(inventory),
 		inventory,
-	});
+		link_policy: {
+			ordinary_files_only: true,
+			nlink_one_required: true,
+			cross_workspace_identity_unique_required: true,
+		},
+		file_links: inventory.map((file) => {
+			const stats = lstatSync(resolve(workspaceRoot, file.path));
+			return { path: file.path, nlink: stats.nlink, file_identity: `${stats.dev}:${stats.ino}` };
+		}),
+	};
+	return writeOnceJson(runRoot, path, snapshot);
 }
 
 function changedSemanticBytes(sourceRoot: string, finalRoot: string, writablePaths: readonly string[]): number {
@@ -298,6 +348,44 @@ function changedSemanticBytes(sourceRoot: string, finalRoot: string, writablePat
 		if (!sourceBytes.equals(targetBytes)) total += targetBytes.length;
 	}
 	return total;
+}
+
+function rawAttemptUsage(entries: readonly unknown[], prefixLength: number): {
+	providerDispatches: number;
+	toolCalls: number;
+	tokens: number;
+	activeExecutionTimeMs: number;
+	settled: boolean;
+} {
+	const attemptEntries = entries.slice(prefixLength) as Array<Record<string, unknown>>;
+	let providerDispatches = 0;
+	let toolCalls = 0;
+	let tokens = 0;
+	const timestamps: number[] = [];
+	for (const entry of attemptEntries) {
+		if (typeof entry.timestamp === "string") {
+			const timestamp = Date.parse(entry.timestamp);
+			if (Number.isFinite(timestamp)) timestamps.push(timestamp);
+		}
+		const message = entry.message as Record<string, unknown> | undefined;
+		if (message?.role !== "assistant") continue;
+		if (message.stopReason !== "error") providerDispatches++;
+		const content = Array.isArray(message.content) ? message.content as Array<Record<string, unknown>> : [];
+		toolCalls += content.filter((block) => block.type === "toolCall").length;
+		const usage = message.usage as Record<string, unknown> | undefined;
+		for (const key of ["input", "output", "cacheRead", "cacheWrite"] as const) {
+			const value = usage?.[key];
+			if (typeof value === "number" && Number.isFinite(value)) tokens += value;
+		}
+	}
+	const lastMessage = (attemptEntries.at(-1)?.message ?? null) as Record<string, unknown> | null;
+	return {
+		providerDispatches,
+		toolCalls,
+		tokens,
+		activeExecutionTimeMs: timestamps.length > 1 ? Math.max(0, timestamps.at(-1)! - timestamps[0]!) : 0,
+		settled: lastMessage?.role === "assistant" && lastMessage.stopReason === "stop",
+	};
 }
 
 function assertIndependentFiles(...roots: string[]): void {
@@ -345,9 +433,11 @@ async function executeCandidate(options: {
 	sequence: { value: number };
 	repo: JsonlSessionRepo;
 	parentSessionMetadata: JsonlSessionMetadata;
-	parentEntryCount: number;
+	parentEntries: readonly unknown[];
 	seed: RecoverySeedV2A;
 	seedWorkspaceRoot: string;
+	workspaceRoot: string;
+	initialWorkspaceRef: ArtifactRefV0B;
 	task: TaskSpecV1;
 	skill: Skill;
 	patch: string;
@@ -358,9 +448,7 @@ async function executeCandidate(options: {
 	const suffix = options.strategy === "continue_failed_session" ? "a" : "b";
 	const candidatePathId = `${options.seed.recovery_group_id}-candidate-${suffix}`;
 	const attemptId = `${candidatePathId}-attempt-01`;
-	const candidateRoot = resolve(options.runRoot, `candidates/${suffix}`);
-	const workspaceRoot = resolve(candidateRoot, "workspace");
-	cloneWorkspace(options.seedWorkspaceRoot, workspaceRoot, `${candidatePathId}-workspace`, options.task);
+	const workspaceRoot = options.workspaceRoot;
 	const seedProtectedBytes = readProtectedBytes(options.seedWorkspaceRoot, options.task);
 	const initialWorkspaceDigest = treeDigest(workspaceRoot);
 	if (initialWorkspaceDigest !== options.seed.failed_workspace_snapshot_digest) throw new Error("Candidate initial Workspace digest drift");
@@ -370,7 +458,9 @@ async function executeCandidate(options: {
 			: await options.repo.create({ cwd: workspaceRoot, id: `${candidatePathId}-session`, metadata: { strategy_id: options.strategy } });
 	const sessionMetadata = await session.getMetadata();
 	const entriesBefore = await session.getEntries();
-	if (options.strategy === "continue_failed_session" && entriesBefore.length !== options.parentEntryCount) throw new Error("derived Session lost parent history");
+	if (options.strategy === "continue_failed_session" && stableJson(entriesBefore) !== stableJson(options.parentEntries)) {
+		throw new Error("derived Session parent history bytes diverged");
+	}
 	if (options.strategy === "fresh_session_from_failure_seed" && entriesBefore.length !== 0) throw new Error("fresh Session unexpectedly retained parent history");
 	const sessionBeforePath = `candidates/${suffix}/session-before.jsonl`;
 	writeOnceBytes(options.runRoot, sessionBeforePath, readFileSync(sessionMetadata.path));
@@ -380,7 +470,9 @@ async function executeCandidate(options: {
 		strategy_id: options.strategy,
 		attempt_id: attemptId,
 		initial_workspace_digest: initialWorkspaceDigest,
+		initial_workspace_ref: options.initialWorkspaceRef,
 		session_digest_before_run: sessionBeforeRef.sha256,
+		session_snapshot_before_run_ref: sessionBeforeRef,
 	});
 	const harness = await runHarness({
 		session,
@@ -400,15 +492,25 @@ async function executeCandidate(options: {
 		attemptId,
 		prefix: `candidates/${suffix}`,
 	});
+	const finalEntries = await session.getEntries();
+	const rawUsage = rawAttemptUsage(finalEntries, entriesBefore.length);
+	if (
+		rawUsage.providerDispatches !== harness.providerDispatches ||
+		rawUsage.toolCalls !== harness.toolCalls ||
+		rawUsage.tokens !== harness.tokens ||
+		(rawUsage.settled !== harness.settled && harness.terminalReason !== "budget_stopped")
+	) {
+		throw new Error("V2-A raw Session usage disagrees with runtime observation");
+	}
 	const finalWorkspaceDigest = treeDigest(workspaceRoot);
 	const workspaceRef = workspaceSnapshot(options.runRoot, workspaceRoot, `candidates/${suffix}/workspace-final.json`, `${candidatePathId}-workspace`);
 	const sessionRef = sessionArtifact(options.runRoot, sessionMetadata);
 	const usage: BudgetUsageV2A = {
-		faux_provider_dispatches: harness.providerDispatches,
-		tool_calls: harness.toolCalls,
+		faux_provider_dispatches: rawUsage.providerDispatches,
+		tool_calls: rawUsage.toolCalls,
 		verifier_runs: 1,
-		tokens: harness.tokens,
-		active_execution_time_ms: harness.activeExecutionTimeMs,
+		tokens: rawUsage.tokens,
+		active_execution_time_ms: rawUsage.activeExecutionTimeMs,
 		real_cost_usd: 0,
 	};
 	const budgetWithin =
@@ -425,11 +527,13 @@ async function executeCandidate(options: {
 		skill_sha256: options.seed.skill_digest,
 		tool_profile_sha256: options.seed.tool_profile_digest,
 		verifier_sha256: options.task.external_verifier_sha256,
-		model_id: "v2a-faux/faux-1",
-		policy_id: "v2a_two_path_bounded_recovery",
+		model_id: V2A_MODEL_ID,
+		policy_id: V2A_POLICY_ID,
+		pi_commit: options.seed.pi_commit,
+		workbench_source_sha256: options.seed.workbench_digest,
 		budget: V2A_ATTEMPT_CAPS,
 	});
-	const expectedHistory = options.strategy === "continue_failed_session" ? options.parentEntryCount : 0;
+	const expectedHistory = options.strategy === "continue_failed_session" ? options.parentEntries.length : 0;
 	const hardGates = {
 		identity_complete: evidenceValid,
 		seed_and_isolation_valid: initialWorkspaceDigest === options.seed.failed_workspace_snapshot_digest,
@@ -445,7 +549,7 @@ async function executeCandidate(options: {
 		lineage_complete: evidenceValid,
 	};
 	const candidate: CandidatePathV2A = {
-		schema_version: "v2a-candidate-path-v1",
+		schema_version: "v2a-candidate-path-v2",
 		candidate_path_id: candidatePathId,
 		recovery_group_id: options.seed.recovery_group_id,
 		recovery_seed_id: options.seed.recovery_seed_id,
@@ -455,7 +559,8 @@ async function executeCandidate(options: {
 		session_snapshot_before_run_ref: sessionBeforeRef,
 		session_digest_before_run: sessionBeforeRef.sha256,
 		parent_history_entry_count: entriesBefore.length,
-		workspace_ref: workspaceRef,
+		workspace_ref: options.initialWorkspaceRef,
+		initial_workspace_ref: options.initialWorkspaceRef,
 		initial_workspace_digest: initialWorkspaceDigest,
 		attempt_id: attemptId,
 		settled: harness.settled,
@@ -478,6 +583,8 @@ async function executeCandidate(options: {
 		candidate_path_id: candidatePathId,
 		terminal_reason: candidate.terminal_reason,
 		verifier_status: candidate.verifier_status,
+		verifier_result_ref: candidate.verifier_result_ref,
+		session_ref: candidate.session_ref,
 		candidate_ref: candidateRef,
 	});
 	return candidate;
@@ -488,7 +595,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 	mkdirSync(options.runRoot, { recursive: true });
 	writeOnceBytes(options.runRoot, "journal.jsonl", "");
 	const sequence = { value: 0 };
-	const task = loadCandidateTaskPackV1(options.projectRoot).find((candidate) => candidate.task_id === "v1-parse-duration");
+	const task = loadCandidateTaskPackV1(options.projectRoot).find((candidate) => candidate.task_id === V2A_TASK_ID);
 	if (!task) throw new Error("V2-A frozen task is unavailable");
 	const loadedSkill = await loadExactOneSkillV1({
 		projectRoot: options.projectRoot,
@@ -498,13 +605,32 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 	const skill = loadedSkill.skill;
 	const instruction = readFileSync(resolve(options.projectRoot, task.instruction_ref), "utf8");
 	const patch = readFileSync(resolve(options.projectRoot, task.reference_patch_ref), "utf8");
-	const manifest = manifestFor(options.runId, task.task_id);
-	const manifestRef = writeOnceJson(options.runRoot, "config/manifest.json", manifest);
+	const workbenchSource = sourceInventory(options.projectRoot);
+	const workbenchSourceRef = writeOnceJson(options.runRoot, "config/workbench-source.json", workbenchSource);
 	const instructionPath = writeOnceBytes(options.runRoot, "config/instruction.md", instruction);
 	const instructionRef = artifactRef(options.runRoot, instructionPath, "text/markdown", false);
-	writeOnceBytes(options.runRoot, "config/skill.md", readFileSync(resolve(options.projectRoot, "fixtures/skills/v1/reliability-completion/SKILL.md")));
-	writeOnceBytes(options.runRoot, "config/verifier.mjs", readFileSync(resolve(options.projectRoot, task.external_verifier_ref)));
-	appendJournal(options.runRoot, sequence, "run_started", { run_id: options.runId, manifest_ref: manifestRef });
+	const skillPath = writeOnceBytes(options.runRoot, "config/skill.md", readFileSync(resolve(options.projectRoot, "fixtures/skills/v1/reliability-completion/SKILL.md")));
+	const skillRef = artifactRef(options.runRoot, skillPath, "text/markdown", false);
+	const verifierPath = writeOnceBytes(options.runRoot, "config/verifier.mjs", readFileSync(resolve(options.projectRoot, task.external_verifier_ref)));
+	const verifierRef = artifactRef(options.runRoot, verifierPath, "text/javascript", false);
+	if (skillRef.sha256 !== loadedSkill.ref.source_sha256 || verifierRef.sha256 !== task.external_verifier_sha256) {
+		throw new Error("V2-A frozen Skill/Verifier snapshot identity drift");
+	}
+	const manifest = manifestFor({
+		runId: options.runId,
+		task,
+		instructionRef,
+		skillRef,
+		verifierRef,
+		workbenchSourceRef,
+		workbenchSourceDigest: workbenchSource.digest,
+	});
+	const manifestRef = writeOnceJson(options.runRoot, "config/manifest.json", manifest);
+	appendJournal(options.runRoot, sequence, "run_started", {
+		run_id: options.runId,
+		manifest_ref: manifestRef,
+		workbench_source_ref: workbenchSourceRef,
+	});
 	const primaryWorkspaceRoot = resolve(options.runRoot, "primary/workspace");
 	mkdirSync(resolve(primaryWorkspaceRoot, ".."), { recursive: true });
 	createTemporaryWorkspace({
@@ -534,10 +660,24 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		patch,
 	});
 	if (!primaryHarness.settled) throw new Error("V2-A primary Attempt did not settle");
+	const parentSessionMetadata = await parentSession.getMetadata();
+	const primarySessionRef = sessionArtifact(options.runRoot, parentSessionMetadata);
+	const parentEntries = await parentSession.getEntries();
+	const primaryRawUsage = rawAttemptUsage(parentEntries, 0);
+	if (
+		primaryRawUsage.providerDispatches !== primaryHarness.providerDispatches ||
+		primaryRawUsage.toolCalls !== primaryHarness.toolCalls ||
+		primaryRawUsage.tokens !== primaryHarness.tokens ||
+		!primaryRawUsage.settled
+	) {
+		throw new Error("V2-A primary raw Session usage disagrees with runtime observation");
+	}
 	appendJournal(options.runRoot, sequence, "primary_settled", {
 		attempt_id: primaryAttemptId,
 		provider_dispatches: primaryHarness.providerDispatches,
 		tool_calls: primaryHarness.toolCalls,
+		terminal_reason: primaryHarness.terminalReason,
+		session_ref: primarySessionRef,
 	});
 	const primaryVerifier = await verifyWorkspace({
 		projectRoot: options.projectRoot,
@@ -554,10 +694,12 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 	});
 	if (primaryVerifier.result.status === "passed") {
 		const terminal: RunTerminalV2A = {
-			schema_version: "v2a-run-terminal-v1",
+			schema_version: "v2a-run-terminal-v2",
 			manifest_id: manifest.manifest_id,
 			run_id: options.runId,
 			primary_attempt_id: primaryAttemptId,
+			primary_session_ref: primarySessionRef,
+			primary_verifier_result_ref: primaryVerifier.resultRef,
 			primary_verifier_status: "passed",
 			outcome: "initial_pass",
 			recovery_group_id: null,
@@ -592,13 +734,11 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 	cloneWorkspace(primaryWorkspaceRoot, seedWorkspaceRoot, `${recoverySeedId}-workspace`, task);
 	const seedWorkspaceDigest = treeDigest(seedWorkspaceRoot);
 	const seedWorkspaceRef = workspaceSnapshot(options.runRoot, seedWorkspaceRoot, "seed/workspace-snapshot.json", `${recoverySeedId}-workspace`);
-	const parentSessionMetadata = await parentSession.getMetadata();
 	const parentSessionRef = sessionArtifact(options.runRoot, parentSessionMetadata);
-	const parentEntryCount = (await parentSession.getEntries()).length;
-	const workbenchDigest = treeDigest(resolve(options.projectRoot, "workbench/src"));
+	const parentEntryCount = parentEntries.length;
 	const recoveryPrompt = `${instruction.trim()}\n\nExternal verifier feedback:\n${stableJson(failurePacket)}\n`;
 	const seed: RecoverySeedV2A = {
-		schema_version: "v2a-recovery-seed-v1",
+		schema_version: "v2a-recovery-seed-v2",
 		recovery_seed_id: recoverySeedId,
 		recovery_group_id: recoveryGroupId,
 		parent_run_id: options.runId,
@@ -617,8 +757,9 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		tool_profile_digest: digestObject({ tool_profile_id: task.tool_profile_id, command_descriptors: task.command_descriptors }),
 		prompt_digest: sha256(recoveryPrompt),
 		skill_digest: loadedSkill.ref.source_sha256,
-		pi_commit: PI_COMMIT,
-		workbench_digest: workbenchDigest,
+		pi_commit: V2A_PINNED_PI_COMMIT,
+		workbench_source_ref: workbenchSourceRef,
+		workbench_digest: workbenchSource.digest,
 		created_before_candidate_attempts: true,
 	};
 	const seedRef = writeOnceJson(options.runRoot, "seed/recovery-seed.json", seed);
@@ -631,6 +772,41 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		workspace_digest: seedWorkspaceDigest,
 		parent_session_entry_count: parentEntryCount,
 	});
+	const candidateAWorkspaceRoot = resolve(options.runRoot, "candidates/a/workspace");
+	const candidateBWorkspaceRoot = resolve(options.runRoot, "candidates/b/workspace");
+	const candidateAPathId = `${recoveryGroupId}-candidate-a`;
+	const candidateBPathId = `${recoveryGroupId}-candidate-b`;
+	cloneWorkspace(seedWorkspaceRoot, candidateAWorkspaceRoot, `${candidateAPathId}-workspace`, task);
+	cloneWorkspace(seedWorkspaceRoot, candidateBWorkspaceRoot, `${candidateBPathId}-workspace`, task);
+	if (
+		treeDigest(candidateAWorkspaceRoot) !== seedWorkspaceDigest ||
+		treeDigest(candidateBWorkspaceRoot) !== seedWorkspaceDigest
+	) {
+		throw new Error("Candidate initial Workspace content differs from Recovery Seed");
+	}
+	assertIndependentFiles(seedWorkspaceRoot, candidateAWorkspaceRoot, candidateBWorkspaceRoot);
+	const candidateAInitialWorkspaceRef = workspaceSnapshot(
+		options.runRoot,
+		candidateAWorkspaceRoot,
+		"candidates/a/workspace-initial.json",
+		`${candidateAPathId}-workspace`,
+	);
+	const candidateBInitialWorkspaceRef = workspaceSnapshot(
+		options.runRoot,
+		candidateBWorkspaceRoot,
+		"candidates/b/workspace-initial.json",
+		`${candidateBPathId}-workspace`,
+	);
+	for (const [candidatePathId, initialWorkspaceRef] of [
+		[candidateAPathId, candidateAInitialWorkspaceRef],
+		[candidateBPathId, candidateBInitialWorkspaceRef],
+	] as const) {
+		appendJournal(options.runRoot, sequence, "candidate_workspace_initial_frozen", {
+			candidate_path_id: candidatePathId,
+			initial_workspace_digest: seedWorkspaceDigest,
+			initial_workspace_ref: initialWorkspaceRef,
+		});
+	}
 	const modes = options.candidateModes ?? (["pass", "fail"] as const);
 	const candidateA = await executeCandidate({
 		projectRoot: options.projectRoot,
@@ -638,9 +814,11 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		sequence,
 		repo,
 		parentSessionMetadata,
-		parentEntryCount,
+		parentEntries,
 		seed,
 		seedWorkspaceRoot,
+		workspaceRoot: candidateAWorkspaceRoot,
+		initialWorkspaceRef: candidateAInitialWorkspaceRef,
 		task,
 		skill,
 		patch,
@@ -654,9 +832,11 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		sequence,
 		repo,
 		parentSessionMetadata,
-		parentEntryCount,
+		parentEntries,
 		seed,
 		seedWorkspaceRoot,
+		workspaceRoot: candidateBWorkspaceRoot,
+		initialWorkspaceRef: candidateBInitialWorkspaceRef,
 		task,
 		skill,
 		patch,
@@ -664,7 +844,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		strategy: "fresh_session_from_failure_seed",
 		mode: modes[1],
 	});
-	assertIndependentFiles(seedWorkspaceRoot, resolve(options.runRoot, "candidates/a/workspace"), resolve(options.runRoot, "candidates/b/workspace"));
+	assertIndependentFiles(seedWorkspaceRoot, candidateAWorkspaceRoot, candidateBWorkspaceRoot);
 	if (candidateA.common_artifact_digest !== candidateB.common_artifact_digest) throw new Error("Candidate common Artifact fairness drift");
 	if (candidateA.immediate_recovery_prompt_sha256 !== candidateB.immediate_recovery_prompt_sha256) throw new Error("Candidate recovery prompt drift");
 	const groupUsage = {
@@ -702,10 +882,12 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A): Promise<RunT
 		artifactRef(options.runRoot, "candidates/b/candidate.json", "application/json", false),
 	];
 	const terminal: RunTerminalV2A = {
-		schema_version: "v2a-run-terminal-v1",
+		schema_version: "v2a-run-terminal-v2",
 		manifest_id: manifest.manifest_id,
 		run_id: options.runId,
 		primary_attempt_id: primaryAttemptId,
+		primary_session_ref: primarySessionRef,
+		primary_verifier_result_ref: primaryVerifier.resultRef,
 		primary_verifier_status: "failed",
 		outcome: selection.selected_candidate_id ? "recovery_selected" : "recovery_none",
 		recovery_group_id: recoveryGroupId,

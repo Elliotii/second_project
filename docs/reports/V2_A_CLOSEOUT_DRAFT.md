@@ -12,6 +12,31 @@ final_goal_acceptance: pending_main_and_user
 candidate_commit: null
 ```
 
+## Post-audit bounded correction appendix — 2026-08-06
+
+This Closeout remains a draft. The original Candidate failed Gate J with five
+P1 evidence-authority findings. The original Implementation Session has now
+completed the authorized bounded correction and recommends:
+
+`PASS_V2_A_BOUNDED_CORRECTION_PENDING_REAUDIT`
+
+Corrected evidence authority is
+`.runs/v2-a/corrected-evidence/**`; old `.runs/v2-a/evidence/**` remains
+preserved and is superseded for Gate J. The six corrected Run IDs use the
+`v2a-corrected-authoritative-*` namespace and all bind
+`workbench/src` digest
+`b5caeb1b5301d4276a9becdcbbd47df122ebfa09313d202528f134721bbb15d6`.
+
+Final verification before handoff: strict TypeScript passed; V2-A 11/11,
+Workspace/V0-B 11/11, V1-A 18/18 plus deterministic gates, V1-B 31/31 and
+V1-C budget-stop 13/13 all passed with zero skipped. The five post-audit test
+families cover 19 coherent-tamper variants.
+
+Pending control points are Main's narrow correction review, a corrected
+Candidate commit if Main accepts the delta, and a fresh focused re-audit of
+P1-001 through P1-005. Gate J and V2-A acceptance remain pending; V2-B and all
+real access remain unauthorized.
+
 **Recommendation.** Accept the implementation as ready for Main light review and, if that review is satisfied, freeze a Candidate/Audit Baseline for the Contract-required focused independent audit. Do not mark the Goal accepted before Gate J and Main/user acceptance.
 
 ## Delivered
