@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_b_stage_2_authorized
-  status: V2_B_STAGE_1_ACCEPTED_EXECUTION_BASELINE_PENDING
+  phase: v2_b_bounded_r2_implementation_authorized
+  status: V2_B_R1_PRESERVED_R2_CONTROL_BASELINE_PENDING
 
 active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 
@@ -33,13 +33,15 @@ last_completed_goal:
 
 current_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_stage_2_authorized_pending_gate_h
+  status: active_bounded_r2_zero_call_implementation_authorized
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
+  amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
 
 next_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_stage_2_authorized_pending_gate_h
+  status: active_bounded_r2_zero_call_implementation_authorized
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
+  amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -381,6 +383,16 @@ completed_work:
   - V2_B_candidate_implementation_commit_created_at_d1825dc8bab16b6f0418e883a11fff132d8e8e52
   - V2_B_stage_2_opaque_credential_network_and_real_calls_authorized_after_Gate_H
   - V2_B_stage_2_new_top_level_execution_session_authorized
+  - V2_B_R1_gate_H_passed_and_one_primary_attempt_executed
+  - V2_B_R1_paused_before_verifier_after_8_provider_calls_and_10_tool_calls
+  - V2_B_R1_preserved_with_zero_seed_zero_candidates_and_zero_negative_execution
+  - V2_B_R1_known_cost_USD_0_0004849208
+  - V2_B_R1_inspector_numeric_usage_reasoning_false_positive_identified
+  - V2_B_bounded_R2_interpretive_correction_accepted_by_user
+  - V2_B_bounded_R2_amendment_and_control_baseline_authorized
+  - V2_B_bounded_R2_zero_call_implementation_and_one_focused_audit_authorized
+  - V2_B_bounded_R2_audited_execution_baseline_and_fresh_real_execution_authorized
+  - V2_B_bounded_R2_main_goal_mode_activated
 
 workspace:
   git_initialized: true
@@ -856,7 +868,9 @@ v2:
   implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
   implementation_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  V2_B_contract_status: active_stage_2_authorized_pending_gate_h
+  V2_B_contract_status: active_amended_by_bounded_R2
+  V2_B_amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
+  V2_B_amendment_status: accepted_activated
   V2_B_contract_accepted: true
   V2_B_contract_accepted_at: 2026-08-07
   V2_B_goal_authorized: true
@@ -877,8 +891,8 @@ v2:
   V2_B_stage_1_credential_reads_authorized: 0
   V2_B_stage_1_network_authorized: false
   V2_B_stage_1_real_model_calls_authorized: 0
-  V2_B_stage_2_owner: new_top_level_v2_b_real_execution_session_to_be_created_from_execution_baseline
-  V2_B_stage_2_execution_authorized: true_after_execution_baseline_and_gate_h
+  V2_B_stage_2_owner: completed_R1_top_level_execution_session
+  V2_B_stage_2_execution_authorized: consumed_by_R1_pause
   V2_B_stage_2_execution_conditionally_preauthorized: consumed_by_user_authorization
   V2_B_stage_2_credential_reads_authorized: opaque_contract_bounded_after_Gate_H
   V2_B_stage_2_credential_reads_conditionally_preauthorized: consumed_by_user_authorization
@@ -893,6 +907,39 @@ v2:
   V2_B_candidate_execution_baseline_commit_conditionally_preauthorized: true_after_stage_1_main_acceptance
   V2_B_bounded_stage_1_correction_preauthorized: true_within_allowlist_and_no_architecture_scope_semantic_identity_change
   V2_B_main_goal_mode_authorized: true_through_stage_2_evidence_and_main_disposition_recommendation
+  V2_B_R1_execution_baseline: a76cb3f340d26dc3dd336628761d22546886db27
+  V2_B_R1_sequence_id: v2b-real-20260807-01
+  V2_B_R1_status: immutable_paused_before_verifier
+  V2_B_R1_known_real_cost_usd: 0.0004849208
+  V2_B_R1_provider_model_calls: 8
+  V2_B_R1_tool_calls: 10
+  V2_B_R1_positive_seed_observed: false
+  V2_B_R1_candidates_executed: 0
+  V2_B_R1_negative_executed: false
+  V2_B_R1_reports:
+    - docs/reports/V2_B_REAL_EXECUTION_REPORT.md
+    - docs/reports/V2_B_CLOSEOUT_DRAFT.md
+    - docs/reports/V2_B_MAIN_DISPOSITION_RECOMMENDATION.md
+  V2_B_R2_control_baseline_commit_authorized: true
+  V2_B_R2_control_baseline_commit: resulting_HEAD_of_this_revision
+  V2_B_R2_implementation_owner: original_v2_b_stage_1_top_level_session_or_one_fresh_top_level_replacement
+  V2_B_R2_implementation_credential_reads_authorized: 0
+  V2_B_R2_implementation_network_authorized: false
+  V2_B_R2_implementation_real_model_calls_authorized: 0
+  V2_B_R2_candidate_commit_authorized: true_after_main_light_acceptance
+  V2_B_R2_focused_audit_authorized: one_fresh_top_level_session
+  V2_B_R2_audited_execution_baseline_authorized: true_after_focused_audit_pass
+  V2_B_R2_execution_owner: future_fresh_top_level_no_source_edit_session
+  V2_B_R2_execution_authorized: true_after_audited_execution_baseline_and_gate_h
+  V2_B_R2_credential_reads_authorized: opaque_after_gate_h
+  V2_B_R2_network_authorized: true_after_gate_h
+  V2_B_R2_real_model_calls_authorized: bounded_A_B_and_one_negative_after_gate_h
+  V2_B_R2_controlled_seed_initial_real_calls: 0
+  V2_B_R2_recovery_paths_exact: 2
+  V2_B_R2_negative_cases_exact: 1
+  V2_B_R2_infrastructure_group_replacement_max: 1
+  V2_B_R2_third_path_authorized: false
+  V2_B_R2_final_acceptance_authorized: false
   V2_B_final_acceptance_authorized: false
   V2_final_acceptance_authorized: false
   V3_authorized: false
@@ -1533,7 +1580,10 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
   - docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
+  - docs/reports/V2_B_MAIN_DISPOSITION_RECOMMENDATION.md
+  - docs/reports/V2_B_REAL_EXECUTION_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
   - docs/第二项目_Codex交接包_2026-07-30/V2_VERSION_CHARTER.md
   - docs/reports/V2_FAILURE_AWARE_BOUNDED_RECOVERY_PRECONTRACT_RESEARCH.md
@@ -1617,12 +1667,16 @@ next_checkpoint:
   - preserve_V2_A_accepted_Implementation_Baseline_and_evidence
   - V2_B_contract_activated_for_zero_access_stage_1
   - V2_B_stage_1_accepted_and_candidate_commit_frozen
-  - create_and_verify_V2_B_execution_baseline
-  - freeze_exact_V2_B_stage_2_manifest
-  - create_new_top_level_V2_B_stage_2_execution_session
-  - run_Gate_H_before_any_real_access
-  - complete_frozen_sequence_or_preserve_contract_pause
-  - main_review_stage_2_evidence_and_recommend_disposition
+  - preserve_R1_execution_and_reports_as_immutable_pause_evidence
+  - create_and_verify_V2_B_R2_control_baseline
+  - original_or_replacement_top_level_implementation_session_completes_zero_call_R2_amendment
+  - main_light_review_and_freeze_R2_candidate_commit
+  - one_fresh_focused_audit_and_hit_specific_correction_if_required
+  - create_audited_R2_execution_baseline
+  - create_fresh_top_level_R2_execution_session
+  - run_Gate_H_R2_before_any_real_access
+  - execute_controlled_seed_then_real_A_B_and_one_negative
+  - main_review_R2_evidence_and_recommend_V2_disposition
 
 open_user_decisions:
   - V2_B_final_disposition_after_stage_2_evidence_or_contract_pause
@@ -1703,13 +1757,15 @@ open_user_decisions:
   frozen protocol; the current same-Session Runtime Control treatment is not
   promoted as the V1 default. Cell 04's outer exit `124` and unknown product
   exit remain disclosed, with complete terminal product evidence and no retry
-  or replacement. No further V1 call or correction is authorized. V2-A is now
-  closed and accepted on its deterministic zero-real-access Implementation
-  Baseline. V2-B is activated for its new top-level zero-real-access Stage 1;
-  its two-stage route and USD 0.20 / 0.60 / 1.40 cost ceilings are frozen.
-  Stage 2 real access is conditionally preauthorized but remains inactive until
-  Stage 1 acceptance, a frozen Execution Baseline and Gate H. Pi changes and
-  SDK/Extension switching remain unauthorized.
+  or replacement. No further V1 call or correction is authorized. V2-A is closed
+  and accepted on its deterministic zero-real-access Implementation Baseline.
+  V2-B R1 passed Gate H and made eight real Provider/model calls, but stopped
+  before Verifier execution; it produced no Recovery Seed, Candidate, Selection
+  or Negative evidence and remains immutable historical pause evidence. The user
+  accepted bounded R2: a zero-call controlled verifier-failed Seed followed by
+  real A/B recovery and one real Negative. R2 keeps the USD 0.20 / 0.60 / 1.40
+  ceilings and all non-cost budgets. Pi changes and SDK/Extension switching remain
+  unauthorized.
 
 ## Expected Next Handoff
 
@@ -1758,9 +1814,12 @@ is active. Its new top-level Stage 1 Session completed the zero-real-access thin
 composition, and two bounded Main corrections stayed inside the accepted allowlist.
 Main accepted `PASS_V2_B_STAGE1_THIN_REAL_COMPOSITION` after strict TypeScript and
 an independent 18/18 focused rerun. Candidate commit
-`d1825dc8bab16b6f0418e883a11fff132d8e8e52` is frozen. This revision's resulting
-HEAD is the authorized Execution Baseline. A different fresh top-level no-source-edit
-Stage 2 Session is authorized to perform Gate H and, only after it passes, opaque
-Credential resolution, network access and the frozen bounded real sequence.
-Final V2-B/V2 acceptance, Pi changes, SDK/Extension route switching and V3 remain
-unauthorized.
+  `d1825dc8bab16b6f0418e883a11fff132d8e8e52` and Execution Baseline
+  `a76cb3f340d26dc3dd336628761d22546886db27` are frozen. R1
+  `v2b-real-20260807-01` passed Gate H but paused before its first Verifier after
+  eight Provider/model calls; known cost was USD `0.0004849208`. It is not V2
+  recovery evidence. The accepted `V2_B_BOUNDED_R2_AMENDMENT.md` now authorizes a
+  zero-call controlled Seed/shared-controller correction, Main Candidate freeze,
+  one fresh focused audit, an audited Execution Baseline, and a fresh no-source-edit
+  R2 Session for real A/B plus one Negative after Gate H. Final V2-B/V2 acceptance,
+  Pi changes, SDK/Extension/RPC switching, a third path and V3 remain unauthorized.

@@ -1,7 +1,7 @@
 # V2-B Goal Contract — Thin Real Composition and Frozen Bounded Real Recovery Acceptance
 
 ```yaml
-status: active_stage_2_authorized_pending_gate_h
+status: active_amended_by_bounded_R2
 goal_id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 version: V2
 drafted_at: 2026-08-07
@@ -33,6 +33,10 @@ stage_2_network_conditionally_preauthorized: consumed_by_user_authorization
 stage_2_real_model_calls_authorized: contract_budget_after_Gate_H
 stage_2_real_model_calls_conditionally_preauthorized: consumed_by_user_authorization
 stage_2_owner: new_top_level_v2_b_real_execution_session_to_be_created_from_execution_baseline
+bounded_r2_amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
+bounded_r2_amendment_status: accepted_activated
+bounded_r2_control_baseline_commit: resulting_HEAD_of_this_revision
+bounded_r2_final_acceptance_authorized: false
 subagent_execution_authorized: false
 specialist_session_form: new_top_level_codex_sessions_only
 candidate_execution_baseline_commit_conditionally_preauthorized: true_after_stage_1_main_acceptance
@@ -53,6 +57,11 @@ v3_authorized: false
 > Main 创建 Execution Baseline 和另一个 fresh 顶层 Stage 2 Session。Stage 2 必须先通过 Gate H；
 > 在 Gate H 前 Credential、网络和真实调用权限均不生效，且 Stage 2 始终没有源码、Manifest、
 > Verifier、控制状态、暂存或提交权限。
+>
+> R1 `v2b-real-20260807-01` 已作为 immutable historical pause evidence 保留：它通过 Gate H 并完成
+> 八次真实 Provider/model 调用，但在 Verifier 前停止，未产生 Seed、A/B 或 Negative Evidence。
+> 用户随后接受并激活 `V2_B_BOUNDED_R2_AMENDMENT.md`。凡原 Contract 与该 Amendment 对 controlled
+> Seed、quiescent budget terminal、Inspector 或 R2 sequence 的规定冲突，以 Amendment 为准。
 
 ## 1. Goal Mission
 
@@ -689,3 +698,14 @@ user_decisions_required:
 当前 Control Baseline 形成前后，Stage 1 真实访问仍必须全部为 0。Stage 2 权限不提前生效。
 最终接受/关闭 V2-B 或 V2、Pi 修改、SDK/Extension/RPC 切换、增加 Case/Retry/Fallback/
 Replacement 和进入 V3 仍未授权。
+
+### 19.1 Bounded R2 control point
+
+R1 已不可变停止，Main 的结论为 `REVISE_V2_B_BOUNDED`，不是 V2 完成。用户已接受 bounded R2
+interpretive correction，并授权 Main 连续完成 Amendment Control Baseline、零调用 Implementation、
+Candidate freeze、一次 fresh focused audit、命中项返修、audited Execution Baseline，以及 fresh
+R2 Execution Session在 Gate H 后执行真实 A/B 和一个 Negative。R2 允许最多一次严格的
+infrastructure-only whole-group replacement，总成本仍不超过 USD 1.40。
+
+该授权不包含最终 V2-B/V2 接受、V3、Pi 修改、SDK/Extension/RPC 切换、第三路径或任务结果追跑。
+当前执行必须先完成 Amendment 的零调用实现与审计，不得直接从 R1 Baseline 发起 R2 真实调用。

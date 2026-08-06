@@ -8,7 +8,7 @@ accepted_at: 2026-08-06
 formalized_at: 2026-08-06
 last_control_update: 2026-08-07
 amended_at: 2026-08-07
-amendment_authorized_by_user: v2_b_thin_real_composition_and_top_level_session_ownership
+amendment_authorized_by_user: v2_b_thin_real_composition_and_bounded_R2_controlled_seed_route
 version: V2
 project_identity: Adaptive Coding Agent Harness
 planning_governance_baseline: f81d0db7d5335456e195f11e1b5a8e37077a0a67
@@ -21,15 +21,17 @@ V2_B_contract_draft_created: true
 V2_B_contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
 V2_B_contract_accepted: true
 V2_B_contract_accepted_at: 2026-08-07
-V2_B_contract_status: active_stage_1_authorized_not_started
+V2_B_contract_status: active_amended_by_bounded_R2
+V2_B_bounded_R2_amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
+V2_B_bounded_R2_amendment_status: accepted_activated
 V2_B_activation_authorized: true
 V2_B_stage_1_implementation_authorized: true
 V2_B_stage_2_execution_authorized: false
 V2_B_stage_2_execution_conditionally_preauthorized: true_after_stage_1_acceptance_execution_baseline_and_Gate_H
 V2_B_specialist_session_form: new_top_level_codex_sessions_only_no_subagents
-real_model_calls_authorized: 0
-credential_reads_authorized: 0
-external_network_authorized: false
+real_model_calls_authorized: bounded_R2_A_B_and_one_negative_after_audited_baseline_and_Gate_H
+credential_reads_authorized: opaque_R2_execution_only_after_Gate_H
+external_network_authorized: R2_execution_only_after_Gate_H
 pi_core_patch_authorized: false
 external_download_authorized: false
 V2_B_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
@@ -672,9 +674,9 @@ accepted_charter_decisions:
 → 用户单独决定是否接受/关闭 V2-B 与 V2
 ```
 
-当前控制状态：V2-A 已以 `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE` 关闭接受，Implementation
-Baseline 为 `9ac6740155e763598180dcf80e8b735d967874ad`。V2-B 已激活，`active_goal` 为
-`V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE`；本次 revision 的 resulting HEAD 是 Stage 1
-Control Baseline。Stage 1 顶层 Session及其零真实访问实现已授权。Stage 2 真实权限仅为条件预授权，
-在 Stage 1 接受、Execution Baseline 冻结和 Gate H 前不生效。V2-B/V2 最终接受、Pi 修改、
-SDK/Extension 路线切换和 V3 仍未授权。
+当前控制状态：V2-A 已关闭接受。V2-B Stage 1 与 Execution Baseline 已形成；R1 通过 Gate H 后在
+Verifier 前不可变暂停，未产生 Recovery Seed、A/B 或 Negative evidence。用户已接受并激活
+`V2_B_BOUNDED_R2_AMENDMENT.md`：先完成 zero-call controlled Seed/shared-controller/Inspector/
+budget-terminal 修正和一次 focused audit，再从 audited Execution Baseline 由 fresh no-source-edit
+Session执行 real A/B 与一个 Negative。R2 真实权限在 Gate H 前不生效。V2-B/V2 最终接受、Pi
+修改、SDK/Extension/RPC 路线切换、第三路径和 V3 仍未授权。
