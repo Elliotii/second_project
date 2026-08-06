@@ -8,16 +8,22 @@ accepted_at: 2026-08-06
 formalized_at: 2026-08-06
 version: V2
 project_identity: Adaptive Coding Agent Harness
-planning_baseline: f81d0db7d5335456e195f11e1b5a8e37077a0a67
-active_goal: null
-contract_created: false
-implementation_authorized: false
+planning_governance_baseline: f81d0db7d5335456e195f11e1b5a8e37077a0a67
+planning_baseline: bd903c963b68ba2b13ab56c20a7515a63f681021
+active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+contract_created: true
+contract_status: accepted_activated_implementation_not_started
+implementation_authorized: true_zero_real_access_dedicated_session_only
 real_model_calls_authorized: 0
 credential_reads_authorized: 0
 external_network_authorized: false
 pi_core_patch_authorized: false
 external_download_authorized: false
-git_commit_authorized: false
+control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_activation_revision
+candidate_commit_authorized: conditional_after_main_accepts_V2_A_gates_A_through_I
+focused_audit_authorized: conditional_after_main_candidate_freeze
+final_V2_A_acceptance_authorized: false
+V2_B_authorized: false
 accepted_goal_count: 2
 portfolio_continuity_after_v2: V3_trace_to_validated_experience
 ```
@@ -585,10 +591,10 @@ accepted_charter_decisions:
 用户审查并接受 V2 Version Charter（已完成）
 → Main Session 正式化 Charter，保持 active_goal: null（已完成）
 → 用户单独授权 V2 Planning Baseline Commit（已完成）
-→ Main Session 创建并核验 Planning Baseline（本 revision resulting HEAD）
-→ Main Session 起草 V2-A Goal Contract Draft
-→ 用户接受正式 V2-A Contract
-→ 用户单独授权 Activation + Control Baseline Commit
+→ Main Session 创建并核验 Planning Baseline `bd903c963b68ba2b13ab56c20a7515a63f681021`（已完成）
+→ Main Session 起草 V2-A Goal Contract Draft（已完成）
+→ 用户接受正式 V2-A Contract（已完成）
+→ 用户单独授权 Activation + Control Baseline Commit（已完成）
 → dedicated V2-A Implementation Session 执行 zero-call 实现
 → Main 轻量验收与 Candidate freeze
 → fresh focused independent audit
@@ -600,4 +606,8 @@ accepted_charter_decisions:
 → Main/用户回答 Version Question并收口 V2
 ```
 
-当前控制状态：`active_goal: null`。V2 Planning Baseline Commit 已授权并由本 revision resulting HEAD 形成；V2-A Contract、Activation、实现、审计 handoff、凭据、网络和真实调用仍未授权。
+当前控制状态：`active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`。正式 Contract 已接受并
+激活；本次 activation revision 的 resulting HEAD 是 V2-A Control Baseline。精确 SHA 与 tracked/
+Pi cleanliness 核验后，dedicated V2-A Implementation Session 可执行零真实访问的 Gates A–I。
+Main 在接受 Gates A–I 后可按用户条件预授权冻结 Candidate 并启动一次 focused audit。V2-A 最终
+接受、V2-B、凭据、网络、真实调用、Pi 修改和 SDK/Extension 路线切换仍未授权。
