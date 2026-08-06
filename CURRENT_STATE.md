@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v1_completed
-  status: V1_C_CLOSED_ACCEPTED_SKILL_ONLY_DESCRIPTIVE_LEAD_V2_NOT_AUTHORIZED
+  phase: v2_charter_accepted_planning
+  status: V2_PLANNING_BASELINE_AUTHORIZED_ACTIVE_GOAL_NULL
 
 active_goal: null
 
@@ -33,8 +33,8 @@ last_completed_goal:
   execution_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
 
 next_goal:
-  id: V2_FAILURE_AWARE_BOUNDED_MULTI_PATH_RECOVERY
-  status: candidate_not_authorized_requires_post_v1_compatibility_and_precontract_review
+  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  status: charter_defined_planning_baseline_authorized_contract_draft_next
   contract: null
 
 retired_goal_candidate:
@@ -328,7 +328,13 @@ completed_work:
   - V1_C_closeout_strict_typescript_and_focused_40_of_40_regression_passed
   - V1_C_closed_accepted_PASS_V1_C_COMPARISON_COMPLETION
   - V1_closed_accepted_with_skill_only_descriptive_lead
-  - V2_remains_not_authorized
+  - V2_post_V1_Pi_SDK_Extension_compatibility_checkpoint_completed
+  - V2_failure_aware_bounded_recovery_precontract_research_completed
+  - V2_precontract_research_main_review_accepted_for_charter_drafting
+  - V2_version_charter_accepted_by_user
+  - V2_version_charter_formalized_with_no_active_goal
+  - V2_planning_baseline_commit_authorized_by_user
+  - V2_A_remains_not_activated
 
 workspace:
   git_initialized: true
@@ -728,6 +734,51 @@ v1:
   V1_C_dependency_install_authorized: false
   V1_C_dedicated_session_git_commit_authorized: false
   V1_C_v2_authorized: false
+
+v2:
+  charter: docs/第二项目_Codex交接包_2026-07-30/V2_VERSION_CHARTER.md
+  charter_status: accepted
+  charter_accepted: true
+  charter_accepted_at: 2026-08-06
+  active_goal: false
+  current_candidate_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  formal_goal_contract_created: false
+  activation_authorized: false
+  implementation_authorized: false
+  implementation_started: false
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  pi_core_patch_authorized: false
+  external_download_authorized: false
+  planning_governance_commit: f81d0db7d5335456e195f11e1b5a8e37077a0a67
+  planning_baseline_commit_authorized: consumed
+  planning_baseline_commit: resulting_HEAD_of_this_revision
+  precontract_research: docs/reports/V2_FAILURE_AWARE_BOUNDED_RECOVERY_PRECONTRACT_RESEARCH.md
+  precontract_research_status: completed_main_review_accepted_for_charter
+  runtime_surface: direct_public_emitted_AgentHarness
+  session_primitive: direct_public_pi_agent_core_JsonlSessionRepo_subject_to_V2_A_deterministic_gate
+  workspace_provider: current_controlled_temp_copy
+  accepted_goal_sequence:
+    - V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+    - V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+  version_question: immutable_failed_seed_two_isolated_session_history_candidates_verify_and_select_or_none
+  strategies:
+    - continue_failed_session
+    - fresh_session_from_failure_seed
+  intended_delta: parent_session_history_retained_vs_absent
+  common_inputs:
+    - identical_failed_workspace_seed
+    - frozen_promoted_V1_skill
+    - common_failure_packet
+    - common_recovery_policy
+    - common_model_tool_verifier_and_budget_contract
+  focused_V2_A_audit_required: true_after_candidate_freeze
+  V2_B_contract_before_V2_A_acceptance: prohibited
+  sdk_disposition: behavioral_reference_only_unless_direct_route_hits_concrete_gate
+  extension_disposition: deferred_thin_adapter_candidate_for_future_real_Pi_surface
+  third_party_pi_package_disposition: reject_as_unscoped_dependency
+  git_worktree_disposition: deferred_until_concrete_temp_copy_or_git_metadata_failure
 
 v0_a:
   goal_id: V0_A_CONTRACTS_PREFLIGHT_WORKSPACE_PI_ADAPTER
@@ -1336,6 +1387,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V2_VERSION_CHARTER.md
+  - docs/reports/V2_FAILURE_AWARE_BOUNDED_RECOVERY_PRECONTRACT_RESEARCH.md
   - docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
   - docs/reports/V1_C_CORRECTED_FULL_PILOT_R2_EXECUTION_SESSION_START_PROMPT.md
   - docs/reports/V1_C_AGGREGATE_NORMALIZER_MAIN_ACCEPTANCE_AND_PILOT_RESTART_DECISION.md
@@ -1409,10 +1462,13 @@ next_checkpoint:
   - Skill_only_promoted_within_frozen_protocol
   - current_same_session_Runtime_Control_not_promoted
   - preserve_all_V1_B_and_V1_C_historical_and_R2_evidence
-  - review_post_V1_Pi_SDK_Extension_compatibility_checkpoint_before_any_V2_contract
-  - stop_before_V2_without_new_user_authorization
+  - post_V1_Pi_SDK_Extension_compatibility_checkpoint_completed
+  - V2_version_question_and_two_goal_charter_accepted
+  - create_and_verify_V2_planning_baseline_commit
+  - draft_V2_A_goal_contract_after_exact_baseline_confirmation
 
-open_user_decisions: []
+open_user_decisions:
+  - review_future_V2_A_goal_contract_draft
 ```
 
 ## Current Constraints
@@ -1524,9 +1580,10 @@ the valid A/B/C aggregate missing from V1-B: 24/24 terminal and comparable,
 22 passed, two failed, zero invalid, eight passing fairness blocks, one
 unsuccessful C Recovery and exact cost USD `0.0105276024`.
 
-V1 therefore closes with a bounded Skill-only descriptive lead. The next Main
-decision is not another V1 execution loop. Before any V2 Contract, revisit the
-already recorded read-only Pi SDK/Extension compatibility checkpoint for real
-Pi Skill exposure and clean Session / Workspace reuse. V2 remains a candidate
-Portfolio North Star and has no research, Contract, activation or implementation
-authority yet.
+V1 therefore closes with a bounded Skill-only descriptive lead. The post-V1
+Pi SDK/Extension compatibility checkpoint and V2 bounded Precontract Research
+are complete. The user accepted and Main formalized `V2_VERSION_CHARTER.md`.
+V2-A is the next Charter-defined candidate, but no Goal Contract exists and
+`active_goal` remains `null`. Planning Baseline Commit, Contract drafting,
+Activation, implementation, audit, credentials, network and real calls remain
+separate later control points.
