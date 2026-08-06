@@ -6,24 +6,39 @@ date: 2026-08-06
 accepted_by_user: true
 accepted_at: 2026-08-06
 formalized_at: 2026-08-06
+last_control_update: 2026-08-07
+amended_at: 2026-08-07
+amendment_authorized_by_user: v2_b_thin_real_composition_and_top_level_session_ownership
 version: V2
 project_identity: Adaptive Coding Agent Harness
 planning_governance_baseline: f81d0db7d5335456e195f11e1b5a8e37077a0a67
 planning_baseline: bd903c963b68ba2b13ab56c20a7515a63f681021
-active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-contract_created: true
-contract_status: implementation_complete_main_review_accepted_focused_audit_pending
-implementation_authorized: consumed_completed_zero_real_access
+active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+V2_A_status: closed_accepted
+V2_A_disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+V2_A_implementation_baseline: 9ac6740155e763598180dcf80e8b735d967874ad
+V2_B_contract_draft_created: true
+V2_B_contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
+V2_B_contract_accepted: true
+V2_B_contract_accepted_at: 2026-08-07
+V2_B_contract_status: active_stage_1_authorized_not_started
+V2_B_activation_authorized: true
+V2_B_stage_1_implementation_authorized: true
+V2_B_stage_2_execution_authorized: false
+V2_B_stage_2_execution_conditionally_preauthorized: true_after_stage_1_acceptance_execution_baseline_and_Gate_H
+V2_B_specialist_session_form: new_top_level_codex_sessions_only_no_subagents
 real_model_calls_authorized: 0
 credential_reads_authorized: 0
 external_network_authorized: false
 pi_core_patch_authorized: false
 external_download_authorized: false
-control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_activation_revision
-candidate_commit_authorized: consumed_by_resulting_HEAD_of_candidate_revision
-focused_audit_authorized: true_after_exact_candidate_SHA_confirmation
-final_V2_A_acceptance_authorized: false
-V2_B_authorized: false
+V2_B_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+V2_B_control_baseline_commit: resulting_HEAD_of_this_revision
+V2_B_candidate_or_execution_baseline_commit_conditionally_preauthorized: true_after_stage_1_main_acceptance
+V2_B_focused_audit_conditionally_preauthorized: one_top_level_session_on_concrete_high_risk_finding
+final_V2_A_acceptance_authorized: consumed
+V2_B_goal_activation_authorized: true
+V2_B_main_goal_mode_authorized: true_through_stage_2_evidence_and_main_disposition_recommendation
 accepted_goal_count: 2
 portfolio_continuity_after_v2: V3_trace_to_validated_experience
 ```
@@ -390,15 +405,33 @@ focused audit 只覆盖：Seed 不可变性、Session lineage、Workspace isolat
 
 V2-B Contract 只能在 V2-A accepted 后起草。
 
-Owner：fresh no-source-edit V2-B Execution Session。
+V2-A 接受后的本地源码核验发现，accepted V2-A public surface 仍将 Faux Provider、零真实费用
+和 `real_execution_authorized: false` 固定在确定性执行合同内；现有 V1 真实 Provider handle 又在
+内部创建 `InMemorySessionStorage`，不能直接接管 V2 已审计的外部 `JsonlSessionRepo` fork/fresh
+Session。因此 V2-B 保持一个 Goal，但使用两个严格分权的阶段：
+
+1. **Stage 1 — Thin Real Composition**
+   - Owner：新的顶层 zero-call V2-B Implementation Session；
+   - 只增加 V2 Controller 到已接受 DeepSeek/opaque credential/budget 机制的薄组合 seam；
+   - 必须保留 Direct public `AgentHarness`、JSONL Session、V2-A 行为和回归；
+   - Credential、网络、外部 Provider/model call 和真实成本均为 0。
+2. **Stage 2 — Frozen Real Acceptance**
+   - Owner：另一个新的顶层 fresh no-source-edit V2-B Execution Session；
+   - 从 Main 冻结的精确 Execution Baseline 与 immutable Manifest 开始；
+   - 先做零访问只读 preflight，通过后才可在单独授权下读取 opaque Credential 并执行真实 Case。
+
+这里的“顶层 Session”指侧边栏可见、可独立交接的 Codex Session/任务。V2-B 不得使用子 Agent
+代替 Stage 1、Stage 2 或未来可能授权的 focused audit。Stage 1 与 Stage 2 不得由同一 Session
+承担，看到真实 Outcome 的 Session 永远没有源码、Fixture、Manifest、Verifier 或控制状态编辑权。
 
 范围：
 
+- 一个零真实调用的 real-composition Stage；
 - 一个冻结 positive Case：初始有效失败并执行 A/B；
 - 一个冻结 negative Case：初始通过且不分支；
-- 使用 V2-A accepted baseline、immutable Manifest、固定 Provider/Profile/Skill/Tool/Verifier；
+- 使用 V2-A accepted substrate、immutable Manifest、固定 Provider/Profile/Skill/Tool/Verifier；
 - 输出完整 Candidate 与 Selection evidence；
-- 不修改源码，不临场增加路径或改选择规则。
+- Stage 2 不修改源码，不临场增加路径或改选择规则。
 
 若 positive Case 两条路径都失败，但机制和证据有效，可以形成真实 `no_passing_candidate` 事实；是否允许 Contract 内预先冻结的第二个 positive Case，由 V2-B Contract 在结果未知前决定。不得因想得到漂亮结果而临场无限续跑。
 
@@ -412,6 +445,8 @@ V2 明确吸取 V1 教训：
 
 - 只用两个 Goal，不把 Preparation、Audit、Execution 各自升级成独立版本 Goal；
 - 独立审计只因 V2-A 涉及高风险 lineage/isolation/selection，且只做一次 focused audit；
+- V2-B Stage 1 是 accepted V2-A 与真实 Provider 之间经源码证明缺失的薄组合层，不是新的研究 Goal；
+- V2-B 默认不新增独立审计 Session；Stage 2 的 fresh top-level Session 先做只读 preflight，只有具体高风险 finding 才由 Main 建议另一个顶层 focused audit；
 - 返修回原 Implementation Session；
 - Main 每个阶段先问“当前证据是否已经能回答 Version Question”；
 - Specialist 的未绑定建议不会自动变成 Gate；
@@ -432,11 +467,12 @@ V2 完成至少要求：
 7. pass/pass、pass/fail、fail/pass、fail/fail、invalid 场景均有确定性证据；
 8. 初始通过时不创建任何恢复对象或额外调用；
 9. Direct Session create/open/fork 的实际采用路线通过公开 emitted import 和 Windows deterministic Gate；
-10. 一个冻结真实 positive Case 与一个 negative Case 完成，或按 Contract 允许的有效 no-selection 结果诚实收口；
-11. 所有 Run/Attempt/Seed/Candidate/Session/Workspace/Verifier/Selection 可由 Inspector 关联；
-12. 未修改 Pi Core、未使用 private import、未让 Agent 修改 Verifier/Manifest/接受标准；
-13. 输出有界机制结论，不声称统计普适或 V3 自进化；
-14. Main Session 与用户完成 V2 版本接受和控制状态收口。
+10. V2-B thin real-composition seam 在零真实访问下通过 fail-closed authority、budget、Session 与 V2-A regression Gates；
+11. 一个冻结真实 positive Case 与一个 negative Case 完成，或按 Contract 允许的有效 no-selection 结果诚实收口；
+12. 所有 Run/Attempt/Seed/Candidate/Session/Workspace/Verifier/Selection 可由 Inspector 关联；
+13. 未修改 Pi Core、未使用 private import、未让 Agent 修改 Verifier/Manifest/接受标准；
+14. 输出有界机制结论，不声称统计普适或 V3 自进化；
+15. Main Session 与用户完成 V2 版本接受和控制状态收口。
 
 ## 16. Pause Conditions
 
@@ -457,6 +493,9 @@ V2 完成至少要求：
 13. 一个局部问题被扩张成大规模外部研究而阻塞 Charter/Goal；
 14. V2-A Candidate 的高风险控制流未经 focused audit 就准备真实调用；
 15. 实际实现无法在两个 Goal 内有界完成，且原因不是普通可修 defect。
+16. V2-B real composition 必须复制/重写 V2 Controller、绕过已审计 JSONL Session/Inspector，或弱化 V2-A hard gates 才能继续；
+17. 同一个 V2-B Session 同时拥有源码修改权和真实 Outcome 观察权；
+18. 顶层 Session 无法从精确 Baseline 和冻结 Manifest 启动，且只能以子 Agent 代替。
 
 ## 17. V3 Continuity
 
@@ -579,6 +618,27 @@ accepted_charter_decisions:
       - integrate_now
     recommendation: defer_until_concrete_gap_or_post_V2_integration
     consequence: records reuse value without changing V2 scope
+
+  - decision: amend_V2_B_with_thin_zero_call_real_composition_stage
+    accepted_by_user: 2026-08-07
+    evidence: accepted V2_A source hardcodes Faux Provider and zero-real Manifest while V1 real handle owns an incompatible in-memory Session
+    options:
+      - one_V2_B_goal_with_stage_1_composition_and_fresh_stage_2_execution
+      - reopen_closed_V2_A
+      - bypass_tracked_source_with_external_wrapper
+      - switch_to_SDK_or_Extension
+    recommendation: one_V2_B_goal_with_stage_1_composition_and_fresh_stage_2_execution
+    consequence: adds the minimum honest integration seam without reopening V2_A or changing the Direct AgentHarness route
+
+  - decision: require_new_top_level_codex_sessions_for_all_V2_B_specialist_work
+    accepted_by_user: 2026-08-07
+    evidence: user requires visible independent Session ownership and rejects child-Agent execution for V2_B
+    options:
+      - new_top_level_sessions
+      - child_agents
+      - main_session_execution
+    recommendation: new_top_level_sessions
+    consequence: Main retains project control while Stage 1 and Stage 2 have isolated context and authority
 ```
 
 ## 21. Acceptance and Next Sequence
@@ -599,15 +659,22 @@ accepted_charter_decisions:
 → Main 轻量验收与 Candidate freeze
 → fresh focused independent audit
 → 原 Implementation Session 有界返修（如需）
-→ Main/用户接受 V2-A Implementation Baseline
-→ Main 起草 V2-B Contract
-→ 用户单独授权 frozen real execution
-→ fresh no-source-edit V2-B Execution Session
-→ Main/用户回答 Version Question并收口 V2
+→ Main/用户接受 V2-A Implementation Baseline（已完成，`9ac6740155e763598180dcf80e8b735d967874ad`）
+→ Main 核验 real-composition gap 并获得最小 Charter amendment 授权（已完成）
+→ Main 起草 V2-B Contract Draft（已完成）
+→ 用户审查并接受 V2-B Contract（已完成，成本 ceiling 同比例翻倍为 USD 0.20/0.60/1.40）
+→ 用户单独授权 V2-B Stage 1 Activation + Control Baseline（已完成）
+→ 新的顶层 zero-call V2-B Implementation Session（已授权，待 Baseline SHA 确认后创建）
+→ Main 轻量验收并按条件预授权冻结 Execution Baseline
+→ Gate H 后启用已条件预授权的 Credential、网络、真实调用与预算
+→ 另一个新的顶层 fresh no-source-edit V2-B Execution Session
+→ Main 回答 Version Question并提交处置建议
+→ 用户单独决定是否接受/关闭 V2-B 与 V2
 ```
 
-当前控制状态：`active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`。dedicated Implementation
-Session 已从精确 Control Baseline 完成零真实访问的 Gates A–I，Main light review 处置为
-`ACCEPT_FOR_FOCUSED_AUDIT`。本次 candidate revision 的 resulting HEAD 是 Audit Baseline；精确
-SHA 核验后启动一次 fresh focused audit。V2-A 最终接受、V2-B、凭据、网络、真实调用、Pi 修改
-和 SDK/Extension 路线切换仍未授权。
+当前控制状态：V2-A 已以 `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE` 关闭接受，Implementation
+Baseline 为 `9ac6740155e763598180dcf80e8b735d967874ad`。V2-B 已激活，`active_goal` 为
+`V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE`；本次 revision 的 resulting HEAD 是 Stage 1
+Control Baseline。Stage 1 顶层 Session及其零真实访问实现已授权。Stage 2 真实权限仅为条件预授权，
+在 Stage 1 接受、Execution Baseline 冻结和 Gate H 前不生效。V2-B/V2 最终接受、Pi 修改、
+SDK/Extension 路线切换和 V3 仍未授权。
