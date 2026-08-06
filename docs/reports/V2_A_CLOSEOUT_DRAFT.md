@@ -1,4 +1,8 @@
-# V2-A Closeout Draft
+# V2-A Closeout Draft — Superseded
+
+> Superseded by `docs/reports/V2_A_CLOSEOUT.md` after Gate J passed and the user
+> accepted `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE` on 2026-08-06. The text
+> below is retained only as the implementation Session's historical draft.
 
 ## Draft disposition
 

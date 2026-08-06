@@ -1,7 +1,7 @@
 # V2-A Goal Contract — Deterministic Recovery Seed, Isolation and Selection
 
 ```yaml
-status: line_byte_correction_main_review_passed_hit_specific_reaudit_pending
+status: closed_accepted
 goal_id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 version: V2_A
 project: Agent Harness Reliability Workbench
@@ -11,7 +11,7 @@ planning_baseline_commit: bd903c963b68ba2b13ab56c20a7515a63f681021
 accepted_by_user: true
 accepted_at: 2026-08-06
 contract_accepted: true
-active_goal: true
+active_goal: false
 activation_authorized: true
 activated_by_user: true
 activated_at: 2026-08-06
@@ -47,8 +47,17 @@ corrected_candidate_focused_reaudit_disposition: REVISE_V2_A_BOUNDED
 remaining_reaudit_finding: V2A-REAUDIT-P1-002-LINE-BYTE-NORMALIZATION
 line_byte_bounded_correction_completed: true
 line_byte_main_narrow_review: ACCEPT_LINE_BYTE_CANDIDATE_FOR_HIT_SPECIFIC_REAUDIT
-line_byte_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
-focused_independent_audit_authorized: true_after_exact_candidate_SHA_confirmation
+line_byte_candidate_audit_baseline_commit: de6d30c896079c6ae1164646ae55ead8e6a33c09
+hit_specific_reaudit_disposition: PASS_V2_A_P1_002_HIT_SPECIFIC_REAUDIT
+gate_J: passed
+main_technical_disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+final_acceptance: true
+final_acceptance_at: 2026-08-06
+closeout: docs/reports/V2_A_CLOSEOUT.md
+definition_of_done: 24_of_24
+implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+implementation_baseline_commit: resulting_HEAD_of_this_revision
+focused_independent_audit_authorized: consumed
 V2_B_contract_creation_authorized: false
 V2_B_execution_authorized: false
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
@@ -56,10 +65,9 @@ accepted_v1_c_control_closeout_baseline: c37ef6e6676cba245c0929dcdf98401f004fab5
 accepted_v2_charter: docs/第二项目_Codex交接包_2026-07-30/V2_VERSION_CHARTER.md
 ```
 
-> 本文件是用户已接受并已激活的 V2-A 正式 Goal Contract。dedicated V2-A Implementation
-> Session 已以零凭据、零网络、零外部 Provider/真实模型调用完成 Gates A–I；Main light review
-> 接受其进入 Candidate freeze。当前 resulting HEAD 是 Candidate Audit Baseline，下一步只执行
-> Gate J focused audit；V2-A 最终接受、V2-B 和任何真实访问仍未授权。
+> 本文件是已完成并关闭的 V2-A 正式 Goal Contract。Gates A–J、DoD 24/24 和
+> `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE` 已由 Main 与用户接受；正式 Closeout 为
+> `docs/reports/V2_A_CLOSEOUT.md`。V2-B 和任何真实访问不由本合同授权。
 
 ---
 

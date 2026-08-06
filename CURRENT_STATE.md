@@ -5,43 +5,40 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_a_deterministic_recovery_substrate
-  status: V2_A_LINE_BYTE_CORRECTION_MAIN_REVIEW_PASSED_HIT_REAUDIT_NEXT
+  phase: v2_a_closed_accepted
+  status: V2_A_CLOSED_ACCEPTED_V2_B_NOT_AUTHORIZED
 
-active_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+active_goal: null
 
 last_executed_goal:
-  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  disposition: PASS_V1_C_COMPARISON_COMPLETION
-  execution_disposition: PASS_VALID_V1_C_R2_PILOT
-  policy_result: SKILL_ONLY_DESCRIPTIVELY_BETTER
+  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
+  disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  final_candidate_commit: de6d30c896079c6ae1164646ae55ead8e6a33c09
 
 last_closed_goal:
-  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  disposition: PASS_V1_C_COMPARISON_COMPLETION
-  closeout: docs/reports/V1_C_CLOSEOUT.md
+  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
+  disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  closeout: docs/reports/V2_A_CLOSEOUT.md
 
 last_completed_goal:
-  id: V1_C_BOUNDED_BUDGET_STOP_CORRECTION_AND_COMPARISON_COMPLETION
+  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V1_C_GOAL_CONTRACT.md
-  disposition: PASS_V1_C_COMPARISON_COMPLETION
-  execution_baseline_commit: c37ef6e6676cba245c0929dcdf98401f004fab54
+  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
+  disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  implementation_baseline_commit: resulting_HEAD_of_this_revision
 
 current_goal:
-  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  status: line_byte_correction_main_review_passed_hit_specific_candidate_freeze
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  implementation_owner: dedicated_v2_a_implementation_session
-  control_baseline_commit: 228973b7e7b826468c54b84f28faf8d9c0c33a6d
+  id: null
+  status: none
+  contract: null
 
 next_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: blocked_until_V2_A_closed_accepted
+  status: charter_defined_not_authorized
   contract: null
 
 retired_goal_candidate:
@@ -359,6 +356,13 @@ completed_work:
   - V2_A_corrected_candidate_reaudit_found_one_P1_002_line_byte_normalization_bypass
   - V2_A_line_byte_bounded_correction_completed_by_original_implementation_session
   - V2_A_line_byte_main_narrow_review_accepted_candidate_for_hit_specific_reaudit
+  - V2_A_line_byte_candidate_audit_baseline_created_at_de6d30c896079c6ae1164646ae55ead8e6a33c09
+  - V2_A_fresh_hit_specific_reaudit_passed_with_zero_findings
+  - V2_A_gate_J_main_synthesis_passed
+  - V2_A_PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE_accepted_by_user
+  - V2_A_Gates_A_through_J_and_DoD_24_of_24_accepted
+  - V2_A_closed_accepted
+  - V2_A_control_closeout_and_Implementation_Baseline_commit_authorized
 
 workspace:
   git_initialized: true
@@ -375,7 +379,8 @@ workspace:
   v2_a_control_baseline_tracked_files_clean_required: true
   v2_a_candidate_audit_baseline_commit: ece8856891f950a090f9adabf75ca8c8e707ce53
   v2_a_corrected_candidate_audit_baseline_commit: d6d7a82081658d1782897319dd1e615578ad77c7
-  v2_a_line_byte_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
+  v2_a_line_byte_candidate_audit_baseline_commit: de6d30c896079c6ae1164646ae55ead8e6a33c09
+  v2_a_implementation_baseline_commit: resulting_HEAD_of_this_revision
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
   v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
@@ -770,18 +775,18 @@ v2:
   charter_status: accepted
   charter_accepted: true
   charter_accepted_at: 2026-08-06
-  active_goal: true
-  current_goal: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  active_goal: false
+  current_goal: null
   formal_goal_contract_created: true
   goal_contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  goal_contract_status: line_byte_correction_main_review_passed_hit_specific_reaudit_pending
+  goal_contract_status: closed_accepted
   goal_contract_accepted: true
   activation_authorized: true
   implementation_authorized: true
   implementation_owner: dedicated_v2_a_implementation_session
   implementation_started: true
   implementation_completed: true
-  implementation_session_disposition: PASS_V2_A_BOUNDED_CORRECTION_PENDING_REAUDIT
+  implementation_session_disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
   main_light_review: ACCEPT_FOR_FOCUSED_AUDIT
   first_candidate_audit_baseline_commit: ece8856891f950a090f9adabf75ca8c8e707ce53
   first_focused_audit_disposition: REVISE_V2_A_BOUNDED
@@ -798,6 +803,14 @@ v2:
   remaining_reaudit_finding: V2A-REAUDIT-P1-002-LINE-BYTE-NORMALIZATION
   line_byte_bounded_correction_completed: true
   line_byte_main_narrow_review: ACCEPT_LINE_BYTE_CANDIDATE_FOR_HIT_SPECIFIC_REAUDIT
+  line_byte_candidate_audit_baseline_commit: de6d30c896079c6ae1164646ae55ead8e6a33c09
+  hit_specific_reaudit_disposition: PASS_V2_A_P1_002_HIT_SPECIFIC_REAUDIT
+  gate_J: passed
+  main_technical_disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  final_acceptance: true
+  final_acceptance_at: 2026-08-06
+  closeout: docs/reports/V2_A_CLOSEOUT.md
+  definition_of_done: 24_of_24
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -816,10 +829,12 @@ v2:
   corrected_candidate_commit_authorized: consumed
   corrected_candidate_audit_baseline_commit: d6d7a82081658d1782897319dd1e615578ad77c7
   focused_independent_reaudit_authorized: consumed_with_one_P1_002_finding
-  line_byte_candidate_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  line_byte_candidate_audit_baseline_commit: resulting_HEAD_of_this_revision
-  hit_specific_reaudit_authorized: true_after_exact_line_byte_candidate_SHA_confirmation
-  final_acceptance_authorized: false
+  line_byte_candidate_commit_authorized: consumed
+  line_byte_candidate_audit_baseline_commit: de6d30c896079c6ae1164646ae55ead8e6a33c09
+  hit_specific_reaudit_authorized: consumed_with_PASS
+  final_acceptance_authorized: consumed
+  implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  implementation_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_authorized: false
   precontract_research: docs/reports/V2_FAILURE_AWARE_BOUNDED_RECOVERY_PRECONTRACT_RESEARCH.md
   precontract_research_status: completed_main_review_accepted_for_charter
@@ -1534,11 +1549,11 @@ next_checkpoint:
   - V2_version_question_and_two_goal_charter_accepted
   - V2_planning_baseline_verified_at_bd903c963b68ba2b13ab56c20a7515a63f681021
   - V2_A_contract_accepted_and_goal_activated
-  - create_and_verify_V2_A_line_byte_candidate_audit_baseline
-  - launch_fresh_hit_specific_P1_002_reaudit
-  - main_review_hit_reaudit_and_stop_before_V2_A_final_acceptance
+  - preserve_V2_A_accepted_Implementation_Baseline_and_evidence
+  - wait_for_separate_user_authorization_before_V2_B_planning_or_contract
 
-open_user_decisions: []
+open_user_decisions:
+  - whether_to_authorize_V2_B_precontract_planning_or_contract_drafting
 ```
 
 ## Current Constraints
@@ -1616,9 +1631,9 @@ open_user_decisions: []
   promoted as the V1 default. Cell 04's outer exit `124` and unknown product
   exit remain disclosed, with complete terminal product evidence and no retry
   or replacement. No further V1 call or correction is authorized. V2-A is now
-  active only for the accepted deterministic zero-real-access Contract; V2-B,
-  real calls, network, credentials, Pi changes and SDK/Extension switching remain
-  unauthorized.
+  closed and accepted on its deterministic zero-real-access Implementation
+  Baseline; V2-B, real calls, network, credentials, Pi changes and SDK/Extension
+  switching remain unauthorized.
 
 ## Expected Next Handoff
 
@@ -1655,13 +1670,13 @@ unsuccessful C Recovery and exact cost USD `0.0105276024`.
 V1 therefore closes with a bounded Skill-only descriptive lead. The post-V1
 Pi SDK/Extension compatibility checkpoint and V2 bounded Precontract Research
 are complete. The user accepted and Main formalized `V2_VERSION_CHARTER.md`.
-V2-A has an accepted formal Contract and remains active. The first Candidate
+V2-A is closed and accepted. The first Candidate
 `ece8856891f950a090f9adabf75ca8c8e707ce53` received five bounded P1 findings.
-Candidate `d6d7a82081658d1782897319dd1e615578ad77c7` closed four, while its fresh
-re-audit found one remaining P1-002 line-byte normalization bypass. The original
-Implementation owner corrected only that defect with exact Buffer record/prefix
-comparison and a coherent trailing-byte regression. Main narrow review accepted the
-result for a fresh hit-specific re-audit. The resulting HEAD of this revision is the
-new Candidate Audit Baseline; Gate J and final acceptance remain pending.
-V2-A final acceptance, V2-B, credentials, network, real calls, Pi changes and
+Candidate `d6d7a82081658d1782897319dd1e615578ad77c7` closed four and exposed one
+remaining P1-002 line-byte bypass. Candidate
+`de6d30c896079c6ae1164646ae55ead8e6a33c09` closed that last finding, and a fresh
+hit-specific audit passed with zero new findings. The user accepted
+`PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`; Gates A–J and DoD 24/24 are accepted,
+`active_goal` is null, and the resulting HEAD of this closeout revision is the V2-A
+Implementation Baseline. V2-B, credentials, network, real calls, Pi changes and
 SDK/Extension route switching remain unauthorized.
