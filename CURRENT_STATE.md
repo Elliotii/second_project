@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_completed
-  status: V3_CLOSED_ACCEPTED
+  phase: v3_5_goal_1_active
+  status: V3_5_G1_ACTIVATED_IMPLEMENTATION_NOT_STARTED
 
-active_goal: null
+active_goal: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 
 last_executed_goal:
   id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
@@ -32,12 +32,20 @@ last_completed_goal:
   disposition: PASS_V3_G3_SELECTIVE_REUSE_AND_BOUNDED_REAL_CLOSURE
   implementation_baseline_commit: 74e7e73a07321f191d1b266ab8dd3cb94f66cade
 
-current_goal: null
+current_goal:
+  id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  status: activated_implementation_not_started
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  implementation_owner: future_top_level_goal_session_from_control_baseline
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  pi_core_patch_authorized: false
 
 next_goal:
-  id: null
-  status: no_goal_selected_V4_not_authorized
-  authority: null
+  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+  status: blocked_on_goal_1_acceptance_and_user_reviewed_case_contract
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -130,6 +138,28 @@ v3_control:
   control_baseline_commit_authorized: consumed
   control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
   implementation_baseline_commit: 74e7e73a07321f191d1b266ab8dd3cb94f66cade
+
+v3_5_control:
+  charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  charter_status: accepted
+  charter_accepted_by_user: true
+  preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
+  preimplementation_review_status: accepted_as_charter_design_basis
+  active_goal: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  goal_1_status: activated_implementation_not_started
+  goal_1_implementation_owner: future_top_level_goal_session_from_control_baseline
+  goal_1_control_baseline_commit_authorized: true
+  goal_1_control_baseline_commit: resulting_HEAD_of_this_revision
+  goal_1_bounded_implementation_commit_authorized: true
+  goal_1_real_model_calls_authorized: 0
+  goal_1_credential_reads_authorized: 0
+  goal_1_external_network_authorized: false
+  goal_1_pi_core_patch_authorized: false
+  goal_1_runtime_route_switch_authorized: false
+  goal_2_status: not_activated_blocked_on_goal_1_and_case_contract
+  goal_2_real_execution_authorized: false
+  goal_3_status: not_activated
+  v3_5_final_acceptance_authorized: false
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -1759,6 +1789,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  - docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
   - docs/reports/V3_CLOSEOUT.md
   - docs/reports/V3_G3_CLOSEOUT.md
