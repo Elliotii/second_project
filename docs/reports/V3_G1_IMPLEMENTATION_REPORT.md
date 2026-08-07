@@ -1,10 +1,11 @@
 # V3 Goal 1 — Evidence to Candidate State Implementation Report
 
-Date: 2026-08-07  
+Date: 2026-08-08
 Goal: `V3_G1_EVIDENCE_TO_CANDIDATE_STATE`  
 Execution owner: dedicated top-level Goal 1 Implementation Session  
 Control baseline: `8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75` / tree `07ba2a3c28fa8761583dd62eb9698ce99d396860`  
-Recommended disposition: `READY_FOR_BOUNDED_MODEL_BACKED_PROPOSAL`
+Bounded-real-proposal Candidate Baseline: `07b81a4cf392854bbbde041f3dafae13b52a768f` / tree `cbb2669a53c811ff1ae6ca1a27ae6c53fadb178d`
+Recommended disposition: `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE_PENDING_MAIN_ACCEPTANCE`
 
 ## 1. Outcome and claim boundary
 
@@ -12,11 +13,13 @@ Recommended disposition: `READY_FOR_BOUNDED_MODEL_BACKED_PROPOSAL`
 
 **Fact:** Invalid, infrastructure-attributed, cancelled, missing-Verifier, unclosed-lineage, malformed, stale, unknown-key, authority-targeting, linked-file, hardlink, inventory-tampered, derived-field-tampered, and invocation-authority-tampered inputs fail closed in the focused tests. A structural opportunity is recognized only for the exact ordered and linked pattern `same frozen check fails -> edit occurs -> same frozen check fails`.
 
-**Fact:** This Session performed zero Credential reads, zero external network calls, and zero real Provider/model calls. It did not modify Pi, accepted base prompt bytes, the accepted V1 Skill fixture, an active pointer, `CURRENT_STATE.md`, or another control/accepted authority file. It did not stage or commit Git changes.
+**Fact:** Under the later bounded execution authorization, this Session made exactly one opaque Credential read and one request to `https://api.deepseek.com/chat/completions` using `deepseek-v4-flash`. The response was direct-JSON parsed without repair, passed the existing host exact-schema/evidence/base/applicability/authority checks, and produced one `prompt_addendum` Candidate. Authority totals are Credential reads 1, external requests 1, Provider calls 1, real-model calls 1, retries 0, fallbacks 0, replacements 0.
 
-**Unconfirmed:** No real model-backed proposal has been requested or observed. The bounded producer adapter has been exercised only with injected Faux/fixture ports, as currently authorized. Goal 1 therefore is not claimed as finally accepted or as a final PASS.
+**Fact:** Candidate `candidate-48ee92898bdb1eeedfc33956a67725f0` (digest `48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4`) was written outside the Agent workspace and accepted base as inactive State `efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9`. Reload was byte-semantically equal and status remained `staged_inactive`. No comparator, promotion/reject decision, active binding, rollback, Goal 2, or Goal 3 path ran.
 
-**Recommendation:** Main and the user may review this zero-call candidate and, if desired, separately authorize one bounded model-backed proposal. This Session stops at that authorization gate and does not enter Goal 2 or Goal 3.
+**Fact:** Pi, accepted base prompt bytes, accepted V1 Skill bytes, Verifier/Outcome/control files, and the Goal-local accepted-active sentinel were unchanged. This Session did not modify source, tests, fixtures, Pi, `CURRENT_STATE.md`, or Git index/history.
+
+**Recommendation:** Main should perform the finite acceptance review of the real proposal evidence. Goal 1 is not self-accepted by this Session; the current disposition is `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE_PENDING_MAIN_ACCEPTANCE`.
 
 ## 2. Gate and exit-criteria matrix
 
@@ -42,7 +45,9 @@ Recommended disposition: `READY_FOR_BOUNDED_MODEL_BACKED_PROPOSAL`
 | Whole-Candidate atomic reject | mixed valid plus authority-targeting edit | PASS: no staged write |
 | Accepted base / active bytes | raw evidence summary plus tests | PASS: before/after SHA-256 equal |
 | Candidate not active | State envelope and absence of active mutation path | PASS: `staged_inactive` only |
-| Bounded real model-backed proposal | requires later independent authorization | PENDING — authorization gate reached |
+| Bounded real model-backed proposal | `.runs/v3-g1/real-proposal/v3g1-real-proposal-20260808-02/` | PASS: exactly 1 request; direct JSON; host validation accepted |
+| Real prompt Candidate / inactive State | Candidate/State artifacts and reload | PASS: one `prompt_addendum`; `staged_inactive`; reload equal |
+| Real-call cost and authority ceilings | safe Provider response and counters | PASS: USD 0.0002016 conservative; 1/1/1/1; zero retry/fallback/replacement |
 | Goal 1 acceptance / commit | Main/user authority only | NOT CLAIMED |
 
 ## 3. Implementation
@@ -74,6 +79,19 @@ Main's lightweight review reproduced two Goal-local fail-closed defects and retu
 - `G1-MAIN-002`: boundary validation previously created `stateRoot` before detecting that it was prohibited. Reload/staging now performs nearest-existing-ancestor canonical preflight before any filesystem mutation and retains the ordinary canonical post-check. Focused tests prove that rejected workspace and accepted-base targets do not exist afterward and that their sentinel bytes/directory inventories remain identical.
 
 The exact Main repro outputs in the corrected raw evidence are `PROMPT_TAMPER_REJECTED`, `SKILL_FLAGS_TAMPER_REJECTED`, and `BOUNDARY_REJECTED_NO_RESIDUE`. This correction adds no State kind, Trigger, formal Outcome adapter, store, version, active pointer, Promotion, Goal 2, or Goal 3 behavior.
+
+### 3.5 Bounded real proposal execution
+
+The later Main/user authorization bound execution to the exact Candidate Baseline `07b81a4cf392854bbbde041f3dafae13b52a768f` / `cbb2669a53c811ff1ae6ca1a27ae6c53fadb178d`, one DeepSeek request, one Credential read, one `deepseek-v4-flash` call, USD 0.20, and `prompt_addendum` only. The frozen input was deterministically rebuilt from accepted V2 evidence and validated before dispatch:
+
+- Evidence ID `v2b-controlled-seed-evidence`; digest `26a5fb5900e4eba39972406dae056733f939df58d7f60adca26d5ed044c905be`.
+- Opportunity ID `opp-8eaa309ec84c340b1b3d276c068d577b`; canonical digest `62ecb8c4fba737141168c03f0e77a662dec47c3f9b4d7fbe75b74228a451fbb2`; Trigger `hard_failure`.
+- Model-facing structured input: 853 bytes; canonical SHA-256 `7181526a6c42a543c6b8db59dff9c9c7ab78d4eaf1504907fe5181879b31828c`.
+- Accepted-base identity was recomputed as `0c667c4b193b4de106107e5dd47782b634920c172a80ba6233509239c9184eb8`.
+
+The model returned a plain JSON object with one `prompt_addendum`. Direct `JSON.parse` succeeded; no fence stripping, repair, fallback, retry, replacement, tool call, or manual proposal rewrite occurred. Usage was 628 prompt tokens and 406 completion tokens (1,034 total); conservative recorded cost was USD 0.0002016, below the USD 0.20 cap. The safe response copy contains no Credential or reasoning payload.
+
+The existing `createBoundedModelBackedProducerV3` host validation accepted the raw object and derived Candidate identity/digest. `stageCandidateStateV3` then wrote exactly one host-only State, and `loadStagedStateV3` recomputed/reloaded it equal with `status: staged_inactive`. No accepted State or active binding changed.
 
 ## 4. Source Delta
 
@@ -110,6 +128,9 @@ No existing V0–V2 product module was rewritten. No CLI/runtime/router/eval rep
 | zero-call evidence generation/reload | 0; two inactive States staged and reloaded; authority counters all zero |
 | final public import plus public type smoke | 0; exact three-symbol runtime output and no type diagnostics |
 | final protected-identity/Pi/status/diff bundle | 0; named blobs equal, Pi clean, staged diff empty, `git diff --check` clean |
+| `node --experimental-loader ./.runs/v3-g1/runtime/public-pi-loader.mjs ./.runs/v3-g1/runtime/run-bounded-real-proposal.mjs` | 0; one real proposal accepted and staged inactive |
+| post-execution strict TypeScript through pinned emitted compiler | 0; no diagnostics |
+| post-execution `npm --prefix workbench run v3g1:test` | 0; 13 pass, 0 fail, 0 skipped |
 
 ### 5.1 Development failures and repairs retained
 
@@ -121,6 +142,8 @@ No existing V0–V2 product module was rewritten. No CLI/runtime/router/eval rep
 | Initial ignored TypeScript bridge lacked the public provider subpath mapping required by existing Workbench imports. | Added only public emitted provider/type path mapping to the ignored bridge. | Strict Workbench and public type smokes exit 0. |
 | `G1-MAIN-001`: prompt composed digest and Skill invocation flags could be tampered without rejection. | Added trusted-base prompt recomputation and explicit Skill source/authority-field checks while retaining public source/wrapper recomputation. | Main repro test and corrected focused suite 13/13. |
 | `G1-MAIN-002`: a prohibited State root left an empty directory because validation followed `mkdir`. | Added pre-create canonical-future-path overlap checks and no-residue byte/inventory assertions. | Main boundary repro returns `BOUNDARY_REJECTED_NO_RESIDUE`. |
+| First real runner invocation omitted the public Pi loader; a second command used a Windows path that was not a valid loader specifier. Both failed during module linking before the runner body. | Used the already verified public loader with an explicit `./` module specifier. | No Run root, Credential read, network request, or model call occurred in either failure. |
+| Pre-dispatch execution `v3g1-real-proposal-20260808-01` transcribed the expected accepted-base digest incorrectly. Trusted recomputation rejected it before dispatch. | Corrected the ignored runner constant to the exact Prompt value and used a new write-once execution ID; the failed root was preserved. | Failure counters are all zero; authoritative execution `v3g1-real-proposal-20260808-02` passed with exactly one request and zero retries. |
 
 These were ordinary Goal-local schema/path/adapter/test defects. They caused no credential, network, model, accepted-file, Pi, Git-control, or external side effect.
 
@@ -134,6 +157,14 @@ These were ordinary Goal-local schema/path/adapter/test defects. They caused no 
 | Prompt State manifest | `.runs/v3-g1/evidence/main-review-correction-20260807-01/host-state-prompt/candidates/330310751aede212be7cc792488c3644d87663d3f6906fac41c3e5bee199bc4e/state.json`; State digest `330310751aede212be7cc792488c3644d87663d3f6906fac41c3e5bee199bc4e`; artifact SHA-256 `101f2a1710579883795e7c2dc81e5e76003dcd87344a3b6da587005e85ebbda6` |
 | Adaptive Skill State manifest | `.runs/v3-g1/evidence/main-review-correction-20260807-01/host-state-skill/candidates/37c284ade18042e4b83e3c40af12ec2da6f7e846e7d26449d46a8dbd10c32d86/state.json`; State digest `37c284ade18042e4b83e3c40af12ec2da6f7e846e7d26449d46a8dbd10c32d86`; artifact SHA-256 `2623e41267786884e2973fb4c592b7123fa7d9c58bba6a507f08bd3aeb6fbda9` |
 | Focused test definition | `workbench/tests/v3g1-evidence-to-candidate.test.ts` |
+| Authoritative bounded real execution | `.runs/v3-g1/real-proposal/v3g1-real-proposal-20260808-02/`; result `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE_PENDING_MAIN_ACCEPTANCE` |
+| Real execution Evidence Index | `.runs/v3-g1/real-proposal/v3g1-real-proposal-20260808-02/evidence-index.json`; SHA-256 `0f9d62c976546a2364121cb65d467e3d0f591b65154f3cced64da6672c557373` |
+| Safe Provider response / usage | `provider-response-safe.json` under the authoritative root; prompt/completion/total 628/406/1,034; cost USD 0.0002016 |
+| Raw parsed proposal | `raw-proposal-content.json` SHA-256 `5cd6e211d4885c37c154191b9f8a3aba285ce8e9766a83208eaabd9841e7957d`; direct parse artifact `parsed-proposal.json` SHA-256 `8caee507c69fdb16c96198d6eee48eae47cfc45dbe719072ed24fa592bc55ef4` |
+| Host Candidate | `validated-candidate.json`; Candidate ID `candidate-48ee92898bdb1eeedfc33956a67725f0`; digest `48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4` |
+| Real inactive State | `host-state/candidates/efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9/state.json`; artifact SHA-256 `25c2c0e3f43f2e9984e70e184a4d59206f4f96dc23685a94fb4a1402c467a676`; reload equal |
+| Pre-dispatch fail-closed evidence | `.runs/v3-g1/real-proposal/v3g1-real-proposal-20260808-01/execution-failure.json`; all authority counters zero |
+| Command/exit supplement | `.runs/v3-g1/real-proposal/v3g1-real-proposal-20260808-02-post-verification/evidence-index.json`; SHA-256 `d4bfb10a5c41b9bb2a16612687bd516a2e80058c7434e468173b38c98a7de8ef` |
 
 Both manifests reloaded equal to their in-memory State and retained `status: staged_inactive`. Prompt Candidate digest is `b388c102c737efafc90170981cfdf336101e46db9b2290cd8f593ae6f297fdb3`; Skill Candidate digest is `f89a6f5c9ac3817332259c3c2e6053ecaabab847fd00e262fb4ec4b15141ccd2`.
 
@@ -154,6 +185,8 @@ The final worktree blob IDs equal the baseline `HEAD` blob IDs:
 
 Raw byte SHA-256 evidence additionally records base prompt `d380370a1e16c64cc875f4520dd527a477a6d5ff21765d73779125e6b7a10313` before/after, accepted Skill `d41a123a4fa7c5aece7c1efece8fcc3be2040b272a5ab76f14622d3b17fc80af` before/after, and the evidence-local active sentinel `a8657034a13a4e73646a1e07b01c7f63ca89f5416c005c92748fc957e4b91093` before/after.
 
+For the bounded real execution, `protected-identities-before.json` and `protected-identities-after.json` under the authoritative Run root contain equal SHA-256/size maps for every tracked path other than the two report paths authorized for post-execution editing. The Goal-local accepted-active sentinel SHA-256 was `a3863c5130f98bd6a5f7d24b09a7b9a76685be1a9ae29c76fcb308a5a7f3e2fe` before and after. Tracked/index status was clean immediately before and immediately after the real call.
+
 ## 8. Pi and public-import check
 
 - Pi source: `D:/AI/AI_Projects/project2/.upstream/pi`, HEAD `027a5847901b5dde30270abaa1041046cd2b4b55`, clean, package `@earendil-works/pi-agent-core@0.82.1`.
@@ -162,14 +195,9 @@ Raw byte SHA-256 evidence additionally records base prompt `d380370a1e16c64cc875
 - Runtime smoke observed `AgentHarness`, `loadSkills`, and `NodeExecutionEnv`; type smoke and strict TypeScript used the existing emitted TypeScript 5.9.3 compiler.
 - No Pi source/artifact file was modified; no dependency was copied, installed, downloaded, or resolved from the absent old-worktree `.runs/v0-a/pi` path.
 
-## 9. Remaining real-proposal gate
+## 9. Remaining gate
 
-The sole intentional Goal 1 remainder is a bounded real model-backed proposal. It requires a new explicit authorization covering its exact proposal count, Credential/network/model access, model/profile, budget/cost ceiling, frozen evidence input, and no-source-authority execution conditions. Until then:
-
-- the adapter is proven only with Faux/fixture ports;
-- no real proposal is represented as completed;
-- Goal 1 is not finally accepted or labeled PASS;
-- no baseline, active state, promotion/rejection decision, Goal 2, or Goal 3 action is authorized.
+The bounded real-proposal authorization has been consumed exactly once and is not reusable. The sole remainder is Main/user finite acceptance of Goal 1 based on the preserved Candidate/State evidence. This Session does not claim that acceptance and has no authority to make another request, promote/reject the Candidate, bind active state, commit, enter Goal 2, or enter Goal 3.
 
 ## 10. CURRENT_STATE_UPDATE_PROPOSAL
 
@@ -180,11 +208,17 @@ active_goal: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_zero_call_implementation: complete
 goal_1_zero_call_verification: pass
 goal_1_final_acceptance: pending
-goal_1_disposition: READY_FOR_BOUNDED_MODEL_BACKED_PROPOSAL
-remaining_gate: bounded_real_model_backed_proposal_authorization
-credential_reads_observed: 0
-external_network_calls_observed: 0
-real_model_calls_observed: 0
+goal_1_bounded_real_proposal: pass_pending_main_acceptance
+goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE_PENDING_MAIN_ACCEPTANCE
+remaining_gate: main_user_finite_acceptance
+credential_reads_observed: 1
+external_network_calls_observed: 1
+provider_calls_observed: 1
+real_model_calls_observed: 1
+retry_fallback_replacement_observed: 0
+real_candidate_id: candidate-48ee92898bdb1eeedfc33956a67725f0
+real_state_digest: efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9
+real_state_status: staged_inactive
 accepted_base_mutated: false
 active_state_mutated: false
 git_staged_or_committed: false
@@ -192,4 +226,4 @@ goal_2_authorized: false
 goal_3_authorized: false
 ```
 
-Final Session output: `READY_FOR_BOUNDED_MODEL_BACKED_PROPOSAL`
+Final Session output: `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE_PENDING_MAIN_ACCEPTANCE`
