@@ -1,7 +1,8 @@
 import type { ArtifactRefV0B } from "./v0b-types.ts";
+import type { RuntimeBudgetStopObservationV2 } from "./v2-types.ts";
 
-export const V2B_CONTROL_BASELINE_COMMIT = "33b347abbd92dc1d1cba3511fd5e69b64c06027d" as const;
-export const V2B_CONTROL_BASELINE_TREE = "b0900b0891bf177c6a5093e47c4affb7e1b20ea2" as const;
+export const V2B_CONTROL_BASELINE_COMMIT = "b1c8cf6045a0118452734bdf3cbe7b65fcd645ac" as const;
+export const V2B_CONTROL_BASELINE_TREE = "5c494f27fd01da4a70c8c162c0f6d588c9613b98" as const;
 export const V2B_PINNED_PI_COMMIT = "027a5847901b5dde30270abaa1041046cd2b4b55" as const;
 export const V2B_MODEL_PROFILE_ID = "deepseek_fixed_v1" as const;
 export const V2B_SKILL_ID = "reliability-completion-v1" as const;
@@ -44,6 +45,17 @@ export type CaseIdV2B = "primary_positive" | "contingency_positive" | "negative"
 export type ExpectedBehaviorV2B = "valid_initial_failure_then_two_candidates" | "valid_initial_pass_no_branch";
 export type AttemptRoleV2B = "primary" | "continue_failed_session" | "fresh_session_from_failure_seed";
 export type RuntimeTerminalReasonV2B = "settled" | "budget_stopped" | "usage_invalid" | "usage_overflow" | "runtime_invalid";
+
+export interface QuiescenceEvidenceV2B {
+	pre_dispatch_refusal: boolean;
+	pending_provider_responses: 0;
+	pending_tool_calls: 0;
+	pending_side_effects: 0;
+	prior_usage_known: boolean;
+	session_persisted: boolean;
+	workspace_persisted: boolean;
+	evidence_closed: boolean;
+}
 
 export interface CaseDefinitionV2B {
 	case_id: CaseIdV2B;
@@ -145,6 +157,9 @@ export interface AttemptRuntimeEvidenceV2B {
 	role: AttemptRoleV2B;
 	terminal_reason: RuntimeTerminalReasonV2B;
 	settled: boolean;
+	agent_completion: "settled" | "pre_dispatch_budget_terminal" | "invalid";
+	quiescence: QuiescenceEvidenceV2B | null;
+	runtime_budget_stop_observation: RuntimeBudgetStopObservationV2 | null;
 	composition: CompositionShapeV2B;
 	usage: UsageV2B;
 	reservations: ProviderReservationV2B[];

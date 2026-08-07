@@ -82,10 +82,6 @@ test("V2-B Gates B-D exercise both winners, selector none, budget stop, and cons
 		["b-selected", "positive_b_selected", "candidate-b"],
 		["none", "positive_none", null],
 		["budget", "positive_a_budget_b_selected", "candidate-b"],
-		["usage", "positive_a_usage_invalid_b_selected", "candidate-b"],
-		["token-overflow", "positive_a_token_overflow_b_selected", "candidate-b"],
-		["cost-overflow", "positive_a_cost_overflow_b_selected", "candidate-b"],
-		["tool-cap", "positive_a_tool_cap_b_selected", "candidate-b"],
 	] as const;
 	for (const [label, scenario, selectedSuffix] of cases) {
 		const root = await makeRun(label, scenario);
@@ -96,24 +92,15 @@ test("V2-B Gates B-D exercise both winners, selector none, budget stop, and cons
 		if (selectedSuffix === null) assert.equal(inspected.terminal!.selected_candidate_id, null);
 		else assert.match(inspected.terminal!.selected_candidate_id!, new RegExp(`${selectedSuffix}$`));
 		if (scenario === "positive_a_budget_b_selected") assert.equal(inspected.attempts[1]!.terminal_reason, "budget_stopped");
-		if (scenario === "positive_a_usage_invalid_b_selected") {
-			const attempt = inspected.attempts[1]!;
-			assert.equal(attempt.terminal_reason, "usage_invalid");
-			assert.equal(attempt.reservations[0]!.phase, "conservative_unknown_usage_charge");
-			assert.equal(attempt.usage.conservative_charged_tokens, attempt.reservations[0]!.reserved_tokens);
-			assert.equal(attempt.usage.conservative_charged_cost_usd, attempt.reservations[0]!.reserved_cost_usd);
-		}
-		if (scenario === "positive_a_token_overflow_b_selected" || scenario === "positive_a_cost_overflow_b_selected") {
-			const reservation = inspected.attempts[1]!.reservations[0]!;
-			assert.equal(inspected.attempts[1]!.terminal_reason, "usage_overflow");
-			assert.equal(reservation.phase, "conservative_overflow_charge");
-			if (scenario === "positive_a_token_overflow_b_selected") assert.ok((reservation.actual_tokens as number) > reservation.reserved_tokens);
-			else assert.ok((reservation.actual_cost_usd as number) > reservation.reserved_cost_usd);
-		}
-		if (scenario === "positive_a_tool_cap_b_selected") {
-			assert.equal(inspected.attempts[1]!.terminal_reason, "budget_stopped");
-			assert.equal(inspected.attempts[1]!.usage.tool_calls, V2B_ATTEMPT_CAPS.tool_calls);
-		}
+	}
+});
+
+test("V2-B Amendment fail-closes unknown usage, reservation overflow, and non-quiescent Tool cap before Verifier/B", async () => {
+	for (const scenario of ["positive_a_usage_invalid_b_selected", "positive_a_token_overflow_b_selected", "positive_a_cost_overflow_b_selected", "positive_a_tool_cap_b_selected"] as const) {
+		const runRoot = rootFor(`unsafe-${scenario}`);
+		await assert.rejects(() => executeStage1RunV2B({ projectRoot: PROJECT_ROOT, runRoot, runId: `v2b-unsafe-${scenario}`, scenario: V2B_STAGE1_SCENARIOS[scenario]! }), /verifier-safe Agent terminal|runtime-observed pre-dispatch budget stop/);
+		assert.equal(existsSync(resolve(runRoot, "substrate/candidates/a/verifier-result.json")), false, scenario);
+		assert.equal(existsSync(resolve(runRoot, "substrate/candidates/b/candidate.json")), false, scenario);
 	}
 });
 
@@ -335,6 +322,7 @@ test("V2-B correction 2 makes post-dispatch Primary Pause ineligible with no Con
 			onAttemptEvidence({ attempt_id: attemptId, role: "primary", usage: usageV2B({ provider_requests: 1 }) } as AttemptRuntimeEvidenceV2B);
 			throw new Error("synthetic post-dispatch boundary");
 		} }) },
+		scenarioForCase: () => V2B_STAGE1_SCENARIOS.positive_a_selected!,
 	});
 	assert.equal("status" in terminal && terminal.status, "paused");
 	assert.equal("reason" in terminal && terminal.reason, "run_invalid");

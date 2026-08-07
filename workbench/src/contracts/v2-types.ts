@@ -88,6 +88,8 @@ export interface RecoverySeedV2A {
 	pi_commit: typeof V2A_PINNED_PI_COMMIT;
 	workbench_source_ref: ArtifactRefV0B;
 	workbench_digest: string;
+	controlled_seed_provenance_ref: ArtifactRefV0B | null;
+	maintenance_check_ref: ArtifactRefV0B | null;
 	created_before_candidate_attempts: true;
 }
 
@@ -100,6 +102,34 @@ export interface CandidateHardGatesV2A {
 	verifier_passed: boolean;
 	protected_secret_path_valid: boolean;
 	lineage_complete: boolean;
+}
+
+export interface RuntimeBudgetStopObservationV2 {
+	pre_dispatch_refusal: boolean;
+	pending_provider_responses: number;
+	pending_provider_reservation: boolean;
+	pending_tool_calls: number;
+	prior_usage_known: boolean;
+	reservations_reconciled: boolean;
+}
+
+export interface CandidatePreVerifierCheckpointV2A {
+	schema_version: "v2a-candidate-pre-verifier-checkpoint-v1";
+	candidate_path_id: string;
+	attempt_id: string;
+	terminal_reason: "budget_stopped";
+	runtime_observation: RuntimeBudgetStopObservationV2;
+	session_snapshot_ref: ArtifactRefV0B;
+	session_id: string;
+	session_entry_count: number;
+	workspace_snapshot_ref: ArtifactRefV0B;
+	workspace_digest: string;
+	raw_provider_dispatches: number;
+	raw_tool_calls: number;
+	raw_tokens: number;
+	tool_lifecycle_closed: boolean;
+	protected_secret_path_valid: boolean;
+	journal_sequence: number;
 }
 
 export interface CandidatePathV2A {
@@ -117,7 +147,10 @@ export interface CandidatePathV2A {
 	initial_workspace_ref: ArtifactRefV0B;
 	initial_workspace_digest: string;
 	attempt_id: string;
+	pre_verifier_checkpoint_ref: ArtifactRefV0B | null;
 	settled: boolean;
+	agent_completion: "settled" | "pre_dispatch_budget_terminal" | "invalid";
+	quiescent_budget_terminal: boolean;
 	final_workspace_ref: ArtifactRefV0B;
 	final_workspace_digest: string;
 	verifier_result_ref: ArtifactRefV0B;
@@ -181,6 +214,7 @@ export interface RunManifestV2A {
 	workbench_source_ref: ArtifactRefV0B;
 	workbench_source_digest: string;
 	real_execution_authorized: boolean;
+	execution_port_kind: "internal_deterministic" | "injected";
 	recovery_candidate_count_on_valid_failure: 2;
 	per_attempt_budget: BudgetCapsV2A;
 	per_group_budget: {
@@ -208,6 +242,8 @@ export interface RunTerminalV2A {
 	primary_session_ref: ArtifactRefV0B;
 	primary_verifier_result_ref: ArtifactRefV0B;
 	primary_verifier_status: VerifierResultV0B["status"];
+	primary_agent_completion: "settled" | "pre_dispatch_budget_terminal";
+	primary_maintenance_check_ref: ArtifactRefV0B | null;
 	outcome: "initial_pass" | "recovery_selected" | "recovery_none";
 	recovery_group_id: string | null;
 	recovery_seed_ref: ArtifactRefV0B | null;

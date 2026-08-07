@@ -2,7 +2,8 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import type { ArtifactRefV0B } from "./contracts/v0b-types.ts";
-import type { CandidateModeV2A } from "./contracts/v2-types.ts";
+import type { CandidateModeV2A, CandidatePathV2A } from "./contracts/v2-types.ts";
+import type { ControlledSeedProvenanceV2 } from "./run-v2.ts";
 import {
 	V2B_ATTEMPT_CAPS,
 	V2B_CONTROL_BASELINE_COMMIT,
@@ -46,6 +47,7 @@ export interface Stage1ScenarioV2B {
 	usageInvalidRole?: "primary" | "continue_failed_session" | "fresh_session_from_failure_seed";
 	usageOverflow?: { role: "primary" | "continue_failed_session" | "fresh_session_from_failure_seed"; kind: "tokens" | "cost" };
 	toolCapRole?: "primary" | "continue_failed_session" | "fresh_session_from_failure_seed";
+	controlledSeed?: true;
 }
 
 export const V2B_STAGE1_SCENARIOS: Readonly<Record<string, Stage1ScenarioV2B>> = Object.freeze({
@@ -58,6 +60,11 @@ export const V2B_STAGE1_SCENARIOS: Readonly<Record<string, Stage1ScenarioV2B>> =
 	positive_a_token_overflow_b_selected: { caseId: "primary_positive", primaryMode: "fail", candidateModes: ["pass", "pass"], usageOverflow: { role: "continue_failed_session", kind: "tokens" } },
 	positive_a_cost_overflow_b_selected: { caseId: "primary_positive", primaryMode: "fail", candidateModes: ["pass", "pass"], usageOverflow: { role: "continue_failed_session", kind: "cost" } },
 	positive_a_tool_cap_b_selected: { caseId: "primary_positive", primaryMode: "fail", candidateModes: ["pass", "pass"], toolCapRole: "continue_failed_session" },
+	r2_controlled_a_selected: { caseId: "primary_positive", primaryMode: "pass", candidateModes: ["pass", "fail"], controlledSeed: true },
+	r2_controlled_b_selected: { caseId: "primary_positive", primaryMode: "pass", candidateModes: ["fail", "pass"], controlledSeed: true },
+	r2_controlled_both_selected: { caseId: "primary_positive", primaryMode: "pass", candidateModes: ["pass", "pass"], controlledSeed: true },
+	r2_controlled_none: { caseId: "primary_positive", primaryMode: "pass", candidateModes: ["fail", "fail"], controlledSeed: true },
+	r2_controlled_a_budget_b_selected: { caseId: "primary_positive", primaryMode: "pass", candidateModes: ["budget_stop", "pass"], controlledSeed: true },
 });
 
 export interface PriorCaseTerminalV2B {
@@ -167,6 +174,7 @@ async function executeCaseRunV2B(options: {
 	executionPort?: ExecutionPortV2;
 	realCounters?: RealCallCountersV2B;
 	attemptEvidence?: AttemptRuntimeEvidenceV2B[];
+	onAttemptStarted?: (input: { attemptId: string; role: AttemptRuntimeEvidenceV2B["role"] }) => void;
 }): Promise<RunTerminalV2B> {
 	if (existsSync(options.runRoot)) throw new Error("V2-B Run root already exists");
 	mkdirSync(resolve(options.runRoot, "config"), { recursive: true });
@@ -181,7 +189,21 @@ async function executeCaseRunV2B(options: {
 		...(options.scenario.usageInvalidRole ? { usageInvalidRole: options.scenario.usageInvalidRole } : {}),
 		...(options.scenario.usageOverflow ? { usageOverflow: options.scenario.usageOverflow } : {}),
 		...(options.scenario.toolCapRole ? { toolCapRole: options.scenario.toolCapRole } : {}),
+		...(options.onAttemptStarted ? { onAttemptStarted: options.onAttemptStarted } : {}),
 	});
+	let controlledPrimaryPort: ExecutionPortV2 | null = null;
+	let controlledSeedProvenance: ControlledSeedProvenanceV2 | undefined;
+	let controlledSeedPatch: string | undefined;
+	if (options.scenario.controlledSeed) {
+		const provenancePath = resolve(options.projectRoot, "fixtures/recovery/v2b-r2/provenance.json");
+		controlledSeedProvenance = JSON.parse(readFileSync(provenancePath, "utf8")) as ControlledSeedProvenanceV2;
+		controlledSeedPatch = readFileSync(resolve(options.projectRoot, controlledSeedProvenance.fixture_ref), "utf8");
+		controlledPrimaryPort = createStage1RealShapedExecutionPortV2B({
+			authority: createStage1ExecutionAuthorityV2B({ runId: options.runId, caseId: options.scenario.caseId, authorized: true }),
+			onAttemptEvidence: (evidence) => attempts.push(structuredClone(evidence)),
+			...(options.onAttemptStarted ? { onAttemptStarted: options.onAttemptStarted } : {}),
+		});
+	}
 	const substrateRoot = resolve(options.runRoot, "substrate");
 	let substrate;
 	try {
@@ -193,18 +215,39 @@ async function executeCaseRunV2B(options: {
 			primaryMode: options.scenario.primaryMode,
 			...(options.scenario.candidateModes ? { candidateModes: options.scenario.candidateModes } : {}),
 			executionPort: port,
+			...(controlledPrimaryPort ? { primaryExecutionPort: controlledPrimaryPort, candidateExecutionPort: port } : {}),
+			...(controlledSeedPatch ? { primaryPatch: controlledSeedPatch } : {}),
+			...(controlledSeedProvenance ? { controlledSeedProvenance } : {}),
 		realExecutionAuthorized: options.stage === "stage2_real",
 			realCallCounters: counters,
 		});
 	} finally {
+		await controlledPrimaryPort?.close?.();
 		await port.close?.();
 	}
 	const expectedAttempts = substrate.outcome === "initial_pass" ? 1 : 3;
 	if (attempts.length !== expectedAttempts) throw new Error("V2-B runtime evidence Attempt count mismatch");
 	const attemptRefs: ArtifactRefV0B[] = [];
 	const usage = emptyUsage();
+	const substrateCandidates = substrate.candidate_refs.map((ref) => JSON.parse(readFileSync(resolve(substrateRoot, ref.path), "utf8")) as CandidatePathV2A);
 	for (const [index, attempt] of attempts.entries()) {
 		attempt.usage.verifier_runs = 1;
+		if (attempt.agent_completion === "pre_dispatch_budget_terminal") {
+			const candidate = substrateCandidates.find((entry) => entry.attempt_id === attempt.attempt_id);
+			if (!candidate?.pre_verifier_checkpoint_ref || candidate.quiescent_budget_terminal !== true || !attempt.runtime_budget_stop_observation) {
+				throw new Error("V2-B budget terminal lacks Controller-derived pre-Verifier checkpoint");
+			}
+			attempt.quiescence = {
+				pre_dispatch_refusal: true,
+				pending_provider_responses: 0,
+				pending_tool_calls: 0,
+				pending_side_effects: 0,
+				prior_usage_known: true,
+				session_persisted: true,
+				workspace_persisted: true,
+				evidence_closed: true,
+			};
+		}
 		if (options.stage === "stage1_zero_real_access") {
 			assertZeroRealAccessV2B(attempt.counters_before);
 			assertZeroRealAccessV2B(attempt.counters_after);
@@ -424,7 +467,9 @@ export interface SequencePortFactoryV2B {
 }
 
 function sequenceScenario(caseId: CaseIdV2B): Stage1ScenarioV2B {
-	return { caseId, primaryMode: "fail", candidateModes: ["pass", "pass"] };
+	return caseId === "primary_positive"
+		? { caseId, primaryMode: "pass", candidateModes: ["pass", "pass"], controlledSeed: true }
+		: { caseId, primaryMode: "pass" };
 }
 
 function writeSequenceTerminal(sequenceRoot: string, manifest: ExecutionManifestV2B, status: SequenceTerminalV2B["status"], reason: SequenceTerminalV2B["reason"]): SequenceTerminalV2B {
@@ -570,17 +615,18 @@ export async function runNextSequenceV2B(options: {
 	const attempts: AttemptRuntimeEvidenceV2B[] = [];
 	const runCounters = zeroCounters();
 	try {
+		const recordAttemptStarted = ({ attemptId, role }: { attemptId: string; role: AttemptRuntimeEvidenceV2B["role"] }): void => {
+			const current = readLedger(options.sequenceRoot);
+			assertSequenceCapacity(current, next!.case_id);
+			appendLedger(options.sequenceRoot, { manifest_id: options.manifest.manifest_id, sequence_id: options.manifest.sequence_id, case_id: next!.case_id, planned_run_id: next!.planned_run_id, state: "started", reason: "attempt_started_reserved", run_terminal_ref: null, attempt_id: attemptId, attempt_role: role, reserved_usage: reservedAttemptUsage(), actual_usage: emptyUsage(), real_call_counters: zeroCounters() });
+		};
 		const port = options.portFactory.create({
 			runId: next.planned_run_id, caseId: next.case_id, realCounters: runCounters,
 			onAttemptEvidence: (evidence) => attempts.push(structuredClone(evidence)),
-			onAttemptStarted: ({ attemptId, role }) => {
-				const current = readLedger(options.sequenceRoot);
-				assertSequenceCapacity(current, next!.case_id);
-				appendLedger(options.sequenceRoot, { manifest_id: options.manifest.manifest_id, sequence_id: options.manifest.sequence_id, case_id: next!.case_id, planned_run_id: next!.planned_run_id, state: "started", reason: "attempt_started_reserved", run_terminal_ref: null, attempt_id: attemptId, attempt_role: role, reserved_usage: reservedAttemptUsage(), actual_usage: emptyUsage(), real_call_counters: zeroCounters() });
-			},
+			onAttemptStarted: recordAttemptStarted,
 		});
 		const runRoot = resolve(options.sequenceRoot, "runs", next.planned_run_id);
-		const run = await executeCaseRunV2B({ projectRoot: options.projectRoot, runRoot, runId: next.planned_run_id, scenario: options.scenarioForCase?.(next.case_id) ?? sequenceScenario(next.case_id), stage: options.manifest.stage, executionManifest: options.manifest, executionPort: port, realCounters: runCounters, attemptEvidence: attempts });
+		const run = await executeCaseRunV2B({ projectRoot: options.projectRoot, runRoot, runId: next.planned_run_id, scenario: options.scenarioForCase?.(next.case_id) ?? sequenceScenario(next.case_id), stage: options.manifest.stage, executionManifest: options.manifest, executionPort: port, realCounters: runCounters, attemptEvidence: attempts, onAttemptStarted: recordAttemptStarted });
 		const ref = artifactRef(options.sequenceRoot, `runs/${next.planned_run_id}/terminal.json`, "application/json", false);
 		appendLedger(options.sequenceRoot, { manifest_id: options.manifest.manifest_id, sequence_id: options.manifest.sequence_id, case_id: next.case_id, planned_run_id: next.planned_run_id, state: "terminal", reason: run.outcome, run_terminal_ref: ref, attempt_id: null, attempt_role: null, reserved_usage: emptyUsage(), actual_usage: structuredClone(run.usage), real_call_counters: structuredClone(run.real_call_counters) });
 		return run;

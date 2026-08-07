@@ -266,3 +266,42 @@ Run's Primary/A/B composition, and cleared when it closes.
 This is deterministic Stage 1 readiness only. It does not authorize Stage 2,
 read a Credential, make a network or real-model call, prove real recovery
 effectiveness, select a V2 winner, or accept/close V2-B or V2.
+
+## V2-B bounded R2 zero-call preparation
+
+The accepted R2 Amendment keeps the same V2 Controller and exposes its actual
+Seed freeze and Seed-to-Recovery-Group seams. A tracked derived-behavior fixture
+is written by the deterministic public `AgentHarness` through
+`workspace_write`, its declared public check passes, the harness settles, and
+the unchanged external target Verifier fails before the immutable Seed is
+created. Candidate A still uses public JSONL fork and Candidate B still uses
+public JSONL create; both start from byte-identical isolated Seed Workspaces.
+
+The frozen Stage 2 `run-next` surface now uses that controlled zero-access
+Primary for the Positive Case, then routes only A/B through the injected dormant
+real port. Credential resolution therefore remains late-bound once per real
+Run, after the controlled Seed is valid. The already-predeclared Contingency is
+skipped after the controlled Seed forms, and the separate Negative retains the
+real no-branch route.
+
+A pre-dispatch request-cap refusal is verifier-eligible only after the shared
+Controller reopens the public JSONL Session, freezes pre-Verifier Session and
+Workspace refs, reconciles raw usage/reservations and Tool Result closure, and
+writes the checkpoint into the append-only Journal. The read-only Inspector
+derives the same gate from those raw bytes and ordering; summary booleans are
+not authority. It remains labeled `pre_dispatch_budget_terminal`, never
+`settled`. Unknown usage, reservation overflow, Tool-cap/pending-side-effect,
+post-dispatch, malformed, or injected compatibility-bypass states stop before
+the Verifier and before the other Candidate.
+
+The schema-aware Inspector permits only a finite non-negative numeric
+`message.usage.reasoning` field. Reasoning/thinking content, signatures,
+Authorization/Credential material, unknown sensitive shapes, and broken Tool
+Call/Tool Result lineage remain fail-closed.
+
+```powershell
+npm run v2b:r2
+```
+
+This command is a zero-access deterministic proof. It does not authorize the
+fresh R2 audit or real Execution Session.

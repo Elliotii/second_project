@@ -1,0 +1,9 @@
+{
+  "schema_version": "v2b-r2-controlled-seed-provenance-v1",
+  "case_id": "controlled_parse_duration_recovery_seed",
+  "source_run_id": "v1c-full-pilot-run-14-parse-duration-r2-a",
+  "source_cell": 14,
+  "classification": "derived_behavior_fixture_not_historical_run_bytes",
+  "fixture_ref": "fixtures/recovery/v2b-r2/partial-subject.ts",
+  "fixture_sha256": "ac487bcab206535edf13ad2b77c5052f552ab0d27bcd8071b457d4bd187da1d9"
+}

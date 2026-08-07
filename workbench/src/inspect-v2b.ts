@@ -34,9 +34,7 @@ import {
 	validateRunRootBoundary,
 } from "./evidence/artifacts.ts";
 import { digestObject, stableJson, treeInventory } from "./hash.ts";
-import { inspectRunV2A } from "./inspect-v2.ts";
-
-const FORBIDDEN_EVIDENCE_V2B = /(?:bearer\s+[A-Za-z0-9._-]+|"(?:authorization|reasoning(?:_content)?|thinking|thoughtsignature|signature)"\s*:)/i;
+import { inspectRunV2A, scanEvidenceBytesV2 } from "./inspect-v2.ts";
 const ZERO_COUNTERS_V2B: RealCallCountersV2B = Object.freeze({ credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
 
 function portable(path: string): string {
@@ -82,8 +80,7 @@ function addUsage(target: UsageV2B, value: UsageV2B): void {
 function scanEvidence(runRoot: string, errors: string[]): void {
 	for (const entry of treeInventory(runRoot)) {
 		if (entry.path.includes("/workspace/") || entry.path.endsWith("/workspace")) continue;
-		const bytes = readFileSync(resolve(runRoot, entry.path), "utf8");
-		if (FORBIDDEN_EVIDENCE_V2B.test(bytes)) errors.push(`secret/reasoning scan rejected: ${entry.path}`);
+		scanEvidenceBytesV2(readFileSync(resolve(runRoot, entry.path)), entry.path, errors);
 	}
 }
 
@@ -139,6 +136,24 @@ function validateAttempt(attempt: AttemptRuntimeEvidenceV2B, expectedRole: Attem
 		stableJson(attempt.composition.tool_names) !== stableJson(["run_command", "workspace_edit", "workspace_list", "workspace_read", "workspace_search", "workspace_write"]) ||
 		attempt.no_retry_fallback !== true
 	) errors.push(`${label}: composition shape mismatch`);
+	const quiescenceValid = attempt.quiescence !== null && stableJson(attempt.quiescence) === stableJson({
+		pre_dispatch_refusal: true,
+		pending_provider_responses: 0,
+		pending_tool_calls: 0,
+		pending_side_effects: 0,
+		prior_usage_known: true,
+		session_persisted: true,
+		workspace_persisted: true,
+		evidence_closed: true,
+	});
+	const runtimeStop = attempt.runtime_budget_stop_observation;
+	const runtimeStopClosed = runtimeStop !== null && runtimeStop.pre_dispatch_refusal === true && runtimeStop.pending_provider_responses === 0 &&
+		runtimeStop.pending_provider_reservation === false && runtimeStop.pending_tool_calls === 0 && runtimeStop.prior_usage_known === true && runtimeStop.reservations_reconciled === true;
+	if (
+		(attempt.agent_completion === "settled" && (!attempt.settled || attempt.terminal_reason !== "settled" || attempt.quiescence !== null || runtimeStop !== null)) ||
+		(attempt.agent_completion === "pre_dispatch_budget_terminal" && (attempt.settled || attempt.terminal_reason !== "budget_stopped" || !quiescenceValid || !runtimeStopClosed)) ||
+		(attempt.agent_completion === "invalid" && attempt.settled)
+	) errors.push(`${label}: Agent completion/quiescence mismatch`);
 	if (requireZeroCounters && (stableJson(attempt.counters_before) !== stableJson(ZERO_COUNTERS_V2B) || stableJson(attempt.counters_after) !== stableJson(ZERO_COUNTERS_V2B))) {
 		errors.push(`${label}: Stage 1 real-access counters are not zero`);
 	}
@@ -217,6 +232,7 @@ export function inspectStage1RunV2B(options: { projectRoot: string; runRoot: str
 		runRoot: resolve(options.runRoot, "substrate"),
 		expectedTaskId: manifest.case.task_id,
 		expectedRealExecutionAuthorized: manifest.stage === "stage2_real",
+		expectedExecutionPortKind: "injected",
 		expectedRealCallCounters: terminal.real_call_counters,
 	});
 	if (!substrate.integrity_valid) errors.push(...substrate.errors.map((error) => `substrate: ${error}`));
@@ -251,7 +267,16 @@ export function inspectStage1RunV2B(options: { projectRoot: string; runRoot: str
 			if (continued!.composition.common_input_sha256 !== fresh!.composition.common_input_sha256) errors.push("V2-B A/B common input identity drift");
 			const [candidateA, candidateB] = substrate.candidates;
 			if (!substrate.recovery_seed || !candidateA || !candidateB || candidateA.initial_workspace_digest !== substrate.recovery_seed.failed_workspace_snapshot_digest || candidateB.initial_workspace_digest !== substrate.recovery_seed.failed_workspace_snapshot_digest || candidateA.common_artifact_digest !== candidateB.common_artifact_digest || candidateA.immediate_recovery_prompt_sha256 !== candidateB.immediate_recovery_prompt_sha256 || stableJson(candidateA.budget_caps) !== stableJson(candidateB.budget_caps)) {
-				errors.push("V2-B A/B Seed/Failure Packet/recovery instruction/Skill/Tool/Verifier/budget/Pi/Workbench fairness mismatch");
+				 errors.push("V2-B A/B Seed/Failure Packet/recovery instruction/Skill/Tool/Verifier/budget/Pi/Workbench fairness mismatch");
+			}
+			for (const attempt of [continued!, fresh!]) {
+				if (attempt.agent_completion !== "pre_dispatch_budget_terminal") continue;
+				const candidate = substrate.candidates.find((entry) => entry.attempt_id === attempt.attempt_id);
+				if (!candidate?.pre_verifier_checkpoint_ref || candidate.quiescent_budget_terminal !== true || stableJson(attempt.runtime_budget_stop_observation) !== stableJson(
+					safeRead<{ runtime_observation: unknown }>(resolve(options.runRoot, "substrate"), candidate.pre_verifier_checkpoint_ref.path, errors)?.runtime_observation,
+				) || attempt.reservations.some((reservation) => reservation.phase === "reserved_before_dispatch")) {
+					errors.push(`${attempt.attempt_id}: Attempt evidence is not bound to the raw-derived pre-Verifier checkpoint`);
+				}
 			}
 		}
 	}

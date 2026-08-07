@@ -16,6 +16,7 @@ import {
 	V2A_WORKBENCH_SOURCE_SCOPE,
 	type CandidateHardGatesV2A,
 	type CandidatePathV2A,
+	type CandidatePreVerifierCheckpointV2A,
 	type InspectResultV2A,
 	type RecoverySeedV2A,
 	type RunManifestV2A,
@@ -31,7 +32,8 @@ import { SYSTEM_PROMPT } from "./prompts/base.ts";
 import { selectCandidateV2A } from "./recovery/selector-v2.ts";
 import { expectedSkillIdentityV1 } from "./skill/runtime-v1.ts";
 
-const FORBIDDEN_EVIDENCE = /(?:(?:bearer|api[_-]?key|authorization)\s*[:=]\s*[A-Za-z0-9._-]{8,}|"(?:reasoning(?:_content)?|thinking|thoughtsignature|signature)"\s*:)/i;
+const FORBIDDEN_SECRET_TEXT = /(?:(?:bearer|authorization)\s*[:=]?\s*[A-Za-z0-9._-]{8,}|(?:api[_-]?key|credential)\s*[:=]\s*[A-Za-z0-9._-]{8,})/i;
+const SENSITIVE_JSON_KEY = new Set(["authorization", "proxyauthorization", "apikey", "credential", "credentials", "secret", "accesstoken", "refreshtoken", "idtoken", "reasoningcontent", "thinking", "thinkingsignature", "thoughtsignature", "signature"]);
 const FORBIDDEN_WORKSPACE = /(?:bearer\s+[A-Za-z0-9._-]+|FAKE_(?:SENSITIVE|RESOLVER|PROVIDER|FACTORY)[A-Za-z0-9_-]*)/i;
 
 interface JournalEventV2A {
@@ -96,6 +98,49 @@ function safeReadJson<T>(runRoot: string, path: string, errors: string[]): T | n
 	}
 }
 
+function scanStructuredEvidenceV2(value: unknown, path: readonly string[], label: string, errors: string[]): void {
+	if (Array.isArray(value)) {
+		value.forEach((child, index) => scanStructuredEvidenceV2(child, [...path, String(index)], label, errors));
+		return;
+	}
+	if (!value || typeof value !== "object") return;
+	for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+		const normalized = key.replace(/[_-]/g, "").toLowerCase();
+		const childPath = [...path, key];
+		if (normalized === "reasoning") {
+			const exactUsagePath = childPath.length === 3 && childPath[0] === "message" && childPath[1] === "usage" && childPath[2] === "reasoning";
+			if (!exactUsagePath || typeof child !== "number" || !Number.isFinite(child) || child < 0) errors.push(`${label}: forbidden reasoning shape at $/${childPath.join("/")}`);
+			continue;
+		}
+		if (SENSITIVE_JSON_KEY.has(normalized)) {
+			errors.push(`${label}: forbidden secret/reasoning key at $/${childPath.join("/")}`);
+			continue;
+		}
+		scanStructuredEvidenceV2(child, childPath, label, errors);
+	}
+}
+
+export function scanEvidenceBytesV2(bytes: Buffer, relativePath: string, errors: string[]): void {
+	const text = bytes.toString("utf8");
+	if (FORBIDDEN_SECRET_TEXT.test(text)) errors.push(`secret scan rejected: ${relativePath}`);
+	const isJsonl = relativePath.endsWith(".jsonl");
+	const isJson = relativePath.endsWith(".json");
+	if (!isJson && !isJsonl) return;
+	try {
+		if (isJsonl) {
+			if (text !== "" && (!text.endsWith("\n") || text.includes("\r"))) throw new Error("JSONL framing invalid");
+			for (const [index, line] of text.split("\n").entries()) {
+				if (line === "") continue;
+				scanStructuredEvidenceV2(JSON.parse(line), [], `${relativePath}:${index + 1}`, errors);
+			}
+		} else scanStructuredEvidenceV2(JSON.parse(text), [], relativePath, errors);
+	} catch (error) {
+		if (/"(?:reasoning(?:_content)?|thinking|thoughtSignature|signature|authorization|credential|api[_-]?key)"\s*:/i.test(text)) {
+			errors.push(`${relativePath}: unknown/unparseable sensitive schema`);
+		} else if (isJson || isJsonl) errors.push(`${relativePath}: evidence JSON parse failed: ${error instanceof Error ? error.message : String(error)}`);
+	}
+}
+
 function scanEvidenceFiles(runRoot: string, errors: string[]): void {
 	const visit = (directory: string): void => {
 		for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -114,7 +159,7 @@ function scanEvidenceFiles(runRoot: string, errors: string[]): void {
 				errors.push(`unsupported evidence entry rejected: ${relativePath}`);
 				continue;
 			}
-			if (FORBIDDEN_EVIDENCE.test(readFileSync(path, "utf8"))) errors.push(`secret/reasoning scan rejected: ${relativePath}`);
+			scanEvidenceBytesV2(readFileSync(path), relativePath, errors);
 		}
 	};
 	visit(runRoot);
@@ -232,6 +277,7 @@ function validateManifest(
 	errors: string[],
 	expectedTaskId: string,
 	expectedRealExecutionAuthorized: boolean,
+	expectedExecutionPortKind: "internal_deterministic" | "injected",
 ): void {
 	const { manifest_id: declaredManifestId, ...manifestBody } = manifest;
 	if (digestObject(manifestBody) !== declaredManifestId || terminal.manifest_id !== declaredManifestId) errors.push("Manifest identity mismatch");
@@ -241,7 +287,7 @@ function validateManifest(
 		manifest.thinking_level !== "off" || manifest.tool_profile_id !== V2A_TOOL_PROFILE_ID || manifest.skill_id !== V2A_SKILL_ID ||
 		manifest.pi_commit !== V2A_PINNED_PI_COMMIT ||
 		manifest.workbench_revision !== V2A_WORKBENCH_REVISION || manifest.workbench_source_scope !== V2A_WORKBENCH_SOURCE_SCOPE ||
-		manifest.real_execution_authorized !== expectedRealExecutionAuthorized || manifest.recovery_candidate_count_on_valid_failure !== 2 ||
+		manifest.real_execution_authorized !== expectedRealExecutionAuthorized || manifest.execution_port_kind !== expectedExecutionPortKind || manifest.recovery_candidate_count_on_valid_failure !== 2 ||
 		stableJson(manifest.strategy_ids) !== stableJson(V2A_STRATEGY_ORDER) ||
 		stableJson(manifest.per_attempt_budget) !== stableJson(V2A_ATTEMPT_BUDGET_CAPS) ||
 		stableJson(manifest.per_group_budget) !== stableJson(V2A_GROUP_BUDGET_CAPS)
@@ -301,6 +347,9 @@ function parseSession(runRoot: string, ref: ArtifactRefV0B, label: string, error
 		const lines = recordBytes.map((record) => JSON.parse(record.toString("utf8")) as Record<string, unknown>);
 		const header = lines[0];
 		if (!header || header.type !== "session" || typeof header.id !== "string" || typeof header.cwd !== "string") throw new Error("Session header invalid");
+		const toolErrors: string[] = [];
+		validateSessionToolLineageV2(lines.slice(1), toolErrors, label);
+		if (toolErrors.length > 0) throw new Error(toolErrors.join("; "));
 		return { rawBytes, recordBytes, lines, header, entries: lines.slice(1) };
 	} catch (error) {
 		errors.push(`${label}: ${error instanceof Error ? error.message : String(error)}`);
@@ -310,6 +359,31 @@ function parseSession(runRoot: string, ref: ArtifactRefV0B, label: string, error
 
 function equalRecordBytes(left: readonly Buffer[], right: readonly Buffer[]): boolean {
 	return left.length === right.length && left.every((record, index) => record.equals(right[index]!));
+}
+
+export function validateSessionToolLineageV2(entries: readonly Record<string, unknown>[], errors: string[], label = "Session"): void {
+	const pendingToolCalls = new Set<string>();
+	const completedToolCalls = new Set<string>();
+	for (const [entryIndex, entry] of entries.entries()) {
+		const message = entry.message as Record<string, unknown> | undefined;
+		if (!message) continue;
+		if (message.role === "assistant") {
+			const content = Array.isArray(message.content) ? message.content as Array<Record<string, unknown>> : [];
+			for (const block of content.filter((candidate) => candidate.type === "toolCall")) {
+				if (typeof block.id !== "string" || block.id === "" || typeof block.name !== "string" || pendingToolCalls.has(block.id) || completedToolCalls.has(block.id)) {
+					errors.push(`${label}: Tool Call identity invalid at entry ${entryIndex + 1}`);
+					continue;
+				}
+				pendingToolCalls.add(block.id);
+			}
+		}
+		if (message.role === "toolResult") {
+			const toolCallId = message.toolCallId;
+			if (typeof toolCallId !== "string" || !pendingToolCalls.delete(toolCallId)) errors.push(`${label}: Tool Result lineage invalid at entry ${entryIndex + 1}`);
+			else completedToolCalls.add(toolCallId);
+		}
+	}
+	if (pendingToolCalls.size !== 0) errors.push(`${label}: Tool Calls without exact Tool Results`);
 }
 
 function rawUsage(entries: readonly Record<string, unknown>[]): RawUsageV2A {
@@ -514,7 +588,7 @@ function terminalReasonFromRaw(usage: RawUsageV2A): CandidatePathV2A["terminal_r
 
 function compareCandidateSummary(candidate: CandidatePathV2A, derived: CandidatePathV2A, errors: string[]): void {
 	for (const key of [
-		"settled", "terminal_reason", "verifier_status", "evidence_valid", "budget_within_limits", "allowed_semantic_diff_size",
+		"settled", "agent_completion", "quiescent_budget_terminal", "terminal_reason", "verifier_status", "evidence_valid", "budget_within_limits", "allowed_semantic_diff_size",
 		"parent_history_entry_count", "initial_workspace_digest", "final_workspace_digest",
 	] as const) {
 		if (candidate[key] !== derived[key]) errors.push(`${candidate.candidate_path_id}: derived ${key} mismatch`);
@@ -617,21 +691,77 @@ function inspectCandidate(options: {
 	const usage = rawUsage(attemptEntries);
 	const terminalReason = terminalReasonFromRaw(usage);
 	const verifier = validateVerifier(runRoot, manifest, candidate.verifier_result_ref, candidate.attempt_id, `candidates/${suffix}`, errors);
-	const budgetValid =
-		usage.providerDispatches <= V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max &&
-		usage.toolCalls <= V2A_ATTEMPT_BUDGET_CAPS.tool_calls_max &&
-		terminalReason !== "budget_stopped";
 	const protectedValid = protectedWorkspaceValid(runRoot, suffix, protectedPaths, errors);
 	const startEvent = eventOf(journal, "candidate_started", candidate.candidate_path_id);
 	const frozenEvent = eventOf(journal, "candidate_workspace_initial_frozen", candidate.candidate_path_id);
+	const verifierEvents = journal.filter((event) => event.type === "candidate_verifier_completed" && event.data?.candidate_path_id === candidate.candidate_path_id);
+	const verifierEvent = verifierEvents[0] ?? null;
 	const terminalEvent = eventOf(journal, "candidate_terminal", candidate.candidate_path_id);
+	let quiescentBudgetTerminal = false;
+	if (candidate.pre_verifier_checkpoint_ref) {
+		const checkpointStartErrors = errors.length;
+		addArtifactErrors(errors, runRoot, `${candidate.candidate_path_id} pre-Verifier checkpoint`, candidate.pre_verifier_checkpoint_ref);
+		if (candidate.pre_verifier_checkpoint_ref.path !== `candidates/${suffix}/pre-verifier-checkpoint.json`) errors.push(`${candidate.candidate_path_id}: pre-Verifier checkpoint path mismatch`);
+		const checkpoint = safeReadJson<CandidatePreVerifierCheckpointV2A>(runRoot, candidate.pre_verifier_checkpoint_ref.path, errors);
+		const checkpointEvents = journal.filter((event) => event.type === "candidate_pre_verifier_checkpoint" && event.data?.candidate_path_id === candidate.candidate_path_id);
+		const checkpointEvent = checkpointEvents[0] ?? null;
+		let checkpointSession: ParsedSessionV2A | null = null;
+		let checkpointWorkspace: ValidatedSnapshotV2A | null = null;
+		if (checkpoint) {
+			checkpointSession = parseSession(runRoot, checkpoint.session_snapshot_ref, `${candidate.candidate_path_id} pre-Verifier Session`, errors);
+			checkpointWorkspace = validateWorkspaceSnapshot(
+				runRoot,
+				checkpoint.workspace_snapshot_ref,
+				`candidates/${suffix}/workspace-pre-verifier.json`,
+				workspaceRoot,
+				`${candidate.candidate_path_id}-workspace`,
+				`${candidate.candidate_path_id} pre-Verifier Workspace`,
+				errors,
+				true,
+			);
+			const checkpointUsage = checkpointSession && before ? rawUsage(checkpointSession.entries.slice(before.entries.length)) : null;
+			const observation = checkpoint.runtime_observation;
+			const checkpointIndex = checkpointEvent ? journal.indexOf(checkpointEvent) : -1;
+			const verifierIndex = verifierEvent ? journal.indexOf(verifierEvent) : -1;
+			const terminalIndex = terminalEvent ? journal.indexOf(terminalEvent) : -1;
+			const rawDerived =
+				checkpoint.schema_version === "v2a-candidate-pre-verifier-checkpoint-v1" && checkpoint.candidate_path_id === candidate.candidate_path_id &&
+				checkpoint.attempt_id === candidate.attempt_id && checkpoint.terminal_reason === "budget_stopped" &&
+				observation?.pre_dispatch_refusal === true && observation.pending_provider_responses === 0 &&
+				observation.pending_provider_reservation === false && observation.pending_tool_calls === 0 &&
+				observation.prior_usage_known === true && observation.reservations_reconciled === true &&
+				checkpoint.raw_provider_dispatches === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max &&
+				checkpointSession !== null && finalSession !== null && checkpointSession.rawBytes.equals(finalSession.rawBytes) &&
+				checkpoint.session_id === checkpointSession.header.id && checkpoint.session_entry_count === checkpointSession.entries.length &&
+				checkpointWorkspace?.valid === true && checkpoint.workspace_digest === checkpointWorkspace.snapshot?.digest && checkpoint.workspace_digest === final.snapshot?.digest &&
+				checkpointUsage !== null && checkpointUsage.settled === false &&
+				checkpoint.raw_provider_dispatches === checkpointUsage.providerDispatches && checkpoint.raw_tool_calls === checkpointUsage.toolCalls && checkpoint.raw_tokens === checkpointUsage.tokens &&
+				checkpoint.tool_lifecycle_closed === true && checkpoint.protected_secret_path_valid === true && protectedValid &&
+				checkpointEvents.length === 1 && checkpointEvent !== null && sameRef(checkpointEvent.data?.checkpoint_ref, candidate.pre_verifier_checkpoint_ref) &&
+				sameRef(checkpointEvent.data?.session_snapshot_ref, checkpoint.session_snapshot_ref) && sameRef(checkpointEvent.data?.workspace_snapshot_ref, checkpoint.workspace_snapshot_ref) &&
+				checkpointEvent.seq === checkpoint.journal_sequence && checkpointIndex >= 0 && verifierIndex > checkpointIndex && terminalIndex > verifierIndex &&
+				verifierEvents.length === 1 && verifierEvent !== null && sameRef(verifierEvent.data?.verifier_result_ref, candidate.verifier_result_ref) &&
+				sameRef(verifierEvent.data?.pre_verifier_checkpoint_ref, candidate.pre_verifier_checkpoint_ref);
+			quiescentBudgetTerminal = terminalReason === "budget_stopped" && rawDerived && errors.length === checkpointStartErrors;
+		}
+		if (!quiescentBudgetTerminal) errors.push(`${candidate.candidate_path_id}: raw-derived pre-Verifier quiescence checkpoint invalid`);
+	} else if (candidate.quiescent_budget_terminal) {
+		errors.push(`${candidate.candidate_path_id}: quiescent summary lacks raw pre-Verifier checkpoint`);
+	}
+	const internalDeterministicBudgetTerminal = manifest.execution_port_kind === "internal_deterministic" && terminalReason === "budget_stopped" && candidate.pre_verifier_checkpoint_ref === null;
+	const budgetValid =
+		usage.providerDispatches <= V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max &&
+		usage.toolCalls <= V2A_ATTEMPT_BUDGET_CAPS.tool_calls_max &&
+		(terminalReason !== "budget_stopped" || quiescentBudgetTerminal);
 	if (
 		!startEvent || !frozenEvent || !terminalEvent ||
 		!sameRef(startEvent.data?.initial_workspace_ref, candidate.initial_workspace_ref) ||
 		!sameRef(frozenEvent.data?.initial_workspace_ref, candidate.initial_workspace_ref) ||
 		!sameRef(startEvent.data?.session_snapshot_before_run_ref, candidate.session_snapshot_before_run_ref) ||
+		verifierEvents.length !== 1 || !verifierEvent || !sameRef(verifierEvent.data?.verifier_result_ref, candidate.verifier_result_ref) ||
 		!sameRef(terminalEvent.data?.verifier_result_ref, candidate.verifier_result_ref) ||
 		!sameRef(terminalEvent.data?.session_ref, candidate.session_ref) ||
+		!sameRef(terminalEvent.data?.pre_verifier_checkpoint_ref, candidate.pre_verifier_checkpoint_ref) ||
 		terminalEvent.data?.terminal_reason !== candidate.terminal_reason || terminalEvent.data?.verifier_status !== candidate.verifier_status
 	) {
 		errors.push(`${candidate.candidate_path_id}: Journal raw Artifact/terminal binding mismatch`);
@@ -643,7 +773,7 @@ function inspectCandidate(options: {
 		identity_complete: evidenceValid,
 		seed_and_isolation_valid: initialMatchesSeed,
 		session_lineage_valid: sessionValid,
-		unique_terminal_settled: usage.settled && journal.filter((event) => event.type === "candidate_terminal" && event.data?.candidate_path_id === candidate.candidate_path_id).length === 1,
+		unique_terminal_settled: (usage.settled || quiescentBudgetTerminal || internalDeterministicBudgetTerminal) && journal.filter((event) => event.type === "candidate_terminal" && event.data?.candidate_path_id === candidate.candidate_path_id).length === 1,
 		budget_valid: budgetValid,
 		verifier_passed: verifier.passed,
 		protected_secret_path_valid: protectedValid,
@@ -654,6 +784,8 @@ function inspectCandidate(options: {
 		parent_history_entry_count: before?.entries.length ?? -1,
 		initial_workspace_digest: initial.snapshot?.digest ?? "",
 		settled: usage.settled,
+		agent_completion: usage.settled ? "settled" : quiescentBudgetTerminal || internalDeterministicBudgetTerminal ? "pre_dispatch_budget_terminal" : "invalid",
+		quiescent_budget_terminal: quiescentBudgetTerminal,
 		final_workspace_digest: final.snapshot?.digest ?? "",
 		verifier_status: verifier.status ?? "invalid",
 		evidence_valid: evidenceValid,
@@ -675,7 +807,7 @@ function inspectCandidate(options: {
 	return { derived, initial, sessionId: before && typeof before.header.id === "string" ? before.header.id : null };
 }
 
-export function inspectRunV2A(options: { projectRoot: string; runRoot: string; expectedTaskId?: string; expectedRealExecutionAuthorized?: boolean; expectedRealCallCounters?: { credential_reads: number; network_calls: number; external_provider_calls: number; real_model_calls: number } }): InspectResultV2A {
+export function inspectRunV2A(options: { projectRoot: string; runRoot: string; expectedTaskId?: string; expectedRealExecutionAuthorized?: boolean; expectedExecutionPortKind?: "internal_deterministic" | "injected"; expectedRealCallCounters?: { credential_reads: number; network_calls: number; external_provider_calls: number; real_model_calls: number } }): InspectResultV2A {
 	const errors = validateRunRootBoundary(options.runRoot);
 	const result = (terminal: RunTerminalV2A | null, seed: RecoverySeedV2A | null, candidates: CandidatePathV2A[], selection: SelectionDecisionV2A | null): InspectResultV2A => ({
 		schema_version: "v2a-inspection-v2",
@@ -693,7 +825,7 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 	if (!terminal || !manifest) return result(terminal, null, [], null);
 	if (terminal.schema_version !== "v2a-run-terminal-v2" || terminal.run_id !== manifest.run_id) errors.push("Run terminal/Manifest identity mismatch");
 	if (stableJson(terminal.real_call_counters) !== stableJson(options.expectedRealCallCounters ?? { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 })) errors.push("real-access counters mismatch");
-	validateManifest(options.projectRoot, options.runRoot, terminal, manifest, errors, options.expectedTaskId ?? V2A_TASK_ID, options.expectedRealExecutionAuthorized ?? false);
+	validateManifest(options.projectRoot, options.runRoot, terminal, manifest, errors, options.expectedTaskId ?? V2A_TASK_ID, options.expectedRealExecutionAuthorized ?? false, options.expectedExecutionPortKind ?? "internal_deterministic");
 	const journal = readJournal(options.runRoot, terminal, errors);
 	const runStartedEvent = eventOf(journal, "run_started");
 	if (
@@ -709,15 +841,29 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 	const primaryVerifier = validateVerifier(options.runRoot, manifest, terminal.primary_verifier_result_ref, terminal.primary_attempt_id, "primary", errors);
 	const primarySettledEvent = eventOf(journal, "primary_settled");
 	const primaryVerifierEvent = eventOf(journal, "primary_verifier_completed");
+	const primaryQuiescentBudgetTerminal = terminal.primary_agent_completion === "pre_dispatch_budget_terminal" && !primaryUsage.settled && primaryUsage.providerDispatches === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max;
 	if (
-		!primarySession || !primaryUsage.settled || primaryUsage.providerDispatches > V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max ||
+		!primarySession || (!primaryUsage.settled && !primaryQuiescentBudgetTerminal) || primaryUsage.providerDispatches > V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max ||
 		primaryUsage.toolCalls > V2A_ATTEMPT_BUDGET_CAPS.tool_calls_max ||
 		primarySettledEvent?.data?.provider_dispatches !== primaryUsage.providerDispatches || primarySettledEvent?.data?.tool_calls !== primaryUsage.toolCalls ||
+		primarySettledEvent?.data?.agent_completion !== terminal.primary_agent_completion ||
 		!sameRef(primarySettledEvent?.data?.session_ref, terminal.primary_session_ref) ||
 		!sameRef(primaryVerifierEvent?.data?.verifier_result_ref, terminal.primary_verifier_result_ref) ||
 		primaryVerifierEvent?.data?.status !== primaryVerifier.status || terminal.primary_verifier_status !== primaryVerifier.status
 	) {
 		errors.push("primary raw Session/Verifier/Journal budget or terminal semantics mismatch");
+	}
+	if (terminal.primary_maintenance_check_ref) {
+		addArtifactErrors(errors, options.runRoot, "primary maintenance check", terminal.primary_maintenance_check_ref);
+		const maintenance = safeReadJson<{ schema_version?: unknown; attempt_id?: unknown; status?: unknown; exit_code?: unknown; output_ref?: unknown }>(options.runRoot, terminal.primary_maintenance_check_ref.path, errors);
+		const maintenanceEvent = eventOf(journal, "primary_maintenance_completed");
+		if (
+			terminal.primary_maintenance_check_ref.path !== "primary/maintenance-result.json" || maintenance?.schema_version !== "v2b-r2-maintenance-check-v1" ||
+			maintenance.attempt_id !== terminal.primary_attempt_id || maintenance.status !== "passed" || maintenance.exit_code !== 0 ||
+			!addArtifactErrors(errors, options.runRoot, "primary maintenance output", maintenance.output_ref) ||
+			!sameRef(maintenanceEvent?.data?.maintenance_check_ref, terminal.primary_maintenance_check_ref) ||
+			journal.indexOf(maintenanceEvent!) >= journal.indexOf(primaryVerifierEvent!)
+		) errors.push("controlled Seed maintenance check identity/order mismatch");
 	}
 	if (terminal.outcome === "initial_pass") {
 		if (
@@ -759,6 +905,21 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 		seed.workbench_digest !== manifest.workbench_source_digest || !seed.created_before_candidate_attempts
 	) {
 		errors.push("Recovery Seed lineage/source/order mismatch");
+	}
+	if (!sameRef(seed.maintenance_check_ref, terminal.primary_maintenance_check_ref)) errors.push("Recovery Seed maintenance linkage mismatch");
+	if (seed.controlled_seed_provenance_ref === null) {
+		if (seed.maintenance_check_ref !== null) errors.push("uncontrolled Seed unexpectedly carries maintenance evidence");
+	} else {
+		addArtifactErrors(errors, options.runRoot, "controlled Seed provenance", seed.controlled_seed_provenance_ref);
+		const provenance = safeReadJson<{ schema_version?: unknown; case_id?: unknown; source_run_id?: unknown; source_cell?: unknown; classification?: unknown; fixture_ref?: unknown; fixture_sha256?: unknown }>(options.runRoot, seed.controlled_seed_provenance_ref.path, errors);
+		if (
+			seed.controlled_seed_provenance_ref.path !== "config/controlled-seed-provenance.json" ||
+			provenance?.schema_version !== "v2b-r2-controlled-seed-provenance-v1" || provenance?.case_id !== "controlled_parse_duration_recovery_seed" ||
+			provenance?.source_run_id !== "v1c-full-pilot-run-14-parse-duration-r2-a" || provenance?.source_cell !== 14 ||
+			provenance?.classification !== "derived_behavior_fixture_not_historical_run_bytes" || typeof provenance?.fixture_ref !== "string" ||
+			typeof provenance?.fixture_sha256 !== "string" || fileSha256(resolve(options.projectRoot, provenance.fixture_ref)) !== provenance.fixture_sha256 ||
+			seed.maintenance_check_ref === null
+		) errors.push("controlled Seed provenance/fixture/maintenance identity mismatch");
 	}
 	for (const [label, ref] of [
 		["Seed instruction", seed.task_instruction_ref],

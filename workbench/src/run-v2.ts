@@ -1,4 +1,5 @@
 import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { relative, resolve, sep } from "node:path";
 import {
 	AgentHarness,
@@ -18,6 +19,7 @@ import {
 import type { ArtifactRefV0B, TaskSpecV0B, VerifierResultV0B } from "./contracts/v0b-types.ts";
 import type {
 	BudgetUsageV2A,
+	CandidatePreVerifierCheckpointV2A,
 	CandidateModeV2A,
 	CandidatePathV2A,
 	ExecuteRunOptionsV2A,
@@ -25,6 +27,7 @@ import type {
 	RecoveryStrategyV2A,
 	RunManifestV2A,
 	RunTerminalV2A,
+	RuntimeBudgetStopObservationV2,
 	SourceInventoryV2A,
 	WorkspaceSnapshotV2A,
 } from "./contracts/v2-types.ts";
@@ -65,6 +68,8 @@ export const ZERO_REAL_CALL_COUNTERS_V2A = Object.freeze({
 export interface HarnessResultV2A {
 	settled: boolean;
 	terminalReason: "settled" | "budget_stopped" | "runtime_invalid";
+	agentCompletion: "settled" | "pre_dispatch_budget_terminal" | "invalid";
+	runtimeBudgetStopObservation: RuntimeBudgetStopObservationV2 | null;
 	providerDispatches: number;
 	toolCalls: number;
 	tokens: number;
@@ -87,6 +92,18 @@ export interface ExecutionPortV2 {
 	execute(input: ExecutionAttemptRequestV2): Promise<HarnessResultV2A>;
 	close?(): Promise<void>;
 }
+
+export interface ControlledSeedProvenanceV2 {
+	schema_version: "v2b-r2-controlled-seed-provenance-v1";
+	case_id: "controlled_parse_duration_recovery_seed";
+	source_run_id: "v1c-full-pilot-run-14-parse-duration-r2-a";
+	source_cell: 14;
+	classification: "derived_behavior_fixture_not_historical_run_bytes";
+	fixture_ref: string;
+	fixture_sha256: string;
+}
+
+const CONTROLLER_OWNED_DETERMINISTIC_PORTS_V2A = new WeakSet<ExecutionPortV2>();
 
 class CandidateBudgetStopV2A extends Error {
 	constructor() {
@@ -116,6 +133,7 @@ function manifestFor(options: {
 	workbenchSourceRef: ArtifactRefV0B;
 	workbenchSourceDigest: string;
 	realExecutionAuthorized: boolean;
+	executionPortKind: "internal_deterministic" | "injected";
 }): RunManifestV2A {
 	if (options.task.task_id !== V2A_TASK_ID && options.task.task_id !== "v1-stable-format") throw new Error("V2 task identity is outside the frozen Case set");
 	if (options.task.external_verifier_id !== V2A_VERIFIER_ID && options.task.external_verifier_id !== "v1-stable-format-verifier") throw new Error("V2 Verifier identity is outside the frozen Case set");
@@ -150,6 +168,7 @@ function manifestFor(options: {
 		workbench_source_ref: options.workbenchSourceRef,
 		workbench_source_digest: options.workbenchSourceDigest,
 		real_execution_authorized: options.realExecutionAuthorized,
+		execution_port_kind: options.executionPortKind,
 		recovery_candidate_count_on_valid_failure: 2 as const,
 		per_attempt_budget: structuredClone(V2A_ATTEMPT_CAPS),
 		per_group_budget: structuredClone(V2A_GROUP_BUDGET_CAPS),
@@ -205,6 +224,43 @@ async function verifyWorkspace(options: {
 		workspaceEnvironmentKey: "V1_WORKSPACE",
 	});
 	return { result, resultRef: writeOnceJson(options.runRoot, `${options.prefix}/verifier-result.json`, result) };
+}
+
+function runMaintenanceCheckV2(options: {
+	runRoot: string;
+	workspaceRoot: string;
+	task: TaskSpecV1;
+	attemptId: string;
+}): ArtifactRefV0B {
+	const command = options.task.command_descriptors.find((entry) => entry.command_id === options.task.public_check_id);
+	if (!command || command.executable !== "current_node_executable" || command.cwd !== "workspace") {
+		throw new Error("V2 controlled Seed maintenance command identity invalid");
+	}
+	const result = spawnSync(process.execPath, command.argv, {
+		cwd: options.workspaceRoot,
+		encoding: "utf8",
+		timeout: command.timeout_seconds * 1000,
+		maxBuffer: command.max_combined_output_bytes,
+		env: {},
+	});
+	const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+	const outputPath = writeOnceBytes(options.runRoot, "primary/maintenance-output.txt", output);
+	const outputRef = artifactRef(options.runRoot, outputPath, "text/plain", false);
+	const evidence = {
+		schema_version: "v2b-r2-maintenance-check-v1",
+		attempt_id: options.attemptId,
+		command_id: command.command_id,
+		executable: "current_node_executable",
+		argv: command.argv,
+		cwd: "workspace",
+		exit_code: result.status,
+		signal: result.signal,
+		status: result.status === 0 && result.signal === null ? "passed" : "failed",
+		output_ref: outputRef,
+	};
+	const ref = writeOnceJson(options.runRoot, "primary/maintenance-result.json", evidence);
+	if (evidence.status !== "passed") throw new Error("V2 controlled Seed maintenance check failed");
+	return ref;
 }
 
 function fakeResponses(mode: CandidateModeV2A | "primary_pass" | "primary_fail", attemptId: string, patch: string) {
@@ -294,6 +350,8 @@ async function runHarnessDeterministicV2A(options: ExecutionAttemptRequestV2): P
 		return {
 			settled: exhaustedHostBudget ? false : settled,
 			terminalReason: exhaustedHostBudget ? "budget_stopped" : settled ? "settled" : "runtime_invalid",
+			agentCompletion: exhaustedHostBudget ? "pre_dispatch_budget_terminal" : settled ? "settled" : "invalid",
+			runtimeBudgetStopObservation: null,
 			providerDispatches,
 			toolCalls,
 			tokens,
@@ -304,6 +362,8 @@ async function runHarnessDeterministicV2A(options: ExecutionAttemptRequestV2): P
 		return {
 			settled: false,
 			terminalReason: budgetStopped ? "budget_stopped" : "runtime_invalid",
+			agentCompletion: budgetStopped ? "pre_dispatch_budget_terminal" : "invalid",
+			runtimeBudgetStopObservation: null,
 			providerDispatches,
 			toolCalls,
 			tokens,
@@ -443,7 +503,128 @@ function sessionArtifact(runRoot: string, metadata: JsonlSessionMetadata): Artif
 	return artifactRef(runRoot, metadata.path, "application/x-ndjson", false);
 }
 
-async function executeCandidate(options: {
+export function prepareAndFreezeRecoverySeedV2(options: {
+	runRoot: string;
+	seedWorkspaceRoot: string;
+	seed: RecoverySeedV2A;
+}): ArtifactRefV0B {
+	const seedRef = writeOnceJson(options.runRoot, "seed/recovery-seed.json", options.seed);
+	if (
+		fileSha256(resolve(options.runRoot, seedRef.path)) !== seedRef.sha256 ||
+		treeDigest(options.seedWorkspaceRoot) !== options.seed.failed_workspace_snapshot_digest
+	) throw new Error("Recovery Seed failed post-freeze integrity verification");
+	return seedRef;
+}
+
+function sessionToolLifecycleClosedV2(entries: readonly unknown[]): boolean {
+	const calls = new Set<string>();
+	const results = new Set<string>();
+	for (const entry of entries) {
+		if (!entry || typeof entry !== "object") return false;
+		const message = (entry as { message?: unknown }).message;
+		if (!message || typeof message !== "object") continue;
+		const role = (message as { role?: unknown }).role;
+		if (role === "assistant") {
+			const content = (message as { content?: unknown }).content;
+			if (!Array.isArray(content)) return false;
+			for (const block of content) {
+				if (!block || typeof block !== "object" || (block as { type?: unknown }).type !== "toolCall") continue;
+				const id = (block as { id?: unknown }).id;
+				if (typeof id !== "string" || id === "" || calls.has(id)) return false;
+				calls.add(id);
+			}
+		} else if (role === "toolResult") {
+			const id = (message as { toolCallId?: unknown }).toolCallId;
+			if (typeof id !== "string" || !calls.has(id) || results.has(id)) return false;
+			results.add(id);
+		}
+	}
+	return calls.size === results.size;
+}
+
+async function createCandidatePreVerifierCheckpointV2A(options: {
+	runRoot: string;
+	sequence: { value: number };
+	candidatePathId: string;
+	attemptId: string;
+	suffix: "a" | "b";
+	session: Session<JsonlSessionMetadata>;
+	entriesBefore: readonly unknown[];
+	workspaceRoot: string;
+	task: TaskSpecV1;
+	seedProtectedBytes: Readonly<Record<string, string>>;
+	harness: HarnessResultV2A;
+}): Promise<{ ref: ArtifactRefV0B; checkpoint: CandidatePreVerifierCheckpointV2A }> {
+	const observation = options.harness.runtimeBudgetStopObservation;
+	if (!observation || options.harness.terminalReason !== "budget_stopped" || options.harness.agentCompletion !== "pre_dispatch_budget_terminal") {
+		throw new Error("V2 Candidate lacks a runtime-observed pre-dispatch budget stop");
+	}
+	const metadata = await options.session.getMetadata();
+	const liveEntries = await options.session.getEntries();
+	const reopenedRepo = new JsonlSessionRepo({
+		fs: new NodeExecutionEnv({ cwd: options.runRoot, shellEnv: {} }),
+		sessionsRoot: resolve(options.runRoot, "sessions"),
+	});
+	const reopened = await reopenedRepo.open(metadata);
+	const reopenedMetadata = await reopened.getMetadata();
+	const reopenedEntries = await reopened.getEntries();
+	if (
+		reopenedMetadata.id !== metadata.id || resolve(reopenedMetadata.path) !== resolve(metadata.path) ||
+		stableJson(reopenedEntries) !== stableJson(liveEntries)
+	) throw new Error("V2 Candidate public Session reopen evidence mismatch");
+	const sessionPath = `candidates/${options.suffix}/session-pre-verifier.jsonl`;
+	writeOnceBytes(options.runRoot, sessionPath, readFileSync(metadata.path));
+	const sessionRef = artifactRef(options.runRoot, sessionPath, "application/x-ndjson", false);
+	const rawUsage = rawAttemptUsage(reopenedEntries, options.entriesBefore.length);
+	const toolLifecycleClosed = sessionToolLifecycleClosedV2(reopenedEntries.slice(options.entriesBefore.length));
+	const workspaceRef = workspaceSnapshot(
+		options.runRoot,
+		options.workspaceRoot,
+		`candidates/${options.suffix}/workspace-pre-verifier.json`,
+		`${options.candidatePathId}-workspace`,
+	);
+	const workspaceDigest = treeDigest(options.workspaceRoot);
+	const protectedValid = candidateWorkspaceGuardrails(options.seedProtectedBytes, options.workspaceRoot, options.task);
+	const rawGate =
+		observation.pre_dispatch_refusal === true && observation.pending_provider_responses === 0 &&
+		observation.pending_provider_reservation === false && observation.pending_tool_calls === 0 &&
+		observation.prior_usage_known === true && observation.reservations_reconciled === true &&
+		rawUsage.providerDispatches === V2A_ATTEMPT_CAPS.faux_provider_dispatches_max &&
+		rawUsage.providerDispatches === options.harness.providerDispatches && rawUsage.toolCalls === options.harness.toolCalls &&
+		rawUsage.tokens === options.harness.tokens && rawUsage.settled === false && toolLifecycleClosed && protectedValid;
+	if (!rawGate) throw new Error("V2 Candidate raw pre-Verifier quiescence checkpoint failed");
+	const checkpoint: CandidatePreVerifierCheckpointV2A = {
+		schema_version: "v2a-candidate-pre-verifier-checkpoint-v1",
+		candidate_path_id: options.candidatePathId,
+		attempt_id: options.attemptId,
+		terminal_reason: "budget_stopped",
+		runtime_observation: structuredClone(observation),
+		session_snapshot_ref: sessionRef,
+		session_id: metadata.id,
+		session_entry_count: reopenedEntries.length,
+		workspace_snapshot_ref: workspaceRef,
+		workspace_digest: workspaceDigest,
+		raw_provider_dispatches: rawUsage.providerDispatches,
+		raw_tool_calls: rawUsage.toolCalls,
+		raw_tokens: rawUsage.tokens,
+		tool_lifecycle_closed: true,
+		protected_secret_path_valid: true,
+		journal_sequence: options.sequence.value + 1,
+	};
+	const ref = writeOnceJson(options.runRoot, `candidates/${options.suffix}/pre-verifier-checkpoint.json`, checkpoint);
+	appendJournal(options.runRoot, options.sequence, "candidate_pre_verifier_checkpoint", {
+		candidate_path_id: options.candidatePathId,
+		attempt_id: options.attemptId,
+		checkpoint_ref: ref,
+		session_snapshot_ref: sessionRef,
+		workspace_snapshot_ref: workspaceRef,
+		terminal_reason: "budget_stopped",
+	});
+	if (options.sequence.value !== checkpoint.journal_sequence) throw new Error("V2 Candidate checkpoint Journal sequence mismatch");
+	return { ref, checkpoint };
+}
+
+export async function executeRecoveryCandidateFromSeedV2(options: {
 	projectRoot: string;
 	runRoot: string;
 	sequence: { value: number };
@@ -501,6 +682,28 @@ async function executeCandidate(options: {
 		mode: options.mode,
 		patch: options.patch,
 	});
+	const settledEligible = harness.settled && harness.agentCompletion === "settled" && harness.terminalReason === "settled";
+	const internalDeterministicBudget = CONTROLLER_OWNED_DETERMINISTIC_PORTS_V2A.has(options.executionPort) && harness.terminalReason === "budget_stopped";
+	let checkpointRef: ArtifactRefV0B | null = null;
+	let quiescentBudgetTerminal = false;
+	if (!settledEligible && !internalDeterministicBudget) {
+		const checkpoint = await createCandidatePreVerifierCheckpointV2A({
+			runRoot: options.runRoot,
+			sequence: options.sequence,
+			candidatePathId,
+			attemptId,
+			suffix,
+			session,
+			entriesBefore,
+			workspaceRoot,
+			task: options.task,
+			seedProtectedBytes,
+			harness,
+		});
+		checkpointRef = checkpoint.ref;
+		quiescentBudgetTerminal = true;
+	}
+	if (!settledEligible && !internalDeterministicBudget && !quiescentBudgetTerminal) throw new Error("V2 Candidate is not at a verifier-safe Agent terminal");
 	const verifier = await verifyWorkspace({
 		projectRoot: options.projectRoot,
 		runRoot: options.runRoot,
@@ -508,6 +711,12 @@ async function executeCandidate(options: {
 		task: options.task,
 		attemptId,
 		prefix: `candidates/${suffix}`,
+	});
+	appendJournal(options.runRoot, options.sequence, "candidate_verifier_completed", {
+		candidate_path_id: candidatePathId,
+		attempt_id: attemptId,
+		verifier_result_ref: verifier.resultRef,
+		...(checkpointRef ? { pre_verifier_checkpoint_ref: checkpointRef } : {}),
 	});
 	const finalEntries = await session.getEntries();
 	const rawUsage = rawAttemptUsage(finalEntries, entriesBefore.length);
@@ -534,7 +743,7 @@ async function executeCandidate(options: {
 		usage.faux_provider_dispatches <= V2A_ATTEMPT_CAPS.faux_provider_dispatches_max &&
 		usage.tool_calls <= V2A_ATTEMPT_CAPS.tool_calls_max &&
 		usage.verifier_runs <= V2A_ATTEMPT_CAPS.verifier_runs_max &&
-		harness.terminalReason !== "budget_stopped";
+		(harness.terminalReason !== "budget_stopped" || quiescentBudgetTerminal);
 	const evidenceValid = options.mode !== "invalid";
 	const protectedSecretPathValid = candidateWorkspaceGuardrails(seedProtectedBytes, workspaceRoot, options.task);
 	const commonArtifactDigest = digestObject({
@@ -559,7 +768,7 @@ async function executeCandidate(options: {
 			(options.strategy === "continue_failed_session"
 				? sessionMetadata.parentSessionPath === options.parentSessionMetadata.path
 				: sessionMetadata.parentSessionPath === undefined),
-		unique_terminal_settled: harness.settled,
+		unique_terminal_settled: settledEligible || internalDeterministicBudget || quiescentBudgetTerminal,
 		budget_valid: budgetWithin,
 		verifier_passed: verifier.result.status === "passed",
 		protected_secret_path_valid: protectedSecretPathValid,
@@ -580,7 +789,10 @@ async function executeCandidate(options: {
 		initial_workspace_ref: options.initialWorkspaceRef,
 		initial_workspace_digest: initialWorkspaceDigest,
 		attempt_id: attemptId,
+		pre_verifier_checkpoint_ref: checkpointRef,
 		settled: harness.settled,
+		agent_completion: harness.agentCompletion,
+		quiescent_budget_terminal: quiescentBudgetTerminal,
 		final_workspace_ref: workspaceRef,
 		final_workspace_digest: finalWorkspaceDigest,
 		verifier_result_ref: verifier.resultRef,
@@ -603,13 +815,27 @@ async function executeCandidate(options: {
 		verifier_result_ref: candidate.verifier_result_ref,
 		session_ref: candidate.session_ref,
 		candidate_ref: candidateRef,
+		pre_verifier_checkpoint_ref: checkpointRef,
 	});
 	return candidate;
+}
+
+export async function executeRecoveryGroupFromSeedV2(options: {
+	executeA: () => Promise<CandidatePathV2A>;
+	executeB: () => Promise<CandidatePathV2A>;
+}): Promise<readonly [CandidatePathV2A, CandidatePathV2A]> {
+	const candidateA = await options.executeA();
+	const candidateB = await options.executeB();
+	return [candidateA, candidateB] as const;
 }
 
 export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 	taskId?: string;
 	executionPort?: ExecutionPortV2;
+	primaryExecutionPort?: ExecutionPortV2;
+	candidateExecutionPort?: ExecutionPortV2;
+	primaryPatch?: string;
+	controlledSeedProvenance?: ControlledSeedProvenanceV2;
 	realExecutionAuthorized?: boolean;
 	realCallCounters?: { credential_reads: number; network_calls: number; external_provider_calls: number; real_model_calls: number };
 }): Promise<RunTerminalV2A> {
@@ -620,6 +846,10 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 	const task = loadCandidateTaskPackV1(options.projectRoot).find((candidate) => candidate.task_id === (options.taskId ?? V2A_TASK_ID));
 	if (!task) throw new Error("V2-A frozen task is unavailable");
 	const executionPort = options.executionPort ?? createDeterministicExecutionPortV2A();
+	const primaryExecutionPort = options.primaryExecutionPort ?? executionPort;
+	const candidateExecutionPort = options.candidateExecutionPort ?? executionPort;
+	const internalDefaultExecution = options.executionPort === undefined && options.primaryExecutionPort === undefined && options.candidateExecutionPort === undefined;
+	if (internalDefaultExecution) CONTROLLER_OWNED_DETERMINISTIC_PORTS_V2A.add(candidateExecutionPort);
 	const loadedSkill = await loadExactOneSkillV1({
 		projectRoot: options.projectRoot,
 		skillRoot: "fixtures/skills/v1",
@@ -628,6 +858,12 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 	const skill = loadedSkill.skill;
 	const instruction = readFileSync(resolve(options.projectRoot, task.instruction_ref), "utf8");
 	const patch = readFileSync(resolve(options.projectRoot, task.reference_patch_ref), "utf8");
+	const primaryPatch = options.primaryPatch ?? patch;
+	let controlledSeedProvenanceRef: ArtifactRefV0B | null = null;
+	if (options.controlledSeedProvenance) {
+		if (sha256(primaryPatch) !== options.controlledSeedProvenance.fixture_sha256) throw new Error("controlled Seed fixture digest mismatch");
+		controlledSeedProvenanceRef = writeOnceJson(options.runRoot, "config/controlled-seed-provenance.json", options.controlledSeedProvenance);
+	}
 	const workbenchSource = sourceInventory(options.projectRoot);
 	const workbenchSourceRef = writeOnceJson(options.runRoot, "config/workbench-source.json", workbenchSource);
 	const instructionPath = writeOnceBytes(options.runRoot, "config/instruction.md", instruction);
@@ -648,6 +884,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		workbenchSourceRef,
 		workbenchSourceDigest: workbenchSource.digest,
 		realExecutionAuthorized: options.realExecutionAuthorized ?? false,
+		executionPortKind: internalDefaultExecution ? "internal_deterministic" : "injected",
 	});
 	const manifestRef = writeOnceJson(options.runRoot, "config/manifest.json", manifest);
 	appendJournal(options.runRoot, sequence, "run_started", {
@@ -673,7 +910,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 	});
 	const primaryAttemptId = `${options.runId}-primary-attempt-01`;
 	appendJournal(options.runRoot, sequence, "primary_started", { attempt_id: primaryAttemptId });
-	const primaryHarness = await executionPort.execute({
+	const primaryHarness = await primaryExecutionPort.execute({
 		session: parentSession,
 		workspaceRoot: primaryWorkspaceRoot,
 		task,
@@ -681,9 +918,11 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		prompt: instruction,
 		attemptId: primaryAttemptId,
 		mode: options.primaryMode === "pass" ? "primary_pass" : "primary_fail",
-		patch,
+		patch: primaryPatch,
 	});
-	if (!primaryHarness.settled) throw new Error("V2-A primary Attempt did not settle");
+	if (!primaryHarness.settled || primaryHarness.agentCompletion !== "settled" || primaryHarness.terminalReason !== "settled") {
+		throw new Error("V2-A primary Attempt did not reach a verifier-safe settled terminal");
+	}
 	const parentSessionMetadata = await parentSession.getMetadata();
 	const primarySessionRef = sessionArtifact(options.runRoot, parentSessionMetadata);
 	const parentEntries = await parentSession.getEntries();
@@ -692,7 +931,7 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		primaryRawUsage.providerDispatches !== primaryHarness.providerDispatches ||
 		primaryRawUsage.toolCalls !== primaryHarness.toolCalls ||
 		primaryRawUsage.tokens !== primaryHarness.tokens ||
-		!primaryRawUsage.settled
+		primaryRawUsage.settled !== primaryHarness.settled
 	) {
 		throw new Error("V2-A primary raw Session usage disagrees with runtime observation");
 	}
@@ -701,8 +940,16 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		provider_dispatches: primaryHarness.providerDispatches,
 		tool_calls: primaryHarness.toolCalls,
 		terminal_reason: primaryHarness.terminalReason,
+		agent_completion: primaryHarness.agentCompletion,
 		session_ref: primarySessionRef,
 	});
+	const maintenanceCheckRef = options.controlledSeedProvenance ? runMaintenanceCheckV2({
+		runRoot: options.runRoot,
+		workspaceRoot: primaryWorkspaceRoot,
+		task,
+		attemptId: primaryAttemptId,
+	}) : null;
+	if (maintenanceCheckRef) appendJournal(options.runRoot, sequence, "primary_maintenance_completed", { attempt_id: primaryAttemptId, status: "passed", maintenance_check_ref: maintenanceCheckRef });
 	const primaryVerifier = await verifyWorkspace({
 		projectRoot: options.projectRoot,
 		runRoot: options.runRoot,
@@ -725,6 +972,8 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 			primary_session_ref: primarySessionRef,
 			primary_verifier_result_ref: primaryVerifier.resultRef,
 			primary_verifier_status: "passed",
+			primary_agent_completion: primaryHarness.agentCompletion as "settled" | "pre_dispatch_budget_terminal",
+			primary_maintenance_check_ref: maintenanceCheckRef,
 			outcome: "initial_pass",
 			recovery_group_id: null,
 			recovery_seed_ref: null,
@@ -784,12 +1033,11 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		pi_commit: V2A_PINNED_PI_COMMIT,
 		workbench_source_ref: workbenchSourceRef,
 		workbench_digest: workbenchSource.digest,
+		controlled_seed_provenance_ref: controlledSeedProvenanceRef,
+		maintenance_check_ref: maintenanceCheckRef,
 		created_before_candidate_attempts: true,
 	};
-	const seedRef = writeOnceJson(options.runRoot, "seed/recovery-seed.json", seed);
-	if (fileSha256(resolve(options.runRoot, seedRef.path)) !== seedRef.sha256 || treeDigest(seedWorkspaceRoot) !== seedWorkspaceDigest) {
-		throw new Error("Recovery Seed failed post-freeze integrity verification");
-	}
+	const seedRef = prepareAndFreezeRecoverySeedV2({ runRoot: options.runRoot, seedWorkspaceRoot, seed });
 	appendJournal(options.runRoot, sequence, "seed_frozen", {
 		recovery_seed_id: recoverySeedId,
 		recovery_seed_ref: seedRef,
@@ -832,7 +1080,8 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		});
 	}
 	const modes = options.candidateModes ?? (["pass", "fail"] as const);
-	const candidateA = await executeCandidate({
+	const [candidateA, candidateB] = await executeRecoveryGroupFromSeedV2({
+		executeA: () => executeRecoveryCandidateFromSeedV2({
 		projectRoot: options.projectRoot,
 		runRoot: options.runRoot,
 		sequence,
@@ -849,9 +1098,9 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		recoveryPrompt,
 		strategy: "continue_failed_session",
 		mode: modes[0],
-		executionPort,
-	});
-	const candidateB = await executeCandidate({
+		executionPort: candidateExecutionPort,
+		}),
+		executeB: () => executeRecoveryCandidateFromSeedV2({
 		projectRoot: options.projectRoot,
 		runRoot: options.runRoot,
 		sequence,
@@ -868,7 +1117,8 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		recoveryPrompt,
 		strategy: "fresh_session_from_failure_seed",
 		mode: modes[1],
-		executionPort,
+		executionPort: candidateExecutionPort,
+		}),
 	});
 	assertIndependentFiles(seedWorkspaceRoot, candidateAWorkspaceRoot, candidateBWorkspaceRoot);
 	if (candidateA.common_artifact_digest !== candidateB.common_artifact_digest) throw new Error("Candidate common Artifact fairness drift");
@@ -915,6 +1165,8 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		primary_session_ref: primarySessionRef,
 		primary_verifier_result_ref: primaryVerifier.resultRef,
 		primary_verifier_status: "failed",
+		primary_agent_completion: primaryHarness.agentCompletion as "settled" | "pre_dispatch_budget_terminal",
+		primary_maintenance_check_ref: maintenanceCheckRef,
 		outcome: selection.selected_candidate_id ? "recovery_selected" : "recovery_none",
 		recovery_group_id: recoveryGroupId,
 		recovery_seed_ref: seedRef,

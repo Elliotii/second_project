@@ -182,6 +182,7 @@ interface RuntimePortOptionsV2B {
 	realCounters?: RealCallCountersV2B;
 	usageInvalidRole?: AttemptRoleV2B;
 	usageOverflow?: { role: AttemptRoleV2B; kind: "tokens" | "cost" };
+	runtimeObservationFaultRole?: AttemptRoleV2B;
 	toolCapRole?: AttemptRoleV2B;
 	onAttemptStarted?: (input: { attemptId: string; role: AttemptRoleV2B }) => void;
 }
@@ -219,6 +220,7 @@ export function createStage1RealShapedExecutionPortV2B(options: {
 	onAttemptEvidence: (evidence: AttemptRuntimeEvidenceV2B) => void;
 	usageInvalidRole?: AttemptRoleV2B;
 	usageOverflow?: { role: AttemptRoleV2B; kind: "tokens" | "cost" };
+	runtimeObservationFaultRole?: AttemptRoleV2B;
 	toolCapRole?: AttemptRoleV2B;
 	onAttemptStarted?: (input: { attemptId: string; role: AttemptRoleV2B }) => void;
 }): ExecutionPortV2 {
@@ -230,6 +232,7 @@ export function createStage1RealShapedExecutionPortV2B(options: {
 		onAttemptEvidence: options.onAttemptEvidence,
 		...(options.usageInvalidRole ? { usageInvalidRole: options.usageInvalidRole } : {}),
 		...(options.usageOverflow ? { usageOverflow: options.usageOverflow } : {}),
+		...(options.runtimeObservationFaultRole ? { runtimeObservationFaultRole: options.runtimeObservationFaultRole } : {}),
 		...(options.toolCapRole ? { toolCapRole: options.toolCapRole } : {}),
 		...(options.onAttemptStarted ? { onAttemptStarted: options.onAttemptStarted } : {}),
 	});
@@ -307,6 +310,8 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 			let pending: ProviderReservationV2B | null = null;
 			let settled = false;
 			let budgetStopped = false;
+			let preDispatchBudgetRefusal = false;
+			let pendingToolCalls = 0;
 			let usageInvalid = false;
 			let usageOverflow = false;
 			let invalidObservedTokens = 0;
@@ -329,6 +334,7 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 				if (pending) throw new V2BUsageBoundaryError();
 				if (usage.provider_requests + 1 > V2B_ATTEMPT_CAPS.provider_requests) {
 					budgetStopped = true;
+					preDispatchBudgetRefusal = true;
 					throw new V2BBudgetStopError();
 				}
 				const requestOrdinal = usage.provider_requests + 1;
@@ -363,6 +369,11 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 					throw new V2BBudgetStopError();
 				}
 				usage.tool_calls++;
+				pendingToolCalls++;
+				return undefined;
+			});
+			const offToolResult = harness.on("tool_result", () => {
+				pendingToolCalls = Math.max(0, pendingToolCalls - 1);
 				return undefined;
 			});
 			const unsubscribe = harness.subscribe((event) => {
@@ -435,8 +446,23 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 				offProvider();
 				offPayload();
 				offTool();
+				offToolResult();
 				await harness.abort();
 			}
+			const runtimeBudgetStopObservation = terminalReason === "budget_stopped" ? {
+				pre_dispatch_refusal: preDispatchBudgetRefusal,
+				pending_provider_responses: pending === null ? 0 : 1,
+				pending_provider_reservation: pending !== null,
+				pending_tool_calls: pendingToolCalls,
+				prior_usage_known: !usageInvalid && !usageOverflow,
+				reservations_reconciled: pending === null && reservations.every((reservation) => reservation.phase !== "reserved_before_dispatch"),
+			} : null;
+			if (runtimeBudgetStopObservation && options.runtimeObservationFaultRole === role) runtimeBudgetStopObservation.pending_tool_calls = 1;
+			const runtimeQuiescent = Boolean(
+				runtimeBudgetStopObservation?.pre_dispatch_refusal && runtimeBudgetStopObservation.pending_provider_responses === 0 &&
+				runtimeBudgetStopObservation.pending_provider_reservation === false && runtimeBudgetStopObservation.pending_tool_calls === 0 &&
+				runtimeBudgetStopObservation.prior_usage_known && runtimeBudgetStopObservation.reservations_reconciled,
+			);
 			if (providerPayloadSha256 === "") providerPayloadSha256 = sha256("no-provider-payload");
 			const evidence: AttemptRuntimeEvidenceV2B = {
 				schema_version: "v2b-attempt-runtime-evidence-v1",
@@ -444,6 +470,9 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 				role,
 				terminal_reason: terminalReason,
 				settled: terminalReason === "settled",
+				agent_completion: terminalReason === "settled" ? "settled" : runtimeQuiescent ? "pre_dispatch_budget_terminal" : "invalid",
+				quiescence: null,
+				runtime_budget_stop_observation: runtimeBudgetStopObservation,
 				composition: {
 					provider: "deepseek",
 					model_id: "deepseek-v4-flash",
@@ -487,6 +516,8 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 			return {
 				settled: usageInvalid || usageOverflow ? invalidObservedSettled : evidence.settled,
 				terminalReason: terminalReason === "settled" ? "settled" : terminalReason === "budget_stopped" ? "budget_stopped" : "runtime_invalid",
+				agentCompletion: evidence.agent_completion,
+				runtimeBudgetStopObservation,
 				providerDispatches: rawObservedProviderResponses,
 				toolCalls: usageInvalid || usageOverflow ? invalidObservedToolCalls : budgetStopped ? rawObservedToolCalls : usage.tool_calls,
 				tokens: usageInvalid || usageOverflow ? invalidObservedTokens : usage.tokens,

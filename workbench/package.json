@@ -18,7 +18,8 @@
     "v1b:run-next": "node src/cli.ts v1b run-next",
     "v2a:test": "node --test tests/v2a-recovery.test.ts tests/v2a-cli.test.ts tests/v2a-post-audit.test.ts",
     "v2a:deterministic": "node scripts/run-v2a-deterministic-suite.mjs",
-    "v2b:stage1": "node --test tests/v2b-stage1.test.ts"
+    "v2b:stage1": "node --test tests/v2b-stage1.test.ts",
+    "v2b:r2": "node --test tests/v2b-r2.test.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",
