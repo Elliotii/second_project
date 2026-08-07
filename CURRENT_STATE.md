@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_goal_2_completed
-  status: V3_G2_CLOSED_ACCEPTED
+  phase: v3_goal_3_active_zero_call_implementation_pending
+  status: V3_G3_ACTIVE_IMPLEMENTATION_NOT_STARTED
 
-active_goal: null
+active_goal: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
 
 last_executed_goal:
   id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
@@ -31,11 +31,11 @@ last_completed_goal:
   disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
   implementation_baseline_commit: resulting_HEAD_of_this_revision
 
-current_goal: null
+current_goal: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
 
 next_goal:
   id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
-  status: not_authorized
+  status: active_zero_call_implementation_authorized_not_started
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
 
 v3_control:
@@ -72,8 +72,19 @@ v3_control:
   goal_2_focused_tests: 6_passed_0_failed_0_skipped
   goal_2_goal_1_regression: 13_passed_0_failed_0_skipped
   goal_2_real_access_observed: 0
-  goal_3_authorized: false
-  real_model_calls_authorized: consumed_1_no_further_calls_authorized
+  goal_3_authorized: true
+  goal_3_status: active_zero_call_implementation_authorized_not_started
+  goal_3_implementation_owner: future_new_top_level_dedicated_goal_3_implementation_session
+  goal_3_implementation_authorized: true_zero_call_only
+  goal_3_implementation_started: false
+  goal_3_real_model_calls_authorized: 0
+  goal_3_credential_reads_authorized: 0
+  goal_3_external_network_authorized: false
+  goal_3_pi_core_patch_authorized: false
+  goal_3_sdk_extension_rpc_switch_authorized: false
+  goal_3_control_baseline_commit_authorized: consumed
+  goal_3_control_baseline_commit: resulting_HEAD_of_this_revision
+  real_model_calls_authorized: 0
   credential_reads_authorized: consumed_1_no_further_reads_authorized
   real_model_calls_observed: 1
   external_network_requests_observed: 1
@@ -1789,7 +1800,10 @@ next_checkpoint:
   - V3_goal_2_closed_accepted_with_deterministic_validation_promotion_rejection_and_rollback
   - preserve_V3_goal_2_candidate_baseline_and_ignored_mechanism_evidence
   - do_not_activate_real_goal_1_candidate_without_Goal_3_authority_and_frozen_case_design
-  - V3_goal_3_requires_separate_user_authorization
+  - V3_goal_3_activation_and_zero_call_implementation_authorized
+  - create_and_verify_V3_goal_3_control_baseline_from_Goal_2_implementation_baseline
+  - generate_start_prompt_pinning_exact_Goal_3_control_baseline
+  - start_one_new_top_level_Goal_3_implementation_session
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
@@ -1828,10 +1842,11 @@ next_checkpoint:
   - main_review_recommends_PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
   - user_accepted_limited_V2_B_and_V2_closeout_without_further_R2_execution
   - V2_closed_with_mechanism_demonstrated_and_real_negative_incomplete
-  - no_active_goal_and_V3_goal_3_not_authorized
+  - V3_goal_3_active_zero_call_implementation_not_started
 
 open_user_decisions:
-  - authorize_or_defer_V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
+  - authorize_Goal_3_real_behavioral_execution_only_after_frozen_implementation_baseline
+  - accept_or_revise_final_V3_portfolio_claims_after_real_behavioral_evidence
 ```
 
 ## Current Constraints

@@ -14,18 +14,22 @@ v2_disposition: ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_package: "@earendil-works/pi-agent-core@0.82.1"
 prime_reference_commit: b9a4461149419156599d60174dddf15458e2b9ee
-active_goal: null
+active_goal: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_activation_authorized: consumed
 goal_2_status: closed_accepted
 goal_2_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 goal_2_authorized: consumed
-goal_3_authorized: false
-implementation_owner: null
-implementation_authorized: false
+goal_3_authorized: true
+goal_3_status: active_zero_call_implementation_authorized_not_started
+goal_3_implementation_owner: future_new_top_level_dedicated_goal_3_implementation_session
+goal_3_implementation_authorized: true_zero_call_only
+goal_3_implementation_started: false
+implementation_owner: future_new_top_level_dedicated_goal_3_implementation_session
+implementation_authorized: true_zero_call_only
 implementation_started: true
-implementation_completed: false_goal_3_pending
+implementation_completed: false_goal_3_active
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
 goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
 real_model_calls_authorized: 0
@@ -35,12 +39,13 @@ provider_calls_observed: 1
 real_proposal_cost_usd: 0.0002016
 external_network_authorized: false
 pi_core_patch_authorized: false
-git_commit_authorized: consumed_v3_goal_2_closeout
+git_commit_authorized: consumed_v3_goal_3_control_baseline
 control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
 goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
 goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
 goal_2_candidate_baseline_tree: f9a2ce17d374e357e6c6df1e5607b6b646373485
 goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
+goal_3_control_baseline_commit: resulting_HEAD_of_this_revision
 implementation_goal_count: 3
 implementation_session_model: one_fresh_top_level_session_per_goal
 ```
@@ -748,3 +753,31 @@ Goal 1 被 Main/用户接受并形成 Implementation Baseline 后，才以相同
   review, so the Charter's risk-driven audit trigger was not met.
 - `active_goal` is `null`. Goal 3, further real access and Pi or integration-route
   changes require separate user authorization.
+
+### 22.5 Goal 3 activation (2026-08-08)
+
+The user accepted Main's bounded Goal 3 plan and separately authorized Goal 3
+Activation, its Control Baseline Commit and one new top-level Dedicated Goal 3
+Implementation Session. Goal 3 starts from the accepted Goal 2 Implementation
+Baseline `d24b51ffacc886560671f90757ff087a3561bd1a` with these bindings:
+
+- implementation only; Credential reads, network requests, external Provider
+  calls and real-model calls are all 0;
+- first prove a content-identified host-side admission bridge from the immutable
+  real Goal 1 Candidate to the current Goal 2 active-State identity without
+  rewriting the original Candidate or weakening stale protection;
+- implement only project-persistent State reuse, deterministic applicability,
+  Run-start binding freeze, public Direct Pi prompt/Skill binding, refinement
+  Manifest/Inspector lineage and the Charter-bounded 3–5 Cases;
+- ordinary compile/schema/path/adapter defects return to the same Goal 3 Session;
+  no default Stage chain, Replacement Session or independent audit;
+- no real behavioral execution until Main accepts and freezes the Goal 3
+  implementation baseline and the user separately authorizes a fresh
+  no-source-edit Execution Session;
+- no Pi modification, private import, SDK/Extension/RPC switch, third State,
+  Router, Experience Platform, new Eval Runtime or V4 work.
+
+The active Goal is now `V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE`. The
+Dedicated Session must stop after its bounded implementation, focused tests,
+raw evidence, Implementation Report and Closeout Draft, and must not commit or
+change `CURRENT_STATE.md` or this Charter.
