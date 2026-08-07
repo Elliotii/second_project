@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_b_bounded_r2_execution_baseline_ready
-  status: V2_B_R2_FOCUSED_REAUDIT_PASSED_EXECUTION_BASELINE_READY
+  phase: v2_b_bounded_r2_context_message_count_reaudit_passed
+  status: V2_B_R2_CORRECTED_EXECUTION_BASELINE_READY
 
 active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 
@@ -33,13 +33,13 @@ last_completed_goal:
 
 current_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_bounded_r2_audited_execution_baseline_ready
+  status: active_bounded_r2_corrected_execution_baseline_ready
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
   amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
 
 next_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_bounded_r2_audited_execution_baseline_ready
+  status: active_bounded_r2_corrected_execution_baseline_ready
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
   amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
 
@@ -934,7 +934,16 @@ v2:
   V2_B_R2_focused_reaudit_disposition: PASS_V2_B_R2_FOCUSED_REAUDIT
   V2_B_R2_focused_reaudit_tests: 36_of_36_pass_zero_skipped_plus_strict_typescript
   V2_B_R2_audited_execution_baseline_authorized: true_after_focused_audit_pass
-  V2_B_R2_audited_execution_baseline_commit: resulting_HEAD_of_this_revision
+  V2_B_R2_audited_execution_baseline_commit: a9da3c505af6219a05202359c113a4de6943b16f
+  V2_B_R2_first_real_sequence_id: v2b-r2-real-20260807-01
+  V2_B_R2_first_real_sequence_status: immutable_paused_after_real_A_B_composition_evidence_invalid
+  V2_B_R2_first_real_sequence_negative_started: false
+  V2_B_R2_context_message_count_exception_authorized: consumed
+  V2_B_R2_context_message_count_implementation_session: 019fd804-a262-7e70-aa6f-865d2dc478ba
+  V2_B_R2_context_message_count_candidate_commit: 673454aafabd810692239084dda9103ec85193ca
+  V2_B_R2_context_message_count_candidate_tree: 45ca056973e9e88b746ed6f7b7f1f9ee98e0416f
+  V2_B_R2_context_message_count_hit_specific_reaudit: PASS_V2_B_R2_CONTEXT_MESSAGE_COUNT_HIT_SPECIFIC_REAUDIT
+  V2_B_R2_corrected_audited_execution_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_R2_execution_owner: future_fresh_top_level_no_source_edit_session
   V2_B_R2_execution_started: false
   V2_B_R2_execution_authorized: true_after_audited_execution_baseline_and_gate_h
@@ -1680,7 +1689,10 @@ next_checkpoint:
   - main_light_review_and_freeze_R2_candidate_commit
   - one_fresh_focused_audit_and_hit_specific_correction_if_required
   - V2_B_R2_focused_reaudit_passed_and_P1_001_closed
-  - create_audited_R2_execution_baseline
+  - initial_audited_R2_execution_baseline_created_at_a9da3c505af6219a05202359c113a4de6943b16f
+  - first_R2_real_A_B_raw_outcomes_preserved_as_composition_evidence_invalid_and_negative_absent
+  - context_message_count_bounded_correction_candidate_and_hit_specific_reaudit_passed
+  - create_corrected_audited_R2_execution_baseline
   - create_fresh_top_level_R2_execution_session
   - run_Gate_H_R2_before_any_real_access
   - execute_controlled_seed_then_real_A_B_and_one_negative
