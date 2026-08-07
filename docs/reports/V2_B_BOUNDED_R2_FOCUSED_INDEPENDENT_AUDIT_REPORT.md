@@ -1,6 +1,97 @@
 # V2-B Bounded R2 Focused Independent Audit Report
 
-## Audit disposition
+## Hit-specific re-audit — 2026-08-07 (Asia/Hong_Kong)
+
+### Current disposition
+
+`PASS_V2_B_R2_FOCUSED_REAUDIT`
+
+**Fact:** Corrected Candidate `2826298b41d6168b8ec3ff2b8d76dc20fe9d89ae` closes `V2B-R2-AUDIT-P1-001`. The complete Provider reservation ledger is now content-addressed and bound into the Candidate checkpoint and Journal before budget-stopped Verifier eligibility. The Inspector independently derives each non-error Provider response's `input`, `output`, `cacheRead`, `cacheWrite`, and `usage.cost.total` from persisted JSONL and exactly reconciles the ordered per-request reservation totals and aggregates. Coherent token and cost tampering is rejected, and the runtime-fault path still stops before any Verifier call or artifact.
+
+**Fact:** This is a hit-specific closure only. It does not accept V2-B/V2, authorize the real R2 Execution Session, change the bounded protocol, or authorize V3.
+
+### Corrected identity and cleanliness
+
+| Check | Observed | Disposition |
+|---|---|---|
+| Corrected Candidate HEAD | `2826298b41d6168b8ec3ff2b8d76dc20fe9d89ae` | exact |
+| Corrected Candidate tree | `d732bf23008fc911d948c0928248c77d30d9114e` | exact |
+| Original Candidate | `0bc5eba535c06fd1a780a82f95859defa3f2eb78` | exact correction base |
+| Project tracked/index status before report update | clean; cached and unstaged paths empty | pass |
+| Pinned Pi HEAD | `027a5847901b5dde30270abaa1041046cd2b4b55` | exact |
+| Pinned Pi tree | `0aa996c1d6108d5ffd8ff24ff498d08720283f29` | unchanged |
+| Pinned Pi status | clean | pass |
+
+**Fact:** The correction diff `0bc5eba..2826298` contains only the existing audit/implementation/closeout reports and the R2 allowlisted contracts, runtime composition, Controller, Inspectors, and focused test. It changes no `CURRENT_STATE.md`, governance file, fixture, Pi file, V1 path, dependency/lockfile, Selector, Case definition, budget constant, retry/fallback/replacement rule, Provider/Model route, or V3 surface.
+
+### Hit-specific source disposition
+
+#### 1. Complete ledger is persisted and bound before Verifier eligibility — PASS
+
+**Fact:** `workbench/src/run-v2.ts:600-690` performs the budget-terminal checkpoint. It independently reopens the public JSONL Session, derives the response usage, constructs `v2a-provider-reservation-ledger-v1` from the complete runtime reservation array, and writes it once at `candidates/<a|b>/provider-reservations-pre-verifier.json` (`:635-642`). The raw gate cannot pass unless the ledger exactly reconciles (`:653-661`). Only after that gate does the Controller write the checkpoint, with the ledger's full `ArtifactRef`, and append the `candidate_pre_verifier_checkpoint` Journal event carrying both refs (`:662-690`). Candidate Verifier execution remains later in the existing Controller sequence.
+
+**Fact:** The checkpoint schema in `workbench/src/contracts/v2-types.ts:129-153` includes Candidate/Attempt identity, the content-addressed reservation-ledger ref, Session/Workspace refs, raw token/cost totals, Tool/protected-path facts, and Journal sequence.
+
+#### 2. Inspector independently derives JSONL usage and reconciles ordered per-request/aggregate evidence — PASS
+
+**Fact:** `workbench/src/inspect-v2.ts:428-466` walks every persisted non-error assistant response. It independently requires finite, non-negative numeric `input`, `output`, `cacheRead`, `cacheWrite`, and `usage.cost.total`; derives each response's token sum and exact cost; and gives every response an ordered request ordinal.
+
+**Fact:** The same Inspector requires one reservation per response and exactly eight R2 dispatches, validates known-usage phase and finite non-negative actuals, enforces Attempt identity and request-before/after ordering, enforces reservation ceilings, and requires exact per-response token and cost equality (`:445-466`). It then checks the ledger identity/ref, independently reopened Session, Workspace, raw tokens/cost, and Journal/checkpoint/Verifier ordering (`:750-803`).
+
+**Fact:** `checkpoint.raw_tokens === ledgerDerived.tokens` and `checkpoint.raw_cost_usd === ledgerDerived.cost` are aggregate equalities over those independently derived per-response values. `workbench/src/inspect-v2b.ts:173-203` independently reconciles the outer Attempt reservation aggregate to Attempt token and cost usage, and `:273-285` requires that the outer Attempt reservations exactly match the content-addressed pre-Verifier ledger.
+
+#### 3. Budget-stopped and settled reconciliation; booleans non-authoritative — PASS
+
+**Fact:** `workbench/src/inspect-v2b.ts:197-203` applies the exact committed/conservative token and cost reconciliation to both `settled` and `budget_stopped`. A `budget_stopped` Candidate additionally must satisfy the raw JSONL/ledger/checkpoint proof above. The runtime observation booleans are only compared for agreement with `ledgerDerived`; lines `788-789` require the independently derived facts first, so all-true summary booleans cannot establish eligibility.
+
+#### 4. Coherent token and cost tampering — PASS
+
+**Fact:** `workbench/tests/v2b-r2.test.ts:214-256` coherently changes the content-addressed pre-Verifier ledger's `actual_tokens` and `actual_cost_usd` in separate cases, refreshes the ledger, checkpoint, Candidate, substrate terminal, outer terminal, and relevant Journal refs, and requires read-only inspection to reject both.
+
+**Fact:** The same focused test also changes only the outer Attempt reservation token/cost values with the enclosing Attempt and terminal refs refreshed. The outer Inspector rejects those changes because the Attempt no longer reconciles or matches the pre-Verifier ledger.
+
+**Independent audit reproduction:** the unchanged original P1 audit script now reports `original_integrity_valid: true` and `tampered_integrity_valid: false` after changing Candidate A reservation 1 `actual_tokens` from `2736` to `2737` while leaving Attempt usage unchanged and refreshing enclosing refs. Errors are `committed usage does not reconcile` and `Attempt evidence is not bound to the raw-derived pre-Verifier checkpoint`.
+
+Evidence root: `.runs/v2-b/r2-focused-audit/reservation-tamper-1786098111669/`.
+
+#### 5. Runtime fault still stops before Verifier — PASS
+
+**Fact:** The `R2-MR raw gate` test injects a runtime-observation fault into Candidate A. `executeRunV2A` rejects before Verifier eligibility; `candidates/a/verifier-result.json` remains absent and the captured Attempt has `usage.verifier_runs === 0`. The 7-test focused suite reran this case successfully.
+
+#### 6. Frozen semantics unchanged — PASS
+
+**Fact:** Diff inspection found no change to the three frozen Cases, A/B paths or Session treatment, Attempt/Group/sequence budgets, Selector, no-retry/fallback/replacement rules, Direct public Pi route, pinned Pi checkout, V1 code/tests, V3 scope, fixture, Prompt, Skill, Verifier, Provider/Model profile, or real-access authority. The only runtime-port change exposes a structured clone of the already-existing reservation array to the shared Controller for pre-Verifier evidence; it does not change dispatch, Tool, retry, fallback, or route behavior.
+
+### Hit-specific commands and exits
+
+All commands ran from `C:/Users/HUAWEI/.codex/worktrees/70b0/project2`. The ignored audit-local loader mapped imports to the already-built pinned Pi artifacts; no dependency installation or Pi mutation occurred.
+
+| Command | Exit/result |
+|---|---|
+| Candidate HEAD/tree, project status/cached/unstaged, pinned Pi HEAD/tree/status composite identity check | `0`; all exact and clean |
+| `git diff --name-status 0bc5eba535c06fd1a780a82f95859defa3f2eb78..2826298b41d6168b8ec3ff2b8d76dc20fe9d89ae` plus focused source diff inspection | `0`; correction limited to 11 expected report/R2 paths |
+| `node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p .runs/v2-b/r2-focused-audit/tsconfig.audit.json` | `0`; strict TypeScript clean |
+| `node --experimental-loader ./.runs/v2-b/r2-focused-audit/pi-loader.mjs workbench/tests/v2b-r2.test.ts` | `0`; 7/7 pass, 0 skipped |
+| inherited-loader `node workbench/tests/v2b-stage1.test.ts` | `0`; 19/19 pass, 0 skipped |
+| inherited-loader `node workbench/tests/v2a-recovery.test.ts` | `0`; 5/5 pass, 0 skipped |
+| inherited-loader `node workbench/tests/v2a-post-audit.test.ts` | `0`; 5/5 pass, 0 skipped |
+| `node --experimental-loader ./.runs/v2-b/r2-focused-audit/pi-loader.mjs .runs/v2-b/r2-focused-audit/reproduce-reservation-tamper.ts` | `0`; original valid, tampered invalid with two expected reconciliation/binding errors |
+
+Narrow re-audit total: **36 tests, 36 passed, 0 failed, 0 skipped**, plus strict TypeScript. Per Main's instruction, V1, V2-A CLI, path-security, Verifier-security, and the former 75-test full audit were not rerun.
+
+### Access and claims boundary
+
+**Fact:** This re-audit used zero Credential reads, zero network calls, zero external Provider calls, and zero real model calls. It edited no source, test, fixture, control state, Pi file, Git index, or Git history. Only this report is updated; reproduction/test artifacts remain ignored under `.runs/`.
+
+**Unverified and outside this hit-specific re-audit:** real R2 execution, Credential/network/Provider/model behavior, production durability, exactly-once effects, OS egress blocking, natural failure frequency, statistical superiority, final V2-B/V2 acceptance, and V3.
+
+### Hit-specific conclusion
+
+**Recommendation:** `V2B-R2-AUDIT-P1-001` is closed for corrected Candidate `2826298b41d6168b8ec3ff2b8d76dc20fe9d89ae`. Return to Main with disposition `PASS_V2_B_R2_FOCUSED_REAUDIT`.
+
+---
+
+## Original audit disposition (historical; superseded by the hit-specific re-audit above)
 
 **Recommendation: `REVISE_V2_B_R2_BOUNDED`.**
 
@@ -212,7 +303,7 @@ One initial direct `v2a-cli.test.ts` invocation exited `1` because its child pro
 
 Not required and not assessed: production durability, exactly-once effects, OS egress blocking, natural failure frequency, statistical superiority, universal Skill/Runtime conclusions, V3 capabilities, SDK/Extension route switching, or a third recovery path.
 
-## Final recommendation
+## Original final recommendation (historical)
 
 `REVISE_V2_B_R2_BOUNDED`
 
