@@ -173,6 +173,19 @@ export function providerPayloadIdentityV2B(value: unknown): string {
 	return sha256(stableJson(safeProviderProjectionV2B(value)));
 }
 
+export function firstProviderPayloadEvidenceV2B(value: unknown): {
+	provider_payload_sha256: string;
+	context_message_count: number;
+} {
+	if (value === null || typeof value !== "object" || Array.isArray(value)) throw new V2BExecutionBoundaryError("shape_invalid");
+	const messages = (value as Record<string, unknown>).messages;
+	if (!Array.isArray(messages)) throw new V2BExecutionBoundaryError("shape_invalid");
+	return {
+		provider_payload_sha256: providerPayloadIdentityV2B(value),
+		context_message_count: messages.length,
+	};
+}
+
 interface RuntimePortOptionsV2B {
 	mode: "stage1_stub" | "stage2_real";
 	runId: string;
@@ -360,7 +373,11 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 				return undefined;
 			});
 			const offPayload = harness.on("before_provider_payload", (event) => {
-				if (providerPayloadSha256 === "") providerPayloadSha256 = providerPayloadIdentityV2B(event.payload);
+				const firstPayload = firstProviderPayloadEvidenceV2B(event.payload);
+				if (providerPayloadSha256 === "") {
+					providerPayloadSha256 = firstPayload.provider_payload_sha256;
+					contextMessageCount = firstPayload.context_message_count;
+				}
 				return { payload: event.payload };
 			});
 			const offTool = harness.on("tool_call", () => {

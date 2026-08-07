@@ -8,7 +8,7 @@ import type { CandidatePathV2A, CandidatePreVerifierCheckpointV2A, ProviderReser
 import { sha256, stableJson, treeDigest } from "../src/hash.ts";
 import { inspectSequenceV2B, inspectStage1RunV2B, inspectionFingerprintV2B } from "../src/inspect-v2b.ts";
 import { scanEvidenceBytesV2, validateSessionToolLineageV2 } from "../src/inspect-v2.ts";
-import { createRealExecutionPortV2B, createStage1ExecutionAuthorityV2B, createStage1RealShapedExecutionPortV2B } from "../src/pi/pi-run-handle-v2b.ts";
+import { createRealExecutionPortV2B, createStage1ExecutionAuthorityV2B, createStage1RealShapedExecutionPortV2B, firstProviderPayloadEvidenceV2B, providerPayloadIdentityV2B, V2BExecutionBoundaryError } from "../src/pi/pi-run-handle-v2b.ts";
 import { createOneRunProviderAuthorityV1B } from "../src/provider/fixed-provider-v1.ts";
 import { buildExecutionManifestV2B, executeStage1RunV2B, preflightExecutionManifestV2B, runNextSequenceV2B, V2B_STAGE1_SCENARIOS, type ObservedStage2IdentityV2B, type SequencePortFactoryV2B } from "../src/run-v2b.ts";
 import { createDeterministicExecutionPortV2A, executeRecoveryGroupFromSeedV2, executeRunV2A, prepareAndFreezeRecoverySeedV2, type ExecutionPortV2, type HarnessResultV2A } from "../src/run-v2.ts";
@@ -51,6 +51,20 @@ function zeroCallPortFactory(): SequencePortFactoryV2B {
 		}),
 	};
 }
+
+test("R2 context message count uses the first real-shaped Provider payload and rejects invalid messages shape", () => {
+	const payload = { model: "deepseek-v4-flash", messages: [{ role: "system", content: "bounded" }, { role: "user", content: "task" }], max_tokens: 1024 };
+	assert.deepEqual(firstProviderPayloadEvidenceV2B(payload), {
+		provider_payload_sha256: providerPayloadIdentityV2B(payload),
+		context_message_count: 2,
+	});
+	for (const invalid of [null, [], {}, { messages: null }, { messages: "not-an-array" }]) {
+		assert.throws(
+			() => firstProviderPayloadEvidenceV2B(invalid),
+			(error: unknown) => error instanceof V2BExecutionBoundaryError && error.code === "shape_invalid",
+		);
+	}
+});
 
 test("R2-B controlled Seed uses Direct AgentHarness Tool/JSONL lifecycle, maintenance pass, target fail, and shared Controller seams", async () => {
 	assert.equal(typeof prepareAndFreezeRecoverySeedV2, "function");
