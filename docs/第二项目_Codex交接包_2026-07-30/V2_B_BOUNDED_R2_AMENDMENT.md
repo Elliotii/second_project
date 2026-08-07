@@ -1,7 +1,7 @@
 # V2-B Bounded R2 Amendment — Controlled Recovery Seed and Real Two-path Acceptance
 
 ```yaml
-status: accepted_activated
+status: executed_closed_negative_not_valid_limited_closeout_accepted
 goal_id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 amendment_id: V2_B_BOUNDED_R2
 version: V2
@@ -14,19 +14,31 @@ implementation_owner: original_v2_b_stage_1_top_level_session_or_one_fresh_top_l
 implementation_real_model_calls_authorized: 0
 implementation_credential_reads_authorized: 0
 implementation_network_authorized: false
-focused_audit_authorized: one_fresh_top_level_session_after_candidate_freeze
-r2_execution_owner: fresh_top_level_no_source_edit_session
-r2_execution_real_access: authorized_only_after_audited_execution_baseline_and_gate_h
+focused_audit_authorized: consumed_passed
+r2_execution_owner: completed_top_level_task_019fdbfe-b7a1-7080-a58f-27fb8093f124
+r2_execution_real_access: consumed_no_further_access_authorized
+r2_execution_baseline_commit: 571165a186444e16a0fafad2fcd886295d7efbab
+r2_execution_baseline_tree: bb7245412093f132fec4236711e7bbda96d0a1c1
+r2_sequence_id: v2b-r2-real-20260807-02
+r2_sequence_status: paused
+r2_sequence_reason: negative_not_valid
+r2_main_disposition: PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
 per_attempt_real_cost_usd_max: 0.20
 per_recovery_group_real_cost_usd_max: 0.60
 r2_plus_one_infrastructure_replacement_real_cost_usd_max: 1.40
-final_v2_b_acceptance_authorized: false
-final_v2_acceptance_authorized: false
+final_v2_b_acceptance_authorized: consumed_for_limited_closeout_not_pass
+final_v2_acceptance_authorized: consumed_for_limited_closeout_not_pass
 v3_authorized: false
 pi_core_patch_authorized: false
 sdk_extension_rpc_route_switch_authorized: false
 third_recovery_path_authorized: false
 ```
+
+> Closeout control update (2026-08-07): R2 ended at the binding
+> `PAUSE_V2_B_R2_NEGATIVE_NOT_VALID` hard stop. The user accepted a limited
+> closeout that preserves the valid controlled Seed/A/B/Selection evidence and
+> the incomplete real Negative together. This is not a full R2 PASS and grants
+> no continuation authority.
 
 > 本 Amendment 是用户接受并激活的 V2-B R2 绑定修订。它只覆盖与 R1 自然触发正例、
 > quiescent budget terminal、证据扫描和 R2 执行序列冲突的原 Contract 条款；未被明确覆盖的

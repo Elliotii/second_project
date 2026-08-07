@@ -1,19 +1,22 @@
 # V2 Version Charter — Failure-aware Bounded Multi-path Recovery
 
 ```yaml
-status: accepted
+status: closed_accepted_with_explicit_limitation
 date: 2026-08-06
 accepted_by_user: true
 accepted_at: 2026-08-06
 formalized_at: 2026-08-06
 last_control_update: 2026-08-07
+closed_at: 2026-08-07
+version_disposition: ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION
+version_question_result: mechanism_demonstrated_real_negative_incomplete
 amended_at: 2026-08-07
 amendment_authorized_by_user: v2_b_thin_real_composition_and_bounded_R2_controlled_seed_route
 version: V2
 project_identity: Adaptive Coding Agent Harness
 planning_governance_baseline: f81d0db7d5335456e195f11e1b5a8e37077a0a67
 planning_baseline: bd903c963b68ba2b13ab56c20a7515a63f681021
-active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+active_goal: null
 V2_A_status: closed_accepted
 V2_A_disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
 V2_A_implementation_baseline: 9ac6740155e763598180dcf80e8b735d967874ad
@@ -21,17 +24,17 @@ V2_B_contract_draft_created: true
 V2_B_contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
 V2_B_contract_accepted: true
 V2_B_contract_accepted_at: 2026-08-07
-V2_B_contract_status: active_amended_by_bounded_R2
+V2_B_contract_status: closed_user_accepted_mechanism_proven_negative_incomplete
 V2_B_bounded_R2_amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
-V2_B_bounded_R2_amendment_status: accepted_activated
+V2_B_bounded_R2_amendment_status: executed_closed_negative_not_valid
 V2_B_activation_authorized: true
 V2_B_stage_1_implementation_authorized: true
-V2_B_stage_2_execution_authorized: false
-V2_B_stage_2_execution_conditionally_preauthorized: true_after_stage_1_acceptance_execution_baseline_and_Gate_H
+V2_B_stage_2_execution_authorized: consumed_no_further_execution_authorized
+V2_B_stage_2_execution_conditionally_preauthorized: consumed
 V2_B_specialist_session_form: new_top_level_codex_sessions_only_no_subagents
-real_model_calls_authorized: bounded_R2_A_B_and_one_negative_after_audited_baseline_and_Gate_H
-credential_reads_authorized: opaque_R2_execution_only_after_Gate_H
-external_network_authorized: R2_execution_only_after_Gate_H
+real_model_calls_authorized: 0_after_closeout
+credential_reads_authorized: 0_after_closeout
+external_network_authorized: false_after_closeout
 pi_core_patch_authorized: false
 external_download_authorized: false
 V2_B_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
@@ -40,10 +43,19 @@ V2_B_candidate_or_execution_baseline_commit_conditionally_preauthorized: true_af
 V2_B_focused_audit_conditionally_preauthorized: one_top_level_session_on_concrete_high_risk_finding
 final_V2_A_acceptance_authorized: consumed
 V2_B_goal_activation_authorized: true
-V2_B_main_goal_mode_authorized: true_through_stage_2_evidence_and_main_disposition_recommendation
+V2_B_main_goal_mode_authorized: consumed_goal_complete
 accepted_goal_count: 2
 portfolio_continuity_after_v2: V3_trace_to_validated_experience
+V2_B_closeout: docs/reports/V2_B_CLOSEOUT.md
+V2_closeout: docs/reports/V2_CLOSEOUT.md
+final_V2_closeout_user_decision: consumed_for_limited_closeout_not_full_pass
 ```
+
+> Closeout control update (2026-08-07): V2 is closed with
+> `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-A passed;
+> V2-B demonstrated the controlled real A/B recovery and selection mechanism but
+> did not obtain a valid real Negative Verifier result. No Goal is active and V3
+> remains a candidate only.
 
 > 本文件是用户已接受的 V2 Version Charter。它冻结版本问题、产品边界、数据合同、Goal 切分和验收标准；Charter 接受不等于 Goal 创建或 Activation，也不授权实现、真实调用、网络、凭据或 Git commit。
 

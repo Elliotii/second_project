@@ -5,24 +5,24 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_b_bounded_r2_context_message_count_reaudit_passed
-  status: V2_B_R2_CORRECTED_EXECUTION_BASELINE_READY
+  phase: v2_closed_accepted_with_explicit_limitation
+  status: V2_CLOSED_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
 
-active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+active_goal: null
 
 last_executed_goal:
-  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  final_candidate_commit: de6d30c896079c6ae1164646ae55ead8e6a33c09
+  id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+  status: closed_user_accepted_with_explicit_limitation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
+  disposition: CLOSE_V2_B_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
+  execution_baseline_commit: 571165a186444e16a0fafad2fcd886295d7efbab
 
 last_closed_goal:
-  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
-  closeout: docs/reports/V2_A_CLOSEOUT.md
+  id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+  status: closed_user_accepted_with_explicit_limitation
+  contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
+  disposition: CLOSE_V2_B_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
+  closeout: docs/reports/V2_B_CLOSEOUT.md
 
 last_completed_goal:
   id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
@@ -32,16 +32,14 @@ last_completed_goal:
   implementation_baseline_commit: resulting_HEAD_of_this_revision
 
 current_goal:
-  id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_bounded_r2_corrected_execution_baseline_ready
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
+  id: null
+  status: no_active_goal
+  contract: null
 
 next_goal:
-  id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_bounded_r2_corrected_execution_baseline_ready
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
+  id: V3_TRACE_TO_VALIDATED_EXPERIENCE
+  status: candidate_not_authorized
+  contract: null
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -393,6 +391,18 @@ completed_work:
   - V2_B_bounded_R2_zero_call_implementation_and_one_focused_audit_authorized
   - V2_B_bounded_R2_audited_execution_baseline_and_fresh_real_execution_authorized
   - V2_B_bounded_R2_main_goal_mode_activated
+  - V2_B_R2_context_message_count_bounded_correction_and_hit_specific_reaudit_passed
+  - V2_B_R2_corrected_audited_execution_baseline_created_at_571165a186444e16a0fafad2fcd886295d7efbab
+  - V2_B_R2_context_corrected_Gate_H_passed_with_zero_real_access
+  - V2_B_R2_controlled_verifier_failed_seed_frozen_before_candidates
+  - V2_B_R2_real_A_and_B_started_once_from_identical_seed_workspace_bytes
+  - V2_B_R2_both_candidates_passed_and_frozen_selector_selected_A
+  - V2_B_R2_single_negative_started_once_and_paused_without_verifier_result
+  - V2_B_R2_final_inspector_validated_truthful_paused_terminal
+  - V2_B_R2_main_limited_review_completed_with_PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
+  - V2_B_limited_closeout_accepted_by_user
+  - V2_B_closed_with_mechanism_proven_negative_incomplete
+  - V2_closed_accepted_with_explicit_negative_incomplete_limitation
 
 workspace:
   git_initialized: true
@@ -413,6 +423,11 @@ workspace:
   v2_a_implementation_baseline_commit: resulting_HEAD_of_this_revision
   v2_b_control_baseline_commit: resulting_HEAD_of_this_revision
   v2_b_control_baseline_tracked_files_clean_required: true
+  v2_b_r2_context_message_count_candidate_commit: 673454aafabd810692239084dda9103ec85193ca
+  v2_b_r2_corrected_audited_execution_baseline_commit: 571165a186444e16a0fafad2fcd886295d7efbab
+  v2_b_r2_corrected_audited_execution_baseline_tree: bb7245412093f132fec4236711e7bbda96d0a1c1
+  v2_b_r2_context_corrected_sequence_id: v2b-r2-real-20260807-02
+  v2_b_r2_context_corrected_manifest_id: 7784234c824bb5bfda328e19aec6730c1830db4930a8625a8bc96f2986d79014
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
   v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
@@ -804,11 +819,15 @@ v1:
 
 v2:
   charter: docs/第二项目_Codex交接包_2026-07-30/V2_VERSION_CHARTER.md
-  charter_status: accepted
+  charter_status: closed_accepted_with_explicit_limitation
   charter_accepted: true
   charter_accepted_at: 2026-08-06
-  active_goal: true
-  current_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
+  closed_at: 2026-08-07
+  version_status: closed_accepted_with_explicit_limitation
+  version_disposition: ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION
+  version_question_result: mechanism_demonstrated_real_negative_incomplete
+  active_goal: false
+  current_goal: null
   formal_goal_contract_created: true
   goal_contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
   goal_contract_status: closed_accepted
@@ -868,12 +887,12 @@ v2:
   implementation_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
   implementation_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  V2_B_contract_status: active_amended_by_bounded_R2
+  V2_B_contract_status: closed_user_accepted_mechanism_proven_negative_incomplete
   V2_B_amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
-  V2_B_amendment_status: accepted_activated
+  V2_B_amendment_status: executed_closed_negative_not_valid
   V2_B_contract_accepted: true
   V2_B_contract_accepted_at: 2026-08-07
-  V2_B_goal_authorized: true
+  V2_B_goal_authorized: consumed_closed
   V2_B_activation_authorized: true
   V2_B_activation_authorized_at: 2026-08-07
   V2_B_control_baseline_commit_authorized: consumed
@@ -892,13 +911,13 @@ v2:
   V2_B_stage_1_network_authorized: false
   V2_B_stage_1_real_model_calls_authorized: 0
   V2_B_stage_2_owner: completed_R1_top_level_execution_session
-  V2_B_stage_2_execution_authorized: consumed_by_R1_pause
+  V2_B_stage_2_execution_authorized: consumed_no_further_execution_authorized
   V2_B_stage_2_execution_conditionally_preauthorized: consumed_by_user_authorization
-  V2_B_stage_2_credential_reads_authorized: opaque_contract_bounded_after_Gate_H
+  V2_B_stage_2_credential_reads_authorized: consumed_no_further_reads_authorized
   V2_B_stage_2_credential_reads_conditionally_preauthorized: consumed_by_user_authorization
-  V2_B_stage_2_network_authorized: true_after_Gate_H
+  V2_B_stage_2_network_authorized: consumed_no_further_network_authorized
   V2_B_stage_2_network_conditionally_preauthorized: consumed_by_user_authorization
-  V2_B_stage_2_real_model_calls_authorized: contract_budget_after_Gate_H
+  V2_B_stage_2_real_model_calls_authorized: consumed_no_further_calls_authorized
   V2_B_stage_2_real_model_calls_conditionally_preauthorized: consumed_by_user_authorization
   V2_B_subagent_execution_authorized: false
   V2_B_specialist_session_form: new_top_level_codex_sessions_only
@@ -906,7 +925,7 @@ v2:
   V2_B_one_focused_audit_conditionally_preauthorized: true_on_concrete_high_risk_finding_after_complexity_mapping
   V2_B_candidate_execution_baseline_commit_conditionally_preauthorized: true_after_stage_1_main_acceptance
   V2_B_bounded_stage_1_correction_preauthorized: true_within_allowlist_and_no_architecture_scope_semantic_identity_change
-  V2_B_main_goal_mode_authorized: true_through_stage_2_evidence_and_main_disposition_recommendation
+  V2_B_main_goal_mode_authorized: consumed_goal_complete
   V2_B_R1_execution_baseline: a76cb3f340d26dc3dd336628761d22546886db27
   V2_B_R1_sequence_id: v2b-real-20260807-01
   V2_B_R1_status: immutable_paused_before_verifier
@@ -943,21 +962,58 @@ v2:
   V2_B_R2_context_message_count_candidate_commit: 673454aafabd810692239084dda9103ec85193ca
   V2_B_R2_context_message_count_candidate_tree: 45ca056973e9e88b746ed6f7b7f1f9ee98e0416f
   V2_B_R2_context_message_count_hit_specific_reaudit: PASS_V2_B_R2_CONTEXT_MESSAGE_COUNT_HIT_SPECIFIC_REAUDIT
-  V2_B_R2_corrected_audited_execution_baseline_commit: resulting_HEAD_of_this_revision
-  V2_B_R2_execution_owner: future_fresh_top_level_no_source_edit_session
-  V2_B_R2_execution_started: false
-  V2_B_R2_execution_authorized: true_after_audited_execution_baseline_and_gate_h
-  V2_B_R2_credential_reads_authorized: opaque_after_gate_h
-  V2_B_R2_network_authorized: true_after_gate_h
-  V2_B_R2_real_model_calls_authorized: bounded_A_B_and_one_negative_after_gate_h
+  V2_B_R2_corrected_audited_execution_baseline_commit: 571165a186444e16a0fafad2fcd886295d7efbab
+  V2_B_R2_corrected_audited_execution_baseline_tree: bb7245412093f132fec4236711e7bbda96d0a1c1
+  V2_B_R2_execution_owner: completed_top_level_task_019fdbfe-b7a1-7080-a58f-27fb8093f124
+  V2_B_R2_execution_started: true
+  V2_B_R2_execution_completed: true_with_binding_hard_stop
+  V2_B_R2_execution_authorized: consumed_no_further_execution_authorized
+  V2_B_R2_credential_reads_authorized: consumed_2_no_further_reads_authorized
+  V2_B_R2_network_authorized: consumed_20_no_further_network_authorized
+  V2_B_R2_real_model_calls_authorized: consumed_20_no_further_calls_authorized
+  V2_B_R2_context_corrected_sequence_id: v2b-r2-real-20260807-02
+  V2_B_R2_context_corrected_manifest_id: 7784234c824bb5bfda328e19aec6730c1830db4930a8625a8bc96f2986d79014
+  V2_B_R2_context_corrected_sequence_status: paused
+  V2_B_R2_context_corrected_sequence_reason: negative_not_valid
+  V2_B_R2_controlled_seed_valid: true
+  V2_B_R2_positive_A_B_valid: true
+  V2_B_R2_candidate_A_verifier: passed
+  V2_B_R2_candidate_B_verifier: passed
+  V2_B_R2_selected_candidate_id: v2b-r2-real-20260807-02-primary_positive-run-recovery-group-01-candidate-a
+  V2_B_R2_negative_started_once: true
+  V2_B_R2_negative_verifier_result: absent
+  V2_B_R2_negative_recovery_objects: 0
+  V2_B_R2_final_inspector_integrity_valid: true
+  V2_B_R2_final_inspector_terminal_valid: true
+  V2_B_R2_final_inspector_errors: 0
+  V2_B_R2_actual_started_attempts: 4
+  V2_B_R2_actual_real_provider_model_calls: 20
+  V2_B_R2_actual_tool_calls: 26
+  V2_B_R2_actual_tokens: 40942
+  V2_B_R2_actual_verifier_runs: 3
+  V2_B_R2_actual_cost_usd: 0.0012750192
+  V2_B_R2_old_plus_new_cost_usd: 0.0021159376
+  V2_B_R2_retry_fallback_replacement_extra_case_or_attempt: 0
+  V2_B_R2_stage_2_source_manifest_control_pi_delta: 0
+  V2_B_R2_main_disposition: PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
+  V2_B_R2_positive_mechanism_claim: demonstrated_on_one_controlled_case
+  V2_B_R2_real_negative_claim: not_demonstrated
+  V2_B_R2_context_corrected_execution_report: docs/reports/V2_B_R2_CONTEXT_CORRECTED_STAGE2_EXECUTION_REPORT.md
+  V2_B_R2_context_corrected_pause_report: docs/reports/V2_B_R2_CONTEXT_CORRECTED_STAGE2_PAUSE_REPORT.md
+  V2_B_R2_main_disposition_report: docs/reports/V2_B_R2_CONTEXT_CORRECTED_MAIN_DISPOSITION_RECOMMENDATION.md
   V2_B_R2_controlled_seed_initial_real_calls: 0
   V2_B_R2_recovery_paths_exact: 2
   V2_B_R2_negative_cases_exact: 1
   V2_B_R2_infrastructure_group_replacement_max: 1
+  V2_B_R2_infrastructure_group_replacement_used: 0
   V2_B_R2_third_path_authorized: false
-  V2_B_R2_final_acceptance_authorized: false
-  V2_B_final_acceptance_authorized: false
-  V2_final_acceptance_authorized: false
+  V2_B_R2_final_acceptance_authorized: consumed_for_limited_closeout_not_pass
+  V2_B_final_acceptance_authorized: consumed_for_limited_closeout_not_pass
+  V2_final_acceptance_authorized: consumed_for_limited_closeout_not_pass
+  V2_B_closeout_disposition: CLOSE_V2_B_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
+  V2_B_closeout: docs/reports/V2_B_CLOSEOUT.md
+  V2_closeout: docs/reports/V2_CLOSEOUT.md
+  V2_further_execution_authorized: false
   V3_authorized: false
   V2_B_budget:
     per_attempt_real_cost_usd_max: 0.20
@@ -1596,6 +1652,11 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/V2_CLOSEOUT.md
+  - docs/reports/V2_B_CLOSEOUT.md
+  - docs/reports/V2_B_R2_CONTEXT_CORRECTED_MAIN_DISPOSITION_RECOMMENDATION.md
+  - docs/reports/V2_B_R2_CONTEXT_CORRECTED_STAGE2_EXECUTION_REPORT.md
+  - docs/reports/V2_B_R2_CONTEXT_CORRECTED_STAGE2_PAUSE_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
   - docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
   - docs/reports/V2_B_MAIN_DISPOSITION_RECOMMENDATION.md
@@ -1692,15 +1753,18 @@ next_checkpoint:
   - initial_audited_R2_execution_baseline_created_at_a9da3c505af6219a05202359c113a4de6943b16f
   - first_R2_real_A_B_raw_outcomes_preserved_as_composition_evidence_invalid_and_negative_absent
   - context_message_count_bounded_correction_candidate_and_hit_specific_reaudit_passed
-  - create_corrected_audited_R2_execution_baseline
-  - create_fresh_top_level_R2_execution_session
-  - run_Gate_H_R2_before_any_real_access
-  - execute_controlled_seed_then_real_A_B_and_one_negative
-  - main_review_R2_evidence_and_recommend_V2_disposition
+  - corrected_audited_R2_execution_baseline_created_at_571165a186444e16a0fafad2fcd886295d7efbab
+  - fresh_top_level_R2_execution_session_completed
+  - Gate_H_R2_passed_before_real_access
+  - controlled_seed_and_real_A_B_completed_with_both_candidates_passing_and_A_selected
+  - sole_real_negative_started_once_and_hit_negative_not_valid_hard_stop
+  - final_inspector_validated_integrity_and_terminalization_of_paused_sequence
+  - main_review_recommends_PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
+  - user_accepted_limited_V2_B_and_V2_closeout_without_further_R2_execution
+  - V2_closed_with_mechanism_demonstrated_and_real_negative_incomplete
+  - no_active_goal_and_V3_not_authorized
 
-open_user_decisions:
-  - V2_B_final_disposition_after_stage_2_evidence_or_contract_pause
-  - whether_to_close_V2_after_main_disposition_recommendation
+open_user_decisions: []
 ```
 
 ## Current Constraints
@@ -1786,6 +1850,14 @@ open_user_decisions:
   real A/B recovery and one real Negative. R2 keeps the USD 0.20 / 0.60 / 1.40
   ceilings and all non-cost budgets. Pi changes and SDK/Extension switching remain
   unauthorized.
+- The context-corrected R2 sequence `v2b-r2-real-20260807-02` is terminal and
+  immutable. Its controlled Seed was valid; real A and B both passed the common
+  Verifier and the frozen Selector selected A. The sole Negative started once but
+  reached `execution_boundary` without a Verifier result, so the sequence paused
+  as `negative_not_valid`. Final Inspector output is integrity-valid and
+  terminal-valid with no errors. No retry, replacement or further R2 execution is
+  authorized. Preserve the Positive mechanism evidence without claiming that the
+  mandatory real Negative or full V2 acceptance passed.
 
 ## Expected Next Handoff
 
@@ -1821,25 +1893,26 @@ unsuccessful C Recovery and exact cost USD `0.0105276024`.
 
 V1 therefore closes with a bounded Skill-only descriptive lead. The post-V1
 Pi SDK/Extension compatibility checkpoint and V2 bounded Precontract Research
-are complete. The user accepted and Main formalized `V2_VERSION_CHARTER.md`.
-V2-A is closed and accepted. The first Candidate
-`ece8856891f950a090f9adabf75ca8c8e707ce53` received five bounded P1 findings.
-Candidate `d6d7a82081658d1782897319dd1e615578ad77c7` closed four and exposed one
-remaining P1-002 line-byte bypass. Candidate
-`de6d30c896079c6ae1164646ae55ead8e6a33c09` closed that last finding, and a fresh
-hit-specific audit passed with zero new findings. The user accepted
-`PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`; Gates A–J and DoD 24/24 are accepted,
-the accepted V2-A Implementation Baseline remains fixed. The formal V2-B Contract
-is active. Its new top-level Stage 1 Session completed the zero-real-access thin
-composition, and two bounded Main corrections stayed inside the accepted allowlist.
-Main accepted `PASS_V2_B_STAGE1_THIN_REAL_COMPOSITION` after strict TypeScript and
-an independent 18/18 focused rerun. Candidate commit
-  `d1825dc8bab16b6f0418e883a11fff132d8e8e52` and Execution Baseline
-  `a76cb3f340d26dc3dd336628761d22546886db27` are frozen. R1
-  `v2b-real-20260807-01` passed Gate H but paused before its first Verifier after
-  eight Provider/model calls; known cost was USD `0.0004849208`. It is not V2
-  recovery evidence. The accepted `V2_B_BOUNDED_R2_AMENDMENT.md` now authorizes a
-  zero-call controlled Seed/shared-controller correction, Main Candidate freeze,
-  one fresh focused audit, an audited Execution Baseline, and a fresh no-source-edit
-  R2 Session for real A/B plus one Negative after Gate H. Final V2-B/V2 acceptance,
-  Pi changes, SDK/Extension/RPC switching, a third path and V3 remain unauthorized.
+are complete. V2-A is closed and accepted with
+`PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`; its independently audited final
+Candidate is `de6d30c896079c6ae1164646ae55ead8e6a33c09`, and Gates A–J plus
+DoD 24/24 passed.
+
+V2-B is also closed, but not with a Contract PASS. Its deterministic and real
+composition work culminated in context-corrected sequence
+`v2b-r2-real-20260807-02` on audited Execution Baseline
+`571165a186444e16a0fafad2fcd886295d7efbab`. The sequence formed a valid
+zero-call controlled verifier-failed Seed, ran real A and B once from identical
+Seed Workspace bytes, independently verified both as passing and selected A
+through the frozen Selector. The sole stable-format Negative started once but
+stopped at `execution_boundary` after eight real calls and produced no Verifier
+result. Final Inspector returned `integrity_valid: true`,
+`terminal_valid: true`, `errors: []`; new cost is USD `0.0012750192`,
+and binding old plus new R2 cost is USD `0.0021159376`.
+
+The user explicitly accepted the limited closeout
+`ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. The
+Positive A/B mechanism evidence is accepted; the real initial-pass/no-branch
+Negative remains unverified. V2-B and V2 are closed, no Goal is active, and no
+further V2 execution is authorized. V3 remains a candidate only and is not
+authorized.
