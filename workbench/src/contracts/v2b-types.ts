@@ -1,5 +1,5 @@
 import type { ArtifactRefV0B } from "./v0b-types.ts";
-import type { RuntimeBudgetStopObservationV2 } from "./v2-types.ts";
+import type { ProviderReservationEvidenceV2, RuntimeBudgetStopObservationV2 } from "./v2-types.ts";
 
 export const V2B_CONTROL_BASELINE_COMMIT = "b1c8cf6045a0118452734bdf3cbe7b65fcd645ac" as const;
 export const V2B_CONTROL_BASELINE_TREE = "5c494f27fd01da4a70c8c162c0f6d588c9613b98" as const;
@@ -115,18 +115,7 @@ export interface UsageV2B {
 	conservative_charged_cost_usd: number;
 }
 
-export interface ProviderReservationV2B {
-	reservation_id: string;
-	attempt_id: string;
-	request_ordinal: number;
-	phase: "reserved_before_dispatch" | "known_usage_committed" | "conservative_unknown_usage_charge" | "conservative_overflow_charge";
-	provider_requests_before: number;
-	provider_requests_after: number;
-	reserved_tokens: number;
-	reserved_cost_usd: number;
-	actual_tokens: number | "unknown";
-	actual_cost_usd: number | "unknown";
-}
+export interface ProviderReservationV2B extends ProviderReservationEvidenceV2 {}
 
 export interface CompositionShapeV2B {
 	provider: "deepseek";

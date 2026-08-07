@@ -518,6 +518,7 @@ function createRuntimeExecutionPortV2B(options: RuntimePortOptionsV2B): Closable
 				terminalReason: terminalReason === "settled" ? "settled" : terminalReason === "budget_stopped" ? "budget_stopped" : "runtime_invalid",
 				agentCompletion: evidence.agent_completion,
 				runtimeBudgetStopObservation,
+				providerReservations: structuredClone(reservations),
 				providerDispatches: rawObservedProviderResponses,
 				toolCalls: usageInvalid || usageOverflow ? invalidObservedToolCalls : budgetStopped ? rawObservedToolCalls : usage.tool_calls,
 				tokens: usageInvalid || usageOverflow ? invalidObservedTokens : usage.tokens,

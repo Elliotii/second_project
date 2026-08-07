@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import test from "node:test";
 import type { ArtifactRefV0B } from "../src/contracts/v0b-types.ts";
 import type { AttemptRuntimeEvidenceV2B, RunTerminalV2B } from "../src/contracts/v2b-types.ts";
-import type { CandidatePathV2A, RecoverySeedV2A, RunTerminalV2A } from "../src/contracts/v2-types.ts";
+import type { CandidatePathV2A, CandidatePreVerifierCheckpointV2A, ProviderReservationLedgerV2A, RecoverySeedV2A, RunTerminalV2A } from "../src/contracts/v2-types.ts";
 import { sha256, stableJson, treeDigest } from "../src/hash.ts";
 import { inspectSequenceV2B, inspectStage1RunV2B, inspectionFingerprintV2B } from "../src/inspect-v2b.ts";
 import { scanEvidenceBytesV2, validateSessionToolLineageV2 } from "../src/inspect-v2.ts";
@@ -147,7 +147,11 @@ test("R2-C safe pre-dispatch budget terminal is quiescent, verified once, retain
 	const substrate = readJson<RunTerminalV2A>(resolve(source, "substrate/terminal.json"));
 	const candidateA = readJson<CandidatePathV2A>(resolve(source, "substrate", substrate.candidate_refs[0]!.path));
 	assert.ok(candidateA.pre_verifier_checkpoint_ref);
-	const checkpoint = readJson<{ session_snapshot_ref: ArtifactRefV0B; workspace_snapshot_ref: ArtifactRefV0B }>(resolve(source, "substrate", candidateA.pre_verifier_checkpoint_ref.path));
+	const checkpoint = readJson<{ session_snapshot_ref: ArtifactRefV0B; workspace_snapshot_ref: ArtifactRefV0B; reservation_ledger_ref: ArtifactRefV0B }>(resolve(source, "substrate", candidateA.pre_verifier_checkpoint_ref.path));
+	const preVerifierLedger = readJson<{ reservations: AttemptRuntimeEvidenceV2B["reservations"] }>(resolve(source, "substrate", checkpoint.reservation_ledger_ref.path));
+	assert.equal(preVerifierLedger.reservations.length, attempt.reservations.length);
+	assert.ok(preVerifierLedger.reservations.every((reservation) => reservation.phase === "known_usage_committed"));
+	assert.deepEqual(preVerifierLedger.reservations, attempt.reservations);
 	const journal = readFileSync(resolve(source, "substrate/journal.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line) as { type: string; data?: { candidate_path_id?: string } });
 	const checkpointIndex = journal.findIndex((entry) => entry.type === "candidate_pre_verifier_checkpoint" && entry.data?.candidate_path_id === candidateA.candidate_path_id);
 	const verifierIndex = journal.findIndex((entry) => entry.type === "candidate_verifier_completed" && entry.data?.candidate_path_id === candidateA.candidate_path_id);
@@ -169,7 +173,7 @@ test("R2-C safe pre-dispatch budget terminal is quiescent, verified once, retain
 		assert.match(rejected.errors.join("; "), /quiescence/);
 	}
 
-	for (const variant of ["session-reopen", "workspace-snapshot", "tool-result", "journal-order", "reservation-closure"] as const) {
+	for (const variant of ["session-reopen", "workspace-snapshot", "tool-result", "journal-order", "reservation-closure", "known-actual-tokens", "known-actual-cost"] as const) {
 		const root = rootFor(`raw-checkpoint-tamper-${variant}`);
 		cpSync(source, root, { recursive: true });
 		const localCheckpointPath = resolve(root, "substrate", candidateA.pre_verifier_checkpoint_ref!.path);
@@ -193,17 +197,61 @@ test("R2-C safe pre-dispatch budget terminal is quiescent, verified once, retain
 			for (const [index, event] of events.entries()) event.seq = index + 1;
 			writeFileSync(path, `${events.map(stableJson).join("\n")}\n`, "utf8");
 		}
-		if (variant === "reservation-closure") {
+		if (variant === "reservation-closure" || variant === "known-actual-tokens" || variant === "known-actual-cost") {
 			const outer = readJson<RunTerminalV2B>(resolve(root, "terminal.json"));
 			const attemptPath = resolve(root, outer.attempt_evidence_refs[1]!.path);
 			const changed = readJson<AttemptRuntimeEvidenceV2B>(attemptPath);
-			changed.reservations[0]!.phase = "reserved_before_dispatch";
+			assert.equal(changed.reservations[0]!.phase, "known_usage_committed");
+			if (variant === "reservation-closure") changed.reservations[0]!.phase = "reserved_before_dispatch";
+			if (variant === "known-actual-tokens") changed.reservations[0]!.actual_tokens = Number(changed.reservations[0]!.actual_tokens) + 1;
+			if (variant === "known-actual-cost") changed.reservations[0]!.actual_cost_usd = Number(changed.reservations[0]!.actual_cost_usd) + 0.000001;
 			writeJson(attemptPath, changed);
 			outer.attempt_evidence_refs[1] = refreshedRef(outer.attempt_evidence_refs[1]!, attemptPath);
 			writeJson(resolve(root, "terminal.json"), outer);
 		}
 		const rejected = inspectStage1RunV2B({ projectRoot: PROJECT_ROOT, runRoot: root });
 		assert.equal(rejected.integrity_valid, false, variant);
+	}
+
+	for (const field of ["actual_tokens", "actual_cost_usd"] as const) {
+		const root = rootFor(`coherent-pre-verifier-ledger-${field}`);
+		cpSync(source, root, { recursive: true });
+		const outerPath = resolve(root, "terminal.json");
+		const outer = readJson<RunTerminalV2B>(outerPath);
+		const substratePath = resolve(root, "substrate/terminal.json");
+		const substrateTerminal = readJson<RunTerminalV2A>(substratePath);
+		const candidatePath = resolve(root, "substrate", substrateTerminal.candidate_refs[0]!.path);
+		const candidate = readJson<CandidatePathV2A>(candidatePath);
+		const checkpointPath = resolve(root, "substrate", candidate.pre_verifier_checkpoint_ref!.path);
+		const changedCheckpoint = readJson<CandidatePreVerifierCheckpointV2A>(checkpointPath);
+		const ledgerPath = resolve(root, "substrate", changedCheckpoint.reservation_ledger_ref.path);
+		const changedLedger = readJson<ProviderReservationLedgerV2A>(ledgerPath);
+		assert.equal(changedLedger.reservations[0]!.phase, "known_usage_committed");
+		changedLedger.reservations[0]![field] = Number(changedLedger.reservations[0]![field]) + (field === "actual_tokens" ? 1 : 0.000001);
+		writeJson(ledgerPath, changedLedger);
+		changedCheckpoint.reservation_ledger_ref = refreshedRef(changedCheckpoint.reservation_ledger_ref, ledgerPath);
+		writeJson(checkpointPath, changedCheckpoint);
+		candidate.pre_verifier_checkpoint_ref = refreshedRef(candidate.pre_verifier_checkpoint_ref!, checkpointPath);
+		writeJson(candidatePath, candidate);
+		substrateTerminal.candidate_refs[0] = refreshedRef(substrateTerminal.candidate_refs[0]!, candidatePath);
+		writeJson(substratePath, substrateTerminal);
+		outer.substrate_terminal_ref = refreshedRef(outer.substrate_terminal_ref, substratePath);
+		writeJson(outerPath, outer);
+		const journalPath = resolve(root, "substrate/journal.jsonl");
+		const events = readFileSync(journalPath, "utf8").trim().split("\n").map((line) => JSON.parse(line) as { type: string; data?: Record<string, unknown> });
+		for (const event of events) {
+			if (event.data?.candidate_path_id !== candidate.candidate_path_id) continue;
+			if (event.type === "candidate_pre_verifier_checkpoint") {
+				event.data.checkpoint_ref = candidate.pre_verifier_checkpoint_ref;
+				event.data.reservation_ledger_ref = changedCheckpoint.reservation_ledger_ref;
+			}
+			if (event.type === "candidate_verifier_completed" || event.type === "candidate_terminal") event.data.pre_verifier_checkpoint_ref = candidate.pre_verifier_checkpoint_ref;
+			if (event.type === "candidate_terminal") event.data.candidate_ref = substrateTerminal.candidate_refs[0];
+		}
+		writeFileSync(journalPath, `${events.map(stableJson).join("\n")}\n`, "utf8");
+		const rejected = inspectStage1RunV2B({ projectRoot: PROJECT_ROOT, runRoot: root });
+		assert.equal(rejected.integrity_valid, false, field);
+		assert.match(rejected.errors.join("; "), /reservation|usage|checkpoint/i);
 	}
 });
 
@@ -241,6 +289,7 @@ test("R2-MR raw gate stops before Verifier and injected legacy-shaped data canno
 					prior_usage_known: true,
 					reservations_reconciled: true,
 				},
+				providerReservations: [],
 				providerDispatches: 0,
 				toolCalls: 0,
 				tokens: 0,

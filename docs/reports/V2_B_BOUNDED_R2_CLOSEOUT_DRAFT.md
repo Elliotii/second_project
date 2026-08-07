@@ -2,7 +2,7 @@
 
 Date: 2026-08-07
 Owner: original top-level V2-B Stage 1 Implementation Session
-Disposition: `PASS_FOR_R2_FOCUSED_AUDIT`
+Disposition: `PASS_FOR_V2B_R2_AUDIT_P1_001_REAUDIT`
 
 ## Outcome
 
@@ -12,6 +12,8 @@ Disposition: `PASS_FOR_R2_FOCUSED_AUDIT`
 
 **Fact:** Main light-review findings R2-MR-001 and R2-MR-002 are closed. Verifier eligibility for an injected budget stop is now derived before Verifier from reopened JSONL bytes, frozen Workspace/Session refs, raw usage and reservation closure, Tool lifecycle, protected-path checks, and append-only Journal ordering. The caller-controlled legacy flag no longer exists; V2-A compatibility is limited to the Controller-created default deterministic port and the Inspector's matching persisted mode.
 
+**Fact:** Focused-audit finding `V2B-R2-AUDIT-P1-001` is corrected for re-audit. Before a budget-stopped Candidate Verifier, the Controller persists and checkpoint-binds a complete content-addressed Provider reservation ledger. The Inspector independently parses JSONL response token and cost usage and requires exact per-request and aggregate reconciliation against that ledger for both `settled` and `budget_stopped`. Runtime booleans are summaries only. Coherent token and cost ledger tampering remains invalid even after all enclosing refs/digests are refreshed, while the runtime-fault-before-Verifier proof retains zero Verifier count and no output file.
+
 **Fact:** The delta is restricted to Amendment §8. Pi, Selector, V1 fixtures, governance/control files, dependency lockfiles, references, and R1 reports are unchanged. Nothing was staged or committed.
 
 ## Gate summary
@@ -20,9 +22,9 @@ Disposition: `PASS_FOR_R2_FOCUSED_AUDIT`
 |---|---|---|
 | R2-A Control Baseline | PASS | exact baseline/tree, clean start, exact clean Pi, no subagent, zero access |
 | R2-B Controlled Seed/shared Controller | PASS | Direct Tool/JSONL lifecycle, maintenance pass/target fail, write-once Seed, A fork/B fresh |
-| R2-C Terminal/Inspector | PASS | raw-derived eight-factor checkpoint before Verifier; unsafe/legacy-shaped injection fail closed; exact numeric reasoning path only |
+| R2-C Terminal/Inspector | PASS FOR RE-AUDIT | checkpoint-bound raw reservation ledger; independent per-request/aggregate token+cost reconciliation for settled and budget-stopped; unsafe/legacy-shaped injection fail closed; exact numeric reasoning path only |
 | R2-D Regression/zero access | PASS | TypeScript; R2 7/7; V2-B 19/19; V2-A 11/11; V1 27/27 + CLI 2/2; security 11/11 |
-| R2-E Candidate Audit | PENDING | requires fresh top-level focused audit after Main freezes Candidate |
+| R2-E Candidate Audit | RE-AUDIT PENDING | original audit found only `V2B-R2-AUDIT-P1-001`; bounded correction is ready for focused re-audit |
 | H-R2 through K-R2 | NOT RUN | belongs to later fresh no-source-edit R2 Execution Session |
 
 ## Deliverables
@@ -52,21 +54,20 @@ The Commands ledger retains all corrected failures, including two legacy V1 CLI 
 
 ## Remaining work
 
-1. Main reviews the allowlisted delta and this claims boundary.
-2. Main may freeze the Candidate without changing implementation semantics.
-3. One fresh top-level focused Audit Session reviews only the Amendment scope.
-4. If audit passes, Main creates the audited Execution Baseline and immutable real Manifest.
-5. A different fresh no-source-edit R2 Execution Session performs Gate H-R2 before any authorized real access, then runs controlled Seed, real A/B, and one real Negative.
-6. Main reconciles evidence and returns the Version disposition to the user.
+1. Main reviews the allowlisted P1 correction and this claims boundary.
+2. The focused Audit Session re-audits only `V2B-R2-AUDIT-P1-001` and necessary regressions.
+3. If re-audit passes, Main may amend/freeze the Candidate without changing implementation semantics and create the audited Execution Baseline and immutable real Manifest.
+4. A different fresh no-source-edit R2 Execution Session performs Gate H-R2 before any authorized real access, then runs controlled Seed, real A/B, and one real Negative.
+5. Main reconciles evidence and returns the Version disposition to the user.
 
 No step above is authorized to this implementation Session.
 
 ## Claims boundary
 
-This closeout recommends implementation readiness for focused audit only. It does not accept V2-B, answer the V2 Version Question, authorize Stage 2, predict a winning Candidate, or claim production/network/Tool durability.
+This closeout recommends only focused re-audit of the bounded P1 correction. It does not accept V2-B, answer the V2 Version Question, authorize Stage 2, predict a winning Candidate, or claim production/network/Tool durability.
 
 ## Recommendation
 
-`PASS_FOR_R2_FOCUSED_AUDIT`
+`PASS_FOR_V2B_R2_AUDIT_P1_001_REAUDIT`
 
 Stop and return to Main. Do not stage, commit, audit, or execute real calls.

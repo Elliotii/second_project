@@ -17,6 +17,8 @@ import {
 	type CandidateHardGatesV2A,
 	type CandidatePathV2A,
 	type CandidatePreVerifierCheckpointV2A,
+	type ProviderReservationEvidenceV2,
+	type ProviderReservationLedgerV2A,
 	type InspectResultV2A,
 	type RecoverySeedV2A,
 	type RunManifestV2A,
@@ -417,6 +419,53 @@ function rawUsage(entries: readonly Record<string, unknown>[]): RawUsageV2A {
 	};
 }
 
+interface RawProviderResponseUsageV2 {
+	request_ordinal: number;
+	tokens: number;
+	cost_usd: number;
+}
+
+function rawProviderResponseUsageV2(entries: readonly Record<string, unknown>[], label: string, errors: string[]): RawProviderResponseUsageV2[] | null {
+	const responses: RawProviderResponseUsageV2[] = [];
+	for (const entry of entries) {
+		const message = entry.message as Record<string, unknown> | undefined;
+		if (message?.role !== "assistant" || message.stopReason === "error") continue;
+		const usage = message.usage as Record<string, unknown> | undefined;
+		const values = [usage?.input, usage?.output, usage?.cacheRead, usage?.cacheWrite];
+		const cost = usage?.cost as Record<string, unknown> | undefined;
+		if (values.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0) || typeof cost?.total !== "number" || !Number.isFinite(cost.total) || cost.total < 0) {
+			errors.push(`${label}: raw Provider response usage is unknown or malformed`);
+			return null;
+		}
+		responses.push({ request_ordinal: responses.length + 1, tokens: (values as number[]).reduce((sum, value) => sum + value, 0), cost_usd: cost.total });
+	}
+	return responses;
+}
+
+function deriveReservationLedgerV2(
+	reservations: readonly ProviderReservationEvidenceV2[],
+	responses: readonly RawProviderResponseUsageV2[],
+	attemptId: string,
+): { priorUsageKnown: boolean; reservationsReconciled: boolean; tokens: number; cost: number } {
+	const priorUsageKnown = reservations.length === responses.length && reservations.length === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max && reservations.every((reservation) =>
+		reservation.phase === "known_usage_committed" && typeof reservation.actual_tokens === "number" && Number.isFinite(reservation.actual_tokens) && reservation.actual_tokens >= 0 &&
+		typeof reservation.actual_cost_usd === "number" && Number.isFinite(reservation.actual_cost_usd) && reservation.actual_cost_usd >= 0,
+	);
+	let tokens = 0;
+	let cost = 0;
+	const reservationsReconciled = priorUsageKnown && reservations.every((reservation, index) => {
+		const response = responses[index]!;
+		if (typeof reservation.actual_tokens !== "number" || typeof reservation.actual_cost_usd !== "number") return false;
+		tokens += reservation.actual_tokens;
+		cost += reservation.actual_cost_usd;
+		return reservation.attempt_id === attemptId && reservation.request_ordinal === index + 1 &&
+			reservation.provider_requests_before === index && reservation.provider_requests_after === index + 1 &&
+			reservation.actual_tokens <= reservation.reserved_tokens && reservation.actual_cost_usd <= reservation.reserved_cost_usd + Number.EPSILON &&
+			reservation.actual_tokens === response.tokens && reservation.actual_cost_usd === response.cost_usd;
+	});
+	return { priorUsageKnown, reservationsReconciled, tokens, cost };
+}
+
 function parseWireOutput(output: string): { verifier_id?: unknown; status?: unknown; summary?: unknown; failed_checks?: unknown } | null {
 	try {
 		const last = output.replace(/^\[(?:stdout|stderr)\] /gm, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).at(-1);
@@ -708,6 +757,9 @@ function inspectCandidate(options: {
 		let checkpointSession: ParsedSessionV2A | null = null;
 		let checkpointWorkspace: ValidatedSnapshotV2A | null = null;
 		if (checkpoint) {
+			addArtifactErrors(errors, runRoot, `${candidate.candidate_path_id} pre-Verifier reservation ledger`, checkpoint.reservation_ledger_ref);
+			if (checkpoint.reservation_ledger_ref.path !== `candidates/${suffix}/provider-reservations-pre-verifier.json`) errors.push(`${candidate.candidate_path_id}: pre-Verifier reservation ledger path mismatch`);
+			const reservationLedger = safeReadJson<ProviderReservationLedgerV2A>(runRoot, checkpoint.reservation_ledger_ref.path, errors);
 			checkpointSession = parseSession(runRoot, checkpoint.session_snapshot_ref, `${candidate.candidate_path_id} pre-Verifier Session`, errors);
 			checkpointWorkspace = validateWorkspaceSnapshot(
 				runRoot,
@@ -719,7 +771,10 @@ function inspectCandidate(options: {
 				errors,
 				true,
 			);
-			const checkpointUsage = checkpointSession && before ? rawUsage(checkpointSession.entries.slice(before.entries.length)) : null;
+			const checkpointAttemptEntries = checkpointSession && before ? checkpointSession.entries.slice(before.entries.length) : null;
+			const checkpointUsage = checkpointAttemptEntries ? rawUsage(checkpointAttemptEntries) : null;
+			const rawResponses = checkpointAttemptEntries ? rawProviderResponseUsageV2(checkpointAttemptEntries, candidate.candidate_path_id, errors) : null;
+			const ledgerDerived = reservationLedger && rawResponses ? deriveReservationLedgerV2(reservationLedger.reservations, rawResponses, candidate.attempt_id) : { priorUsageKnown: false, reservationsReconciled: false, tokens: 0, cost: 0 };
 			const observation = checkpoint.runtime_observation;
 			const checkpointIndex = checkpointEvent ? journal.indexOf(checkpointEvent) : -1;
 			const verifierIndex = verifierEvent ? journal.indexOf(verifierEvent) : -1;
@@ -727,18 +782,21 @@ function inspectCandidate(options: {
 			const rawDerived =
 				checkpoint.schema_version === "v2a-candidate-pre-verifier-checkpoint-v1" && checkpoint.candidate_path_id === candidate.candidate_path_id &&
 				checkpoint.attempt_id === candidate.attempt_id && checkpoint.terminal_reason === "budget_stopped" &&
+				reservationLedger?.schema_version === "v2a-provider-reservation-ledger-v1" && reservationLedger.candidate_path_id === candidate.candidate_path_id && reservationLedger.attempt_id === candidate.attempt_id &&
 				observation?.pre_dispatch_refusal === true && observation.pending_provider_responses === 0 &&
 				observation.pending_provider_reservation === false && observation.pending_tool_calls === 0 &&
-				observation.prior_usage_known === true && observation.reservations_reconciled === true &&
+				ledgerDerived.priorUsageKnown && ledgerDerived.reservationsReconciled &&
+				observation.prior_usage_known === ledgerDerived.priorUsageKnown && observation.reservations_reconciled === ledgerDerived.reservationsReconciled &&
 				checkpoint.raw_provider_dispatches === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max &&
 				checkpointSession !== null && finalSession !== null && checkpointSession.rawBytes.equals(finalSession.rawBytes) &&
 				checkpoint.session_id === checkpointSession.header.id && checkpoint.session_entry_count === checkpointSession.entries.length &&
 				checkpointWorkspace?.valid === true && checkpoint.workspace_digest === checkpointWorkspace.snapshot?.digest && checkpoint.workspace_digest === final.snapshot?.digest &&
 				checkpointUsage !== null && checkpointUsage.settled === false &&
 				checkpoint.raw_provider_dispatches === checkpointUsage.providerDispatches && checkpoint.raw_tool_calls === checkpointUsage.toolCalls && checkpoint.raw_tokens === checkpointUsage.tokens &&
+				checkpoint.raw_tokens === ledgerDerived.tokens && checkpoint.raw_cost_usd === ledgerDerived.cost &&
 				checkpoint.tool_lifecycle_closed === true && checkpoint.protected_secret_path_valid === true && protectedValid &&
 				checkpointEvents.length === 1 && checkpointEvent !== null && sameRef(checkpointEvent.data?.checkpoint_ref, candidate.pre_verifier_checkpoint_ref) &&
-				sameRef(checkpointEvent.data?.session_snapshot_ref, checkpoint.session_snapshot_ref) && sameRef(checkpointEvent.data?.workspace_snapshot_ref, checkpoint.workspace_snapshot_ref) &&
+				sameRef(checkpointEvent.data?.reservation_ledger_ref, checkpoint.reservation_ledger_ref) && sameRef(checkpointEvent.data?.session_snapshot_ref, checkpoint.session_snapshot_ref) && sameRef(checkpointEvent.data?.workspace_snapshot_ref, checkpoint.workspace_snapshot_ref) &&
 				checkpointEvent.seq === checkpoint.journal_sequence && checkpointIndex >= 0 && verifierIndex > checkpointIndex && terminalIndex > verifierIndex &&
 				verifierEvents.length === 1 && verifierEvent !== null && sameRef(verifierEvent.data?.verifier_result_ref, candidate.verifier_result_ref) &&
 				sameRef(verifierEvent.data?.pre_verifier_checkpoint_ref, candidate.pre_verifier_checkpoint_ref);

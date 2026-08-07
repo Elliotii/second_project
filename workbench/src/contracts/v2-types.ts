@@ -113,12 +113,33 @@ export interface RuntimeBudgetStopObservationV2 {
 	reservations_reconciled: boolean;
 }
 
+export interface ProviderReservationEvidenceV2 {
+	reservation_id: string;
+	attempt_id: string;
+	request_ordinal: number;
+	phase: "reserved_before_dispatch" | "known_usage_committed" | "conservative_unknown_usage_charge" | "conservative_overflow_charge";
+	provider_requests_before: number;
+	provider_requests_after: number;
+	reserved_tokens: number;
+	reserved_cost_usd: number;
+	actual_tokens: number | "unknown";
+	actual_cost_usd: number | "unknown";
+}
+
+export interface ProviderReservationLedgerV2A {
+	schema_version: "v2a-provider-reservation-ledger-v1";
+	candidate_path_id: string;
+	attempt_id: string;
+	reservations: ProviderReservationEvidenceV2[];
+}
+
 export interface CandidatePreVerifierCheckpointV2A {
 	schema_version: "v2a-candidate-pre-verifier-checkpoint-v1";
 	candidate_path_id: string;
 	attempt_id: string;
 	terminal_reason: "budget_stopped";
 	runtime_observation: RuntimeBudgetStopObservationV2;
+	reservation_ledger_ref: ArtifactRefV0B;
 	session_snapshot_ref: ArtifactRefV0B;
 	session_id: string;
 	session_entry_count: number;
@@ -127,6 +148,7 @@ export interface CandidatePreVerifierCheckpointV2A {
 	raw_provider_dispatches: number;
 	raw_tool_calls: number;
 	raw_tokens: number;
+	raw_cost_usd: number;
 	tool_lifecycle_closed: boolean;
 	protected_secret_path_valid: boolean;
 	journal_sequence: number;

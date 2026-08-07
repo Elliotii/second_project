@@ -5,7 +5,7 @@ Owner: original top-level V2-B Stage 1 Implementation Session
 Control Baseline: `b1c8cf6045a0118452734bdf3cbe7b65fcd645ac`
 Control tree: `5c494f27fd01da4a70c8c162c0f6d588c9613b98`
 Pinned Pi: `027a5847901b5dde30270abaa1041046cd2b4b55`
-Recommendation: `PASS_FOR_R2_FOCUSED_AUDIT`
+Recommendation: `PASS_FOR_V2B_R2_AUDIT_P1_001_REAUDIT`
 
 ## Executive result
 
@@ -17,7 +17,21 @@ Recommendation: `PASS_FOR_R2_FOCUSED_AUDIT`
 
 **Fact:** The dormant real DeepSeek composition remains injected and uncalled. Deterministic construction, preflight, complete sequence, controlled Seed, A/B, and Negative proofs all end with Credential/network/external Provider/model counters equal to zero and real cost USD 0.
 
-**Recommendation:** Main should freeze and review this candidate, then dispatch the separately authorized fresh focused audit. This report does not authorize audit acceptance, Candidate/Execution Baseline commits, Credential access, network, Stage 2 execution, or final V2-B/V2 acceptance.
+**Recommendation:** Main should present the bounded correction of Candidate `0bc5eba535c06fd1a780a82f95859defa3f2eb78` for focused re-audit of `V2B-R2-AUDIT-P1-001`. This report does not authorize audit acceptance, an amended Candidate/Execution Baseline commit, Credential access, network, Stage 2 execution, or final V2-B/V2 acceptance.
+
+## Focused-audit bounded correction: V2B-R2-AUDIT-P1-001
+
+**Fact:** The independent focused audit of Candidate `0bc5eba535c06fd1a780a82f95859defa3f2eb78` found one blocking issue: the budget-stopped pre-Verifier checkpoint did not persist the complete Provider reservation ledger, and the Inspector did not reconcile committed tokens against raw Session usage for `budget_stopped` evidence.
+
+**Fact:** `V2B-R2-AUDIT-P1-001` is corrected in this worktree. Before a budget-stopped Candidate Verifier can run, the shared Controller now writes a content-addressed `v2a-provider-reservation-ledger-v1` Artifact containing every Provider reservation, including request identity/order, reserved token/cost ceilings, terminal phase, and committed actual token/cost. The pre-Verifier checkpoint binds that immutable Artifact ref, its Attempt/Candidate identity, independently parsed raw Session token total, independently parsed raw Session cost total, and Journal order.
+
+**Fact:** The Inspector independently reopens the checkpoint Session JSONL and reservation-ledger Artifact. For each non-error assistant response it derives exact tokens and `usage.cost.total`, requires a one-to-one ordered reservation/response match, checks every known commitment is finite, non-negative and within its reservation, and reconciles both per-request and aggregate token and cost totals. It applies the same reconciliation to `settled` and `budget_stopped` Attempts. Runtime/quiescence booleans are checked only as summaries of the raw-derived result.
+
+**Fact:** Coherent tamper tests change `known_usage_committed.actual_tokens` and `known_usage_committed.actual_cost_usd`, refresh the enclosing ledger/checkpoint/Candidate/terminal refs and Journal digests, and are both rejected by read-only inspection. A separate raw runtime-fault case still stops before Verifier; its Verifier count and output file remain zero/absent.
+
+**Fact:** Correction verification passed strict TypeScript, R2 focused 7/7, affected V2-B 19/19, and affected V2-A 11/11, all with zero skipped tests. Candidate HEAD remained `0bc5eba535c06fd1a780a82f95859defa3f2eb78`; the worktree delta is unstaged and allowlist-only; pinned Pi remained exact and clean; all real-access counters and cost remained zero.
+
+No Case, path, retry, fallback, replacement, budget, fixture, Prompt, Skill, Verifier, Selector, Controller, Provider/Model profile, or A/B Session treatment changed.
 
 ## Main light-review bounded correction
 
@@ -179,8 +193,8 @@ This is application-path counter/stub evidence, not an OS-level egress-blocking 
 |---:|---|
 | 1 R1 history preserved | PASS for tracked reports; R1 ignored run was absent at Gate and was not created/changed |
 | 2 Amendment/baseline/owner frozen | PASS |
-| 3 zero-call Seed/shared seam implemented and focused-audited | IMPLEMENTATION PASS; focused audit pending |
-| 4 Inspector and safe terminal bounded/fail-closed | IMPLEMENTATION PASS; audit pending |
+| 3 zero-call Seed/shared seam implemented and focused-audited | IMPLEMENTATION PASS; focused audit found one bounded correction; re-audit pending |
+| 4 Inspector and safe terminal bounded/fail-closed | IMPLEMENTATION PASS after P1 raw-ledger correction; re-audit pending |
 | 5 audited Execution Baseline before real access | PENDING Main + audit |
 | 6 controlled Seed valid evidence | deterministic PASS; real Execution Session pending |
 | 7 real A/B terminal | NOT RUN / unauthorized here |
@@ -224,7 +238,7 @@ No changes exist in `CURRENT_STATE.md`, `AGENTS.md`, formal governance, Selector
 
 ## Unverified items and claims boundary
 
-**Unverified:** independent focused audit; Main Candidate commit; audited Execution Baseline; Gate H-R2 against that future immutable SHA/tree/Manifest; any Credential resolution; any network or real Provider/model dispatch; real A/B; real Negative; final reconciliation; final V2-B/V2 disposition.
+**Unverified:** focused re-audit and closure of `V2B-R2-AUDIT-P1-001`; Main amended Candidate commit; audited Execution Baseline; Gate H-R2 against that future immutable SHA/tree/Manifest; any Credential resolution; any network or real Provider/model dispatch; real A/B; real Negative; final reconciliation; final V2-B/V2 disposition.
 
 **Not claimed:** universal network sandboxing, natural model failure recovery, A/B superiority, statistical improvement, exactly-once Tool effects, production durability, SDK/Extension/RPC integration, V3 capability, or final Version acceptance.
 
@@ -235,7 +249,7 @@ Do not apply this proposal until Main review and candidate handling.
 ```yaml
 active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 v2_b_bounded_r2_implementation:
-  status: PASS_FOR_R2_FOCUSED_AUDIT_RECOMMENDED
+  status: PASS_FOR_V2B_R2_AUDIT_P1_001_REAUDIT_RECOMMENDED
   control_baseline_commit: b1c8cf6045a0118452734bdf3cbe7b65fcd645ac
   control_baseline_tree: 5c494f27fd01da4a70c8c162c0f6d588c9613b98
   implementation_owner: original_v2_b_stage_1_top_level_implementation_session
@@ -250,6 +264,8 @@ v2_b_bounded_r2_implementation:
   main_light_review_findings:
     R2_MR_001: closed_raw_derived_pre_verifier_checkpoint
     R2_MR_002: closed_controller_owned_v2a_compatibility_no_injected_bypass
+  focused_audit_findings:
+    V2B_R2_AUDIT_P1_001: corrected_complete_pre_verifier_reservation_ledger_and_independent_token_cost_reconciliation_reaudit_pending
   v2_b_regression: 19_of_19_pass_zero_skipped
   v2_a_regression: 11_of_11_pass_zero_skipped
   v1_provider_budget_regression: 27_of_27_pass_zero_skipped
@@ -260,13 +276,13 @@ v2_b_bounded_r2_implementation:
   external_provider_calls: 0
   real_model_calls: 0
   real_cost_usd: 0
-  next_authorized_step: main_light_review_candidate_freeze_then_fresh_focused_audit
+  next_authorized_step: focused_reaudit_of_V2B_R2_AUDIT_P1_001_then_main_disposition
   stage_2_execution: not_started_not_authorized_for_this_session
   final_v2_b_v2_acceptance: pending_main_and_user
 ```
 
 ## Final disposition
 
-`PASS_FOR_R2_FOCUSED_AUDIT`
+`PASS_FOR_V2B_R2_AUDIT_P1_001_REAUDIT`
 
-Stop here for Main review. Do not begin audit or real execution.
+Stop here for Main and focused re-audit. Do not begin audit or real execution.

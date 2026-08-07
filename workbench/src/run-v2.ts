@@ -24,6 +24,8 @@ import type {
 	CandidatePathV2A,
 	ExecuteRunOptionsV2A,
 	RecoverySeedV2A,
+	ProviderReservationEvidenceV2,
+	ProviderReservationLedgerV2A,
 	RecoveryStrategyV2A,
 	RunManifestV2A,
 	RunTerminalV2A,
@@ -70,6 +72,7 @@ export interface HarnessResultV2A {
 	terminalReason: "settled" | "budget_stopped" | "runtime_invalid";
 	agentCompletion: "settled" | "pre_dispatch_budget_terminal" | "invalid";
 	runtimeBudgetStopObservation: RuntimeBudgetStopObservationV2 | null;
+	providerReservations: ProviderReservationEvidenceV2[];
 	providerDispatches: number;
 	toolCalls: number;
 	tokens: number;
@@ -352,6 +355,7 @@ async function runHarnessDeterministicV2A(options: ExecutionAttemptRequestV2): P
 			terminalReason: exhaustedHostBudget ? "budget_stopped" : settled ? "settled" : "runtime_invalid",
 			agentCompletion: exhaustedHostBudget ? "pre_dispatch_budget_terminal" : settled ? "settled" : "invalid",
 			runtimeBudgetStopObservation: null,
+			providerReservations: [],
 			providerDispatches,
 			toolCalls,
 			tokens,
@@ -364,6 +368,7 @@ async function runHarnessDeterministicV2A(options: ExecutionAttemptRequestV2): P
 			terminalReason: budgetStopped ? "budget_stopped" : "runtime_invalid",
 			agentCompletion: budgetStopped ? "pre_dispatch_budget_terminal" : "invalid",
 			runtimeBudgetStopObservation: null,
+			providerReservations: [],
 			providerDispatches,
 			toolCalls,
 			tokens,
@@ -462,6 +467,56 @@ function rawAttemptUsage(entries: readonly unknown[], prefixLength: number): {
 		activeExecutionTimeMs: timestamps.length > 1 ? Math.max(0, timestamps.at(-1)! - timestamps[0]!) : 0,
 		settled: lastMessage?.role === "assistant" && lastMessage.stopReason === "stop",
 	};
+}
+
+interface RawProviderResponseUsageV2 {
+	request_ordinal: number;
+	tokens: number;
+	cost_usd: number;
+}
+
+function rawProviderResponseUsageV2(entries: readonly unknown[], prefixLength: number): RawProviderResponseUsageV2[] {
+	const responses: RawProviderResponseUsageV2[] = [];
+	for (const entry of entries.slice(prefixLength) as Array<Record<string, unknown>>) {
+		const message = entry.message as Record<string, unknown> | undefined;
+		if (message?.role !== "assistant" || message.stopReason === "error") continue;
+		const usage = message.usage as Record<string, unknown> | undefined;
+		const values = [usage?.input, usage?.output, usage?.cacheRead, usage?.cacheWrite];
+		const cost = usage?.cost as Record<string, unknown> | undefined;
+		if (values.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0) || typeof cost?.total !== "number" || !Number.isFinite(cost.total) || cost.total < 0) {
+			throw new Error("V2 Candidate raw Provider response usage is unknown or malformed");
+		}
+		responses.push({ request_ordinal: responses.length + 1, tokens: (values as number[]).reduce((sum, value) => sum + value, 0), cost_usd: cost.total });
+	}
+	return responses;
+}
+
+function knownReservationLedgerReconcilesV2(
+	reservations: readonly ProviderReservationEvidenceV2[],
+	responses: readonly RawProviderResponseUsageV2[],
+	attemptId: string,
+): boolean {
+	if (reservations.length !== responses.length || reservations.length !== V2A_ATTEMPT_CAPS.faux_provider_dispatches_max) return false;
+	let reservationTokens = 0;
+	let responseTokens = 0;
+	let reservationCost = 0;
+	let responseCost = 0;
+	for (const [index, reservation] of reservations.entries()) {
+		const response = responses[index]!;
+		if (
+			reservation.attempt_id !== attemptId || reservation.request_ordinal !== index + 1 ||
+			reservation.provider_requests_before !== index || reservation.provider_requests_after !== index + 1 ||
+			reservation.phase !== "known_usage_committed" || typeof reservation.actual_tokens !== "number" || typeof reservation.actual_cost_usd !== "number" ||
+			!Number.isFinite(reservation.actual_tokens) || reservation.actual_tokens < 0 || !Number.isFinite(reservation.actual_cost_usd) || reservation.actual_cost_usd < 0 ||
+			reservation.actual_tokens > reservation.reserved_tokens || reservation.actual_cost_usd > reservation.reserved_cost_usd + Number.EPSILON ||
+			reservation.actual_tokens !== response.tokens || reservation.actual_cost_usd !== response.cost_usd
+		) return false;
+		reservationTokens += reservation.actual_tokens;
+		responseTokens += response.tokens;
+		reservationCost += reservation.actual_cost_usd;
+		responseCost += response.cost_usd;
+	}
+	return reservationTokens === responseTokens && reservationCost === responseCost;
 }
 
 function assertIndependentFiles(...roots: string[]): void {
@@ -576,6 +631,16 @@ async function createCandidatePreVerifierCheckpointV2A(options: {
 	writeOnceBytes(options.runRoot, sessionPath, readFileSync(metadata.path));
 	const sessionRef = artifactRef(options.runRoot, sessionPath, "application/x-ndjson", false);
 	const rawUsage = rawAttemptUsage(reopenedEntries, options.entriesBefore.length);
+	const rawResponses = rawProviderResponseUsageV2(reopenedEntries, options.entriesBefore.length);
+	const reservationLedger: ProviderReservationLedgerV2A = {
+		schema_version: "v2a-provider-reservation-ledger-v1",
+		candidate_path_id: options.candidatePathId,
+		attempt_id: options.attemptId,
+		reservations: structuredClone(options.harness.providerReservations),
+	};
+	const reservationLedgerRef = writeOnceJson(options.runRoot, `candidates/${options.suffix}/provider-reservations-pre-verifier.json`, reservationLedger);
+	const reservationsReconciled = knownReservationLedgerReconcilesV2(reservationLedger.reservations, rawResponses, options.attemptId);
+	const rawCost = rawResponses.reduce((sum, response) => sum + response.cost_usd, 0);
 	const toolLifecycleClosed = sessionToolLifecycleClosedV2(reopenedEntries.slice(options.entriesBefore.length));
 	const workspaceRef = workspaceSnapshot(
 		options.runRoot,
@@ -588,10 +653,11 @@ async function createCandidatePreVerifierCheckpointV2A(options: {
 	const rawGate =
 		observation.pre_dispatch_refusal === true && observation.pending_provider_responses === 0 &&
 		observation.pending_provider_reservation === false && observation.pending_tool_calls === 0 &&
-		observation.prior_usage_known === true && observation.reservations_reconciled === true &&
+		reservationsReconciled && observation.prior_usage_known === reservationsReconciled && observation.reservations_reconciled === reservationsReconciled &&
 		rawUsage.providerDispatches === V2A_ATTEMPT_CAPS.faux_provider_dispatches_max &&
 		rawUsage.providerDispatches === options.harness.providerDispatches && rawUsage.toolCalls === options.harness.toolCalls &&
-		rawUsage.tokens === options.harness.tokens && rawUsage.settled === false && toolLifecycleClosed && protectedValid;
+		rawUsage.tokens === options.harness.tokens && rawUsage.tokens === rawResponses.reduce((sum, response) => sum + response.tokens, 0) &&
+		rawUsage.settled === false && toolLifecycleClosed && protectedValid;
 	if (!rawGate) throw new Error("V2 Candidate raw pre-Verifier quiescence checkpoint failed");
 	const checkpoint: CandidatePreVerifierCheckpointV2A = {
 		schema_version: "v2a-candidate-pre-verifier-checkpoint-v1",
@@ -599,6 +665,7 @@ async function createCandidatePreVerifierCheckpointV2A(options: {
 		attempt_id: options.attemptId,
 		terminal_reason: "budget_stopped",
 		runtime_observation: structuredClone(observation),
+		reservation_ledger_ref: reservationLedgerRef,
 		session_snapshot_ref: sessionRef,
 		session_id: metadata.id,
 		session_entry_count: reopenedEntries.length,
@@ -607,6 +674,7 @@ async function createCandidatePreVerifierCheckpointV2A(options: {
 		raw_provider_dispatches: rawUsage.providerDispatches,
 		raw_tool_calls: rawUsage.toolCalls,
 		raw_tokens: rawUsage.tokens,
+		raw_cost_usd: rawCost,
 		tool_lifecycle_closed: true,
 		protected_secret_path_valid: true,
 		journal_sequence: options.sequence.value + 1,
@@ -616,6 +684,7 @@ async function createCandidatePreVerifierCheckpointV2A(options: {
 		candidate_path_id: options.candidatePathId,
 		attempt_id: options.attemptId,
 		checkpoint_ref: ref,
+		reservation_ledger_ref: reservationLedgerRef,
 		session_snapshot_ref: sessionRef,
 		workspace_snapshot_ref: workspaceRef,
 		terminal_reason: "budget_stopped",

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import type { ArtifactRefV0B } from "./contracts/v0b-types.ts";
+import type { CandidatePreVerifierCheckpointV2A, ProviderReservationLedgerV2A } from "./contracts/v2-types.ts";
 import {
 	V2B_ATTEMPT_CAPS,
 	V2B_CONTROL_BASELINE_COMMIT,
@@ -193,7 +194,7 @@ function validateAttempt(attempt: AttemptRuntimeEvidenceV2B, expectedRole: Attem
 			errors.push(`${label}: uncommitted provider reservation persisted`);
 		}
 	}
-	if (attempt.terminal_reason === "settled" && (committedTokens !== usage.tokens || Math.abs(committedCost - usage.real_cost_usd) > Number.EPSILON)) {
+	if ((attempt.terminal_reason === "settled" || attempt.terminal_reason === "budget_stopped") && (committedTokens + conservativeTokens !== usage.tokens || Math.abs(committedCost + conservativeCost - usage.real_cost_usd) > Number.EPSILON)) {
 		errors.push(`${label}: committed usage does not reconcile`);
 	}
 	if (conservativeTokens !== usage.conservative_charged_tokens || Math.abs(conservativeCost - usage.conservative_charged_cost_usd) > Number.EPSILON) {
@@ -272,9 +273,15 @@ export function inspectStage1RunV2B(options: { projectRoot: string; runRoot: str
 			for (const attempt of [continued!, fresh!]) {
 				if (attempt.agent_completion !== "pre_dispatch_budget_terminal") continue;
 				const candidate = substrate.candidates.find((entry) => entry.attempt_id === attempt.attempt_id);
-				if (!candidate?.pre_verifier_checkpoint_ref || candidate.quiescent_budget_terminal !== true || stableJson(attempt.runtime_budget_stop_observation) !== stableJson(
-					safeRead<{ runtime_observation: unknown }>(resolve(options.runRoot, "substrate"), candidate.pre_verifier_checkpoint_ref.path, errors)?.runtime_observation,
-				) || attempt.reservations.some((reservation) => reservation.phase === "reserved_before_dispatch")) {
+				const checkpoint = candidate?.pre_verifier_checkpoint_ref
+					? safeRead<CandidatePreVerifierCheckpointV2A>(resolve(options.runRoot, "substrate"), candidate.pre_verifier_checkpoint_ref.path, errors)
+					: null;
+				const ledger = checkpoint
+					? safeRead<ProviderReservationLedgerV2A>(resolve(options.runRoot, "substrate"), checkpoint.reservation_ledger_ref.path, errors)
+					: null;
+				if (!candidate?.pre_verifier_checkpoint_ref || candidate.quiescent_budget_terminal !== true || !checkpoint || !ledger ||
+					stableJson(attempt.runtime_budget_stop_observation) !== stableJson(checkpoint.runtime_observation) ||
+					stableJson(attempt.reservations) !== stableJson(ledger.reservations) || attempt.reservations.some((reservation) => reservation.phase === "reserved_before_dispatch")) {
 					errors.push(`${attempt.attempt_id}: Attempt evidence is not bound to the raw-derived pre-Verifier checkpoint`);
 				}
 			}

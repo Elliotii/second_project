@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import type { ArtifactRefV0B } from "./contracts/v0b-types.ts";
-import type { CandidateModeV2A, CandidatePathV2A } from "./contracts/v2-types.ts";
+import type { CandidateModeV2A, CandidatePathV2A, CandidatePreVerifierCheckpointV2A, ProviderReservationLedgerV2A } from "./contracts/v2-types.ts";
 import type { ControlledSeedProvenanceV2 } from "./run-v2.ts";
 import {
 	V2B_ATTEMPT_CAPS,
@@ -237,6 +237,9 @@ async function executeCaseRunV2B(options: {
 			if (!candidate?.pre_verifier_checkpoint_ref || candidate.quiescent_budget_terminal !== true || !attempt.runtime_budget_stop_observation) {
 				throw new Error("V2-B budget terminal lacks Controller-derived pre-Verifier checkpoint");
 			}
+			const checkpoint = JSON.parse(readFileSync(resolve(substrateRoot, candidate.pre_verifier_checkpoint_ref.path), "utf8")) as CandidatePreVerifierCheckpointV2A;
+			const reservationLedger = JSON.parse(readFileSync(resolve(substrateRoot, checkpoint.reservation_ledger_ref.path), "utf8")) as ProviderReservationLedgerV2A;
+			if (stableJson(reservationLedger.reservations) !== stableJson(attempt.reservations)) throw new Error("V2-B Attempt reservation evidence differs from pre-Verifier ledger");
 			attempt.quiescence = {
 				pre_dispatch_refusal: true,
 				pending_provider_responses: 0,
