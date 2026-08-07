@@ -5,43 +5,33 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_goal_2_activated
-  status: V3_G2_ACTIVATED_NOT_STARTED
+  phase: v3_goal_2_completed
+  status: V3_G2_CLOSED_ACCEPTED
 
-active_goal: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+active_goal: null
 
 last_executed_goal:
-  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
   status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
-  candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
+  disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
 
 last_closed_goal:
-  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
   status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
-  closeout: docs/reports/V3_G1_CLOSEOUT.md
+  disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  closeout: docs/reports/V3_G2_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
   status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
-  implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
+  disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  implementation_baseline_commit: resulting_HEAD_of_this_revision
 
-current_goal:
-  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
-  status: activated_not_started
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  implementation_owner: future_fresh_top_level_goal_2_session
-  implementation_authorized: true_goal_2_only
-  real_model_calls_authorized: 0
-  credential_reads_authorized: 0
-  external_network_authorized: false
-  pi_core_patch_authorized: false
-  git_commit_authorized_for_goal_session: false
+current_goal: null
 
 next_goal:
   id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
@@ -65,15 +55,23 @@ v3_control:
   goal_1_real_state_digest: efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9
   goal_1_real_state_status: staged_inactive
   goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
-  goal_2_status: activated_not_started
-  goal_2_activation_authorized: true
-  goal_2_implementation_owner: future_fresh_top_level_goal_2_session
-  goal_2_implementation_started: false
+  goal_2_status: closed_accepted
+  goal_2_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  goal_2_activation_authorized: consumed
+  goal_2_implementation_owner: completed_top_level_session_019fdd2a-9bc1-7a00-b500-a5b07b81c0c2
+  goal_2_implementation_started: true
+  goal_2_implementation_completed: true
   goal_2_real_model_calls_authorized: 0
   goal_2_credential_reads_authorized: 0
   goal_2_external_network_authorized: false
-  goal_2_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  goal_2_control_baseline_commit: resulting_HEAD_of_this_revision
+  goal_2_control_baseline_commit_authorized: consumed
+  goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
+  goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
+  goal_2_candidate_baseline_tree: f9a2ce17d374e357e6c6df1e5607b6b646373485
+  goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
+  goal_2_focused_tests: 6_passed_0_failed_0_skipped
+  goal_2_goal_1_regression: 13_passed_0_failed_0_skipped
+  goal_2_real_access_observed: 0
   goal_3_authorized: false
   real_model_calls_authorized: consumed_1_no_further_calls_authorized
   credential_reads_authorized: consumed_1_no_further_reads_authorized
@@ -449,6 +447,10 @@ completed_work:
   - V2_B_limited_closeout_accepted_by_user
   - V2_B_closed_with_mechanism_proven_negative_incomplete
   - V2_closed_accepted_with_explicit_negative_incomplete_limitation
+  - V3_G1_closed_accepted_with_typed_staged_state_and_one_bounded_real_proposal
+  - V3_G2_completed_in_one_top_level_dedicated_zero_access_session
+  - V3_G2_main_finite_review_passed_without_concrete_audit_trigger
+  - V3_G2_closed_accepted_with_validate_promote_reject_rollback_mechanism
 
 workspace:
   git_initialized: true
@@ -474,6 +476,11 @@ workspace:
   v2_b_r2_corrected_audited_execution_baseline_tree: bb7245412093f132fec4236711e7bbda96d0a1c1
   v2_b_r2_context_corrected_sequence_id: v2b-r2-real-20260807-02
   v2_b_r2_context_corrected_manifest_id: 7784234c824bb5bfda328e19aec6730c1830db4930a8625a8bc96f2986d79014
+  v3_goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
+  v3_goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
+  v3_goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
+  v3_goal_2_candidate_baseline_tree: f9a2ce17d374e357e6c6df1e5607b6b646373485
+  v3_goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
   v0_a_control_baseline_commit: b6bfef1ceb796b822c1faf23ae43a04bcd1bd69b
   v0_a_implementation_baseline_commit: 1a1565fa7e6d1440c8f99e2c7e587201a14111c1
   v0_a_control_baseline_tracked_files_clean_required: true
@@ -1060,7 +1067,7 @@ v2:
   V2_B_closeout: docs/reports/V2_B_CLOSEOUT.md
   V2_closeout: docs/reports/V2_CLOSEOUT.md
   V2_further_execution_authorized: false
-  V3_authorized: false
+  V3_authorized_at_V2_closeout: false
   V2_B_budget:
     per_attempt_real_cost_usd_max: 0.20
     per_recovery_group_real_cost_usd_max: 0.60
@@ -1699,6 +1706,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  - docs/reports/V3_G2_CLOSEOUT.md
+  - docs/reports/V3_G2_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_G1_CLOSEOUT.md
   - docs/reports/V3_G1_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_HARNESS_STATE_ADAPTATION_PRECONTRACT_REVIEW.md
@@ -1777,10 +1786,10 @@ next_checkpoint:
   - V3_charter_accepted_and_formalized
   - V3_goal_1_closed_accepted_with_zero_call_mechanism_and_one_bounded_real_proposal
   - preserve_V3_goal_1_candidate_and_staged_inactive_state_evidence
-  - V3_goal_2_activated_with_zero_real_access
-  - create_and_verify_V3_goal_2_control_baseline
-  - launch_one_fresh_top_level_V3_goal_2_implementation_session
-  - do_not_promote_or_activate_goal_1_candidate_before_goal_2
+  - V3_goal_2_closed_accepted_with_deterministic_validation_promotion_rejection_and_rollback
+  - preserve_V3_goal_2_candidate_baseline_and_ignored_mechanism_evidence
+  - do_not_activate_real_goal_1_candidate_without_Goal_3_authority_and_frozen_case_design
+  - V3_goal_3_requires_separate_user_authorization
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
@@ -1819,9 +1828,10 @@ next_checkpoint:
   - main_review_recommends_PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
   - user_accepted_limited_V2_B_and_V2_closeout_without_further_R2_execution
   - V2_closed_with_mechanism_demonstrated_and_real_negative_incomplete
-  - no_active_goal_and_V3_not_authorized
+  - no_active_goal_and_V3_goal_3_not_authorized
 
-open_user_decisions: []
+open_user_decisions:
+  - authorize_or_defer_V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
 ```
 
 ## Current Constraints
@@ -1984,8 +1994,18 @@ authorized `deepseek-v4-flash` request then produced a host-validated
 It was persisted and reloaded only as `staged_inactive` State
 `efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9`.
 The request cost USD `0.0002016`; no retry, fallback, replacement, promotion or
-active binding ran in Goal 1. Goal 2 is now separately activated as the
-zero-real-access `V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK` implementation unit.
-It must begin from the accepted Goal 1 Implementation Baseline, use one new
-top-level Dedicated Implementation Session, and stop before Goal 3 selective
-reuse or any real behavioral execution. Goal 3 remains unauthorized.
+active binding ran in Goal 1.
+
+V3 Goal 2 is now closed and accepted with
+`PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK`. From Control Baseline
+`f138ddd607816f266e9024291718eeab087b39f6`, the dedicated top-level Session
+implemented a symmetric deterministic/Faux comparator, Harness-owned decision
+rule, immutable State versions and decisions, stale compare-and-swap protection,
+atomic active-pointer replacement, fail-closed reopen, rollback and independent
+lineage inspection. Main verified the eight-file Source Delta, all indexed
+Artifact/source hashes, strict TypeScript, Goal 2 6/6 and Goal 1 regression
+13/13. Credential/network/Provider/model counts were 0/0/0/0, both Pi checkouts
+remained clean, and the real Goal 1 Candidate was not activated. Candidate
+Baseline is `c86c6947e71f91ad3fb1262101aa092629b44eb0`; the current closeout revision
+is the Goal 2 Implementation Baseline. Goal 3 selective binding, subsequent Runs
+and bounded real behavioral closure remain unauthorized.

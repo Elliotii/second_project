@@ -1,7 +1,10 @@
 # V3 Goal 2 Closeout Draft — Validate, Promote / Reject and Rollback
 
+> Historical dedicated-Session draft. Superseded by the Main-accepted
+> `docs/reports/V3_G2_CLOSEOUT.md`; retained as execution-session evidence.
+
 ```yaml
-status: draft_pending_main_review
+status: superseded_by_main_accepted_closeout
 goal_id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 recommended_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK_PENDING_MAIN_ACCEPTANCE
 control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6

@@ -14,29 +14,33 @@ v2_disposition: ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_package: "@earendil-works/pi-agent-core@0.82.1"
 prime_reference_commit: b9a4461149419156599d60174dddf15458e2b9ee
-active_goal: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_activation_authorized: consumed
-goal_2_status: activated_not_started
-goal_2_authorized: true
+goal_2_status: closed_accepted
+goal_2_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+goal_2_authorized: consumed
 goal_3_authorized: false
-implementation_owner: future_fresh_top_level_goal_2_session
-implementation_authorized: goal_2_only
-implementation_started: false
-implementation_completed: false
+implementation_owner: null
+implementation_authorized: false
+implementation_started: true
+implementation_completed: false_goal_3_pending
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
 goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
-real_model_calls_authorized: 0_for_goal_2
+real_model_calls_authorized: 0
 real_model_calls_observed: 1
 credential_reads_observed: 1
 provider_calls_observed: 1
 real_proposal_cost_usd: 0.0002016
 external_network_authorized: false
 pi_core_patch_authorized: false
-git_commit_authorized: v3_goal_2_control_baseline_only
+git_commit_authorized: consumed_v3_goal_2_closeout
 control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
-goal_2_control_baseline_commit: resulting_HEAD_of_this_revision
+goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
+goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
+goal_2_candidate_baseline_tree: f9a2ce17d374e357e6c6df1e5607b6b646373485
+goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
 implementation_goal_count: 3
 implementation_session_model: one_fresh_top_level_session_per_goal
 ```
@@ -641,28 +645,31 @@ V3 不做：
 
 ```yaml
 V3_VERSION_CHARTER: accepted
-active_goal: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_activation_authorized: consumed
-goal_2_status: activated_not_started
-goal_2_authorized: true
+goal_2_status: closed_accepted
+goal_2_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+goal_2_authorized: consumed
 goal_3_authorized: false
-implementation_owner: future_fresh_top_level_goal_2_session
-implementation_authorized: goal_2_only
-implementation_started: false
-implementation_completed: false
+implementation_owner: null
+implementation_authorized: false
+implementation_started: true
+implementation_completed: false_goal_3_pending
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
 goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
-real_model_calls_authorized: 0_for_goal_2
+real_model_calls_authorized: 0
 real_model_calls_observed: 1
 external_network_authorized: false
 pi_core_patch_authorized: false
-git_commit_authorized: v3_goal_2_control_baseline_only
-goal_2_control_baseline_commit: resulting_HEAD_of_this_revision
+git_commit_authorized: consumed_v3_goal_2_closeout
+goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
+goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
+goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
 ```
 
-Main Session 只负责正式控制状态、Control Baseline、启动 Prompt 与顶层 Session 创建，不修改 V3 产品源码。Goal 1 Session 只能执行 Goal 1；在获得后续独立真实调用授权前，只能完成零调用实现、Faux/fixture 验证和 bounded model-backed adapter 的零调用测试，并在 real proposal authorization gate 停止。Goal 2/3 仍未授权。
+本段仅记录 Charter 最初冻结时的 Goal 1 启动边界；后续 Goal 1/2 的真实当前状态由 22.2–22.4 节取代。Main Session 只负责正式控制状态、Control Baseline、启动 Prompt、顶层 Session 创建、轻量验收与 commit，不代替 Dedicated Session 修改 V3 产品源码。
 
 ### 22.1 Accepted start sequence
 
@@ -722,3 +729,22 @@ demonstrated and reported for Main review.
 Goal 1 被 Main/用户接受并形成 Implementation Baseline 后，才以相同模式启动 Goal 2；Goal 2 接受后才启动 Goal 3。每一步只以前一步已接受的 clean tracked baseline 为起点。
 
 当前 Workbench 的 bare package imports 需要一个 worktree-local、ignored loader/type-path bridge 指向已存在的 pinned emitted Pi artifacts。新 Goal Session 不应复制或安装另一套 Pi，也不应依赖 Git 无法携带的旧 worktree `.runs` 相对路径。该 bridge 属于机械 runtime hydration：必须固定 Pi commit/package identity、只使用 public emitted entries、保持 Pi checkout clean，并在 Session Gate A 做 import/type-path smoke。具体 ignored 文件路径留给启动 Prompt，不写入产品架构。
+
+### 22.4 Goal 2 accepted closeout (2026-08-08)
+
+- Main accepted Goal 2 as `PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK`.
+- Control Baseline: `f138ddd607816f266e9024291718eeab087b39f6` / tree
+  `69812fb30ad7c2ee286a60d0cef35be847189d5d`.
+- Candidate Baseline: `c86c6947e71f91ad3fb1262101aa092629b44eb0` / tree
+  `f9a2ce17d374e357e6c6df1e5607b6b646373485`.
+- Deterministic/Faux evidence proves symmetric State-only validation,
+  Harness-owned Promote/Reject, immutable versions/decisions, stale rejection,
+  fail-closed reopen, atomic active-pointer replacement and pointer rollback.
+- Main independently passed strict TypeScript, Goal 2 6/6 and Goal 1 regression
+  13/13, and verified all indexed Artifact/source hashes.
+- Credential/network/Provider/model counts were 0/0/0/0. The real Goal 1
+  Candidate remains `staged_inactive`; Goal 2 used only isolated ignored stores.
+- No concrete authority/Promotion/active-state finding remained after Main
+  review, so the Charter's risk-driven audit trigger was not met.
+- `active_goal` is `null`. Goal 3, further real access and Pi or integration-route
+  changes require separate user authorization.

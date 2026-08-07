@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 Goal 1 is closed and accepted with `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE`: the zero-call mechanism and one bounded real `deepseek-v4-flash` proposal produced a host-validated `prompt_addendum` Candidate persisted only as reloadable `staged_inactive` State. `V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK` is now active and belongs to one new top-level Dedicated Implementation Session. Goal 2 permits zero credential reads, zero network and zero real-model calls. Goal 3, Pi changes and SDK/Extension/RPC route switches remain unauthorized.
+This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 Goal 1 is closed and accepted with `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE`: the zero-call mechanism and one bounded real `deepseek-v4-flash` proposal produced a host-validated `prompt_addendum` Candidate persisted only as reloadable `staged_inactive` State. V3 Goal 2 is closed and accepted with `PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK`: deterministic/Faux evidence proves symmetric State-only validation, deterministic Promote/Reject, immutable accepted versions, stale protection, fail-closed reload, atomic active-pointer replacement and pointer rollback in isolated ignored stores. No Goal is active. Goal 3, further real access, Pi changes and SDK/Extension/RPC route switches remain unauthorized.
 
 > Current V2 closeout update (2026-08-07): the user accepted the limited closeout
 > `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-B and V2
@@ -12,10 +12,10 @@ This repository is building an Adaptive Coding Agent Harness on the accepted Age
 > `PAUSE_V2_B_R2_NEGATIVE_NOT_VALID` evidence and do not claim a full V2-B PASS.
 > No further V2 execution is authorized. V3 Goal 1 consumed exactly one bounded
 > Credential/network/Provider/model call, with zero retry/fallback/replacement, and
-> is now closed and accepted. Its Candidate remains inactive. Goal 2 is separately
-> active only to implement deterministic/Faux validation, Promote/Reject, immutable
-> versioning, active-pointer safety, stale protection and rollback. Goal 2 does not
-> authorize Goal 3 selective reuse, real behavioral execution or another real call.
+> is closed and accepted. Its real Candidate remains inactive. Goal 2 completed with
+> zero Credential/network/Provider/model access and did not activate that real
+> Candidate; its accepted evidence is deterministic/Faux mechanism evidence only.
+> Goal 3 selective reuse and real behavioral closure require separate user authority.
 
 ## Required Read Order
 
