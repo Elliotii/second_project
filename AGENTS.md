@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are now closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. The context-corrected R2 sequence demonstrated the controlled real A/B recovery and deterministic Selection mechanism, but its mandatory real Negative produced no Verifier result; do not label V2-B as a full PASS. No Goal is active. No further V2 execution, Pi change, SDK/Extension/RPC route switch, third path or V3 work is authorized.
+This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. The accepted `V3_VERSION_CHARTER.md` is now the common V3 execution authority, and only `V3_G1_EVIDENCE_TO_CANDIDATE_STATE` is active. Its implementation belongs to one new top-level Dedicated Implementation Session. Goal 1 currently permits zero credential reads, zero network and zero real-model calls; Goal 2, Goal 3, Pi changes and SDK/Extension/RPC route switches remain unauthorized.
 
 > Current V2 closeout update (2026-08-07): the user accepted the limited closeout
 > `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-B and V2
@@ -10,8 +10,10 @@ This repository is building an Adaptive Coding Agent Harness on the accepted Age
 > the controlled real A/B recovery and selection mechanism, but its sole real
 > Negative produced no Verifier result. Preserve the formal
 > `PAUSE_V2_B_R2_NEGATIVE_NOT_VALID` evidence and do not claim a full V2-B PASS.
-> No further V2 execution is authorized. V3 remains a candidate only and requires
-> a separate user-authorized planning decision.
+> No further V2 execution is authorized. V3 Goal 1 is active under the accepted
+> Charter, but the Main Session does not own its implementation. The dedicated Goal 1
+> Session must stop at the real-proposal authorization gate unless a later user decision
+> grants bounded real-model execution.
 
 ## Required Read Order
 
@@ -62,8 +64,8 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - Keep architecture selection, project-scope decisions, Goal acceptance, risk promotion, and updates to `CURRENT_STATE.md` in the main project-control session with the user.
 - Recommend a separate specialist research session only for a concrete, bounded, context-heavy question whose answer could change an important design decision. Do not create or dispatch one without user authorization.
 - A specialist research report is advisory. The main session must check its cited source paths and symbols, compare the result with pinned Pi evidence and project scope, and accept, narrow, reject, or request revision.
-- Use specialist implementation sessions only after the main session has produced a reviewed Goal Contract and the user has explicitly authorized execution. The implementation session must not grant final Pi Go, freeze architecture, or expand scope.
-- Every execution Goal Contract must name its execution-session owner. When it names a dedicated Goal Session, approvals given in the main session authorize handoff to that Session; they do not authorize the main session to implement or execute the Goal silently.
+- Use specialist implementation sessions only after the main session has produced a reviewed Goal Contract or an accepted Version Charter with a bounded Goal definition, and the user has explicitly authorized execution. The implementation session must not grant final Pi Go, freeze architecture, or expand scope.
+- Every execution authority document (Goal Contract or accepted Version Charter) must name its execution-session owner. When it names a dedicated Goal Session, approvals given in the main session authorize handoff to that Session; they do not authorize the main session to implement or execute the Goal silently.
 - The dedicated Goal Session owns the bounded implementation, commands, raw evidence, execution report, and Closeout draft. It must stop at Contract gates and return its report without making architecture acceptance decisions.
 - The main session reviews the dedicated Session's report and cited evidence, discusses material choices with the user, and owns final Goal acceptance and next-phase decisions.
 - Deviating from the declared Session owner requires explicit user direction and must be recorded in the Goal report, Closeout, and `CURRENT_STATE.md`.
@@ -93,6 +95,7 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - R2 Inspector may allow only finite non-negative numeric `message.usage.reasoning` metadata at the exact schema path. Reasoning/thinking content, signatures, credentials, Authorization material, unknown shapes and all other reasoning paths remain fail-closed.
 - R2 used the bounded top-level Implementation, focused Audit and fresh no-source-edit Execution roles. The Amendment hard exit was honored; the formerly separate final user decision has now been consumed only for the limited closeout, not for a full Contract PASS.
 - V2-B and V2 are now closed by explicit user acceptance of a limited closeout. Treat the execution permissions described above as historical and consumed. Preserve the valid controlled Seed/A/B/Selection evidence and the incomplete real Negative together. Do not reopen V2, rerun the Negative, enter V3 or convert the limited closeout into a full PASS without a new user-authorized planning decision.
+- V3 is governed by the accepted `V3_VERSION_CHARTER.md` as one common execution contract; do not create separate per-Goal Contracts by default. Goal 1, Goal 2 and Goal 3 are sequential implementation units, each owned by a different new top-level Dedicated Implementation Session. Only Goal 1 is active. Goal 1 may implement and Faux-test the bounded model-backed producer adapter, but zero real-model calls, zero credential reads and zero network are currently authorized; a real proposal remains a separate authorization gate. Main alone owns Goal acceptance, control state and commits.
 - For V0-C, keep four temporary specialist roles distinct when their stages are authorized: a read-only precontract research Session, a dedicated deterministic Stage 1 implementation Session, a focused independent audit Session for the frozen candidate, and a fresh Stage 2 user-acceptance Session that exercises the frozen product surface without source-edit authority.
 - V0-C Stage 1 must use zero real-model calls. Stage 2 requires a separately authorized frozen implementation baseline, one bounded user-visible Coding Task and its explicit run/cost budget. Credentials and real-model authority do not flow backward to research, implementation, or audit Sessions.
 
@@ -109,7 +112,7 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 
 Every execution goal must:
 
-1. Produce the deliverables named in its Goal Contract.
+1. Produce the deliverables named in its governing Goal Contract or accepted Version Charter.
 2. Record exact verification commands and results.
 3. List what remains unverified.
 4. Identify scope changes or user decisions needed.

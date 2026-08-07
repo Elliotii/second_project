@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_closed_accepted_with_explicit_limitation
-  status: V2_CLOSED_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
+  phase: v3_goal_1_activated
+  status: V3_G1_ACTIVATED_NOT_STARTED
 
-active_goal: null
+active_goal: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 
 last_executed_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
@@ -32,14 +32,38 @@ last_completed_goal:
   implementation_baseline_commit: resulting_HEAD_of_this_revision
 
 current_goal:
-  id: null
-  status: no_active_goal
-  contract: null
+  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  status: activated_not_started
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  implementation_owner: future_dedicated_top_level_goal_1_session
+  implementation_authorized: true_goal_1_only
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  pi_core_patch_authorized: false
+  git_commit_authorized_for_goal_session: false
 
 next_goal:
-  id: V3_TRACE_TO_VALIDATED_EXPERIENCE
-  status: candidate_not_authorized
-  contract: null
+  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  status: not_authorized
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+
+v3_control:
+  charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  charter_status: accepted
+  charter_accepted_by_user: true
+  precontract_review: docs/reports/V3_HARNESS_STATE_ADAPTATION_PRECONTRACT_REVIEW.md
+  goal_1_activation_authorized: true
+  goal_1_implementation_owner: future_dedicated_top_level_goal_1_session
+  goal_1_implementation_started: false
+  goal_2_authorized: false
+  goal_3_authorized: false
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  pi_core_patch_authorized: false
+  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  control_baseline_commit: resulting_HEAD_of_this_revision
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -1652,6 +1676,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  - docs/reports/V3_HARNESS_STATE_ADAPTATION_PRECONTRACT_REVIEW.md
   - docs/reports/V2_CLOSEOUT.md
   - docs/reports/V2_B_CLOSEOUT.md
   - docs/reports/V2_B_R2_CONTEXT_CORRECTED_MAIN_DISPOSITION_RECOMMENDATION.md
@@ -1724,6 +1750,11 @@ required_reading:
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
 next_checkpoint:
+  - V3_charter_accepted_and_formalized
+  - V3_goal_1_activated_with_zero_real_calls
+  - create_and_verify_V3_control_baseline
+  - launch_one_fresh_top_level_V3_goal_1_implementation_session
+  - goal_1_session_stops_at_real_proposal_authorization_gate_if_zero_call_work_is_ready
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
