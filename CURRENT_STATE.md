@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_goal_1_closed_accepted
-  status: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  phase: v3_goal_2_activated
+  status: V3_G2_ACTIVATED_NOT_STARTED
 
-active_goal: null
+active_goal: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 
 last_executed_goal:
   id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
@@ -29,14 +29,14 @@ last_completed_goal:
   status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
   disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
-  implementation_baseline_commit: resulting_HEAD_of_this_revision
+  implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
 
 current_goal:
-  id: null
-  status: none
-  authority: null
-  implementation_owner: null
-  implementation_authorized: false
+  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  status: activated_not_started
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  implementation_owner: future_fresh_top_level_goal_2_session
+  implementation_authorized: true_goal_2_only
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -44,7 +44,7 @@ current_goal:
   git_commit_authorized_for_goal_session: false
 
 next_goal:
-  id: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
+  id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
   status: not_authorized
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
 
@@ -64,7 +64,16 @@ v3_control:
   goal_1_real_candidate_digest: 48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4
   goal_1_real_state_digest: efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9
   goal_1_real_state_status: staged_inactive
-  goal_2_authorized: false
+  goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
+  goal_2_status: activated_not_started
+  goal_2_activation_authorized: true
+  goal_2_implementation_owner: future_fresh_top_level_goal_2_session
+  goal_2_implementation_started: false
+  goal_2_real_model_calls_authorized: 0
+  goal_2_credential_reads_authorized: 0
+  goal_2_external_network_authorized: false
+  goal_2_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
+  goal_2_control_baseline_commit: resulting_HEAD_of_this_revision
   goal_3_authorized: false
   real_model_calls_authorized: consumed_1_no_further_calls_authorized
   credential_reads_authorized: consumed_1_no_further_reads_authorized
@@ -1768,8 +1777,9 @@ next_checkpoint:
   - V3_charter_accepted_and_formalized
   - V3_goal_1_closed_accepted_with_zero_call_mechanism_and_one_bounded_real_proposal
   - preserve_V3_goal_1_candidate_and_staged_inactive_state_evidence
-  - active_goal_is_null
-  - V3_goal_2_requires_separate_user_authorization
+  - V3_goal_2_activated_with_zero_real_access
+  - create_and_verify_V3_goal_2_control_baseline
+  - launch_one_fresh_top_level_V3_goal_2_implementation_session
   - do_not_promote_or_activate_goal_1_candidate_before_goal_2
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
@@ -1973,6 +1983,9 @@ authorized `deepseek-v4-flash` request then produced a host-validated
 `48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4`.
 It was persisted and reloaded only as `staged_inactive` State
 `efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9`.
-The request cost USD `0.0002016`; no retry, fallback, replacement, promotion,
-active binding, Goal 2 or Goal 3 path ran. No Goal is active. V3 Goal 2 remains
-Charter-defined but requires separate user authorization.
+The request cost USD `0.0002016`; no retry, fallback, replacement, promotion or
+active binding ran in Goal 1. Goal 2 is now separately activated as the
+zero-real-access `V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK` implementation unit.
+It must begin from the accepted Goal 1 Implementation Baseline, use one new
+top-level Dedicated Implementation Session, and stop before Goal 3 selective
+reuse or any real behavioral execution. Goal 3 remains unauthorized.

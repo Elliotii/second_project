@@ -14,27 +14,29 @@ v2_disposition: ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_package: "@earendil-works/pi-agent-core@0.82.1"
 prime_reference_commit: b9a4461149419156599d60174dddf15458e2b9ee
-active_goal: null
+active_goal: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_activation_authorized: consumed
-goal_2_authorized: false
+goal_2_status: activated_not_started
+goal_2_authorized: true
 goal_3_authorized: false
-implementation_owner: completed_top_level_session_019fdcc3-0116-7752-8709-c2d4348d6359
-implementation_authorized: consumed_and_completed_goal_1
-implementation_started: true
-implementation_completed: true
+implementation_owner: future_fresh_top_level_goal_2_session
+implementation_authorized: goal_2_only
+implementation_started: false
+implementation_completed: false
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
-real_model_calls_authorized: consumed_1_no_further_calls_authorized
+goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
+real_model_calls_authorized: 0_for_goal_2
 real_model_calls_observed: 1
 credential_reads_observed: 1
 provider_calls_observed: 1
 real_proposal_cost_usd: 0.0002016
 external_network_authorized: false
 pi_core_patch_authorized: false
-git_commit_authorized: consumed_for_goal_1_candidate_and_closeout
+git_commit_authorized: v3_goal_2_control_baseline_only
 control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
-goal_1_implementation_baseline_commit: resulting_HEAD_of_this_revision
+goal_2_control_baseline_commit: resulting_HEAD_of_this_revision
 implementation_goal_count: 3
 implementation_session_model: one_fresh_top_level_session_per_goal
 ```
@@ -639,23 +641,25 @@ V3 不做：
 
 ```yaml
 V3_VERSION_CHARTER: accepted
-active_goal: null
+active_goal: V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_activation_authorized: consumed
-goal_2_authorized: false
+goal_2_status: activated_not_started
+goal_2_authorized: true
 goal_3_authorized: false
-implementation_owner: completed_top_level_session_019fdcc3-0116-7752-8709-c2d4348d6359
-implementation_authorized: consumed_and_completed_goal_1
-implementation_started: true
-implementation_completed: true
+implementation_owner: future_fresh_top_level_goal_2_session
+implementation_authorized: goal_2_only
+implementation_started: false
+implementation_completed: false
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
-real_model_calls_authorized: consumed_1_no_further_calls_authorized
+goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
+real_model_calls_authorized: 0_for_goal_2
 real_model_calls_observed: 1
 external_network_authorized: false
 pi_core_patch_authorized: false
-git_commit_authorized: consumed_for_goal_1_candidate_and_closeout
-goal_1_implementation_baseline_commit: resulting_HEAD_of_this_revision
+git_commit_authorized: v3_goal_2_control_baseline_only
+goal_2_control_baseline_commit: resulting_HEAD_of_this_revision
 ```
 
 Main Session 只负责正式控制状态、Control Baseline、启动 Prompt 与顶层 Session 创建，不修改 V3 产品源码。Goal 1 Session 只能执行 Goal 1；在获得后续独立真实调用授权前，只能完成零调用实现、Faux/fixture 验证和 bounded model-backed adapter 的零调用测试，并在 real proposal authorization gate 停止。Goal 2/3 仍未授权。
@@ -694,6 +698,26 @@ hard stops.
   `0.0002016`, and retry/fallback/replacement counts were all zero.
 - `active_goal` is now `null`. Goal 2 and Goal 3 require separate user
   authorization; no further real access or Pi modification is authorized.
+
+### 22.3 Goal 2 activation (2026-08-08)
+
+The user subsequently authorized the next planned step. Goal 2 is active from
+the accepted Goal 1 Implementation Baseline
+`6ec958b83363c01e0eeec8be0360516dcdf2bc7e` with these additional control
+bindings:
+
+- one new top-level Dedicated Goal 2 Implementation Session;
+- zero Credential reads, network requests, external Provider calls and real
+  model calls;
+- deterministic/Faux validation evidence only;
+- no per-Goal Contract, Stage chain or default independent audit;
+- no Goal 3 applicability, selective Run binding, real behavioral closure or
+  Portfolio closeout;
+- no Pi modification or SDK/Extension/RPC route switch.
+
+Goal 2 stops when the Charter's good-Promote, bad/no-improvement-Reject,
+rollback, fairness, stale, corrupt/missing, reopen and lineage exit criteria are
+demonstrated and reported for Main review.
 
 Goal 1 被 Main/用户接受并形成 Implementation Baseline 后，才以相同模式启动 Goal 2；Goal 2 接受后才启动 Goal 3。每一步只以前一步已接受的 clean tracked baseline 为起点。
 
