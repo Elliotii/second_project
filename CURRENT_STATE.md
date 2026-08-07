@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_goal_3_active_zero_call_implementation_pending
-  status: V3_G3_ACTIVE_IMPLEMENTATION_NOT_STARTED
+  phase: v3_goal_3_zero_call_implementation_accepted_real_execution_authorized
+  status: V3_G3_REAL_EXECUTION_AUTHORIZED_NOT_STARTED
 
 active_goal: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
 
@@ -35,7 +35,7 @@ current_goal: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
 
 next_goal:
   id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
-  status: active_zero_call_implementation_authorized_not_started
+  status: active_real_execution_authorized_not_started
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
 
 v3_control:
@@ -73,24 +73,41 @@ v3_control:
   goal_2_goal_1_regression: 13_passed_0_failed_0_skipped
   goal_2_real_access_observed: 0
   goal_3_authorized: true
-  goal_3_status: active_zero_call_implementation_authorized_not_started
-  goal_3_implementation_owner: future_new_top_level_dedicated_goal_3_implementation_session
-  goal_3_implementation_authorized: true_zero_call_only
-  goal_3_implementation_started: false
-  goal_3_real_model_calls_authorized: 0
-  goal_3_credential_reads_authorized: 0
-  goal_3_external_network_authorized: false
+  goal_3_status: active_zero_call_implementation_accepted_real_execution_authorized_not_started
+  goal_3_implementation_owner: completed_top_level_session_019fdd6c-7f5d-79c0-98d6-6fb261d689a3
+  goal_3_implementation_authorized: consumed_completed_zero_call
+  goal_3_implementation_started: true
+  goal_3_implementation_completed: true_zero_call_substrate
+  goal_3_zero_call_disposition: PASS_V3_G3_ZERO_CALL_SELECTIVE_REUSE_SUBSTRATE
+  goal_3_implementation_baseline_commit: resulting_HEAD_of_this_revision
+  goal_3_execution_owner: future_new_top_level_no_source_edit_real_execution_session
+  goal_3_real_execution_authorized: true_one_prompt_addendum_agent_run
+  goal_3_real_model_calls_authorized: up_to_16_provider_requests_in_one_agent_run
+  goal_3_credential_reads_authorized: one_opaque_read_after_read_only_gate
+  goal_3_external_network_authorized: true_after_read_only_gate
+  goal_3_provider_request_cap: 16
+  goal_3_token_cap: 131072
+  goal_3_tool_call_cap: 24
+  goal_3_cost_cap_usd: 0.20
+  goal_3_retry_fallback_replacement_authorized: false
+  goal_3_source_or_state_authority_mutation_authorized: false
   goal_3_pi_core_patch_authorized: false
   goal_3_sdk_extension_rpc_switch_authorized: false
   goal_3_control_baseline_commit_authorized: consumed
-  goal_3_control_baseline_commit: resulting_HEAD_of_this_revision
-  real_model_calls_authorized: 0
-  credential_reads_authorized: consumed_1_no_further_reads_authorized
+  goal_3_control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
+  goal_3_focused_tests: 8_passed_0_failed_0_skipped
+  goal_3_behavioral_cases: 4_passed_0_failed
+  goal_3_goal_1_regression: 13_passed_0_failed_0_skipped
+  goal_3_goal_2_regression: 6_passed_0_failed_0_skipped
+  goal_3_shared_state_root: D:/AI/AI_Projects/project2/.runs/v3-g3/shared-authority/sequence-489cb1c4-20d9-42af-8dd6-0b22aeb6cf5d/project-state
+  goal_3_shared_state_inventory_digest: 938a45f932f5276c1a21c94c2c004832e418db653abdc426d44dafecfddb3611
+  real_model_calls_authorized: up_to_16_provider_requests_for_one_goal_3_agent_run
+  credential_reads_authorized: one_additional_opaque_read_after_goal_3_execution_gate
   real_model_calls_observed: 1
   external_network_requests_observed: 1
   provider_calls_observed: 1
   real_proposal_cost_usd: 0.0002016
-  external_network_authorized: false
+  external_network_authorized: true_after_goal_3_execution_gate_only
   pi_core_patch_authorized: false
   control_baseline_commit_authorized: consumed
   control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
@@ -462,6 +479,10 @@ completed_work:
   - V3_G2_completed_in_one_top_level_dedicated_zero_access_session
   - V3_G2_main_finite_review_passed_without_concrete_audit_trigger
   - V3_G2_closed_accepted_with_validate_promote_reject_rollback_mechanism
+  - V3_G3_dedicated_zero_call_implementation_completed
+  - V3_G3_main_bounded_corrections_and_hit_specific_rereview_passed
+  - V3_G3_zero_call_selective_reuse_substrate_accepted_for_implementation_baseline
+  - V3_G3_one_prompt_addendum_real_execution_authorized_from_frozen_baseline
 
 workspace:
   git_initialized: true
@@ -1717,6 +1738,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  - docs/reports/V3_G3_IMPLEMENTATION_REPORT.md
+  - docs/reports/V3_G3_CLOSEOUT_DRAFT.md
   - docs/reports/V3_G2_CLOSEOUT.md
   - docs/reports/V3_G2_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_G1_CLOSEOUT.md
@@ -1804,6 +1827,14 @@ next_checkpoint:
   - create_and_verify_V3_goal_3_control_baseline_from_Goal_2_implementation_baseline
   - generate_start_prompt_pinning_exact_Goal_3_control_baseline
   - start_one_new_top_level_Goal_3_implementation_session
+  - V3_goal_3_zero_call_implementation_and_bounded_corrections_completed
+  - V3_goal_3_main_rereview_passed_without_concrete_independent_audit_trigger
+  - create_and_verify_V3_goal_3_zero_call_implementation_baseline
+  - generate_start_prompt_pinning_exact_Goal_3_implementation_baseline_and_State_root
+  - start_one_fresh_top_level_no_source_edit_Goal_3_real_execution_session
+  - pass_all_read_only_gates_before_one_opaque_credential_read
+  - execute_one_prompt_addendum_first_DeepSeek_V4_Flash_Agent_Run_with_frozen_caps
+  - main_performs_limited_real_evidence_review_and_proposes_V3_disposition
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
@@ -1842,10 +1873,9 @@ next_checkpoint:
   - main_review_recommends_PAUSE_V2_B_R2_NEGATIVE_NOT_VALID
   - user_accepted_limited_V2_B_and_V2_closeout_without_further_R2_execution
   - V2_closed_with_mechanism_demonstrated_and_real_negative_incomplete
-  - V3_goal_3_active_zero_call_implementation_not_started
+  - V3_goal_3_real_execution_authorized_not_started
 
 open_user_decisions:
-  - authorize_Goal_3_real_behavioral_execution_only_after_frozen_implementation_baseline
   - accept_or_revise_final_V3_portfolio_claims_after_real_behavioral_evidence
 ```
 
@@ -2021,6 +2051,23 @@ lineage inspection. Main verified the eight-file Source Delta, all indexed
 Artifact/source hashes, strict TypeScript, Goal 2 6/6 and Goal 1 regression
 13/13. Credential/network/Provider/model counts were 0/0/0/0, both Pi checkouts
 remained clean, and the real Goal 1 Candidate was not activated. Candidate
-Baseline is `c86c6947e71f91ad3fb1262101aa092629b44eb0`; the current closeout revision
-is the Goal 2 Implementation Baseline. Goal 3 selective binding, subsequent Runs
-and bounded real behavioral closure remain unauthorized.
+Baseline is `c86c6947e71f91ad3fb1262101aa092629b44eb0`; the Goal 2 closeout revision
+is its Implementation Baseline.
+
+V3 Goal 3 zero-call implementation is now accepted for an Implementation
+Baseline with `PASS_V3_G3_ZERO_CALL_SELECTIVE_REUSE_SUBSTRATE`. The dedicated
+top-level Session implemented immutable admission, independent Case Authority,
+deterministic applicability, frozen Run binding, public Direct Pi prompt/Skill
+paths, and independently inspected runtime/Manifest evidence. Main passed strict
+TypeScript, Goal 3 8/8 (including four behavioral Cases), Goal 1 13/13 and Goal 2
+6/6, with Credential/network/Provider/model counts 0/0/0/0 and no Pi change.
+The exact shared State root remains read-only in place with inventory digest
+`938a45f932f5276c1a21c94c2c004832e418db653abdc426d44dafecfddb3611`.
+
+The user has separately authorized one fresh no-source-edit real Execution
+Session from the resulting Implementation Baseline: one opaque Credential read
+only after all read-only gates, then one prompt-addendum-first
+`deepseek-v4-flash` Agent Run capped at 16 Provider requests, 131072 tokens, 24
+Tool calls and USD 0.20. Retry, fallback, replacement, extra Cases, source/State
+authority mutation, Pi changes and route switching remain forbidden. Final V3
+acceptance and V4 remain unauthorized.

@@ -22,30 +22,42 @@ goal_2_status: closed_accepted
 goal_2_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 goal_2_authorized: consumed
 goal_3_authorized: true
-goal_3_status: active_zero_call_implementation_authorized_not_started
-goal_3_implementation_owner: future_new_top_level_dedicated_goal_3_implementation_session
-goal_3_implementation_authorized: true_zero_call_only
-goal_3_implementation_started: false
-implementation_owner: future_new_top_level_dedicated_goal_3_implementation_session
-implementation_authorized: true_zero_call_only
+goal_3_status: active_zero_call_implementation_accepted_real_execution_authorized_not_started
+goal_3_implementation_owner: completed_top_level_session_019fdd6c-7f5d-79c0-98d6-6fb261d689a3
+goal_3_implementation_authorized: consumed_completed_zero_call
+goal_3_implementation_started: true
+goal_3_implementation_completed: true_zero_call_substrate
+goal_3_execution_owner: future_new_top_level_no_source_edit_real_execution_session
+goal_3_real_execution_authorized: true_one_prompt_addendum_agent_run
+implementation_owner: future_new_top_level_no_source_edit_real_execution_session
+implementation_authorized: true_one_prompt_addendum_real_execution_only
 implementation_started: true
-implementation_completed: false_goal_3_active
+implementation_completed: true_zero_call_goal_3_real_execution_pending
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
 goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
-real_model_calls_authorized: 0
+real_model_calls_authorized: up_to_16_provider_requests_in_one_agent_run
+goal_3_credential_reads_authorized: one_opaque_read_after_read_only_gate
+goal_3_external_network_authorized: true_after_read_only_gate
+goal_3_provider_request_cap: 16
+goal_3_token_cap: 131072
+goal_3_tool_call_cap: 24
+goal_3_cost_cap_usd: 0.20
+goal_3_retry_fallback_replacement_authorized: false
+goal_3_source_or_state_authority_mutation_authorized: false
 real_model_calls_observed: 1
 credential_reads_observed: 1
 provider_calls_observed: 1
 real_proposal_cost_usd: 0.0002016
-external_network_authorized: false
+external_network_authorized: true_after_goal_3_execution_gate_only
 pi_core_patch_authorized: false
-git_commit_authorized: consumed_v3_goal_3_control_baseline
+git_commit_authorized: consumed_v3_goal_3_implementation_baseline
 control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
 goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
 goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
 goal_2_candidate_baseline_tree: f9a2ce17d374e357e6c6df1e5607b6b646373485
 goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
-goal_3_control_baseline_commit: resulting_HEAD_of_this_revision
+goal_3_control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
+goal_3_implementation_baseline_commit: resulting_HEAD_of_this_revision
 implementation_goal_count: 3
 implementation_session_model: one_fresh_top_level_session_per_goal
 ```
@@ -781,3 +793,35 @@ The active Goal is now `V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE`. The
 Dedicated Session must stop after its bounded implementation, focused tests,
 raw evidence, Implementation Report and Closeout Draft, and must not commit or
 change `CURRENT_STATE.md` or this Charter.
+
+### 22.6 Goal 3 zero-call acceptance and real execution authorization (2026-08-08)
+
+Main accepted the corrected zero-call substrate for a frozen Implementation
+Baseline as `PASS_V3_G3_ZERO_CALL_SELECTIVE_REUSE_SUBSTRATE`. This is not final
+Goal 3 or V3 acceptance.
+
+- The dedicated top-level implementation owner was Session
+  `019fdd6c-7f5d-79c0-98d6-6fb261d689a3`.
+- Main's bounded review and two hit-specific corrections closed the real-port,
+  Case Authority, admission-lineage and independent real-budget inspection
+  findings without changing V3 architecture or adding a fifth behavioral Case.
+- Strict TypeScript, Goal 3 8/8, Goal 1 regression 13/13, Goal 2 regression 6/6
+  and public emitted Pi import/type smoke passed. Actual Credential/network/
+  Provider/model counts remained 0/0/0/0; Pi remained clean.
+- The frozen shared State root is
+  `D:/AI/AI_Projects/project2/.runs/v3-g3/shared-authority/sequence-489cb1c4-20d9-42af-8dd6-0b22aeb6cf5d/project-state/`
+  with inventory digest
+  `938a45f932f5276c1a21c94c2c004832e418db653abdc426d44dafecfddb3611`.
+  The real Session must read it in place and must not copy, relocate or mutate it.
+- No concrete unresolved authority, budget, State-lifecycle or Pi-boundary
+  finding justified a separate independent audit before the frozen baseline.
+
+The user separately authorized one new top-level no-source-edit Execution
+Session after the exact Implementation Baseline SHA is known. It must pass all
+read-only gates before one opaque Credential read, then may execute exactly one
+prompt-addendum-first `deepseek-v4-flash` Agent Run. Frozen ceilings are 16
+Provider requests, 131072 tokens, 24 Tool calls and USD 0.20. Retry, fallback,
+replacement, extra Cases, source edits, State-authority mutation, Pi changes and
+SDK/Extension/RPC switching are forbidden. Main may perform finite evidence
+review and propose a V3 disposition; final V3 acceptance and V4 remain reserved
+for the user.

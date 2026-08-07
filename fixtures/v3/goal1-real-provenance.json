@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "source_root": "C:/Users/HUAWEI/.codex/worktrees/f38b/project2/.runs/v3-g1/real-proposal/v3g1-real-proposal-20260808-02",
+  "source_candidate_file_sha256": "8b161311386364234fa19a0d648f2dedd801dcb3eaa87e3f8be9d2ff9aacbb44",
+  "source_staged_state_file_sha256": "25c2c0e3f43f2e9984e70e184a4d59206f4f96dc23685a94fb4a1402c467a676",
+  "candidate_digest": "48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4",
+  "staged_state_digest": "efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9",
+  "accepted_base_sentinel_digest": "0c667c4b193b4de106107e5dd47782b634920c172a80ba6233509239c9184eb8",
+  "sanitization": "Only the host-validated Candidate, staged State, and this provenance manifest are tracked; no request headers, credentials, or unnecessary provider payloads are included."
+}
