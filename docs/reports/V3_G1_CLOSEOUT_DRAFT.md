@@ -1,5 +1,8 @@
 # V3 Goal 1 — Closeout Draft
 
+> Historical dedicated-Session draft. Superseded by the Main-accepted
+> `docs/reports/V3_G1_CLOSEOUT.md`; retained as execution-session evidence.
+
 Date: 2026-08-08
 Goal: `V3_G1_EVIDENCE_TO_CANDIDATE_STATE`  
 Status: bounded real proposal passed; Main/user acceptance pending

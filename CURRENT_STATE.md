@@ -1,42 +1,42 @@
 # Current State
 
-> Updated: 2026-08-07
+> Updated: 2026-08-08
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_goal_1_activated
-  status: V3_G1_ACTIVATED_NOT_STARTED
+  phase: v3_goal_1_closed_accepted
+  status: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 
-active_goal: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+active_goal: null
 
 last_executed_goal:
-  id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: closed_user_accepted_with_explicit_limitation
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  disposition: CLOSE_V2_B_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
-  execution_baseline_commit: 571165a186444e16a0fafad2fcd886295d7efbab
+  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  status: closed_accepted
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
 
 last_closed_goal:
-  id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: closed_user_accepted_with_explicit_limitation
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
-  disposition: CLOSE_V2_B_MECHANISM_PROVEN_NEGATIVE_INCOMPLETE
-  closeout: docs/reports/V2_B_CLOSEOUT.md
+  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  status: closed_accepted
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  closeout: docs/reports/V3_G1_CLOSEOUT.md
 
 last_completed_goal:
-  id: V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
   status: closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/V2_A_GOAL_CONTRACT.md
-  disposition: PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
   implementation_baseline_commit: resulting_HEAD_of_this_revision
 
 current_goal:
-  id: V3_G1_EVIDENCE_TO_CANDIDATE_STATE
-  status: activated_not_started
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  implementation_owner: future_dedicated_top_level_goal_1_session
-  implementation_authorized: true_goal_1_only
+  id: null
+  status: none
+  authority: null
+  implementation_owner: null
+  implementation_authorized: false
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -53,17 +53,30 @@ v3_control:
   charter_status: accepted
   charter_accepted_by_user: true
   precontract_review: docs/reports/V3_HARNESS_STATE_ADAPTATION_PRECONTRACT_REVIEW.md
-  goal_1_activation_authorized: true
-  goal_1_implementation_owner: future_dedicated_top_level_goal_1_session
-  goal_1_implementation_started: false
+  goal_1_status: closed_accepted
+  goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
+  goal_1_activation_authorized: consumed
+  goal_1_implementation_owner: completed_top_level_session_019fdcc3-0116-7752-8709-c2d4348d6359
+  goal_1_implementation_started: true
+  goal_1_implementation_completed: true
+  goal_1_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
+  goal_1_candidate_baseline_tree: cbb2669a53c811ff1ae6ca1a27ae6c53fadb178d
+  goal_1_real_candidate_digest: 48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4
+  goal_1_real_state_digest: efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9
+  goal_1_real_state_status: staged_inactive
   goal_2_authorized: false
   goal_3_authorized: false
-  real_model_calls_authorized: 0
-  credential_reads_authorized: 0
+  real_model_calls_authorized: consumed_1_no_further_calls_authorized
+  credential_reads_authorized: consumed_1_no_further_reads_authorized
+  real_model_calls_observed: 1
+  external_network_requests_observed: 1
+  provider_calls_observed: 1
+  real_proposal_cost_usd: 0.0002016
   external_network_authorized: false
   pi_core_patch_authorized: false
-  control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_this_revision
-  control_baseline_commit: resulting_HEAD_of_this_revision
+  control_baseline_commit_authorized: consumed
+  control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
+  implementation_baseline_commit: resulting_HEAD_of_this_revision
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -1677,6 +1690,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
+  - docs/reports/V3_G1_CLOSEOUT.md
+  - docs/reports/V3_G1_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_HARNESS_STATE_ADAPTATION_PRECONTRACT_REVIEW.md
   - docs/reports/V2_CLOSEOUT.md
   - docs/reports/V2_B_CLOSEOUT.md
@@ -1751,10 +1766,11 @@ required_reading:
 
 next_checkpoint:
   - V3_charter_accepted_and_formalized
-  - V3_goal_1_activated_with_zero_real_calls
-  - create_and_verify_V3_control_baseline
-  - launch_one_fresh_top_level_V3_goal_1_implementation_session
-  - goal_1_session_stops_at_real_proposal_authorization_gate_if_zero_call_work_is_ready
+  - V3_goal_1_closed_accepted_with_zero_call_mechanism_and_one_bounded_real_proposal
+  - preserve_V3_goal_1_candidate_and_staged_inactive_state_evidence
+  - active_goal_is_null
+  - V3_goal_2_requires_separate_user_authorization
+  - do_not_promote_or_activate_goal_1_candidate_before_goal_2
   - V1_A_closed_accepted_on_independently_reaudited_implementation_baseline
   - original_and_replacement_V1_B_pilots_stopped_on_evidence_integrity_boundaries
   - V1_B_closed_inconclusive_with_zero_valid_comparable_runs
@@ -1945,5 +1961,18 @@ The user explicitly accepted the limited closeout
 `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. The
 Positive A/B mechanism evidence is accepted; the real initial-pass/no-branch
 Negative remains unverified. V2-B and V2 are closed, no Goal is active, and no
-further V2 execution is authorized. V3 remains a candidate only and is not
-authorized.
+further V2 execution is authorized.
+
+V3 Goal 1 is now closed and accepted with
+`PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE`. On Candidate Baseline
+`07b81a4cf392854bbbde041f3dafae13b52a768f`, the dedicated top-level Session
+completed the three-trigger evidence projection, typed Diagnosis/Lesson/Candidate
+boundary, both staged State adapters and fail-closed reload tests. One separately
+authorized `deepseek-v4-flash` request then produced a host-validated
+`prompt_addendum` Candidate with digest
+`48ee92898bdb1eeedfc33956a67725f030bae04d042238af147c30348379c7f4`.
+It was persisted and reloaded only as `staged_inactive` State
+`efbaf666637726231d3c3765a23bf579ebb6f2698dd6e8332904e0db938953d9`.
+The request cost USD `0.0002016`; no retry, fallback, replacement, promotion,
+active binding, Goal 2 or Goal 3 path ran. No Goal is active. V3 Goal 2 remains
+Charter-defined but requires separate user authorization.

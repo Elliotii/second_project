@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. The accepted `V3_VERSION_CHARTER.md` is now the common V3 execution authority, and only `V3_G1_EVIDENCE_TO_CANDIDATE_STATE` is active. Its implementation belongs to one new top-level Dedicated Implementation Session. Goal 1 currently permits zero credential reads, zero network and zero real-model calls; Goal 2, Goal 3, Pi changes and SDK/Extension/RPC route switches remain unauthorized.
+This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 Goal 1 is closed and accepted with `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE`: the zero-call mechanism and one bounded real `deepseek-v4-flash` proposal produced a host-validated `prompt_addendum` Candidate persisted only as reloadable `staged_inactive` State. No Goal is active. Goal 2, Goal 3, further credential/network/model access, Pi changes and SDK/Extension/RPC route switches remain unauthorized.
 
 > Current V2 closeout update (2026-08-07): the user accepted the limited closeout
 > `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-B and V2
@@ -10,10 +10,10 @@ This repository is building an Adaptive Coding Agent Harness on the accepted Age
 > the controlled real A/B recovery and selection mechanism, but its sole real
 > Negative produced no Verifier result. Preserve the formal
 > `PAUSE_V2_B_R2_NEGATIVE_NOT_VALID` evidence and do not claim a full V2-B PASS.
-> No further V2 execution is authorized. V3 Goal 1 is active under the accepted
-> Charter, but the Main Session does not own its implementation. The dedicated Goal 1
-> Session must stop at the real-proposal authorization gate unless a later user decision
-> grants bounded real-model execution.
+> No further V2 execution is authorized. V3 Goal 1 consumed exactly one bounded
+> Credential/network/Provider/model call, with zero retry/fallback/replacement, and
+> is now closed and accepted. Its Candidate remains inactive; this acceptance does
+> not authorize promotion, active binding, Goal 2, Goal 3 or another real call.
 
 ## Required Read Order
 
