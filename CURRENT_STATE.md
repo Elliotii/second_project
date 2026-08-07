@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v2_b_bounded_r2_implementation_authorized
-  status: V2_B_R1_PRESERVED_R2_CONTROL_BASELINE_PENDING
+  phase: v2_b_bounded_r2_execution_baseline_ready
+  status: V2_B_R2_FOCUSED_REAUDIT_PASSED_EXECUTION_BASELINE_READY
 
 active_goal: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
 
@@ -33,13 +33,13 @@ last_completed_goal:
 
 current_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_bounded_r2_zero_call_implementation_authorized
+  status: active_bounded_r2_audited_execution_baseline_ready
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
   amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
 
 next_goal:
   id: V2_B_FROZEN_BOUNDED_REAL_RECOVERY_ACCEPTANCE
-  status: active_bounded_r2_zero_call_implementation_authorized
+  status: active_bounded_r2_audited_execution_baseline_ready
   contract: docs/第二项目_Codex交接包_2026-07-30/V2_B_GOAL_CONTRACT.md
   amendment: docs/第二项目_Codex交接包_2026-07-30/V2_B_BOUNDED_R2_AMENDMENT.md
 
@@ -927,9 +927,16 @@ v2:
   V2_B_R2_implementation_network_authorized: false
   V2_B_R2_implementation_real_model_calls_authorized: 0
   V2_B_R2_candidate_commit_authorized: true_after_main_light_acceptance
+  V2_B_R2_corrected_candidate_commit: 2826298b41d6168b8ec3ff2b8d76dc20fe9d89ae
+  V2_B_R2_corrected_candidate_tree: d732bf23008fc911d948c0928248c77d30d9114e
   V2_B_R2_focused_audit_authorized: one_fresh_top_level_session
+  V2_B_R2_focused_audit_thread_id: 019fdb97-bcbb-7362-ae6f-dbf8e7992c93
+  V2_B_R2_focused_reaudit_disposition: PASS_V2_B_R2_FOCUSED_REAUDIT
+  V2_B_R2_focused_reaudit_tests: 36_of_36_pass_zero_skipped_plus_strict_typescript
   V2_B_R2_audited_execution_baseline_authorized: true_after_focused_audit_pass
+  V2_B_R2_audited_execution_baseline_commit: resulting_HEAD_of_this_revision
   V2_B_R2_execution_owner: future_fresh_top_level_no_source_edit_session
+  V2_B_R2_execution_started: false
   V2_B_R2_execution_authorized: true_after_audited_execution_baseline_and_gate_h
   V2_B_R2_credential_reads_authorized: opaque_after_gate_h
   V2_B_R2_network_authorized: true_after_gate_h
@@ -1672,6 +1679,7 @@ next_checkpoint:
   - original_or_replacement_top_level_implementation_session_completes_zero_call_R2_amendment
   - main_light_review_and_freeze_R2_candidate_commit
   - one_fresh_focused_audit_and_hit_specific_correction_if_required
+  - V2_B_R2_focused_reaudit_passed_and_P1_001_closed
   - create_audited_R2_execution_baseline
   - create_fresh_top_level_R2_execution_session
   - run_Gate_H_R2_before_any_real_access
