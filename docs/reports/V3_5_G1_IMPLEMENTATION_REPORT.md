@@ -7,9 +7,11 @@
 - Disposition: `READY_FOR_MAIN_REVIEW`
 - Parent Control Baseline: `745847d3f9e9579ea98a2d64c657b4c9d3ee91d1`
 - Parent tree: `c183d69ab1a6298fc17fde0bb447b882c8a3fef1`
-- Implementation commit: `RESULTING_COMMIT_OF_THIS_REVISION`
+- Implementation commit: `4122b3cb88c2e35b946e4129d5977c0fdb2c7309`
+- Bounded correction parent: `4122b3cb88c2e35b946e4129d5977c0fdb2c7309`
+- Bounded correction commit: `CORRECTION_COMMIT_OF_THIS_REVISION`
 
-The exact implementation commit SHA is returned to Main after the one authorized commit is created. A commit cannot contain its own SHA because the report bytes participate in that SHA.
+The exact correction commit SHA is returned to Main after the authorized follow-up commit is created. A commit cannot contain its own SHA because the report bytes participate in that SHA.
 
 ## Gate A
 
@@ -26,6 +28,14 @@ The exact implementation commit SHA is returned to Main after the one authorized
 - `docs/reports/V3_5_G1_IMPLEMENTATION_REPORT.md` and `docs/reports/V3_5_G1_CLOSEOUT_DRAFT.md`: implementation evidence and Main-owned closeout draft.
 
 No accepted control artifact, `.upstream/pi`, reference material, dependency tree, or `.runs` artifact is part of the tracked delta.
+
+## Main Review finding and bounded correction
+
+`Fact`: Main reproduced one correctness/security defect in the original implementation commit. `read-model-v35.ts` checked lexical containment and the final ordinary file, but did not reject a directory junction in an intermediate source-reference segment. A junction below `sourceRoot` could therefore expose an ordinary file outside that root to `readLegacyRunFallbackV35`.
+
+`Fact`: the bounded correction adds segment-by-segment validation to every Read Model candidate path, rejecting any existing symlink, Windows directory junction, or reparse path. A final ordinary file is canonicalized and its canonical path must remain within the canonical `sourceRoot`. Existing lexical traversal, drive/absolute-path, missing-source, and final-link/ordinary-file checks remain fail closed. Catalog semantics and V2/V3 adapter semantics are unchanged.
+
+`Fact`: a focused, non-skipped regression constructs an actual Windows directory junction and proves both `linked/package.json` intermediate escape and a final junction are rejected. The existing ordinary-file path still succeeds; traversal and absolute paths remain rejected.
 
 ## Architecture and mechanism
 
@@ -87,7 +97,7 @@ All commands ran from the Goal worktree unless a different working directory is 
 
    `node --experimental-loader ../.runs/v3-5-g1/runtime/public-pi-loader.mjs --test tests/v35-persistent-session.test.ts`
 
-   Exit `0`; 5 passed, 0 failed.
+   Exit `0`; 6 passed, 0 failed, including the non-skipped Windows junction regression.
 
 6. Affected regressions, from `workbench`:
 
@@ -114,6 +124,16 @@ All commands ran from the Goal worktree unless a different working directory is 
     `git diff --check`
 
     Exit `0` before report creation; repeated before staging/commit.
+
+### Bounded correction verification
+
+The correction used the same strict TypeScript and regression commands listed above. Final results were:
+
+- strict TypeScript: exit `0`;
+- Goal-focused test command: exit `0`; 6 passed, 0 failed, 0 skipped;
+- affected V0–V3 regression command: exit `0`; 43 passed, 0 failed, 0 skipped.
+
+One preliminary combined invocation ran from `workbench` while retaining the root-relative `.runs\v3-5-g1\runtime\tsconfig.json` argument. It exited `1` with `TS5058` because that relative config path does not exist from `workbench`; no tests ran in that invocation. The exact TypeScript command was then rerun from the repository root and passed as recorded above. This was a command-location error, not a source/test failure.
 
 ## Process A / Process B evidence index
 
@@ -146,10 +166,10 @@ Identity and linkage:
 1. **PASS** — distinct Process A and Process B completed from the immutable input.
 2. **PASS** — Run B's four-message prior-context digest exactly equals the digest observed inside its Faux provider callback.
 3. **PASS** — the public JSONL Session, immutable Run A/B manifests, and navigation catalog are explicitly linked while preserving distinct authorities.
-4. **PASS** — focused tests prove safe user/assistant/Tool/Run projection and removal of credentials, reasoning, raw provider fields, and arbitrary absolute paths.
+4. **PASS** — focused tests prove safe user/assistant/Tool/Run projection, removal of credentials/reasoning/raw provider fields/arbitrary absolute paths, and fail-closed intermediate/final reparse-path handling.
 5. **PASS** — focused tests cover corrupt/missing catalog and Session/Run, cross-project, workspace mismatch, link/path escape, and parent mismatch failures.
 6. **PASS** — catalog-authority tamper fails closed; Read Model adapters render absent legacy facts as `not_recorded` or `unavailable`.
-7. **PASS** — strict TypeScript, 5 focused tests, and 43 affected regressions pass.
+7. **PASS** — strict TypeScript, 6 focused tests, and 43 affected regressions pass after the bounded correction.
 8. **PASS** — all real-access counters are zero; Pi patch/private-import counts are zero and Pi is clean.
 
 ## Unverified limitations
@@ -170,7 +190,9 @@ For Main review only; this Session did not modify `CURRENT_STATE.md` and does no
 proposal_type: V3_5_G1_IMPLEMENTATION_REVIEW
 goal_id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 implementation_parent: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
-implementation_commit: RESULTING_COMMIT_OF_THIS_REVISION
+implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+correction_parent: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+correction_commit: CORRECTION_COMMIT_OF_THIS_REVISION
 implementation_session_disposition: READY_FOR_MAIN_REVIEW
 exit_criteria_result: PASS_IMPLEMENTATION_EVIDENCE
 goal_acceptance: MAIN_AND_USER_DECISION_REQUIRED
@@ -189,7 +211,7 @@ pi:
   clean: true
 verification:
   strict_typescript: pass
-  focused_tests: 5_pass_0_fail
+  focused_tests: 6_pass_0_fail_0_skip
   affected_regressions: 43_pass_0_fail
   distinct_process_proof: pass
 limitations:

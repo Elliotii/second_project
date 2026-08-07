@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import test from "node:test";
@@ -115,6 +115,20 @@ test("versioned Read Model adapters use bounded source references and explicit u
 	writeFileSync(resolve(legacy, "manifest.json"), JSON.stringify({ run_id: "legacy-run", status: "passed" }), "utf8");
 	assert.equal(readLegacyRunFallbackV35({ sourceRoot: legacy }).session_link, "not_recorded");
 	assert.throws(() => readLegacyRunFallbackV35({ sourceRoot: legacy, sourceRef: "../escape.json" }), /path escape/);
+	assert.throws(() => readLegacyRunFallbackV35({ sourceRoot: legacy, sourceRef: resolve(legacy, "manifest.json") }), /path escape/);
+});
+
+test("Read Model rejects an intermediate Windows directory junction and final reparse path", () => {
+	const root = roots("read-model-junction");
+	const sourceRoot = resolve(root.root, "source");
+	const outside = resolve(root.root, "outside");
+	mkdirSync(sourceRoot, { recursive: true });
+	mkdirSync(outside, { recursive: true });
+	writeFileSync(resolve(outside, "package.json"), JSON.stringify({ run_id: "escaped-run", status: "passed" }), "utf8");
+	symlinkSync(outside, resolve(sourceRoot, "linked"), "junction");
+	symlinkSync(outside, resolve(sourceRoot, "final-link"), "junction");
+	assert.throws(() => readLegacyRunFallbackV35({ sourceRoot, sourceRef: "linked/package.json" }), /symlink, junction, or reparse point/);
+	assert.throws(() => readLegacyRunFallbackV35({ sourceRoot, sourceRef: "final-link" }), /symlink, junction, or reparse point/);
 });
 
 test("catalog cannot override authoritative Run or Pi Session identity", async () => {

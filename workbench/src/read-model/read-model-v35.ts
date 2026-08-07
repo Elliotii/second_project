@@ -13,23 +13,33 @@ function safeRoot(root: string): string {
 	return realpathSync.native(resolved);
 }
 
-function safeFile(root: string, relativePath: string): string {
-	if (relativePath === "" || relativePath.includes("\0") || isAbsolute(relativePath) || /^[A-Za-z]:/.test(relativePath) || relativePath.replaceAll("\\", "/").split("/").includes("..")) throw new Error("Read Model path escape rejected");
-	const target = resolve(root, relativePath);
+function contained(root: string, target: string): boolean {
 	const rel = relative(root, target);
-	if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) throw new Error("Read Model path escape rejected");
-	if (!existsSync(target)) throw new Error("Read Model source is unavailable");
-	const stats = lstatSync(target);
-	if (!stats.isFile() || stats.isSymbolicLink()) throw new Error("Read Model source is not an ordinary file");
-	return target;
+	return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`));
 }
 
 function safeCandidatePath(root: string, relativePath: string): string {
 	if (relativePath === "" || relativePath.includes("\0") || isAbsolute(relativePath) || /^[A-Za-z]:/.test(relativePath) || relativePath.replaceAll("\\", "/").split("/").includes("..")) throw new Error("Read Model path escape rejected");
 	const target = resolve(root, relativePath);
+	if (!contained(root, target)) throw new Error("Read Model path escape rejected");
 	const rel = relative(root, target);
-	if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) throw new Error("Read Model path escape rejected");
+	let cursor = root;
+	for (const segment of rel === "" ? [] : rel.split(sep)) {
+		cursor = resolve(cursor, segment);
+		if (!existsSync(cursor)) break;
+		if (lstatSync(cursor).isSymbolicLink()) throw new Error("Read Model path contains a symlink, junction, or reparse point");
+	}
 	return target;
+}
+
+function safeFile(root: string, relativePath: string): string {
+	const target = safeCandidatePath(root, relativePath);
+	if (!existsSync(target)) throw new Error("Read Model source is unavailable");
+	const stats = lstatSync(target);
+	if (!stats.isFile() || stats.isSymbolicLink()) throw new Error("Read Model source is not an ordinary file");
+	const canonicalTarget = realpathSync.native(target);
+	if (!contained(root, canonicalTarget)) throw new Error("Read Model canonical path escape rejected");
+	return canonicalTarget;
 }
 
 function readObject(path: string): Record<string, unknown> {

@@ -8,7 +8,9 @@ This is an Implementation Session draft. It does not accept Goal 1, close V3.5, 
 
 - Goal: `V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION`
 - Parent Control Baseline: `745847d3f9e9579ea98a2d64c657b4c9d3ee91d1`
-- Implementation commit: `RESULTING_COMMIT_OF_THIS_REVISION` (exact SHA returned to Main after the one authorized commit)
+- Implementation commit: `4122b3cb88c2e35b946e4129d5977c0fdb2c7309`
+- Bounded correction parent: `4122b3cb88c2e35b946e4129d5977c0fdb2c7309`
+- Bounded correction commit: `CORRECTION_COMMIT_OF_THIS_REVISION` (exact SHA returned to Main after commit creation)
 - Pi: public emitted entrypoints from clean `027a5847901b5dde30270abaa1041046cd2b4b55`
 - Access consumed: zero Credential, network, external Provider, real-model, and real calls
 
@@ -20,16 +22,18 @@ This is an Implementation Session draft. It does not accept Goal 1, close V3.5, 
 
 `Fact`: the safe projection renders allowlisted user, assistant, Tool, and Run history while excluding private reasoning/signatures, credential-like material, unknown provider payloads, and arbitrary absolute paths.
 
+`Fact`: Main review found one bounded Read Model filesystem-boundary defect in the original implementation: an intermediate Windows directory junction could lead a source reference outside canonical `sourceRoot`. The correction walks every existing segment, rejects symlink/junction/reparse paths, canonicalizes the final ordinary file, and requires it to remain within canonical `sourceRoot`. A non-skipped junction regression reproduces and rejects both intermediate and final reparse paths. It does not change catalog or V2/V3 adapter semantics.
+
 ## Definition of Done evidence
 
 - Distinct settled Process A/Process B proof: **PASS**.
 - Process B prior-context reconstruction, proven by equal pre-turn and provider-observed digests: **PASS**.
 - Session/Run/catalog linkage with separated authority: **PASS**.
-- Safe inspection projection: **PASS**.
+- Safe inspection projection and canonical filesystem boundary: **PASS after bounded correction**.
 - Missing, corrupt, cross-project, workspace-mismatch, parent, link, and path-escape failures: **PASS**.
 - Catalog cannot override Pi Session/Run truth; absent historical fields remain explicit: **PASS**.
 - Strict TypeScript: **PASS**.
-- Goal-focused tests: **5 passed, 0 failed**.
+- Goal-focused tests: **6 passed, 0 failed, 0 skipped**.
 - Affected regressions: **43 passed, 0 failed**.
 - Credential/network/external Provider/real-model counters: **all 0**.
 - Pi patch/private import: **0**; hydrated Pi tracked status clean.
@@ -63,7 +67,9 @@ For Main only; not applied by this Session.
 proposal_type: V3_5_G1_CLOSEOUT_REVIEW
 goal_id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 implementation_parent: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
-implementation_commit: RESULTING_COMMIT_OF_THIS_REVISION
+implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+correction_parent: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+correction_commit: CORRECTION_COMMIT_OF_THIS_REVISION
 implementation_evidence: PASS
 recommended_goal_disposition: ACCEPT_GOAL_1_WITH_SETTLED_FAUX_PRODUCTIZATION_LIMITATIONS
 acceptance_authority: MAIN_AND_USER
