@@ -14,7 +14,7 @@ v2_disposition: ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_package: "@earendil-works/pi-agent-core@0.82.1"
 prime_reference_commit: b9a4461149419156599d60174dddf15458e2b9ee
-active_goal: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE
 goal_1_activation_authorized: consumed
@@ -22,49 +22,57 @@ goal_2_status: closed_accepted
 goal_2_disposition: PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK
 goal_2_authorized: consumed
 goal_3_authorized: true
-goal_3_status: active_zero_call_implementation_accepted_real_execution_authorized_not_started
+goal_3_status: closed_accepted
 goal_3_implementation_owner: completed_top_level_session_019fdd6c-7f5d-79c0-98d6-6fb261d689a3
 goal_3_implementation_authorized: consumed_completed_zero_call
 goal_3_implementation_started: true
 goal_3_implementation_completed: true_zero_call_substrate
-goal_3_execution_owner: future_new_top_level_no_source_edit_real_execution_session
-goal_3_real_execution_authorized: true_one_prompt_addendum_agent_run
-implementation_owner: future_new_top_level_no_source_edit_real_execution_session
-implementation_authorized: true_one_prompt_addendum_real_execution_only
+goal_3_completed: true_zero_call_plus_one_real_prompt_closure
+goal_3_execution_owner: completed_top_level_session_019fddc4-dcfd-7a53-88e0-e5433838a4d8
+goal_3_real_execution_authorized: consumed_completed_one_prompt_addendum_agent_run
+goal_3_disposition: PASS_V3_G3_SELECTIVE_REUSE_AND_BOUNDED_REAL_CLOSURE
+v3_disposition: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
+implementation_owner: null
+implementation_authorized: false
 implementation_started: true
-implementation_completed: true_zero_call_goal_3_real_execution_pending
+implementation_completed: true_all_three_goals_closed
 zero_call_candidate_baseline_commit: 07b81a4cf392854bbbde041f3dafae13b52a768f
 goal_1_implementation_baseline_commit: 6ec958b83363c01e0eeec8be0360516dcdf2bc7e
-real_model_calls_authorized: up_to_16_provider_requests_in_one_agent_run
-goal_3_credential_reads_authorized: one_opaque_read_after_read_only_gate
-goal_3_external_network_authorized: true_after_read_only_gate
+real_model_calls_authorized: consumed_no_further_calls_authorized
+goal_3_credential_reads_authorized: consumed_1_no_further_reads_authorized
+goal_3_external_network_authorized: consumed_no_further_network_authorized
 goal_3_provider_request_cap: 16
 goal_3_token_cap: 131072
 goal_3_tool_call_cap: 24
 goal_3_cost_cap_usd: 0.20
 goal_3_retry_fallback_replacement_authorized: false
 goal_3_source_or_state_authority_mutation_authorized: false
-real_model_calls_observed: 1
-credential_reads_observed: 1
-provider_calls_observed: 1
+real_model_calls_observed: 7
+credential_reads_observed: 2
+provider_calls_observed: 7
+external_network_requests_observed: 7
 real_proposal_cost_usd: 0.0002016
-external_network_authorized: true_after_goal_3_execution_gate_only
+goal_3_real_execution_cost_usd: 0.0007371112
+v3_total_real_cost_usd: 0.0009387112
+external_network_authorized: consumed_no_further_network_authorized
 pi_core_patch_authorized: false
-git_commit_authorized: consumed_v3_goal_3_implementation_baseline
+git_commit_authorized: consumed_v3_closeout
 control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
 goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
 goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
 goal_2_candidate_baseline_tree: f9a2ce17d374e357e6c6df1e5607b6b646373485
-goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
+goal_2_implementation_baseline_commit: d24b51ffacc886560671f90757ff087a3561bd1a
 goal_3_control_baseline_commit: 8107df7e7ca10206fbb3fc58f93c3baf3cd4ab75
-goal_3_implementation_baseline_commit: resulting_HEAD_of_this_revision
+goal_3_implementation_baseline_commit: 74e7e73a07321f191d1b266ab8dd3cb94f66cade
+goal_3_real_run_manifest_digest: 347a44bfe905baa15fa2542196a2763f263833523a65cb4e0cd3672119891975
+v3_closeout_commit: resulting_HEAD_of_this_revision
 implementation_goal_count: 3
 implementation_session_model: one_fresh_top_level_session_per_goal
 ```
 
-> 本文件已由用户接受并正式化。当前只激活 Goal 1，且实现权只交给一个新的顶层
-> Dedicated Implementation Session；当前 Main Session 不拥有实现权。本次授权不包含 Goal 2、
-> Goal 3、真实模型调用、网络、凭据读取或 Pi 修改。
+> 本文件已由用户接受并正式化。Goal 1、Goal 2、Goal 3 与 V3 已按 22.2–22.7
+> 的后续控制记录完成并接受；当前 `active_goal: null`，所有 V3 执行授权均已消费，
+> V4 未授权。早期启动状态仅作为历史记录保留。
 
 ## 1. Version mission
 
@@ -683,7 +691,7 @@ pi_core_patch_authorized: false
 git_commit_authorized: consumed_v3_goal_2_closeout
 goal_2_control_baseline_commit: f138ddd607816f266e9024291718eeab087b39f6
 goal_2_candidate_baseline_commit: c86c6947e71f91ad3fb1262101aa092629b44eb0
-goal_2_implementation_baseline_commit: resulting_HEAD_of_this_revision
+goal_2_implementation_baseline_commit: d24b51ffacc886560671f90757ff087a3561bd1a
 ```
 
 本段仅记录 Charter 最初冻结时的 Goal 1 启动边界；后续 Goal 1/2 的真实当前状态由 22.2–22.4 节取代。Main Session 只负责正式控制状态、Control Baseline、启动 Prompt、顶层 Session 创建、轻量验收与 commit，不代替 Dedicated Session 修改 V3 产品源码。
@@ -825,3 +833,40 @@ replacement, extra Cases, source edits, State-authority mutation, Pi changes and
 SDK/Extension/RPC switching are forbidden. Main may perform finite evidence
 review and propose a V3 disposition; final V3 acceptance and V4 remain reserved
 for the user.
+
+### 22.7 Goal 3 and V3 final acceptance (2026-08-08)
+
+The user accepted Main's limited Goal 3 and V3 dispositions and authorized
+formal closeout:
+
+```yaml
+goal_3: PASS_V3_G3_SELECTIVE_REUSE_AND_BOUNDED_REAL_CLOSURE
+V3: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
+active_goal: null
+V4_authorized: false
+```
+
+- Implementation Baseline was
+  `74e7e73a07321f191d1b266ab8dd3cb94f66cade`, tree
+  `15645b4d572bcc5f5fb8310bbf8bda8a78b1c17e`.
+- The one authorized real `prompt_addendum` Agent Run moved the same frozen
+  external Verifier from valid failure to valid pass. Inspector independently
+  returned `integrity_valid: true`, with manifest digest
+  `347a44bfe905baa15fa2542196a2763f263833523a65cb4e0cd3672119891975`.
+- Usage was one opaque Credential read, six Provider/model requests, 12,291
+  tokens, seven Tool calls and USD `0.0007371112`. Retry, fallback, replacement
+  and extra Case counts were all zero.
+- Shared State/Admission authority, tracked source and both Pi checkouts remained
+  unchanged. The fresh execution Session wrote ignored evidence under the Main
+  worktree rather than its allocated separate worktree; this non-blocking
+  location deviation forbids a separate-worktree-isolation claim.
+- Only `prompt_addendum` has external-real-model behavioral evidence. The
+  adaptive-Skill route retains deterministic Direct Pi mechanism evidence only;
+  there is no real comparator or causal improvement claim.
+- Full Pi Session/Tool-trace persistence, one-command failure-lineage
+  recomputation, stronger privacy-preserving real-payload proof and a durable
+  multi-process State store are recorded future usability/reliability work, not
+  missing V3 acceptance criteria.
+
+Goal 3 and V3 are closed. No further V3 execution, Credential/network/model
+access, Pi modification or V4 work is authorized.

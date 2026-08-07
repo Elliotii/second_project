@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 Goal 1 is closed and accepted with `PASS_V3_G1_EVIDENCE_TO_CANDIDATE_STATE`: the zero-call mechanism and one bounded real `deepseek-v4-flash` proposal produced a host-validated `prompt_addendum` Candidate persisted only as reloadable `staged_inactive` State. V3 Goal 2 is closed and accepted with `PASS_V3_G2_VALIDATE_PROMOTE_REJECT_ROLLBACK`: deterministic/Faux evidence proves symmetric State-only validation, deterministic Promote/Reject, immutable accepted versions, stale protection, fail-closed reload, atomic active-pointer replacement and pointer rollback in isolated ignored stores. V3 Goal 3's corrected zero-call selective-reuse substrate is accepted for its Implementation Baseline with `PASS_V3_G3_ZERO_CALL_SELECTIVE_REUSE_SUBSTRATE`. A different fresh top-level no-source-edit Session is authorized to perform exactly one prompt-addendum-first real Agent Run after all read-only gates, within the frozen 16-request / 131072-token / 24-tool / USD 0.20 ceilings. Final V3 acceptance and V4 remain unauthorized.
+This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2-A is closed and accepted with `PASS_V2_A_DETERMINISTIC_RECOVERY_SUBSTRATE`. V2-B and V2 are closed by explicit user acceptance of the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 is closed and accepted with `PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION`. Goal 1 established evidence-grounded typed Candidate generation, Goal 2 established deterministic validate/promote/reject/version/rollback, and Goal 3 established persistent selective binding plus one Inspector-valid real `prompt_addendum` Run that moved the external Verifier from valid failure to pass. Only the prompt-addendum path has external-real-model behavioral evidence; there is no real comparator or causal claim, and adaptive-Skill real behavior remains future work. No Goal is active and V4 is not authorized.
 
 > Current V2 closeout update (2026-08-07): the user accepted the limited closeout
 > `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-B and V2
@@ -15,12 +15,11 @@ This repository is building an Adaptive Coding Agent Harness on the accepted Age
 > is closed and accepted. Its real Candidate remains inactive. Goal 2 completed with
 > zero Credential/network/Provider/model access and did not activate that real
 > Candidate; its accepted evidence is deterministic/Faux mechanism evidence only.
-> Goal 3 zero-call implementation is complete and accepted for an Implementation
-> Baseline. After Main records the exact SHA, one fresh no-source-edit real
-> Execution Session may read the Credential opaquely only after all read-only
-> gates and run exactly one prompt-addendum-first Agent task. Retry, fallback,
-> replacement, extra Cases, source/State-authority changes, Pi changes, final V3
-> acceptance and V4 remain forbidden or reserved.
+> Goal 3 and V3 are closed and accepted. The sole real Goal 3 Run consumed one
+> opaque Credential read, six Provider/model requests, 12,291 tokens, seven Tool
+> calls and USD 0.0007371112 with zero retry/fallback/replacement. Preserve its
+> single-real-path/no-comparator limitation and the disclosed Main-worktree
+> evidence-location deviation. No further V3 execution or V4 work is authorized.
 
 ## Required Read Order
 
@@ -102,7 +101,7 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - R2 Inspector may allow only finite non-negative numeric `message.usage.reasoning` metadata at the exact schema path. Reasoning/thinking content, signatures, credentials, Authorization material, unknown shapes and all other reasoning paths remain fail-closed.
 - R2 used the bounded top-level Implementation, focused Audit and fresh no-source-edit Execution roles. The Amendment hard exit was honored; the formerly separate final user decision has now been consumed only for the limited closeout, not for a full Contract PASS.
 - V2-B and V2 are now closed by explicit user acceptance of a limited closeout. Treat the execution permissions described above as historical and consumed. Preserve the valid controlled Seed/A/B/Selection evidence and the incomplete real Negative together. Do not reopen V2, rerun the Negative, enter V3 or convert the limited closeout into a full PASS without a new user-authorized planning decision.
-- V3 is governed by the accepted `V3_VERSION_CHARTER.md` as one common execution contract; do not create separate per-Goal Contracts by default. Goal 1 and Goal 2 are closed and accepted. Goal 3 is the active sequential implementation unit and must be owned by a different new top-level Dedicated Implementation Session. Goal 3 implementation has zero Credential, network, external Provider and real-model authority. Main alone owns Goal acceptance, control state and commits; any real behavioral closure must start later from a frozen implementation baseline in a fresh no-source-edit Execution Session.
+- V3 is closed and accepted under `V3_VERSION_CHARTER.md`. Preserve Goal 1/2/3 reports, the frozen Goal 3 Implementation Baseline `74e7e73a07321f191d1b266ab8dd3cb94f66cade`, the ignored real evidence and the formal V3 Closeout. Do not add a second V3 real path, comparator, retry, replacement or audit after closeout. Future work may consider full Pi Session/Tool-trace persistence, one-command failure-lineage recomputation, stronger privacy-preserving payload proof and a more durable State store, but these are recorded follow-ups rather than reopened V3 requirements. V4 requires a new user-authorized planning decision.
 - For V0-C, keep four temporary specialist roles distinct when their stages are authorized: a read-only precontract research Session, a dedicated deterministic Stage 1 implementation Session, a focused independent audit Session for the frozen candidate, and a fresh Stage 2 user-acceptance Session that exercises the frozen product surface without source-edit authority.
 - V0-C Stage 1 must use zero real-model calls. Stage 2 requires a separately authorized frozen implementation baseline, one bounded user-visible Coding Task and its explicit run/cost budget. Credentials and real-model authority do not flow backward to research, implementation, or audit Sessions.
 
