@@ -20,7 +20,8 @@
     "v2a:deterministic": "node scripts/run-v2a-deterministic-suite.mjs",
     "v2b:stage1": "node --test tests/v2b-stage1.test.ts",
     "v2b:r2": "node --test tests/v2b-r2.test.ts",
-    "v3g1:test": "node --experimental-loader ../.runs/v3-g1/runtime/public-pi-loader.mjs --test tests/v3g1-evidence-to-candidate.test.ts"
+    "v3g1:test": "node --experimental-loader ../.runs/v3-g1/runtime/public-pi-loader.mjs --test tests/v3g1-evidence-to-candidate.test.ts",
+    "v3g2:test": "node --experimental-loader ../.runs/v3-g2/runtime/public-pi-loader.mjs --test tests/v3g2-validate-promote-reject-rollback.test.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",
