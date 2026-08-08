@@ -1,8 +1,8 @@
 # V3.5 Version Charter — Persistent & Inspectable Adaptive Harness Workbench
 
 ```yaml
-status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_activated
-date: 2026-08-08
+status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_zero_access_candidate_ready_for_focused_audit
+date: 2026-08-09
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
 version: V3.5
@@ -21,16 +21,16 @@ goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
 goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
 goal_2_status: closed_inconclusive
 goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
-goal_2_5_status: accepted_activated_implementation_not_started
+goal_2_5_status: zero_access_correction_accepted_focused_audit_pending
 goal_3_status: not_activated
-implementation_authorized: true_goal_2_5_zero_access_initial_phase
+implementation_authorized: consumed_goal_2_5_zero_access_candidate_and_bounded_correction
 real_model_calls_authorized: 32_after_zero_access_main_review_and_focused_audit
 credential_reads_authorized: 2_after_zero_access_main_review_and_focused_audit
 external_network_authorized: true_after_zero_access_main_review_and_focused_audit
 pi_core_patch_authorized: false
 runtime_route_switch_authorized: false
 git_commit_authorized: goal_2_5_control_implementation_audit_execution_and_closeout_within_contract
-control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
+control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
 ```
 
 > 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 已在有界诊断和 Main 校准后接受并激活；初始阶段仅允许零调用实现，真实访问必须等待 Main 验收、一次聚焦审计与精确 Execution Baseline。Goal 3、V3.5 最终接受和 Pi 修改仍未授权。
@@ -443,7 +443,7 @@ V3.5 完成后，在证据支持范围内可以声称：
 - continual self-evolution、semantic memory、自动路由或生产级多用户平台；
 - V3.5 WebUI 是完整 Pi IDE 或替代 Pi Runtime。
 
-## 11. Current control state after Goal 2.5 activation
+## 11. Current control state after Goal 2.5 Main zero-access review
 
 ```yaml
 active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
@@ -455,10 +455,16 @@ goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
 goal_2_status: closed_inconclusive
 goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
 goal_2_execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
-goal_2_5_contract: accepted_activated_implementation_not_started
-goal_2_5_zero_access_implementation_authorized: true
-goal_2_5_focused_audit_authorized: true_once
+goal_2_5_contract: accepted_activated
+goal_2_5_status: zero_access_correction_accepted_focused_audit_pending
+goal_2_5_control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
+goal_2_5_zero_access_candidate_commit: e852f90fa49ae9320896b91338bfb966e328cf98
+goal_2_5_zero_access_correction_commit: 6c5ccf7fbc76c5bc51355e707b7eabb194974b19
+goal_2_5_zero_access_implementation_authorized: consumed
+goal_2_5_main_review: passed_after_one_bounded_correction
+goal_2_5_focused_audit_authorized: true_once_pending
 goal_2_5_real_pair_authorized: true_once_after_audited_execution_baseline
+goal_2_5_real_pair_status: locked_pending_audited_execution_baseline
 goal_2_5_pair_cost_usd_hard_cap: 0.40
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
