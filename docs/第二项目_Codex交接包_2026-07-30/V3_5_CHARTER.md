@@ -1,7 +1,7 @@
 # V3.5 Version Charter — Persistent & Inspectable Adaptive Harness Workbench
 
 ```yaml
-status: accepted_active_goal_1
+status: accepted_goal_1_closed_goal_2_case_contract_draft_pending_review
 date: 2026-08-08
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
@@ -12,22 +12,26 @@ repository_baseline: 6c686f01928a44211119e75767190e221b319fe2
 v3_status: closed_accepted
 v3_disposition: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-active_goal: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-goal_1_status: activated_implementation_not_started
-goal_1_implementation_owner: future_top_level_goal_session_from_control_baseline
-goal_2_status: not_activated
+active_goal: null
+goal_1_status: closed_accepted
+goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
+goal_1_control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
+goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
+goal_2_status: case_contract_draft_pending_user_review_not_activated
 goal_3_status: not_activated
-implementation_authorized: true_goal_1_only
+implementation_authorized: false_no_active_goal
 real_model_calls_authorized: 0
 credential_reads_authorized: 0
 external_network_authorized: false
 pi_core_patch_authorized: false
 runtime_route_switch_authorized: false
-git_commit_authorized: control_baseline_and_goal_1_bounded_implementation
-control_baseline_commit: resulting_HEAD_of_this_revision
+git_commit_authorized: consumed_through_goal_1_acceptance_closeout
+control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
 ```
 
-> 本 Charter 已由用户接受并正式化。用户已单独授权 Goal 1 Activation、Control Baseline Commit，以及从该精确 baseline 启动一个新的顶层 Implementation Session。Goal 2、Goal 3、真实调用、Credential、网络和 Pi 修改仍未授权。
+> 本 Charter 已由用户接受并正式化。Goal 1 已按授权完成、通过 Main 有限验收并正式接受。Goal 2 仅有短 Case Contract 草案等待用户审查；Goal 2 Activation/执行、Goal 3、真实调用、Credential、网络和 Pi 修改均未授权。
 
 ## 1. Version mission
 
@@ -435,28 +439,27 @@ V3.5 完成后，在证据支持范围内可以声称：
 - continual self-evolution、semantic memory、自动路由或生产级多用户平台；
 - V3.5 WebUI 是完整 Pi IDE 或替代 Pi Runtime。
 
-## 11. Current control state and Goal 1 launch input
-
-当前冻结状态：
+## 11. Current control state after Goal 1 acceptance
 
 ```yaml
-active_goal: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-goal_1_implementation_authorized: true_for_new_top_level_session
-real_model_calls_authorized: 0
-credential_reads_authorized: 0
-external_network_authorized: false
-pi_core_patch_authorized: false
-git_commit_authorized: control_baseline_and_goal_1_bounded_implementation
+active_goal: null
+goal_1_status: closed_accepted
+goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+goal_1_control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
+goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
+goal_2_case_contract: draft_pending_user_review
+goal_2_activation_authorized: false
+goal_2_real_execution_authorized: false
+goal_3_authorized: false
+v3_5_final_acceptance_authorized: false
 ```
 
-未来 Goal 1 新 top-level Implementation Session 至少应读取：
+Goal 1 的接受证据见 `docs/reports/V3_5_G1_CLOSEOUT.md`。其结论只覆盖 settled、
+deterministic/Faux 的跨进程 Session reopen/continue、Session↔Run linkage 和安全 Read
+Model；不覆盖 in-flight crash recovery、exactly-once Tool effects、自动 catalog rebuild、
+多写者事务或真实模型 continuation。
 
-1. root `AGENTS.md`；
-2. `CURRENT_STATE.md`；
-3. 本 `V3_5_CHARTER.md`；
-4. `docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md`；
-5. `docs/reports/V3_CLOSEOUT.md` 与 `docs/reports/V3_G3_CLOSEOUT.md`；
-6. 当前 Session、V2 JSONL recovery、V3 Direct Pi Run、Read Model 输入和相关测试；
-7. pinned Pi 中适用的 `AGENTS.md`、public JSONL Session repo/storage/session、AgentHarness 及对应测试。
-
-启动顺序：Main 必须先创建并核验本轮 Control Baseline 的精确 SHA，再生成一个只允许 Goal 1、zero-real-access、no-Pi-patch 的短启动 Prompt，并创建新的顶层 Implementation Session。该 Session 必须从记录的 SHA 开始；不得把本授权扩展到 Goal 2、Goal 3 或任何真实访问。
+Goal 2 的短 Case Contract 草案是当前唯一后续决策材料。草案本身不构成 Contract
+接受、Goal Activation、Control Baseline、Credential/network/model authority 或真实执行
+授权。只有用户审查后另行授权，Main 才可更新控制状态并启动新的顶层 Goal 2 Session。

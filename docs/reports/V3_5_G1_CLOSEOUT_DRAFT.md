@@ -1,5 +1,8 @@
 # V3.5 Goal 1 Closeout Draft
 
+> Superseded by the Main-accepted `docs/reports/V3_5_G1_CLOSEOUT.md`. Retained as
+> the original Implementation Session handoff draft.
+
 ## Draft disposition
 
 `READY_FOR_MAIN_REVIEW`
@@ -10,7 +13,7 @@ This is an Implementation Session draft. It does not accept Goal 1, close V3.5, 
 - Parent Control Baseline: `745847d3f9e9579ea98a2d64c657b4c9d3ee91d1`
 - Implementation commit: `4122b3cb88c2e35b946e4129d5977c0fdb2c7309`
 - Bounded correction parent: `4122b3cb88c2e35b946e4129d5977c0fdb2c7309`
-- Bounded correction commit: `CORRECTION_COMMIT_OF_THIS_REVISION` (exact SHA returned to Main after commit creation)
+- Bounded correction commit: `0b62fb7447c76373fab1a4e26df15f29dd72dfa5`
 - Pi: public emitted entrypoints from clean `027a5847901b5dde30270abaa1041046cd2b4b55`
 - Access consumed: zero Credential, network, external Provider, real-model, and real calls
 
@@ -69,7 +72,7 @@ goal_id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 implementation_parent: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
 implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
 correction_parent: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
-correction_commit: CORRECTION_COMMIT_OF_THIS_REVISION
+correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
 implementation_evidence: PASS
 recommended_goal_disposition: ACCEPT_GOAL_1_WITH_SETTLED_FAUX_PRODUCTIZATION_LIMITATIONS
 acceptance_authority: MAIN_AND_USER

@@ -5,47 +5,41 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_1_active
-  status: V3_5_G1_ACTIVATED_IMPLEMENTATION_NOT_STARTED
+  phase: v3_5_goal_1_closed_goal_2_case_contract_review
+  status: V3_5_G1_CLOSED_ACCEPTED_GOAL_2_CASE_CONTRACT_DRAFT_PENDING_REVIEW
 
-active_goal: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+active_goal: null
 
 last_executed_goal:
-  id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
+  id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  disposition: PASS_V3_G3_SELECTIVE_REUSE_AND_BOUNDED_REAL_CLOSURE
-  implementation_baseline_commit: 74e7e73a07321f191d1b266ab8dd3cb94f66cade
-  real_run_id: v3-g3-real-prompt-addendum-parse-duration-run-01
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
+  implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+  correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
 
 last_closed_goal:
-  id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
+  id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  disposition: PASS_V3_G3_SELECTIVE_REUSE_AND_BOUNDED_REAL_CLOSURE
-  closeout: docs/reports/V3_G3_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  closeout: docs/reports/V3_5_G1_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_G3_SELECTIVE_REUSE_AND_PORTFOLIO_CLOSURE
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
-  disposition: PASS_V3_G3_SELECTIVE_REUSE_AND_BOUNDED_REAL_CLOSURE
-  implementation_baseline_commit: 74e7e73a07321f191d1b266ab8dd3cb94f66cade
-
-current_goal:
   id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  status: activated_implementation_not_started
+  status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  implementation_owner: future_top_level_goal_session_from_control_baseline
-  real_model_calls_authorized: 0
-  credential_reads_authorized: 0
-  external_network_authorized: false
-  pi_core_patch_authorized: false
+  disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  implementation_baseline_commit: resulting_HEAD_of_goal_1_acceptance_revision
+
+current_goal: null
 
 next_goal:
   id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
-  status: blocked_on_goal_1_acceptance_and_user_reviewed_case_contract
+  status: case_contract_draft_pending_user_review_not_activated
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  case_contract_draft: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT_DRAFT.md
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -145,18 +139,30 @@ v3_5_control:
   charter_accepted_by_user: true
   preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   preimplementation_review_status: accepted_as_charter_design_basis
-  active_goal: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  goal_1_status: activated_implementation_not_started
-  goal_1_implementation_owner: future_top_level_goal_session_from_control_baseline
-  goal_1_control_baseline_commit_authorized: true
-  goal_1_control_baseline_commit: resulting_HEAD_of_this_revision
-  goal_1_bounded_implementation_commit_authorized: true
+  active_goal: null
+  goal_1_status: closed_accepted
+  goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
+  goal_1_control_baseline_commit_authorized: consumed
+  goal_1_control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
+  goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
+  goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
+  goal_1_acceptance_baseline_commit: resulting_HEAD_of_this_revision
+  goal_1_focused_tests: 6_passed_0_failed_0_skipped
+  goal_1_affected_regressions: 43_passed_0_failed_0_skipped
+  goal_1_strict_typescript: passed
+  goal_1_cross_process_settled_reopen_continue: passed
+  goal_1_actual_read_model_v2_r2_adapter: passed
+  goal_1_main_path_boundary_correction: intermediate_junction_escape_fixed_and_regression_passed
+  goal_1_bounded_implementation_commit_authorized: consumed
   goal_1_real_model_calls_authorized: 0
   goal_1_credential_reads_authorized: 0
   goal_1_external_network_authorized: false
   goal_1_pi_core_patch_authorized: false
   goal_1_runtime_route_switch_authorized: false
-  goal_2_status: not_activated_blocked_on_goal_1_and_case_contract
+  goal_1_closeout: docs/reports/V3_5_G1_CLOSEOUT.md
+  goal_2_status: case_contract_draft_pending_user_review_not_activated
+  goal_2_case_contract_draft: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT_DRAFT.md
   goal_2_real_execution_authorized: false
   goal_3_status: not_activated
   v3_5_final_acceptance_authorized: false
@@ -1790,6 +1796,9 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT_DRAFT.md
+  - docs/reports/V3_5_G1_CLOSEOUT.md
+  - docs/reports/V3_5_G1_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
   - docs/reports/V3_CLOSEOUT.md
@@ -1934,8 +1943,12 @@ next_checkpoint:
   - user_accepted_limited_V2_B_and_V2_closeout_without_further_R2_execution
   - V2_closed_with_mechanism_demonstrated_and_real_negative_incomplete
   - no_active_goal_after_V3_closeout
+  - V3_5_goal_1_closed_accepted_after_bounded_read_model_path_correction
+  - V3_5_goal_2_short_case_contract_drafted_pending_user_review
 
-open_user_decisions: []
+open_user_decisions:
+  - accept_or_revise_V3_5_goal_2_short_case_contract
+  - separately_authorize_V3_5_goal_2_activation_control_baseline_and_real_execution_if_contract_is_accepted
 ```
 
 ## Current Constraints
@@ -2140,3 +2153,23 @@ remains future work. The real evidence was written by the fresh Session under
 Main worktree ignored storage rather than a separate execution worktree; this
 non-blocking location deviation is disclosed and no separate-worktree isolation
 claim is allowed. V3 is closed, `active_goal` is `null`, and V4 is not authorized.
+
+V3.5 Goal 1 is closed and accepted with
+`PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION`. From Control Baseline
+`745847d3f9e9579ea98a2d64c657b4c9d3ee91d1`, the dedicated top-level Session
+implemented public Pi JSONL settled cross-process reopen/continue, explicit
+Session↔Run linkage, a navigation-only single-writer catalog, safe conversation
+and Tool projection, and bounded V2/V3/legacy Read Model adapters. Main found
+and reproduced one intermediate-junction escape in the Read Model; the original
+Session corrected it in `0b62fb7447c76373fab1a4e26df15f29dd72dfa5`.
+Strict TypeScript, 6/6 Goal-focused tests, 43/43 affected regressions and direct
+projection of accepted V2 R2 Candidate A/B evidence passed. Credential, network,
+external Provider/model and real-model accesses were all zero; Pi remained clean
+and unmodified. The accepted claim is settled deterministic/Faux persistence,
+not crash recovery, exactly-once Tool effects, multi-writer durability or real
+model continuation. The catalog currently fails closed if missing/corrupt; an
+automatic rebuild command remains a non-blocking productization limitation.
+
+No Goal is active. V3.5 Goal 2 has only a short Case Contract draft pending user
+review. That draft does not authorize implementation, Credential/network/model
+access, real execution, Goal 3 or final V3.5 acceptance.

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2 is closed with the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 is closed and accepted with `PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION`. V3.5 is now the active productization version: `Persistent & Inspectable Adaptive Harness Workbench`. Its active Goal is `V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION`, owned by a new top-level Implementation Session after the Main Session creates and records the exact Control Baseline. Goal 1 is zero Credential, zero network, zero Provider/model call and zero Pi patch. Goal 2, Goal 3 and final V3.5 acceptance remain unauthorized.
+This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2 is closed with the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 is closed and accepted with `PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION`. V3.5 is the active productization version: `Persistent & Inspectable Adaptive Harness Workbench`. V3.5 Goal 1 is closed and accepted with `PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION`; no Goal is active. Goal 2 has only a short Case Contract draft pending user review. Goal 2 execution, real access, Goal 3 and final V3.5 acceptance remain unauthorized.
 
 > Current V2 closeout update (2026-08-07): the user accepted the limited closeout
 > `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-B and V2
@@ -20,10 +20,12 @@ This repository is building an Adaptive Coding Agent Harness on the accepted Age
 > calls and USD 0.0007371112 with zero retry/fallback/replacement. Preserve its
 > single-real-path/no-comparator limitation and the disclosed Main-worktree
 > evidence-location deviation. V3 remains closed; V3.5 may consume its accepted
-> artifacts without reopening it. V3.5 Goal 1 is authorized only for public Pi
-> JSONL settled Session reopen/continue, Session↔Run linkage, safe Read Model and
-> focused regression work. Goal 2/3, real access, Pi modification and Runtime
-> route switching are not authorized.
+> artifacts without reopening it. V3.5 Goal 1 proved public Pi JSONL settled
+> Session reopen/continue across processes, explicit Session↔Run linkage and a
+> safe bounded Read Model with zero real access. Its accepted implementation is
+> the two-commit chain `4122b3c...` + path-boundary correction `0b62fb7...`.
+> Goal 2 has not been activated; its draft Case Contract does not authorize
+> Credential, network, Provider/model access, source implementation or execution.
 
 ## Required Read Order
 
@@ -106,7 +108,7 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - R2 used the bounded top-level Implementation, focused Audit and fresh no-source-edit Execution roles. The Amendment hard exit was honored; the formerly separate final user decision has now been consumed only for the limited closeout, not for a full Contract PASS.
 - V2-B and V2 are now closed by explicit user acceptance of a limited closeout. Treat the execution permissions described above as historical and consumed. Preserve the valid controlled Seed/A/B/Selection evidence and the incomplete real Negative together. Do not reopen V2, rerun the Negative, enter V3 or convert the limited closeout into a full PASS without a new user-authorized planning decision.
 - V3 is closed and accepted under `V3_VERSION_CHARTER.md`. Preserve Goal 1/2/3 reports, the frozen Goal 3 Implementation Baseline `74e7e73a07321f191d1b266ab8dd3cb94f66cade`, the ignored real evidence and the formal V3 Closeout. Do not add a second V3 real path, comparator, retry, replacement or audit after closeout. Future work may consider full Pi Session/Tool-trace persistence, one-command failure-lineage recomputation, stronger privacy-preserving payload proof and a more durable State store, but these are recorded follow-ups rather than reopened V3 requirements. V4 requires a new user-authorized planning decision.
-- V3.5 is governed by accepted `V3_5_CHARTER.md`. Goal 1 must preserve `Session != Run`: public Pi JSONL is resumable conversation/context authority; Workbench Run artifacts remain execution/evaluation authority; a thin catalog is navigation metadata only. Full raw Session remains local Runtime state while CLI/API/UI/report consumers receive only allowlisted safe projections. Goal 1 proves settled cross-process reopen/continue only, uses zero real access, and may not implement Goal 2, Goal 3, crash recovery, exactly-once Tool effects, a database, a WebUI, Pi patch/private import, or SDK/Extension/RPC/server switching.
+- V3.5 is governed by accepted `V3_5_CHARTER.md`. Goal 1 is closed and accepted while preserving `Session != Run`: public Pi JSONL is resumable conversation/context authority; Workbench Run artifacts remain execution/evaluation authority; the single-writer catalog is navigation metadata only. Full raw Session remains local Runtime state while CLI/API/UI/report consumers receive only allowlisted safe projections. The accepted claim is settled cross-process reopen/continue with deterministic/Faux evidence, not crash recovery, exactly-once Tool effects, database durability or external-model behavior. Automatic catalog rebuild remains a recorded productization limitation; missing/corrupt catalog currently fails closed. Goal 2 may begin only after its short Case Contract is accepted and separately activated; the draft itself grants no implementation or real-access authority. Goal 3, WebUI, Pi patch/private import and SDK/Extension/RPC/server switching remain unauthorized.
 - For V0-C, keep four temporary specialist roles distinct when their stages are authorized: a read-only precontract research Session, a dedicated deterministic Stage 1 implementation Session, a focused independent audit Session for the frozen candidate, and a fresh Stage 2 user-acceptance Session that exercises the frozen product surface without source-edit authority.
 - V0-C Stage 1 must use zero real-model calls. Stage 2 requires a separately authorized frozen implementation baseline, one bounded user-visible Coding Task and its explicit run/cost budget. Credentials and real-model authority do not flow backward to research, implementation, or audit Sessions.
 
