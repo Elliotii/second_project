@@ -1,19 +1,23 @@
-# V3.5 Goal 2 — One Bounded Real Adaptive Skill Case Contract Draft
+# V3.5 Goal 2 — One Bounded Real Adaptive Skill Case Contract
 
 ```yaml
-status: draft_pending_user_review
+status: accepted_activated_implementation_not_started
 date: 2026-08-08
+accepted_by_user: 2026-08-08
+formalized_by_main_session: 2026-08-08
 goal_id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
 precondition: V3_5_G1_closed_accepted
-active_goal: false
-contract_accepted: false
-goal_activation_authorized: false
-implementation_authorized: false
-credential_reads_authorized: 0
-external_network_authorized: false
-real_model_calls_authorized: 0
-git_commit_authorized: false
+active_goal: true
+contract_accepted: true
+goal_activation_authorized: true
+implementation_authorized: true
+implementation_owner: future_top_level_goal_2_session_created_after_control_baseline
+credential_reads_authorized: 2_after_zero_access_preflight
+external_network_authorized: true_after_zero_access_preflight
+real_model_calls_authorized: 32_after_zero_access_preflight
+real_cost_usd_authorized: 0.40_whole_pair_hard_cap
+git_commit_authorized: bounded_implementation_and_main_closeout
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
@@ -29,7 +33,7 @@ truthful persistence of the observed result.
 
 ## 2. Frozen historical Skill candidate
 
-The proposed Candidate treatment is the accepted V3 historical State version below:
+The frozen Candidate treatment is the accepted V3 historical State version below:
 
 ```yaml
 source_state_root: D:/AI/AI_Projects/project2/.runs/v3-g3/shared-authority/sequence-489cb1c4-20d9-42af-8dd6-0b22aeb6cf5d/project-state
@@ -49,14 +53,14 @@ Skill body:
 > it fails, use only its bounded public output for one focused correction, then run the
 > same check again.
 
-**Leakage decision:** proposed PASS. The Skill contains a reusable procedure only. It does
+**Leakage decision:** PASS. The Skill contains a reusable procedure only. It does
 not mention the Goal 2 task ID, function, source file contents, expected output or patch.
 
 The Goal 2 Session must copy/derive an isolated case-owned State authority and select this
 exact accepted version through existing State inspection/binding APIs. It must not modify
 the closed V3 State root or its global active pointer.
 
-## 3. Proposed frozen held-out Case
+## 3. Frozen held-out Case
 
 ```yaml
 task_id: v35-stable-unique
@@ -80,7 +84,7 @@ tool_profile_digest: f5bae96962e5f920df282b3255bdea49b847bd5b3570aaed923770d4d22
 budget_profile_id: v3g3-fixed-one-run-v1
 budget_profile_digest: 6b20b55e7930b193b7975c15668bba883961c9d3976e9d200b45cfd69d96be21
 provider_profile_digest: 6b90b83a047ce7745fc92a6f1ef99dd7f7ea6e046a5107e060f4b041e864cf32
-proposed_case_authority_digest: 43c2b1c2967826e61b236d3546f693a93424a127e25a5da9f4a0180617848fff
+case_authority_digest: 43c2b1c2967826e61b236d3546f693a93424a127e25a5da9f4a0180617848fff
 acceptance_visibility: hidden_external
 ```
 
@@ -89,7 +93,7 @@ zero-model reference calibration before either real arm. It does not predict eit
 outcome and does not permit the reference patch to enter either arm's Workspace or model
 context.
 
-The exact proposed initial Workspace inventory is:
+The exact frozen initial Workspace inventory is:
 
 | Path | Bytes | SHA-256 |
 |---|---:|---|
@@ -97,7 +101,7 @@ The exact proposed initial Workspace inventory is:
 | `src/subject.ts` | 97 | `2a95f2cc6bd25c22198f40c20fbfd1b204afc45f7120831f250b69dbcd292e86` |
 | `test/public.test.mjs` | 252 | `46ee2aba0b4da27c8d4c22dab3b38b8d3da28e1b9731971a0b193f3050e2665b` |
 
-Canonical proposed bytes:
+Canonical frozen bytes:
 
 `package.json`
 
@@ -126,7 +130,7 @@ Task prompt:
 Repair `src/subject.ts` so `stableUnique` returns each distinct string exactly once while preserving the order of first occurrence without mutating the input array. Preserve the export and run the declared public check.
 ```
 
-Proposed hidden external Verifier source (UTF-8, LF, one trailing newline):
+Frozen hidden external Verifier source (UTF-8, LF, one trailing newline):
 
 ```js
 import { pathToFileURL } from "node:url"; import { resolve } from "node:path";
@@ -135,9 +139,9 @@ const id="v35-stable-unique-verifier"; try { const {stableUnique}=await import(p
 
 The hidden external Verifier may test only behavior implied by that prompt: stable first
 occurrence order, exact string identity, duplicate removal, empty input and input
-non-mutation. It must not require an unstated algorithm or implementation form. This draft
-proposes the exact source and digest above; the future formal Contract must preserve them
-or explicitly replace both before Goal 2 activation or real dispatch.
+non-mutation. It must not require an unstated algorithm or implementation form. This
+Contract freezes the exact source and digest above. They may not be replaced after
+Contract acceptance.
 
 The calibration-only reference bytes are:
 
@@ -150,7 +154,7 @@ They prove deterministic solvability only and are not execution input.
 
 ## 4. Fairness and treatment boundary
 
-Exactly two arms are proposed, in fixed order:
+Exactly two arms are frozen, in fixed order:
 
 ```text
 Base
@@ -166,7 +170,7 @@ Candidate
 + explicit public harness.skill("adaptive-inefficient-success", taskPrompt)
 ```
 
-Frozen proposed identities:
+Frozen identities:
 
 ```yaml
 base_session_id: v35-g2-stable-unique-base-session-01
@@ -188,7 +192,7 @@ The only treatment delta is the explicit adaptive Skill binding and the resultin
 wrapper presented through Pi's public Skill route. Payload identity outside that declared
 delta must be inspected and recorded; equal outcomes are neither required nor expected.
 
-## 5. Proposed real profile and budgets
+## 5. Frozen real profile and budgets
 
 ```yaml
 provider: deepseek
@@ -224,9 +228,9 @@ Only `read_file`, `write_file` for `src/subject.ts`, and the frozen `public_test
 are allowed. The Agent cannot read or modify the hidden Verifier, Case Authority,
 reference calibration, evidence root, control files, credentials or Pi.
 
-These budgets are proposed, not authorized. Contract acceptance must remain separate from
-Goal Activation, Control Baseline/implementation commit authority and real-access
-authorization.
+These budgets are frozen and authorized only after the zero-access implementation,
+reference calibration and Main execution-baseline checks pass. No authority permits a
+retry, replacement, fallback, extra arm or edited Case after real dispatch.
 
 ## 6. Minimal execution flow
 
@@ -303,21 +307,22 @@ evidence, not a Skill victory.
   cannot fail closed;
 - Pi patch/private import or Extension/SDK/RPC route switch becomes necessary.
 
-## 10. User decisions required
+## 10. Activated authority and remaining boundary
 
 ```yaml
-user_decisions_required:
-  - decision: accept_or_revise_this_short_Case_Contract
-    recommendation: accept_if_the_frozen_task_Skill_fairness_and_budget_choices_are_approved
-    consequence: acceptance_still_does_not_activate_or_execute_Goal_2
-  - decision: separately_authorize_Goal_2_Activation_Control_Baseline_and_bounded_commit
-    recommendation: wait_until_the_formal_Contract_is_accepted
-    consequence: creates_the_clean_starting_point_for_one_new_top_level_Goal_2_Session
-  - decision: separately_authorize_opaque_credential_network_and_real_pair_execution
-    recommendation: authorize_only_under_the_frozen_limits_after_zero_access_preflight
-    consequence: permits_exactly_one_Base_and_one_Candidate_no_retry_or_replacement
+activated_authority:
+  activation_and_control_baseline: authorized
+  bounded_implementation_commit: authorized
+  bounded_main_review_and_pre_dispatch_correction: authorized
+  opaque_credential_network_and_real_pair: authorized_after_zero_access_preflight
+  goal_2_closeout_commit: authorized_if_exit_criteria_pass
+remaining_boundary:
+  goal_3: not_authorized
+  v3_5_final_acceptance: not_authorized
+  pi_patch_or_runtime_route_switch: not_authorized
+  retry_fallback_replacement_extra_arm_or_case: not_authorized
 ```
 
-Until those decisions are made, this file is design material only. It does not activate
-Goal 2 or authorize implementation, Git, credentials, network, Provider/model calls, Goal
-3 or final V3.5 acceptance.
+This Contract is accepted and activated. Real access remains mechanically gated behind
+the zero-access implementation/preflight and frozen execution baseline. Goal 3 and final
+V3.5 acceptance remain outside this authority.

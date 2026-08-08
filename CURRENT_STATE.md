@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_1_closed_goal_2_case_contract_review
-  status: V3_5_G1_CLOSED_ACCEPTED_GOAL_2_CASE_CONTRACT_DRAFT_PENDING_REVIEW
+  phase: v3_5_goal_2_activated_implementation_not_started
+  status: V3_5_G2_ACTIVE_IMPLEMENTATION_NOT_STARTED
 
-active_goal: null
+active_goal: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
 
 last_executed_goal:
   id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
@@ -33,13 +33,17 @@ last_completed_goal:
   disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   implementation_baseline_commit: resulting_HEAD_of_goal_1_acceptance_revision
 
-current_goal: null
+current_goal:
+  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+  status: activated_implementation_not_started
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
+  implementation_owner: future_top_level_goal_2_session_created_after_control_baseline
+  control_baseline_commit: resulting_HEAD_of_goal_2_activation_revision
 
 next_goal:
-  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
-  status: case_contract_draft_pending_user_review_not_activated
+  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+  status: charter_defined_not_authorized
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  case_contract_draft: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT_DRAFT.md
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -139,7 +143,7 @@ v3_5_control:
   charter_accepted_by_user: true
   preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   preimplementation_review_status: accepted_as_charter_design_basis
-  active_goal: null
+  active_goal: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
   goal_1_status: closed_accepted
   goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -161,9 +165,18 @@ v3_5_control:
   goal_1_pi_core_patch_authorized: false
   goal_1_runtime_route_switch_authorized: false
   goal_1_closeout: docs/reports/V3_5_G1_CLOSEOUT.md
-  goal_2_status: case_contract_draft_pending_user_review_not_activated
-  goal_2_case_contract_draft: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT_DRAFT.md
-  goal_2_real_execution_authorized: false
+  goal_2_status: activated_implementation_not_started
+  goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
+  goal_2_implementation_owner: future_top_level_goal_2_session_created_after_control_baseline
+  goal_2_control_baseline_commit: resulting_HEAD_of_goal_2_activation_revision
+  goal_2_bounded_implementation_commit_authorized: true
+  goal_2_real_execution_authorized: true_after_zero_access_preflight
+  goal_2_credential_reads_authorized: 2_after_zero_access_preflight
+  goal_2_external_network_authorized: true_after_zero_access_preflight
+  goal_2_real_model_calls_authorized: 32_after_zero_access_preflight
+  goal_2_real_cost_usd_hard_cap: 0.40
+  goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
+  goal_2_closeout_commit_authorized: true_if_exit_criteria_pass
   goal_3_status: not_activated
   v3_5_final_acceptance_authorized: false
 
@@ -1796,7 +1809,7 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT_DRAFT.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
   - docs/reports/V3_5_G1_CLOSEOUT.md
   - docs/reports/V3_5_G1_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
@@ -1944,11 +1957,10 @@ next_checkpoint:
   - V2_closed_with_mechanism_demonstrated_and_real_negative_incomplete
   - no_active_goal_after_V3_closeout
   - V3_5_goal_1_closed_accepted_after_bounded_read_model_path_correction
-  - V3_5_goal_2_short_case_contract_drafted_pending_user_review
+  - V3_5_goal_2_short_case_contract_accepted_not_activated
 
 open_user_decisions:
-  - accept_or_revise_V3_5_goal_2_short_case_contract
-  - separately_authorize_V3_5_goal_2_activation_control_baseline_and_real_execution_if_contract_is_accepted
+  - none_until_contract_hard_stop_or_goal_2_disposition
 ```
 
 ## Current Constraints
@@ -2170,6 +2182,7 @@ not crash recovery, exactly-once Tool effects, multi-writer durability or real
 model continuation. The catalog currently fails closed if missing/corrupt; an
 automatic rebuild command remains a non-blocking productization limitation.
 
-No Goal is active. V3.5 Goal 2 has only a short Case Contract draft pending user
-review. That draft does not authorize implementation, Credential/network/model
-access, real execution, Goal 3 or final V3.5 acceptance.
+V3.5 Goal 2 is active under the accepted frozen Case Contract. One future top-level Goal
+2 Session owns the bounded zero-access implementation and, only after its implementation
+commit and Main preflight pass, the single frozen Base/Candidate real pair. Goal 3 and
+final V3.5 acceptance remain unauthorized.
