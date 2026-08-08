@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "typeRoots": ["D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/@types"],
+    "paths": {
+      "@earendil-works/pi-agent-core": ["D:/AI/AI_Projects/project2/.runs/g006/pi/packages/agent/dist/index.d.ts"],
+      "@earendil-works/pi-agent-core/node": ["D:/AI/AI_Projects/project2/.runs/g006/pi/packages/agent/dist/node.d.ts"],
+      "@earendil-works/pi-ai": ["D:/AI/AI_Projects/project2/.runs/g006/pi/packages/ai/dist/index.d.ts"],
+      "@earendil-works/pi-ai/providers/*": ["D:/AI/AI_Projects/project2/.runs/g006/pi/packages/ai/dist/providers/*.d.ts"]
+    }
+  }
+}

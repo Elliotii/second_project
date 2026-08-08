@@ -23,7 +23,10 @@
     "v3g1:test": "node --experimental-loader ../.runs/v3-g1/runtime/public-pi-loader.mjs --test tests/v3g1-evidence-to-candidate.test.ts",
     "v3g2:test": "node --experimental-loader ../.runs/v3-g2/runtime/public-pi-loader.mjs --test tests/v3g2-validate-promote-reject-rollback.test.ts",
     "v3g3:test": "node --experimental-loader ../.runs/v3-g3/runtime/public-pi-loader.mjs --test tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts",
-    "v35g1:test": "node --experimental-loader ../.runs/v3-5-g1/runtime/public-pi-loader.mjs --test tests/v35-persistent-session.test.ts"
+    "v35g1:test": "node --experimental-loader ../.runs/v3-5-g1/runtime/public-pi-loader.mjs --test tests/v35-persistent-session.test.ts",
+    "v35g2:typecheck": "node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit",
+    "v35g2:test": "node --experimental-loader scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v35g2-real-adaptive-skill.test.ts",
+    "v35g2:calibrate": "node --experimental-loader scripts/v35g2-public-pi-loader.mjs scripts/v35g2-reference-calibration.ts --project-root .. --output-root ../.runs/v3-5-g2/reference-calibration"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",

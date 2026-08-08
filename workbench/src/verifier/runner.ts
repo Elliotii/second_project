@@ -54,7 +54,7 @@ async function spawnVerifier(options: {
 	argv: string[];
 	cwd: string;
 	workspaceRoot: string;
-	workspaceEnvironmentKey: "V0B_WORKSPACE" | "V0C_WORKSPACE" | "V1_WORKSPACE";
+	workspaceEnvironmentKey: "V0B_WORKSPACE" | "V0C_WORKSPACE" | "V1_WORKSPACE" | "V35_WORKSPACE";
 	timeoutMs: number;
 	outputLimitBytes: number;
 }): Promise<{ output: string; exitCode: number | null; timedOut: boolean; overflow: boolean; spawnError: string | null }> {
@@ -118,7 +118,7 @@ export async function runExternalVerifierV0B(options: {
 	verifierSnapshotRef: ArtifactRefV0B;
 	faultInjection?: "missing" | "spawn" | "parse" | "timeout" | "output_cap";
 	outputPath?: string;
-	workspaceEnvironmentKey?: "V0B_WORKSPACE" | "V0C_WORKSPACE" | "V1_WORKSPACE";
+	workspaceEnvironmentKey?: "V0B_WORKSPACE" | "V0C_WORKSPACE" | "V1_WORKSPACE" | "V35_WORKSPACE";
 }): Promise<VerifierResultV0B> {
 	const startedMs = Date.now();
 	const startedAt = new Date().toISOString();

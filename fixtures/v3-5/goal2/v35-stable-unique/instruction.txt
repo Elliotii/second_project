@@ -1,0 +1,1 @@
+Repair `src/subject.ts` so `stableUnique` returns each distinct string exactly once while preserving the order of first occurrence without mutating the input array. Preserve the export and run the declared public check.

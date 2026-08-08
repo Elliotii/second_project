@@ -11,7 +11,7 @@ import {
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { Type, type TSchema } from "@earendil-works/pi-ai";
 import type { BoundedTaskPolicy, ToolAuditEvent } from "../types.ts";
-import { resolveWorkspacePath } from "../workspace/path-policy.ts";
+import { isPathInScope, resolveWorkspacePath } from "../workspace/path-policy.ts";
 
 const MAX_TEXT_BYTES = 50 * 1024;
 const MAX_TEXT_LINES = 2_000;
@@ -48,6 +48,12 @@ export interface BoundedToolProfile {
 	context: ToolProfileContext;
 	auditEvents: ToolAuditEvent[];
 	commandExecutions: CommandExecutionProjection[];
+}
+
+export interface BoundedToolRestrictions {
+	allowed_tool_names?: readonly string[];
+	readable_paths?: readonly string[];
+	allow_repository_commands?: boolean;
 }
 
 const readSchema = Type.Object(
@@ -181,7 +187,7 @@ function listWorkspace(root: string, start: string, depth: number, task: Bounded
 	return projectText(rows.join("\n"), MAX_TEXT_BYTES).text;
 }
 
-export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTaskPolicy): BoundedToolProfile {
+export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTaskPolicy, restrictions: BoundedToolRestrictions = {}): BoundedToolProfile {
 	const canonicalRoot = resolve(workspaceRoot);
 	const auditEvents: ToolAuditEvent[] = [];
 	const commandExecutions: CommandExecutionProjection[] = [];
@@ -227,13 +233,15 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 			parameters: readSchema,
 			async execute(id, args, signal, onUpdate, executionContext) {
 				assertInputKeys(args, ["path", "offset", "limit"]);
-				resolveWorkspacePath({
+				const target = resolveWorkspacePath({
 					workspaceRoot: canonicalRoot,
 					path: args.path,
 					operation: "read",
 					writablePaths: task.writable_paths,
 					protectedPaths: task.protected_paths,
 				});
+				const identity = relative(canonicalRoot, target).split(sep).join("/");
+				if (restrictions.readable_paths && !isPathInScope(identity, restrictions.readable_paths)) throw new Error(`path is outside readable scope: ${identity}`);
 				return piRead.execute(id, args, signal, onUpdate, executionContext);
 			},
 		}),
@@ -340,7 +348,7 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 			async execute(_id, args) {
 				assertInputKeys(args, ["command_id"]);
 				const taskDescriptor = task.command_descriptors.find((entry) => entry.command_id === args.command_id);
-				const repository = repositoryDescriptor(args.command_id);
+				const repository = restrictions.allow_repository_commands === false ? undefined : repositoryDescriptor(args.command_id);
 				if (!taskDescriptor && !repository) throw new Error(`command ID is not allowed: ${args.command_id}`);
 				const executable = taskDescriptor ? process.execPath : repository!.executable;
 				const argv = taskDescriptor ? [...taskDescriptor.argv] : [...repository!.argv];
@@ -362,7 +370,8 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 			},
 		}),
 	];
-	return { tools, context, auditEvents, commandExecutions };
+	const allowed = restrictions.allowed_tool_names ? new Set(restrictions.allowed_tool_names) : null;
+	return { tools: allowed ? tools.filter((tool) => allowed.has(tool.name)) : tools, context, auditEvents, commandExecutions };
 }
 
 export function readProtectedBytes(workspaceRoot: string, task: BoundedTaskPolicy): Record<string, string> {

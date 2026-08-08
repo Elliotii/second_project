@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import type { Session, SessionMetadata } from "@earendil-works/pi-agent-core";
 import type { ArtifactRefV0B, TaskSpecV0B } from "./contracts/v0b-types.ts";
 import type { Goal3RunManifestV3 } from "./contracts/v3g3-types.ts";
 import type { BoundedTaskPolicy } from "./types.ts";
@@ -6,11 +7,12 @@ import { artifactRef, writeOnceBytes, writeOnceJson } from "./evidence/artifacts
 import { digestObject, sha256, stableJson } from "./hash.ts";
 import { createGoal3FauxExecutionPortV3, executeBoundDirectPiV3, type Goal3ExecutionPortV3 } from "./pi/pi-adapter-v3.ts";
 import { GOAL3_BUDGET_PROFILE_DIGEST_V3, GOAL3_BUDGET_PROFILE_V3, goal3ToolProfileDigestV3 } from "./pi/runtime-profile-v3.ts";
+import type { BoundedToolRestrictions } from "./pi/tool-profile.ts";
 import type { FrozenBindingResultV3 } from "./state/binding-v3.ts";
 import { inspectGoal3CaseAuthorityV3 } from "./state/case-authority-v3.ts";
 import { runExternalVerifierV0B } from "./verifier/runner.ts";
 
-export async function executeGoal3RunV3(options: { projectRoot: string; runRoot: string; runId: string; caseId: string; caseAuthorityPath: string; workspaceRoot: string; taskPrompt: string; taskPolicy: BoundedTaskPolicy; verifierTask: TaskSpecV0B; verifierSourcePath: string; frozen: FrozenBindingResultV3; executionPort?: Goal3ExecutionPortV3 }): Promise<{ manifest: Goal3RunManifestV3; manifestRef: ArtifactRefV0B }> {
+export async function executeGoal3RunV3(options: { projectRoot: string; runRoot: string; runId: string; caseId: string; caseAuthorityPath: string; workspaceRoot: string; taskPrompt: string; taskPolicy: BoundedTaskPolicy; verifierTask: TaskSpecV0B; verifierSourcePath: string; frozen: FrozenBindingResultV3; executionPort?: Goal3ExecutionPortV3; executionSession?: Session<SessionMetadata>; toolRestrictions?: BoundedToolRestrictions; verifierWorkspaceEnvironmentKey?: "V0B_WORKSPACE" | "V0C_WORKSPACE" | "V1_WORKSPACE" | "V35_WORKSPACE" }): Promise<{ manifest: Goal3RunManifestV3; manifestRef: ArtifactRefV0B }> {
 	const caseAuthority = inspectGoal3CaseAuthorityV3({ authorityPath: options.caseAuthorityPath, expectedProjectId: options.frozen.binding.project_id });
 	const trustedTask = options.frozen.binding.binding_context.trusted_task_identity;
 	const verifierTaskPolicy: BoundedTaskPolicy = { writable_paths: options.verifierTask.writable_paths, protected_paths: options.verifierTask.protected_paths, command_descriptors: options.verifierTask.command_descriptors };
@@ -23,9 +25,9 @@ export async function executeGoal3RunV3(options: { projectRoot: string; runRoot:
 	if (verifierRef.sha256 !== options.verifierTask.verifier_sha256) throw new Error("Goal 3 verifier source identity mismatch");
 	const executionPort = options.executionPort ?? createGoal3FauxExecutionPortV3();
 	let runtime;
-	try { runtime = await executeBoundDirectPiV3({ runRoot: options.runRoot, runId: options.runId, workspaceRoot: options.workspaceRoot, taskPrompt: options.taskPrompt, taskPolicy: options.taskPolicy, frozen: options.frozen, caseAuthority, executionPort }); }
+	try { runtime = await executeBoundDirectPiV3({ runRoot: options.runRoot, runId: options.runId, workspaceRoot: options.workspaceRoot, taskPrompt: options.taskPrompt, taskPolicy: options.taskPolicy, frozen: options.frozen, caseAuthority, executionPort, executionSession: options.executionSession, toolRestrictions: options.toolRestrictions }); }
 	finally { await executionPort.close(); }
-	const verifier = await runExternalVerifierV0B({ projectRoot: options.projectRoot, runRoot: options.runRoot, workspaceRoot: options.workspaceRoot, attemptId: `${options.runId}-attempt`, task: options.verifierTask, verifierSnapshotPath: verifierPath, verifierSnapshotRef: verifierRef, outputPath: "verifier/output.txt" });
+	const verifier = await runExternalVerifierV0B({ projectRoot: options.projectRoot, runRoot: options.runRoot, workspaceRoot: options.workspaceRoot, attemptId: `${options.runId}-attempt`, task: options.verifierTask, verifierSnapshotPath: verifierPath, verifierSnapshotRef: verifierRef, outputPath: "verifier/output.txt", workspaceEnvironmentKey: options.verifierWorkspaceEnvironmentKey });
 	writeOnceJson(options.runRoot, "verifier/result.json", verifier);
 	const body: Omit<Goal3RunManifestV3, "manifest_digest"> = {
 		schema_version: 1,

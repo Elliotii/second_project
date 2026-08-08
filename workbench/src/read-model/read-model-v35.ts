@@ -1,6 +1,9 @@
 import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { AdaptationLineageViewV35, ComparisonViewV35, LegacyRunFallbackViewV35 } from "../contracts/v35-types.ts";
+import type { Goal2ComparisonReadViewV35 } from "../contracts/v35g2-types.ts";
+import { inspectGoal2PairV35 } from "../v35g2/inspect-v35g2.ts";
+import { GOAL2_SELECTED_STATE_DIGEST_V35, GOAL2_SKILL_NAME_V35, GOAL2_SKILL_SOURCE_SHA256_V35, GOAL2_SKILL_WRAPPER_SHA256_V35 } from "../v35g2/case-v35g2.ts";
 
 function portable(value: string): string {
 	return value.split(sep).join("/");
@@ -91,6 +94,15 @@ export function readV3PromptAdaptationV35(options: { sourceRoot: string }): Adap
 
 export function goal2SkillComparisonPlaceholderV35(): ComparisonViewV35 {
 	return { schema_version: 1, kind: "goal2_skill", source_status: "unavailable", run_id: null, outcome: null, candidate_ids: [], selected_candidate_id: null, source_refs: [] };
+}
+
+export async function readGoal2SkillComparisonV35(options: { sourceRoot: string }): Promise<Goal2ComparisonReadViewV35> {
+	const root = safeRoot(options.sourceRoot);
+	if (!existsSync(resolve(root, "comparison.json"))) return { schema_version: 1, kind: "goal2_skill", source_status: "unavailable", comparison_id: null, result: null, efficiency: null, base: null, candidate: null, skill: null, source_refs: [] };
+	const inspected = await inspectGoal2PairV35({ pairRoot: root });
+	if (!inspected.integrity_valid || !inspected.comparison || !inspected.base || !inspected.candidate) throw new Error(`Goal 2 comparison inspection failed: ${inspected.errors.join("; ")}`);
+	const project = (manifest: typeof inspected.base) => ({ run_id: manifest.run_id, session_id: manifest.session_id, verifier_status: manifest.verifier_status, provider_requests: manifest.provider_requests, tool_calls: manifest.tool_calls, tokens: manifest.tokens, cost_usd: manifest.cost_usd });
+	return { schema_version: 1, kind: "goal2_skill", source_status: "available", comparison_id: inspected.comparison.comparison_id, result: inspected.comparison.result, efficiency: inspected.comparison.efficiency, base: project(inspected.base), candidate: project(inspected.candidate), skill: { name: GOAL2_SKILL_NAME_V35, state_digest: GOAL2_SELECTED_STATE_DIGEST_V35, source_sha256: GOAL2_SKILL_SOURCE_SHA256_V35, wrapper_sha256: GOAL2_SKILL_WRAPPER_SHA256_V35 }, source_refs: ["comparison.json", inspected.comparison.base_manifest_ref.path, inspected.comparison.candidate_manifest_ref.path] };
 }
 
 export function readLegacyRunFallbackV35(options: { sourceRoot: string; sourceRef?: string }): LegacyRunFallbackViewV35 {

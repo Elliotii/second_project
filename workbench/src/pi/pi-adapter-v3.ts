@@ -1,4 +1,4 @@
-import { AgentHarness, formatSkillInvocation, InMemorySessionStorage, Session } from "@earendil-works/pi-agent-core";
+import { AgentHarness, formatSkillInvocation, InMemorySessionStorage, Session, type SessionMetadata } from "@earendil-works/pi-agent-core";
 import { InMemoryCredentialStore, createModels, fauxAssistantMessage, fauxProvider, type AssistantMessage } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { DirectPiRuntimeEvidenceV3, Goal3CaseAuthorityV3, Goal3ProviderProfileV3 } from "../contracts/v3g3-types.ts";
@@ -8,7 +8,7 @@ import { digestObject, sha256, stableJson } from "../hash.ts";
 import { assertKnownUsageV1B, createPublicPiRunCompositionV1B, type OneRunProviderAccessV1B, type OneRunProviderAuthorityV1B } from "../provider/fixed-provider-v1.ts";
 import { projectActualInitialRequestV1, serializeInitialRequestV1, type ModelVisibleProjectionV1 } from "./pi-adapter-v1.ts";
 import { GOAL3_BUDGET_PROFILE_V3, GOAL3_DEEPSEEK_PROVIDER_PROFILE_V3, GOAL3_FAUX_PROVIDER_PROFILE_V3, goal3ToolProfileDigestV3 } from "./runtime-profile-v3.ts";
-import { createBoundedToolProfile } from "./tool-profile.ts";
+import { createBoundedToolProfile, type BoundedToolRestrictions } from "./tool-profile.ts";
 import type { FrozenBindingResultV3 } from "../state/binding-v3.ts";
 
 export interface Goal3RealAccessCountersV3 {
@@ -24,7 +24,7 @@ export interface Goal3ExecutionPortV3 {
 	close(): Promise<void>;
 }
 
-interface BoundExecutionOptionsV3 {
+export interface BoundExecutionOptionsV3 {
 	runRoot: string;
 	runId: string;
 	workspaceRoot: string;
@@ -32,6 +32,8 @@ interface BoundExecutionOptionsV3 {
 	taskPolicy: BoundedTaskPolicy;
 	frozen: FrozenBindingResultV3;
 	caseAuthority: Goal3CaseAuthorityV3;
+	executionSession?: Session<SessionMetadata>;
+	toolRestrictions?: BoundedToolRestrictions;
 }
 
 interface RuntimeCountersV3 extends Goal3RealAccessCountersV3 {
@@ -74,8 +76,9 @@ async function runHarnessV3(options: BoundExecutionOptionsV3 & {
 	onRealDispatch?: () => void;
 }): Promise<DirectPiRuntimeEvidenceV3> {
 	if (stableJson(options.caseAuthority.provider_profile) !== stableJson(options.profile) || options.frozen.binding.case_authority_digest !== options.caseAuthority.authority_digest) throw new Error("Direct Pi execution port is not authorized by frozen Case Authority");
-	const storage = new InMemorySessionStorage(); const session = new Session(storage);
-	const profile = createBoundedToolProfile(options.workspaceRoot, options.taskPolicy);
+	const storage = options.executionSession ? null : new InMemorySessionStorage();
+	const session = options.executionSession ?? new Session(storage!);
+	const profile = createBoundedToolProfile(options.workspaceRoot, options.taskPolicy, options.toolRestrictions);
 	const skills = options.frozen.adaptiveSkill === null ? [] : [options.frozen.adaptiveSkill];
 	const harness = new AgentHarness({ models: options.models, session, model: options.model, resources: { skills }, tools: profile.tools, toolContext: profile.context, systemPrompt: options.frozen.composedPrompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: GOAL3_BUDGET_PROFILE_V3.wall_time_ms_max } });
 	let settled = 0; let payloadDigest = sha256("no-provider-payload"); let toolCalls = 0;
@@ -132,7 +135,7 @@ async function runHarnessV3(options: BoundExecutionOptionsV3 & {
 		binding_digest: options.frozen.binding.binding_digest,
 		case_authority_digest: options.caseAuthority.authority_digest,
 		runtime_path: invocation.runtimePath,
-		session_id: (await storage.getMetadata()).id,
+		session_id: (await session.getMetadata()).id,
 		settled_events: settled,
 		provider_kind: options.profile.provider_kind,
 		provider_id: options.profile.provider_id,
