@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_audit_findings_corrected_hit_recheck
-  status: V3_5_G2_5_AUDIT_FINDINGS_CORRECTED_HIT_RECHECK_PENDING
+  phase: v3_5_goal_2_5_audited_execution_baseline_ready_for_real_pair
+  status: V3_5_G2_5_AUDIT_PASS_EXECUTION_BASELINE_FREEZE
 
 active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 
@@ -35,7 +35,7 @@ last_completed_goal:
 
 current_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: audit_findings_corrected_hit_recheck_pending
+  status: focused_audit_passed_execution_baseline_frozen_real_pair_pending
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
   control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
@@ -43,8 +43,9 @@ current_goal:
   zero_access_correction_commit: 6c5ccf7fbc76c5bc51355e707b7eabb194974b19
   focused_audit_correction_commit: 2df7da60a365ea2de5ca80e8ada1b59048779117
   main_review: passed_after_one_bounded_correction
-  focused_audit: two_findings_corrected_hit_recheck_pending
-  real_pair: locked_pending_audited_execution_baseline
+  focused_audit: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
+  execution_baseline_commit: resulting_HEAD_of_this_revision
+  real_pair: authorized_once_pending_new_no_source_edit_execution_session
 
 next_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -193,7 +194,7 @@ v3_5_control:
   goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
-  goal_2_5_status: audit_findings_corrected_hit_recheck_pending
+  goal_2_5_status: focused_audit_passed_execution_baseline_frozen_real_pair_pending
   goal_2_5_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   goal_2_5_research: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   goal_2_5_implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
@@ -211,7 +212,9 @@ v3_5_control:
   goal_2_5_focused_audit_baseline: e174808550211f2236c3a5c08a350a45d1bcab48
   goal_2_5_focused_audit_disposition: REVISE_V3_5_G2_5_FOCUSED_AUDIT
   goal_2_5_audit_findings: V3G25-AUDIT-P1-001_and_V3G25-AUDIT-P1-002
-  goal_2_5_audit_finding_corrections: main_rereview_passed_hit_only_recheck_pending
+  goal_2_5_audit_finding_corrections: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
+  goal_2_5_execution_baseline_commit: resulting_HEAD_of_this_revision
+  goal_2_5_real_pair_status: authorized_once_pending_dispatch
   goal_2_5_focused_tests_after_audit_correction: 12_passed_0_failed_0_skipped
   goal_2_5_real_execution_authorized: true_once_after_audited_execution_baseline
   goal_2_5_credential_reads_authorized: 2_after_audited_execution_baseline

@@ -137,3 +137,65 @@ Access counters: **`0/0/0/0/0`**. Real cost: **USD 0**.
 **Recommendation:** Return findings `V3G25-AUDIT-P1-001` and `V3G25-AUDIT-P1-002` together to the original Goal 2.5 Implementation Session. Re-audit only the corrected Tool-termination/no-follow-up invariant, the budget-terminal live Session/Workspace handoff, their new negative tests, and necessary narrow regressions. Main retains correction, commit, acceptance, and real-execution authority.
 
 This Audit Session stops here. It does not create a commit, update `CURRENT_STATE.md`, freeze an Execution Baseline, or authorize the real pair.
+
+---
+
+## Hit Recheck - 2026-08-09 (Asia/Hong_Kong)
+
+### Final disposition
+
+`PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK`
+
+**Recommendation:** Findings `V3G25-AUDIT-P1-001` and `V3G25-AUDIT-P1-002` are closed for exact corrected Candidate `cbe3c2b841b701c80a0c098dd362b9b91b90466f`. Main may freeze this exact Candidate as the no-source-edit Execution Baseline. This pass does not itself authorize the real pair, alter Goal 2.5 acceptance authority, or answer the Version Question.
+
+### Recheck Gate A
+
+| Check | Observed | Disposition |
+|---|---|---|
+| Corrected Candidate `HEAD` | `cbe3c2b841b701c80a0c098dd362b9b91b90466f` | exact |
+| Project tracked and untracked state before recheck | clean | pass |
+| Pinned Pi `HEAD` | `027a5847901b5dde30270abaa1041046cd2b4b55` | exact |
+| Pinned Pi tracked state | clean | pass |
+| Credential/network/external Provider/model/real-pair authority | none | pass |
+
+**Fact:** This hit-only recheck inspected only the two corrected findings, their focused tests, and the directly reused Goal 2/V2 checkpoint regressions. It did not repeat the general architecture or history review.
+
+### `V3G25-AUDIT-P1-001` - CLOSED
+
+**Fact:** `runTerminationSafeHarness` now arms a typed post-success guard in `workbench/src/pi/pi-adapter-v35g25.ts:185-211`. Once a successful terminating `public_test` Tool Result has been observed, the next `before_provider_request` attempt sets `providerRequestAfterSuccessfulPublicTest` and throws before reservation creation, dispatch counting, `onRealDispatch`, or Provider transport. The synthetic local guard result is excluded from response accounting at `:148-183`.
+
+**Fact:** Accepted public-test termination now requires that no post-success Provider attempt occurred, and such an attempt has precedence as `trajectory_outcome: invalid` (`workbench/src/pi/pi-adapter-v35g25.ts:236-264`). The Faux port also requires actual provider call count to equal recorded dispatches (`:339`), so the test's `request_attempts: 2`, `provider_dispatches: 1`, and `provider_responses: 1` establish zero post-success Provider dispatches/responses.
+
+**Fact:** The mixed-batch negative at `workbench/tests/v35g25-termination-safe.test.ts:274-320` passes with the trajectory invalid, `public_test_terminated: false`, one dispatch/response, and zero Verifier/Candidate counters. The real controller rejects every invalid arm before constructing a Verifier outcome (`workbench/src/v35g25/pair-v35g25.ts:257-286`); a failed Base cannot return a manifest or reach Candidate construction at `:415-419`.
+
+**Fact:** The sole successful-public-test fixture at `workbench/tests/v35g25-termination-safe.test.ts:233-272` still passes: one persisted Tool Result, one Provider dispatch, one public settled event, and accepted `public_test_terminated: true`.
+
+### `V3G25-AUDIT-P1-002` - CLOSED
+
+**Fact:** The budget checkpoint now persists a bounded relative Session reference, entry count, and entry digest together with the authenticated Session and Workspace snapshots (`workbench/src/v35g25/checkpoint-v35g25.ts:96-200`; schema in `workbench/src/contracts/v35g25-types.ts:35-74`).
+
+**Fact:** `inspectGoal25PreVerifierCheckpointV35` now takes explicit expected Run/Session identity plus Session root/evidence root, Workspace, task policy, and protected-before bytes. It authenticates the checkpoint artifacts, then reopens the current public Session and verifies its relative reference, count, digest, and Tool-call/Tool-result closure; it recomputes live Workspace/protected digests before returning (`workbench/src/v35g25/checkpoint-v35g25.ts:204-259`). `handoffGoal25VerifierV35` invokes the Verifier only after that inspection (`:262-285`), and the real call site supplies the same live arm state (`workbench/src/v35g25/pair-v35g25.ts:307-320`).
+
+**Fact:** The three post-checkpoint negatives at `workbench/tests/v35g25-termination-safe.test.ts:490-519` mutate the public Session, writable Workspace, and protected bytes separately. Every case is rejected by live checkpoint inspection with zero Verifier calls and zero Candidate starts. The positive budget-terminal fixture still reaches exactly one Verifier after 17 attempts, 16 dispatches, 16 responses, and closed quiescence (`:429-488`).
+
+### Exact commands and results
+
+All test commands ran from `C:/Users/HUAWEI/.codex/worktrees/558f/project2/workbench`; identity and final-diff checks ran from the project root.
+
+| Command | Exit/result |
+|---|---|
+| root and pinned-Pi `rev-parse HEAD` plus cleanliness checks | `0`; both exact and clean |
+| `npm.cmd run v35g25:typecheck` | `0`; strict TypeScript clean |
+| `npm.cmd run v35g25:test` | `0`; 12/12 passed, including both hit-specific corrections |
+| `npm.cmd run v35g2:test` | `0`; 8/8 passed |
+| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2b-r2.test.ts` | `0`; 8/8 passed |
+
+Hit-only recheck total: **28 tests passed, 0 failed, 0 skipped**, plus strict TypeScript. Goal 1 was not rerun because the correction delta changes no Goal 1 source and the focused live-Session tests directly exercise the affected public JSONL reopen boundary.
+
+### Access, scope, and stop
+
+Access counters remain **`0/0/0/0/0`** for Credential reads, network calls, external Provider calls, real model calls, and real-pair starts. Real cost is **USD 0**.
+
+**Fact:** The Audit Session changed no source, test, fixture, Contract, control state, Pi file, evidence authority, Git index, branch, or history. The only tracked worktree change is this appended Hit Recheck section in the existing audit report. No commit was created.
+
+**Recommendation:** Return `PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK` to Main and stop. Main alone may freeze exact Candidate `cbe3c2b841b701c80a0c098dd362b9b91b90466f` as the no-source-edit Execution Baseline and separately decide whether the already-contracted real-pair gate is satisfied.
