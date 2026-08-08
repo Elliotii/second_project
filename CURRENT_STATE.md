@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_pre_dispatch_correction_authorized
-  status: V3_5_G2_5_INFRASTRUCTURE_CORRECTION_AND_ONE_REPLACEMENT_AUTHORIZED
+  phase: v3_5_goal_2_5_corrected_execution_baseline_ready_for_replacement_pair
+  status: V3_5_G2_5_PRE_DISPATCH_CORRECTION_PASS_REPLACEMENT_PAIR_READY
 
 active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 
@@ -35,7 +35,7 @@ last_completed_goal:
 
 current_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: bounded_pre_dispatch_correction_authorized_not_started
+  status: pre_dispatch_correction_passed_corrected_execution_baseline_frozen_replacement_pending
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
   control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
@@ -50,9 +50,11 @@ current_goal:
   real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   main_disposition: PAUSE_V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_DEFECT_REQUIRES_NEW_AUTHORITY
   amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
-  correction_control_baseline: resulting_HEAD_of_this_revision
-  correction_owner: future_fresh_top_level_zero_access_implementation_session
-  replacement_pair: authorized_once_after_corrected_execution_baseline
+  correction_control_baseline: 9a0f38301bebb5934b34909f8c012a1c84c2d0af
+  correction_owner: completed_top_level_session_019fe386-a1b1-72f2-a3d6-aefec1e24954
+  correction_commit: 6d3f4601ca47c57473bb737eb88e08a471f7d60e
+  corrected_execution_baseline: resulting_HEAD_of_this_revision
+  replacement_pair: authorized_once_pending_fresh_no_source_edit_execution_session
 
 next_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -201,7 +203,7 @@ v3_5_control:
   goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
-  goal_2_5_status: bounded_pre_dispatch_correction_authorized_not_started
+  goal_2_5_status: pre_dispatch_correction_passed_corrected_execution_baseline_frozen_replacement_pending
   goal_2_5_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   goal_2_5_research: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   goal_2_5_implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
@@ -226,9 +228,15 @@ v3_5_control:
   goal_2_5_real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   goal_2_5_main_disposition_report: docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
   goal_2_5_pre_dispatch_amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
-  goal_2_5_correction_control_baseline: resulting_HEAD_of_this_revision
-  goal_2_5_correction_owner: future_fresh_top_level_zero_access_implementation_session
-  goal_2_5_replacement_pair_status: authorized_once_after_corrected_execution_baseline
+  goal_2_5_correction_control_baseline: 9a0f38301bebb5934b34909f8c012a1c84c2d0af
+  goal_2_5_correction_owner: completed_top_level_session_019fe386-a1b1-72f2-a3d6-aefec1e24954
+  goal_2_5_pre_dispatch_correction_commit: 6d3f4601ca47c57473bb737eb88e08a471f7d60e
+  goal_2_5_pre_dispatch_correction_report: docs/reports/V3_5_G2_5_PRE_DISPATCH_CORRECTION_REPORT.md
+  goal_2_5_pre_dispatch_correction_main_review: PASS_V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_CORRECTION
+  goal_2_5_corrected_execution_baseline: resulting_HEAD_of_this_revision
+  goal_2_5_replacement_pair_status: authorized_once_pending_dispatch
+  goal_2_5_pre_dispatch_correction_tests: strict_typescript_passed_goal_2_5_13_passed_goal_2_8_passed
+  goal_2_5_pre_dispatch_correction_access: credentials_0_network_0_external_provider_0_model_0_cost_0
   goal_2_5_focused_tests_after_audit_correction: 12_passed_0_failed_0_skipped
   goal_2_5_real_execution_authorized: one_replacement_after_corrected_execution_baseline
   goal_2_5_credential_reads_authorized: 2_for_one_replacement_after_corrected_execution_baseline

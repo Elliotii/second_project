@@ -6,7 +6,7 @@ date: 2026-08-09
 parent_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
 trigger: PAIR_PREPARATION_ENOENT_WORKSPACES_PARENT_MISSING
 previous_real_pair_authority: consumed_pre_arm
-correction_control_baseline: resulting_HEAD_of_this_revision
+correction_control_baseline: 9a0f38301bebb5934b34909f8c012a1c84c2d0af
 additional_independent_audit: false
 replacement_real_pair_authorized: exactly_once_after_corrected_execution_baseline
 goal_2_5_final_acceptance_authorized: false

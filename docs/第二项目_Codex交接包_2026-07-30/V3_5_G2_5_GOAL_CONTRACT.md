@@ -1,7 +1,7 @@
 # V3.5 Goal 2.5 — Termination-safe Real Adaptive Skill Closure Contract
 
 ```yaml
-status: accepted_activated_bounded_pre_dispatch_correction_and_one_replacement_authorized
+status: accepted_activated_pre_dispatch_correction_passed_replacement_pair_ready
 date: 2026-08-08
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
