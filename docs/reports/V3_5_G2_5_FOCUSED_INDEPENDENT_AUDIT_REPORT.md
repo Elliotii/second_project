@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.2 seconds
-Output:
 # V3.5 Goal 2.5 Focused Independent Audit Report
 
 ## Disposition
@@ -140,4 +137,3 @@ Access counters: **`0/0/0/0/0`**. Real cost: **USD 0**.
 **Recommendation:** Return findings `V3G25-AUDIT-P1-001` and `V3G25-AUDIT-P1-002` together to the original Goal 2.5 Implementation Session. Re-audit only the corrected Tool-termination/no-follow-up invariant, the budget-terminal live Session/Workspace handoff, their new negative tests, and necessary narrow regressions. Main retains correction, commit, acceptance, and real-execution authority.
 
 This Audit Session stops here. It does not create a commit, update `CURRENT_STATE.md`, freeze an Execution Baseline, or authorize the real pair.
-
