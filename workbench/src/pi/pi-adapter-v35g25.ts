@@ -33,6 +33,7 @@ import { createBoundedToolProfile, readProtectedBytes, type BoundedToolRestricti
 import { projectActualInitialRequestV1 } from "./pi-adapter-v1.ts";
 
 export const GOAL25_REQUEST_BUDGET_TERMINAL_CODE = "V35_G2_5_PROVIDER_REQUEST_BUDGET_EXHAUSTED";
+export const GOAL25_POST_SUCCESS_PROVIDER_REQUEST_CODE = "V35_G2_5_PROVIDER_REQUEST_AFTER_SUCCESSFUL_PUBLIC_TEST";
 
 export class Goal25RequestBudgetTerminal extends Error {
 	readonly code = GOAL25_REQUEST_BUDGET_TERMINAL_CODE;
@@ -41,6 +42,17 @@ export class Goal25RequestBudgetTerminal extends Error {
 	constructor(requestAttempt: number) {
 		super(`${GOAL25_REQUEST_BUDGET_TERMINAL_CODE}: request attempt ${requestAttempt} refused before dispatch`);
 		this.name = "Goal25RequestBudgetTerminal";
+		this.requestAttempt = requestAttempt;
+	}
+}
+
+export class Goal25PostSuccessProviderRequest extends Error {
+	readonly code = GOAL25_POST_SUCCESS_PROVIDER_REQUEST_CODE;
+	readonly requestAttempt: number;
+
+	constructor(requestAttempt: number) {
+		super(`${GOAL25_POST_SUCCESS_PROVIDER_REQUEST_CODE}: request attempt ${requestAttempt} refused before dispatch`);
+		this.name = "Goal25PostSuccessProviderRequest";
 		this.requestAttempt = requestAttempt;
 	}
 }
@@ -82,6 +94,7 @@ interface RuntimeStateV35 extends Goal25AccessCountersV35 {
 	pendingToolCalls: number;
 	toolCallAttempts: number;
 	terminatingPublicTestResults: number;
+	providerRequestAfterSuccessfulPublicTest: boolean;
 	rawSettledEvents: number;
 	localBudgetStop: boolean;
 	secondaryAccountingErrors: string[];
@@ -101,6 +114,10 @@ function expectedUserText(options: Goal25ExecutionOptionsV35): string {
 
 function isSyntheticBudgetStop(message: AssistantMessage, state: RuntimeStateV35): boolean {
 	return state.localBudgetStop && message.stopReason === "error" && message.errorMessage?.includes(GOAL25_REQUEST_BUDGET_TERMINAL_CODE) === true;
+}
+
+function isPostSuccessProviderGuard(message: AssistantMessage, state: RuntimeStateV35): boolean {
+	return state.providerRequestAfterSuccessfulPublicTest && message.stopReason === "error" && message.errorMessage?.includes(GOAL25_POST_SUCCESS_PROVIDER_REQUEST_CODE) === true;
 }
 
 async function runTerminationSafeHarness(options: Goal25ExecutionOptionsV35 & {
@@ -137,7 +154,7 @@ async function runTerminationSafeHarness(options: Goal25ExecutionOptionsV35 & {
 		}
 		if (event.type !== "message_end" || event.message.role !== "assistant") return;
 		const message = event.message as AssistantMessage;
-		if (isSyntheticBudgetStop(message, options.state)) return;
+		if (isSyntheticBudgetStop(message, options.state) || isPostSuccessProviderGuard(message, options.state)) return;
 		if (pendingReservation === null) {
 			options.state.secondaryAccountingErrors.push("assistant Provider response had no active reservation");
 			return;
@@ -168,6 +185,10 @@ async function runTerminationSafeHarness(options: Goal25ExecutionOptionsV35 & {
 	const offRequest = harness.on("before_provider_request", () => {
 		options.state.requestAttempts++;
 		if (pendingReservation !== null) throw new Error("Goal 2.5 concurrent Provider reservation rejected");
+		if (options.state.terminatingPublicTestResults > 0) {
+			options.state.providerRequestAfterSuccessfulPublicTest = true;
+			throw new Goal25PostSuccessProviderRequest(options.state.requestAttempts);
+		}
 		if (options.state.requestAttempts > GOAL3_BUDGET_PROFILE_V3.provider_requests_max) {
 			options.state.localBudgetStop = true;
 			throw new Goal25RequestBudgetTerminal(options.state.requestAttempts);
@@ -214,8 +235,8 @@ async function runTerminationSafeHarness(options: Goal25ExecutionOptionsV35 & {
 	}
 	const publicTest = profile.commandExecutions.findLast((execution) => execution.command_id === "public_test");
 	const publicTestSucceeded = publicTest?.exit_code === 0 && publicTest.timed_out === false;
-	const publicTestTerminated = publicTestSucceeded && options.state.terminatingPublicTestResults === 1;
-	const trajectory = options.state.localBudgetStop ? "pre_dispatch_budget_terminal" : publicTestTerminated ? "settled" : "invalid";
+	const publicTestTerminated = publicTestSucceeded && options.state.terminatingPublicTestResults === 1 && !options.state.providerRequestAfterSuccessfulPublicTest;
+	const trajectory = options.state.providerRequestAfterSuccessfulPublicTest ? "invalid" : options.state.localBudgetStop ? "pre_dispatch_budget_terminal" : publicTestTerminated ? "settled" : "invalid";
 	const pendingProviderReservations = options.state.reservations.filter((reservation) => reservation.state !== "responded").length;
 	if (options.state.secondaryAccountingErrors.length > 0) throw new Error(`Goal 2.5 usage accounting invalid: ${options.state.secondaryAccountingErrors.join("; ")}`);
 	if (options.state.pendingToolCalls !== 0 || profile.pendingSideEffects() !== 0) throw new Error("Goal 2.5 Tool or side-effect state is not quiescent");
@@ -239,6 +260,7 @@ async function runTerminationSafeHarness(options: Goal25ExecutionOptionsV35 & {
 		raw_harness_settled_events: options.state.rawSettledEvents,
 		public_test_succeeded: publicTestSucceeded,
 		public_test_terminated: publicTestTerminated,
+		provider_request_after_successful_public_test: options.state.providerRequestAfterSuccessfulPublicTest,
 		usage_known: options.state.reservations.every((reservation) => reservation.state === "responded" && reservation.input_tokens !== null && reservation.output_tokens !== null && reservation.cost_usd !== null),
 		workspace_tree_sha256_at_terminal: treeDigest(options.workspaceRoot),
 		protected_bytes_sha256_at_terminal: digestObject(readProtectedBytes(options.workspaceRoot, options.taskPolicy)),
@@ -306,6 +328,7 @@ export function createGoal25FauxExecutionPortV35(responses: readonly FauxRespons
 				pendingToolCalls: 0,
 				toolCallAttempts: 0,
 				terminatingPublicTestResults: 0,
+				providerRequestAfterSuccessfulPublicTest: false,
 				rawSettledEvents: 0,
 				localBudgetStop: false,
 				secondaryAccountingErrors: [],
@@ -359,6 +382,7 @@ export function createGoal25DeepSeekExecutionPortV35(options: {
 							pendingToolCalls: 0,
 							toolCallAttempts: 0,
 							terminatingPublicTestResults: 0,
+							providerRequestAfterSuccessfulPublicTest: false,
 							rawSettledEvents: 0,
 							localBudgetStop: false,
 							secondaryAccountingErrors: [],

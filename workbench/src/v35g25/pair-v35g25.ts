@@ -259,6 +259,8 @@ async function executeArm(options: {
 			runRoot,
 			runtime,
 			session,
+			sessionEvidenceRoot: options.prepared.pairRoot,
+			sessionRoot: resolve(options.prepared.pairRoot, "sessions"),
 			workspaceRoot,
 			taskPolicy: GOAL2_TASK_POLICY_V35,
 			protectedBefore,
@@ -303,7 +305,19 @@ async function executeArm(options: {
 		return verifierResult.status;
 	};
 	const outcome = checkpointRef
-		? await handoffGoal25VerifierV35({ runRoot, checkpointRef, expectedToolInterfaceSha256: runtime.tool_interface_sha256, runVerifier })
+		? await handoffGoal25VerifierV35({
+			runRoot,
+			checkpointRef,
+			sessionRoot: resolve(options.prepared.pairRoot, "sessions"),
+			sessionEvidenceRoot: options.prepared.pairRoot,
+			workspaceRoot,
+			taskPolicy: GOAL2_TASK_POLICY_V35,
+			protectedBefore,
+			expectedRunId: ids.run,
+			expectedSessionId: ids.session,
+			expectedToolInterfaceSha256: runtime.tool_interface_sha256,
+			runVerifier,
+		})
 		: await handoffGoal25SettledVerifierV35({
 			runRoot,
 			handoffRef: settledHandoffRef!,

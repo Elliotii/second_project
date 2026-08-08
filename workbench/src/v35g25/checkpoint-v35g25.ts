@@ -88,6 +88,8 @@ export function goal25CheckpointGateErrors(checkpoint: Goal25PreVerifierCheckpoi
 	if (checkpoint.timed_out) errors.push("timeout terminal is ineligible");
 	if (checkpoint.post_dispatch_loss) errors.push("post-dispatch loss is ineligible");
 	if (!checkpoint.checkpoint_before_verifier || checkpoint.checkpoint_sequence !== 1) errors.push("checkpoint ordering invalid");
+	if (!Number.isSafeInteger(checkpoint.session_entry_count) || checkpoint.session_entry_count < 2) errors.push("Session entry count invalid");
+	if (checkpoint.session_ref === "" || checkpoint.session_ref === ".." || checkpoint.session_ref.startsWith("../")) errors.push("Session reference invalid");
 	return errors;
 }
 
@@ -95,6 +97,8 @@ export async function createGoal25PreVerifierCheckpointV35(options: {
 	runRoot: string;
 	runtime: Goal25RuntimeEvidenceV35;
 	session: Session<JsonlSessionMetadata>;
+	sessionEvidenceRoot: string;
+	sessionRoot: string;
 	workspaceRoot: string;
 	taskPolicy: BoundedTaskPolicy;
 	protectedBefore: Readonly<Record<string, string>>;
@@ -107,8 +111,8 @@ export async function createGoal25PreVerifierCheckpointV35(options: {
 	const metadata = await options.session.getMetadata();
 	const liveEntries = await options.session.getEntries();
 	const repo = new JsonlSessionRepo({
-		fs: new NodeExecutionEnv({ cwd: options.runRoot, shellEnv: {} }),
-		sessionsRoot: resolve(options.runRoot, "sessions"),
+		fs: new NodeExecutionEnv({ cwd: options.sessionRoot, shellEnv: {} }),
+		sessionsRoot: resolve(options.sessionRoot),
 	});
 	const reopened = await repo.open(metadata);
 	const reopenedMetadata = await reopened.getMetadata();
@@ -117,6 +121,8 @@ export async function createGoal25PreVerifierCheckpointV35(options: {
 		reopenedMetadata.id === metadata.id &&
 		resolve(reopenedMetadata.path) === resolve(metadata.path) &&
 		stableJson(reopenedEntries) === stableJson(liveEntries);
+	const sessionRef = portable(relative(resolve(options.sessionEvidenceRoot), resolve(metadata.path)));
+	if (sessionRef === "" || sessionRef === ".." || sessionRef.startsWith("../")) throw new Error("Goal 2.5 budget-terminal Session is outside its evidence root");
 	const sessionSnapshotRef = artifactRef(
 		options.runRoot,
 		writeOnceBytes(options.runRoot, "checkpoint/session-pre-verifier.jsonl", readFileSync(metadata.path)),
@@ -177,6 +183,8 @@ export async function createGoal25PreVerifierCheckpointV35(options: {
 		checkpoint_before_verifier: true,
 		workspace_tree_sha256: workspaceTreeSha256,
 		protected_bytes_sha256: protectedBytesSha256,
+		session_ref: sessionRef,
+		session_entry_count: reopenedEntries.length,
 		session_entries_sha256: digestObject(reopenedEntries),
 		first_payload_sha256: options.firstPayloadRef.sha256,
 		tool_interface_sha256: options.runtime.tool_interface_sha256,
@@ -193,11 +201,18 @@ export async function createGoal25PreVerifierCheckpointV35(options: {
 	return { checkpoint, ref };
 }
 
-export function inspectGoal25PreVerifierCheckpointV35(options: {
+export async function inspectGoal25PreVerifierCheckpointV35(options: {
 	runRoot: string;
 	checkpointRef: ArtifactRefV0B;
+	sessionRoot: string;
+	sessionEvidenceRoot: string;
+	workspaceRoot: string;
+	taskPolicy: BoundedTaskPolicy;
+	protectedBefore: Readonly<Record<string, string>>;
+	expectedRunId: string;
+	expectedSessionId: string;
 	expectedToolInterfaceSha256: string;
-}): Goal25PreVerifierCheckpointV35 {
+}): Promise<Goal25PreVerifierCheckpointV35> {
 	const refErrors = validateArtifactRef(options.runRoot, options.checkpointRef);
 	if (refErrors.length > 0) throw new Error(`Goal 2.5 checkpoint artifact invalid: ${refErrors.join("; ")}`);
 	const checkpoint = readJsonArtifact<Goal25PreVerifierCheckpointV35>(options.runRoot, options.checkpointRef.path);
@@ -223,8 +238,23 @@ export function inspectGoal25PreVerifierCheckpointV35(options: {
 	const workspaceSnapshot = readJsonArtifact<{ files?: unknown }>(options.runRoot, checkpoint.workspace_snapshot_ref.path);
 	if (digestObject(workspaceSnapshot.files) !== checkpoint.workspace_tree_sha256) errors.push("Workspace snapshot digest mismatch");
 	const sessionLines = readFileSync(resolve(options.runRoot, checkpoint.session_snapshot_ref.path), "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line) as unknown);
-	if (sessionLines.length < 2 || digestObject(sessionLines.slice(1)) !== checkpoint.session_entries_sha256) errors.push("Session snapshot digest mismatch");
+	if (sessionLines.length < 2 || sessionLines.length - 1 !== checkpoint.session_entry_count || digestObject(sessionLines.slice(1)) !== checkpoint.session_entries_sha256) errors.push("Session snapshot identity mismatch");
+	if (checkpoint.run_id !== options.expectedRunId || checkpoint.session_id !== options.expectedSessionId) errors.push("expected checkpoint lineage mismatch");
 	if (checkpoint.tool_interface_sha256 !== options.expectedToolInterfaceSha256) errors.push("Tool-interface digest identity mismatch");
+	const repo = new JsonlSessionRepo({ fs: new NodeExecutionEnv({ cwd: options.sessionRoot, shellEnv: {} }), sessionsRoot: resolve(options.sessionRoot) });
+	const matches = (await repo.list()).filter((entry) => entry.id === checkpoint.session_id);
+	if (matches.length !== 1) errors.push("persisted Session identity unavailable");
+	else {
+		const reopened = await repo.open(matches[0]!);
+		const metadata = await reopened.getMetadata();
+		const entries = await reopened.getEntries();
+		const sessionRef = portable(relative(resolve(options.sessionEvidenceRoot), resolve(metadata.path)));
+		if (metadata.id !== checkpoint.session_id || sessionRef !== checkpoint.session_ref || entries.length !== checkpoint.session_entry_count || digestObject(entries) !== checkpoint.session_entries_sha256 || !sessionToolLifecycleClosedV35(entries)) errors.push("current Session/Tool closure mismatch");
+	}
+	const workspaceTreeSha256 = treeDigest(options.workspaceRoot);
+	const protectedBytesSha256 = digestObject(readProtectedBytes(options.workspaceRoot, options.taskPolicy));
+	if (workspaceTreeSha256 !== checkpoint.workspace_tree_sha256) errors.push("current Workspace drifted before Verifier");
+	if (protectedBytesSha256 !== checkpoint.protected_bytes_sha256 || protectedBytesSha256 !== digestObject(options.protectedBefore)) errors.push("current protected bytes drifted before Verifier");
 	if (errors.length > 0) throw new Error(`Goal 2.5 checkpoint inspection rejected: ${errors.join("; ")}`);
 	return checkpoint;
 }
@@ -232,10 +262,17 @@ export function inspectGoal25PreVerifierCheckpointV35(options: {
 export async function handoffGoal25VerifierV35(options: {
 	runRoot: string;
 	checkpointRef: ArtifactRefV0B;
+	sessionRoot: string;
+	sessionEvidenceRoot: string;
+	workspaceRoot: string;
+	taskPolicy: BoundedTaskPolicy;
+	protectedBefore: Readonly<Record<string, string>>;
+	expectedRunId: string;
+	expectedSessionId: string;
 	expectedToolInterfaceSha256: string;
 	runVerifier: () => Promise<"passed" | "failed">;
 }): Promise<Goal25ArmOutcomeV35> {
-	const checkpoint = inspectGoal25PreVerifierCheckpointV35(options);
+	const checkpoint = await inspectGoal25PreVerifierCheckpointV35(options);
 	const taskOutcome = await options.runVerifier();
 	const body: Omit<Goal25ArmOutcomeV35, "outcome_digest"> = {
 		schema_version: 1,

@@ -174,6 +174,47 @@ async function createSettledHandoff(setup: Awaited<ReturnType<typeof successfulS
 	});
 }
 
+async function budgetTerminalCheckpoint(label: string) {
+	const setup = await setupRun({ label });
+	const capture = createGoal2FirstProviderPayloadCaptureV35({
+		arm: "base",
+		runId: `${label}-run`,
+		taskPrompt: setup.taskPrompt,
+		expectedLastUserText: setup.taskPrompt,
+		skillWrapperSha256: null,
+	});
+	const responses = Array.from({ length: 16 }, (_, index) => toolResponse("workspace_read", { path: "src/subject.ts" }, `${label}-read-${index + 1}`));
+	const port = createGoal25FauxExecutionPortV35(responses);
+	const runtime = await port.execute({
+		runRoot: setup.runRoot,
+		runId: `${label}-run`,
+		workspaceRoot: setup.workspace,
+		taskPrompt: setup.taskPrompt,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		frozen: setup.frozen,
+		caseAuthority: setup.caseAuthority,
+		executionSession: setup.session,
+		toolRestrictions: GOAL25_TOOL_RESTRICTIONS_V35,
+		beforeProviderPayload: capture.observe,
+	});
+	const firstPayload = capture.requireEvidence();
+	const firstPayloadRef = writeOnceJson(setup.runRoot, "first-provider-payload.json", firstPayload);
+	const protectedBefore = readProtectedBytes(setup.workspace, GOAL2_TASK_POLICY_V35);
+	const created = await createGoal25PreVerifierCheckpointV35({
+		runRoot: setup.runRoot,
+		runtime,
+		session: setup.session,
+		sessionEvidenceRoot: setup.runRoot,
+		sessionRoot: resolve(setup.runRoot, "sessions"),
+		workspaceRoot: setup.workspace,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		protectedBefore,
+		firstPayloadRef,
+		firstPayloadToolsSha256: firstPayload.tools_sha256,
+	});
+	return { ...setup, runtime, port, protectedBefore, created };
+}
+
 test("Goal 2.5 command affordance exposes exactly public_test and remains fail closed", async () => {
 	const setup = await setupRun({ label: "tool-affordance" });
 	const profile = createBoundedToolProfile(setup.workspace, GOAL2_TASK_POLICY_V35, GOAL25_TOOL_RESTRICTIONS_V35);
@@ -227,6 +268,54 @@ test("successful public_test persists its Tool Result, terminates, and settles e
 	assert.match(actualSurface, /public_test/);
 	assert.doesNotMatch(actualSurface, /git_status|git_diff|git_log|not_a_legal_command/);
 	assert.equal(capture.requireEvidence().tools_sha256, runtime.tool_interface_sha256);
+	assert.deepEqual(port.accessCounters, { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
+});
+
+test("mixed Tool batch refuses a post-public_test Provider request before dispatch and invalidates the trajectory", async () => {
+	const setup = await setupRun({ label: "mixed-batch-post-success", correctWorkspace: true });
+	const capture = createGoal2FirstProviderPayloadCaptureV35({
+		arm: "base",
+		runId: "mixed-batch-post-success-run",
+		taskPrompt: setup.taskPrompt,
+		expectedLastUserText: setup.taskPrompt,
+		skillWrapperSha256: null,
+	});
+	const mixedResponse = fauxAssistantMessage([
+		fauxToolCall("run_command", { command_id: "public_test" }, { id: "mixed-public-test" }),
+		fauxToolCall("workspace_read", { path: "src/subject.ts" }, { id: "mixed-read" }),
+	], { stopReason: "toolUse", timestamp: 1 });
+	const port = createGoal25FauxExecutionPortV35([
+		mixedResponse,
+		fauxAssistantMessage("must not dispatch", { timestamp: 2 }),
+	]);
+	const runtime = await port.execute({
+		runRoot: setup.runRoot,
+		runId: "mixed-batch-post-success-run",
+		workspaceRoot: setup.workspace,
+		taskPrompt: setup.taskPrompt,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		frozen: setup.frozen,
+		caseAuthority: setup.caseAuthority,
+		executionSession: setup.session,
+		toolRestrictions: GOAL25_TOOL_RESTRICTIONS_V35,
+		beforeProviderPayload: capture.observe,
+	});
+	let verifierRuns = 0;
+	let candidateStarts = 0;
+	if (runtime.trajectory_outcome !== "invalid") {
+		verifierRuns++;
+		candidateStarts++;
+	}
+	assert.equal(runtime.trajectory_outcome, "invalid");
+	assert.equal(runtime.terminal_reason, "invalid");
+	assert.equal(runtime.public_test_succeeded, true);
+	assert.equal(runtime.public_test_terminated, false);
+	assert.equal(runtime.provider_request_after_successful_public_test, true);
+	assert.equal(runtime.request_attempts, 2);
+	assert.equal(runtime.provider_dispatches, 1);
+	assert.equal(runtime.provider_responses, 1);
+	assert.equal(verifierRuns, 0);
+	assert.equal(candidateStarts, 0);
 	assert.deepEqual(port.accessCounters, { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
 });
 
@@ -338,28 +427,8 @@ test("failed and timed-out public checks never return termination", async () => 
 });
 
 test("the seventeenth request attempt refuses locally after exactly sixteen dispatches", async () => {
-	const setup = await setupRun({ label: "budget-terminal" });
-	const capture = createGoal2FirstProviderPayloadCaptureV35({
-		arm: "base",
-		runId: "budget-terminal-run",
-		taskPrompt: setup.taskPrompt,
-		expectedLastUserText: setup.taskPrompt,
-		skillWrapperSha256: null,
-	});
-	const responses = Array.from({ length: 16 }, (_, index) => toolResponse("workspace_read", { path: "src/subject.ts" }, `read-${index + 1}`));
-	const port = createGoal25FauxExecutionPortV35(responses);
-	const runtime = await port.execute({
-		runRoot: setup.runRoot,
-		runId: "budget-terminal-run",
-		workspaceRoot: setup.workspace,
-		taskPrompt: setup.taskPrompt,
-		taskPolicy: GOAL2_TASK_POLICY_V35,
-		frozen: setup.frozen,
-		caseAuthority: setup.caseAuthority,
-		executionSession: setup.session,
-		toolRestrictions: GOAL25_TOOL_RESTRICTIONS_V35,
-		beforeProviderPayload: capture.observe,
-	});
+	const setup = await budgetTerminalCheckpoint("budget-terminal");
+	const { runtime, port, created, protectedBefore } = setup;
 	assert.equal(runtime.trajectory_outcome, "pre_dispatch_budget_terminal");
 	assert.equal(runtime.terminal_reason, "provider_request_budget_exhausted");
 	assert.equal(runtime.request_attempts, 17);
@@ -370,23 +439,17 @@ test("the seventeenth request attempt refuses locally after exactly sixteen disp
 	assert.equal(runtime.pending_side_effects, 0);
 	assert.equal(runtime.usage_known, true);
 	assert.deepEqual(port.accessCounters, { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
-	const firstPayload = capture.requireEvidence();
-	const firstPayloadRef = writeOnceJson(setup.runRoot, "first-provider-payload.json", firstPayload);
-	const protectedBefore = readProtectedBytes(setup.workspace, GOAL2_TASK_POLICY_V35);
-	const created = await createGoal25PreVerifierCheckpointV35({
-		runRoot: setup.runRoot,
-		runtime,
-		session: setup.session,
-		workspaceRoot: setup.workspace,
-		taskPolicy: GOAL2_TASK_POLICY_V35,
-		protectedBefore,
-		firstPayloadRef,
-		firstPayloadToolsSha256: firstPayload.tools_sha256,
-	});
 	let verifierRuns = 0;
 	const outcome = await handoffGoal25VerifierV35({
 		runRoot: setup.runRoot,
 		checkpointRef: created.ref,
+		sessionRoot: resolve(setup.runRoot, "sessions"),
+		sessionEvidenceRoot: setup.runRoot,
+		workspaceRoot: setup.workspace,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		protectedBefore,
+		expectedRunId: runtime.run_id,
+		expectedSessionId: runtime.session_id,
 		expectedToolInterfaceSha256: runtime.tool_interface_sha256,
 		runVerifier: async () => { verifierRuns++; return "failed"; },
 	});
@@ -420,6 +483,37 @@ test("the seventeenth request attempt refuses locally after exactly sixteen disp
 		}
 		assert.ok(errors.length > 0, label);
 		assert.equal(negativeVerifierRuns, 0, label);
+		assert.equal(candidateStarts, 0, label);
+	}
+});
+
+test("budget-terminal handoff rechecks live Session, Workspace and protected bytes before every Verifier", async () => {
+	const scenarios: Array<[string, (setup: Awaited<ReturnType<typeof budgetTerminalCheckpoint>>) => Promise<void> | void]> = [
+		["Session drift", async (setup) => { await setup.session.appendCustomEntry("post-checkpoint-drift", { changed: true }); }],
+		["Workspace drift", (setup) => writeFileSync(resolve(setup.workspace, "src/subject.ts"), "export const postCheckpointDrift = true;\n")],
+		["protected drift", (setup) => writeFileSync(resolve(setup.workspace, "package.json"), "{}\n")],
+	];
+	for (const [label, mutate] of scenarios) {
+		const setup = await budgetTerminalCheckpoint(`budget-live-${label.replaceAll(" ", "-")}`);
+		await mutate(setup);
+		let verifierRuns = 0;
+		let candidateStarts = 0;
+		await assert.rejects(async () => {
+			await handoffGoal25VerifierV35({
+				runRoot: setup.runRoot,
+				checkpointRef: setup.created.ref,
+				sessionRoot: resolve(setup.runRoot, "sessions"),
+				sessionEvidenceRoot: setup.runRoot,
+				workspaceRoot: setup.workspace,
+				taskPolicy: GOAL2_TASK_POLICY_V35,
+				protectedBefore: setup.protectedBefore,
+				expectedRunId: setup.runtime.run_id,
+				expectedSessionId: setup.runtime.session_id,
+				expectedToolInterfaceSha256: setup.runtime.tool_interface_sha256,
+				runVerifier: async () => { verifierRuns++; candidateStarts++; return "failed"; },
+			});
+		}, /checkpoint inspection rejected/, label);
+		assert.equal(verifierRuns, 0, label);
 		assert.equal(candidateStarts, 0, label);
 	}
 });

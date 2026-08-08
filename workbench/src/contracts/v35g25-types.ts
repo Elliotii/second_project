@@ -28,6 +28,7 @@ export interface Goal25RuntimeEvidenceV35 {
 	raw_harness_settled_events: number;
 	public_test_succeeded: boolean;
 	public_test_terminated: boolean;
+	provider_request_after_successful_public_test: boolean;
 	usage_known: boolean;
 	workspace_tree_sha256_at_terminal: string;
 	protected_bytes_sha256_at_terminal: string;
@@ -69,6 +70,8 @@ export interface Goal25PreVerifierCheckpointV35 {
 	checkpoint_before_verifier: true;
 	workspace_tree_sha256: string;
 	protected_bytes_sha256: string;
+	session_ref: string;
+	session_entry_count: number;
 	session_entries_sha256: string;
 	first_payload_sha256: string;
 	tool_interface_sha256: string;

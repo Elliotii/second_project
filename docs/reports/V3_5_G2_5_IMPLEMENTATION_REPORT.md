@@ -1,7 +1,7 @@
 # V3.5 Goal 2.5 Zero-access Implementation and Bounded Correction Report
 
 ```yaml
-status: ZERO_ACCESS_CORRECTION_READY_FOR_MAIN_REREVIEW
+status: AUDIT_CORRECTION_READY_FOR_MAIN_REREVIEW_AND_HIT_ONLY_RECHECK
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 session_role: new_top_level_goal_2_5_implementation_session
 control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
@@ -9,6 +9,8 @@ implementation_commit: SELF
 implementation_commit_resolution: the exact commit SHA containing this report is returned in the Session handoff because tracked bytes cannot contain their own Git object identity
 reviewed_candidate_commit: e852f90fa49ae9320896b91338bfb966e328cf98
 correction_commit: SELF
+audit_correction_starting_baseline: 0ee2ba3b00980222225fe6b816399bc47b064ef2
+audit_correction_commit: SELF
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 real_pair_executed: false
 goal_accepted_or_closed: false
@@ -31,9 +33,39 @@ Provider/model, execute a real model, or execute the real Base/Candidate pair. I
 edit Pi, `CURRENT_STATE.md`, governance, the Charter, the formal Contract, historical
 evidence, or accepted authority artifacts.
 
-Recommendation: Main should re-review the bounded correction. If Main accepts the corrected
-Candidate, the Contract-authorized fresh focused audit remains the next Gate. The real pair
-must remain locked until Main freezes the exact audited Execution Baseline.
+Historical recommendation: Main re-reviewed that bounded correction and dispatched the
+Contract-authorized focused audit. That audit returned the two findings corrected below.
+The real pair remains locked until Main accepts their hit-only recheck and freezes the exact
+audited Execution Baseline.
+
+### Focused-audit correction outcome
+
+Fact: replacement correction authority was used only because the original Implementation
+Session was stuck on stale Git approval after Main's mechanical commit. Starting from exact
+clean baseline `0ee2ba3b00980222225fe6b816399bc47b064ef2`, this Session corrected only
+`V3G25-AUDIT-P1-001` and `V3G25-AUDIT-P1-002`.
+
+- `V3G25-AUDIT-P1-001` is corrected pending hit-only recheck. A successful terminating
+  `public_test` now arms a typed pre-dispatch guard. Any subsequent Provider request attempt
+  is refused before dispatch, persisted as
+  `provider_request_after_successful_public_test: true`, and classified with invalid
+  Trajectory and no accepted public-test termination. The sole-successful-public-test path
+  remains one dispatch, one persisted Tool Result, one public `settled`, and Verifier-
+  eligible.
+- `V3G25-AUDIT-P1-002` is corrected pending hit-only recheck. The budget checkpoint now
+  persists the public Session reference and entry count in addition to its entries digest.
+  Immediately before Verifier handoff, inspection reopens the live Session and requires
+  exact identity/reference/count/digest/Tool closure, then recomputes current Workspace and
+  protected-byte digests and requires exact checkpoint and protected pre-run equality.
+
+Fact: hit-specific tests prove a mixed successful-public-test/read batch reaches two request
+attempts but only one Provider dispatch, an invalid Trajectory, zero Verifiers and zero
+Candidate starts. Separate post-checkpoint live Session, Workspace and protected-byte
+mutations each reach zero Verifiers and zero Candidate starts.
+
+Recommendation: Main should perform only a narrow review of these two corrections and return
+the same two hits to the original focused Audit Session for recheck. This report does not
+claim that audit has passed or that an Execution Baseline may be frozen.
 
 ## 2. Gate A record
 
@@ -95,15 +127,32 @@ order, or fairness change was made.
 | `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2b-r2.test.ts` | 0 | 8 passed, 0 failed/skipped |
 | `git diff --check` | 0 | no whitespace errors |
 
-This correction turn directly recorded 32 passing tests. The unaffected Candidate proof
-remains 34 passing tests plus Main's supplemental V3 8/8 result; those unaffected commands
-were not repeated merely to inflate correction evidence.
+The earlier Main-review correction turn directly recorded 32 passing tests. Its unaffected
+Candidate proof recorded 34 passing tests plus Main's supplemental V3 8/8 result; those are
+historical results, separate from the focused-audit correction verification below.
 
 Mechanical command history: plain `npm run v35g25:typecheck` exited 1 because PowerShell
 blocked `npm.ps1`; `npm.cmd` passed. One intermediate focused run exited 1 at 9/10 because
 the new missing-payload fixture expected the normalized rejection text while the inspector
 returned the underlying missing-file error. The inspector was corrected to accumulate the
 artifact error and fail through the typed settled-handoff rejection; the final run is 10/10.
+
+### Focused-audit correction verification
+
+Run from `workbench/` unless stated otherwise:
+
+| Command | Exit | Result |
+|---|---:|---|
+| `npm.cmd run v35g25:typecheck` | 0 | strict TypeScript PASS |
+| first `npm.cmd run v35g25:test` | 1 | 11/12 passed; the new Session-drift fixture appended malformed JSONL and was corrected to use the public Session API; no source defect was implicated |
+| final `npm.cmd run v35g25:test` | 0 | 12/12 passed, including both hit-specific corrections |
+| `npm.cmd run v35g2:test` | 0 | 8/8 passed |
+| first `npm.cmd run v35g1:test` | 1 | 0/1; failed before test execution because this replacement worktree lacked the known ignored Goal 1 loader |
+| final `npm.cmd run v35g1:test` after restoring the ignored loader from the existing pinned mapping | 0 | 6/6 passed |
+| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2b-r2.test.ts` | 0 | 8/8 passed |
+
+Final authorized correction state: strict TypeScript plus **34 tests passed, 0 failed, 0
+skipped**. The ignored Goal 1 loader remains test-local and is not part of the tracked delta.
 
 ## 5. Contract section 6 proof disposition
 
@@ -162,6 +211,7 @@ network_calls: 0
 external_provider_calls: 0
 real_model_calls: 0
 real_cost_usd: 0
+real_pair_starts: 0
 ```
 
 Fact: the tracked DeepSeek pair factory was constructed for both arms and closed without
@@ -186,7 +236,7 @@ Mechanical observations:
 
 Remaining limitations:
 
-- the focused independent audit has not run;
+- the two focused-audit findings have not yet passed their required hit-only recheck;
 - Main has not reviewed or frozen an Execution Baseline;
 - the dormant real DeepSeek composition has not been executed;
 - the real Base/Candidate pair, its two external Verifiers, comparison, and cost evidence do
@@ -202,7 +252,8 @@ Remaining limitations:
 | Zero-access implementation/proof | PASS |
 | Main light review of original Candidate | COMPLETE; F-001/F-002/F-003 returned |
 | Bounded correction | PASS / READY FOR MAIN REREVIEW |
-| Fresh focused audit | PENDING |
+| Fresh focused audit | COMPLETE / REVISE TWO FINDINGS |
+| Two bounded audit corrections | PASS / PENDING HIT-ONLY RECHECK |
 | Exact audited Execution Baseline | PENDING |
 | Single real Base/Candidate pair | NOT AUTHORIZED IN THIS PHASE / PENDING |
 | Final evidence review and user acceptance | PENDING |
@@ -220,14 +271,14 @@ CURRENT_STATE_UPDATE_PROPOSAL:
   implementation_commit: USE_SESSION_HANDOFF_SHA
   zero_access_proof:
     strict_typescript: passed
-    focused_tests: 10_passed
+    focused_tests: 12_passed
     narrow_regressions:
       goal_2: 8_passed
       goal_1: 6_passed
       v2_checkpoint: 8_passed
       unaffected_v3_main_supplemental_preserved: 8_passed
     counters: 0/0/0/0/0
-  next_gate: Main bounded-correction rereview, then one fresh focused audit if Main accepts the corrected Candidate
+  next_gate: Main narrow rereview, then same Audit Session hit-only recheck of the two corrected findings
   real_pair_authority: locked_pending_exact_audited_execution_baseline
   goal_accepted: false
   goal_3_authorized: false
