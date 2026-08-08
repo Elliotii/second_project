@@ -40,7 +40,7 @@ import {
 	handoffGoal25SettledVerifierV35,
 	handoffGoal25VerifierV35,
 } from "../src/v35g25/checkpoint-v35g25.ts";
-import { assertGoal25PinnedPiSourceV35, createGoal25RealPairPortFactoryV35, createGoal25SessionRunLinkV35 } from "../src/v35g25/pair-v35g25.ts";
+import { assertGoal25PinnedPiSourceV35, createGoal25RealPairPortFactoryV35, createGoal25SessionRunLinkV35, prepareGoal25PairV35 } from "../src/v35g25/pair-v35g25.ts";
 import { compareGoal25FirstProviderPayloadsV35 } from "../src/v35g25/payload-fairness-v35g25.ts";
 import { GOAL25_REAL_PAIR_AUTHORIZATION_TOKEN_V35, parseGoal25RealPairArgumentsV35 } from "../src/v35g25/real-entry-v35g25.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
@@ -214,6 +214,27 @@ async function budgetTerminalCheckpoint(label: string) {
 	});
 	return { ...setup, runtime, port, protectedBefore, created };
 }
+
+test("prepareGoal25PairV35 cold-starts both isolated Workspaces and frozen preflight from an absent Pair root", async () => {
+	mkdirSync(TEST_ROOT, { recursive: true });
+	const pairRoot = resolve(TEST_ROOT, `cold-start-pair-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+	assert.equal(existsSync(pairRoot), false);
+	const prepared = await prepareGoal25PairV35({
+		projectRoot: PROJECT_ROOT,
+		pairRoot,
+		historicalStateRoot: HISTORICAL_STATE,
+	});
+	assert.equal(prepared.pairRoot, pairRoot);
+	assert.notEqual(prepared.baseWorkspace, prepared.candidateWorkspace);
+	assert.equal(treeDigest(prepared.baseWorkspace), GOAL2_WORKSPACE_DIGEST_V35);
+	assert.equal(treeDigest(prepared.candidateWorkspace), GOAL2_WORKSPACE_DIGEST_V35);
+	const preflight = JSON.parse(readFileSync(resolve(pairRoot, "preflight.json"), "utf8")) as Record<string, unknown>;
+	const preflightBody = { ...preflight };
+	delete preflightBody.preflight_digest;
+	assert.deepEqual(preflight.arm_order, ["base", "candidate"]);
+	assert.equal(preflight.initial_workspace_sha256, GOAL2_WORKSPACE_DIGEST_V35);
+	assert.equal(preflight.preflight_digest, digestObject(preflightBody));
+});
 
 test("Goal 2.5 command affordance exposes exactly public_test and remains fail closed", async () => {
 	const setup = await setupRun({ label: "tool-affordance" });

@@ -161,6 +161,7 @@ export async function prepareGoal25PairV35(options: {
 	const caseAuthority = materializeGoal2CaseAuthorityV35({ projectRoot: options.projectRoot, authorityRoot: resolve(authorityRoot, "case") });
 	await materializeGoal2StateSelectionV35({ sourceStateRoot: options.historicalStateRoot, authorityRoot: resolve(authorityRoot, "state-selection") });
 	const fixture = goal2FixturePathsV35(options.projectRoot);
+	mkdirSync(resolve(options.pairRoot, "workspaces"), { recursive: false });
 	const workspace = (arm: Goal25ArmV35): string => {
 		const target = resolve(options.pairRoot, "workspaces", arm);
 		createTemporaryWorkspace({
