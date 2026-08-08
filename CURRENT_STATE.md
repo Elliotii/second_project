@@ -5,19 +5,18 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_corrected_execution_baseline_ready_for_replacement_pair
-  status: V3_5_G2_5_PRE_DISPATCH_CORRECTION_PASS_REPLACEMENT_PAIR_READY
+  phase: v3_5_goal_2_5_execution_complete_pending_user_acceptance
+  status: V3_5_G2_5_VALID_REAL_PAIR_PASS_RECOMMENDED
 
 active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 
 last_executed_goal:
-  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
-  status: closed_inconclusive
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
-  disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
-  control_baseline_commit: b44197e3a5465058c4cb327613d775943f5f8444
-  initial_implementation_commit: ce58cdb35948c7f100773f3fb94762d23d7eccd5
-  execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
+  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+  status: execution_complete_pending_user_acceptance
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
+  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED_recommended
+  corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
+  comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
 
 last_closed_goal:
   id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
@@ -35,7 +34,7 @@ last_completed_goal:
 
 current_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: pre_dispatch_correction_passed_corrected_execution_baseline_frozen_replacement_pending
+  status: execution_complete_valid_real_pair_pass_recommended_pending_user_acceptance
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
   control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
@@ -53,8 +52,11 @@ current_goal:
   correction_control_baseline: 9a0f38301bebb5934b34909f8c012a1c84c2d0af
   correction_owner: completed_top_level_session_019fe386-a1b1-72f2-a3d6-aefec1e24954
   correction_commit: 6d3f4601ca47c57473bb737eb88e08a471f7d60e
-  corrected_execution_baseline: resulting_HEAD_of_this_revision
-  replacement_pair: authorized_once_pending_fresh_no_source_edit_execution_session
+  corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
+  replacement_pair: consumed_once_successfully
+  replacement_execution_owner: completed_top_level_session_019fe38f-7c3d-7a02-92c3-0f7eef53196f
+  comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
+  main_recommendation: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
 
 next_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -203,7 +205,7 @@ v3_5_control:
   goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
-  goal_2_5_status: pre_dispatch_correction_passed_corrected_execution_baseline_frozen_replacement_pending
+  goal_2_5_status: execution_complete_valid_real_pair_pass_recommended_pending_user_acceptance
   goal_2_5_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   goal_2_5_research: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   goal_2_5_implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
@@ -233,17 +235,28 @@ v3_5_control:
   goal_2_5_pre_dispatch_correction_commit: 6d3f4601ca47c57473bb737eb88e08a471f7d60e
   goal_2_5_pre_dispatch_correction_report: docs/reports/V3_5_G2_5_PRE_DISPATCH_CORRECTION_REPORT.md
   goal_2_5_pre_dispatch_correction_main_review: PASS_V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_CORRECTION
-  goal_2_5_corrected_execution_baseline: resulting_HEAD_of_this_revision
-  goal_2_5_replacement_pair_status: authorized_once_pending_dispatch
+  goal_2_5_corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
+  goal_2_5_replacement_execution_session: 019fe38f-7c3d-7a02-92c3-0f7eef53196f
+  goal_2_5_replacement_pair_status: consumed_once_successfully
+  goal_2_5_replacement_pair_root: C:/Users/HUAWEI/.codex/worktrees/d073/project2/.runs/v3-5-g2-5/real-pair-replacement-20260809-01
+  goal_2_5_comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
+  goal_2_5_base_outcome: settled_and_external_verifier_passed
+  goal_2_5_candidate_outcome: settled_and_external_verifier_passed
+  goal_2_5_skill_effect: no_task_success_advantage_observed_single_case
+  goal_2_5_real_access_observed: credential_reads_2_network_6_external_provider_6_model_6
+  goal_2_5_real_usage_observed: input_4762_output_374_total_5136_tool_calls_6_verifiers_2
+  goal_2_5_real_cost_usd_observed: 0.0002796752
+  goal_2_5_main_recommendation: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+  goal_2_5_acceptance: pending_user_decision
   goal_2_5_pre_dispatch_correction_tests: strict_typescript_passed_goal_2_5_13_passed_goal_2_8_passed
   goal_2_5_pre_dispatch_correction_access: credentials_0_network_0_external_provider_0_model_0_cost_0
   goal_2_5_focused_tests_after_audit_correction: 12_passed_0_failed_0_skipped
-  goal_2_5_real_execution_authorized: one_replacement_after_corrected_execution_baseline
-  goal_2_5_credential_reads_authorized: 2_for_one_replacement_after_corrected_execution_baseline
+  goal_2_5_real_execution_authorized: consumed_one_replacement_no_further_execution
+  goal_2_5_credential_reads_authorized: consumed_by_replacement
   goal_2_5_credential_resolver_reads_observed: 0
-  goal_2_5_external_network_authorized: true_for_one_replacement_after_corrected_execution_baseline
+  goal_2_5_external_network_authorized: consumed_by_replacement
   goal_2_5_external_network_observed: 0
-  goal_2_5_real_model_calls_authorized: 32_for_one_replacement_after_corrected_execution_baseline
+  goal_2_5_real_model_calls_authorized: consumed_by_replacement
   goal_2_5_real_model_calls_observed: 0
   goal_2_5_real_cost_usd_observed: 0
   goal_2_5_real_cost_usd_hard_cap: 0.40
@@ -1885,6 +1898,8 @@ required_reading:
   - docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   - docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   - docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
+  - docs/reports/V3_5_G2_5_REPLACEMENT_REAL_PAIR_EXECUTION_REPORT.md
+  - docs/reports/V3_5_G2_5_REPLACEMENT_REAL_PAIR_MAIN_REVIEW_AND_DISPOSITION.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
   - docs/reports/V3_5_G2_CLOSEOUT.md
   - docs/reports/V3_5_G2_IMPLEMENTATION_REPORT.md
@@ -2277,13 +2292,15 @@ the hidden external Verifier never ran and Candidate never started. Therefore no
 pair or Skill-effect claim exists. The invalid pair and persistent Base Session prefix are
 preserved.
 
-Goal 2.5's zero-access implementation and bounded correction passed Main review; the same
-focused Audit Session closed both termination/Verifier findings, and Main froze audited
-Execution Baseline `12c64739eb0b1db715def18800c28ea728f31610`. The fresh no-source-edit
-execution Session invoked the single authorized command once. It stopped before Base arm
-creation because `prepareGoal25PairV35` had not created the intermediate `workspaces`
-parent required by the non-recursive temporary-copy helper. Credential-resolver, network,
-Provider/model, Tool and Verifier counts remained zero and cost was USD 0. The one Pair
-authority is consumed; no replacement is authorized. Goal 2.5 remains active but paused
-for the user's choice between one infrastructure-only correction/replacement Pair and an
-inconclusive closeout. Goal 3 and final V3.5 acceptance remain unauthorized.
+Goal 2.5's zero-access implementation and focused termination/Verifier audit passed. The
+first real command stopped before Base because the caller had not created the direct
+`workspaces` parent. Under the user's bounded Amendment, a one-line-class caller correction
+and absent-Pair-root regression passed Main review, producing corrected Execution Baseline
+`91fb8be73f809a67bedf58efcf520914ce93f737`. The single replacement Pair then completed:
+Base and Candidate each settled, each passed one frozen external Verifier, and comparison
+digest `243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f`
+authenticated the fair Pair. Both used three Provider dispatches and three Tool calls;
+Candidate used 770 more total tokens, while both passed. Main therefore recommends Goal
+2.5 PASS as a valid real adaptive-Skill comparison with no observed task-success advantage
+on the single Case. User acceptance remains pending; Goal 3 and final V3.5 acceptance are
+still unauthorized.

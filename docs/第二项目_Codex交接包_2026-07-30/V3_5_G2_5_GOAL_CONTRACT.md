@@ -1,7 +1,7 @@
 # V3.5 Goal 2.5 — Termination-safe Real Adaptive Skill Closure Contract
 
 ```yaml
-status: accepted_activated_pre_dispatch_correction_passed_replacement_pair_ready
+status: accepted_activated_execution_complete_pass_recommended_pending_user_acceptance
 date: 2026-08-08
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
@@ -12,13 +12,13 @@ contract_accepted: true
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
 active_goal: true
-implementation_authorized: one_pre_dispatch_infrastructure_only_correction
-credential_reads_authorized: 2_for_one_replacement_after_corrected_execution_baseline
-external_network_authorized: true_for_one_replacement_after_corrected_execution_baseline
-real_model_calls_authorized: 32_for_one_replacement_after_corrected_execution_baseline
+implementation_authorized: consumed_one_pre_dispatch_infrastructure_only_correction
+credential_reads_authorized: consumed_by_replacement_observed_2
+external_network_authorized: consumed_by_replacement_observed_6
+real_model_calls_authorized: consumed_by_replacement_observed_6
 git_commit_authorized: control_implementation_audit_execution_and_closeout_within_contract
 focused_audit_authorized: true_once_after_zero_access_candidate
-real_pair_authorized: one_replacement_after_corrected_execution_baseline
+real_pair_authorized: consumed_once_successfully_no_further_execution
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
