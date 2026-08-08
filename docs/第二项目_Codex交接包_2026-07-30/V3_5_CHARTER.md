@@ -1,7 +1,7 @@
 # V3.5 Version Charter — Persistent & Inspectable Adaptive Harness Workbench
 
 ```yaml
-status: accepted_goal_1_closed_goal_2_activated_implementation_not_started
+status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_research_pending
 date: 2026-08-08
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
@@ -12,26 +12,28 @@ repository_baseline: 6c686f01928a44211119e75767190e221b319fe2
 v3_status: closed_accepted
 v3_disposition: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-active_goal: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
 goal_1_control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
 goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
 goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
-goal_2_status: activated_implementation_not_started
+goal_2_status: closed_inconclusive
+goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
+goal_2_5_status: research_candidate_not_activated
 goal_3_status: not_activated
-implementation_authorized: true_goal_2_only
-real_model_calls_authorized: 32_after_zero_access_preflight
-credential_reads_authorized: 2_after_zero_access_preflight
-external_network_authorized: true_after_zero_access_preflight
+implementation_authorized: false
+real_model_calls_authorized: 0
+credential_reads_authorized: 0
+external_network_authorized: false
 pi_core_patch_authorized: false
 runtime_route_switch_authorized: false
-git_commit_authorized: goal_2_control_implementation_and_closeout_within_contract
+git_commit_authorized: goal_2_closeout_only
 control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
 ```
 
-> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 短 Case Contract 已接受并激活；其真实访问仅在零调用实现与 Main preflight 通过后按冻结 Pair 和预算生效。Goal 3、V3.5 最终接受和 Pi 修改仍未授权。
+> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 仅是等待有界诊断的候选，并未激活；Goal 3、V3.5 最终接受和 Pi 修改仍未授权。
 
 ## 1. Version mission
 
@@ -277,6 +279,8 @@ only treatment delta = adaptive Skill binding
 7. V3 authority、closed global State 和 Pi 均未被修改。
 
 ## 6. Goal 3 — Adaptive Harness Workbench WebUI & Demo
+
+> 当前依赖状态：Goal 2 没有形成有效 Base/Candidate evidence，因此本节的启动前提尚未满足。Goal 2.5 是否补足该证据，必须经过新的有界研究、Main 审查和用户授权；不得由 Goal 2 的历史权限自动推出。
 
 ### 6.1 Preconditions and architecture
 

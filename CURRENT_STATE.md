@@ -5,26 +5,26 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_activated_implementation_not_started
-  status: V3_5_G2_ACTIVE_IMPLEMENTATION_NOT_STARTED
+  phase: v3_5_goal_2_closed_inconclusive_postmortem_pending
+  status: V3_5_G2_CLOSED_INCONCLUSIVE_V3_5_INCOMPLETE
 
-active_goal: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+active_goal: null
 
 last_executed_goal:
-  id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
-  implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
-  correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
+  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+  status: closed_inconclusive
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
+  disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
+  control_baseline_commit: b44197e3a5465058c4cb327613d775943f5f8444
+  initial_implementation_commit: ce58cdb35948c7f100773f3fb94762d23d7eccd5
+  execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
 
 last_closed_goal:
-  id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  closeout: docs/reports/V3_5_G1_CLOSEOUT.md
+  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+  status: closed_inconclusive
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
+  disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
+  closeout: docs/reports/V3_5_G2_CLOSEOUT.md
 
 last_completed_goal:
   id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
@@ -33,16 +33,16 @@ last_completed_goal:
   disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   implementation_baseline_commit: resulting_HEAD_of_goal_1_acceptance_revision
 
-current_goal:
-  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
-  status: activated_implementation_not_started
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
-  implementation_owner: future_top_level_goal_2_session_created_after_control_baseline
-  control_baseline_commit: resulting_HEAD_of_goal_2_activation_revision
+current_goal: null
 
 next_goal:
+  id: V3_5_G2_5_BOUNDED_REAL_SKILL_CLOSURE_RETRY
+  status: bounded_postmortem_research_candidate_not_authorized
+  authority: null
+
+deferred_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
-  status: charter_defined_not_authorized
+  status: charter_defined_dependency_not_met_not_authorized
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
 
 v3_control:
@@ -143,7 +143,7 @@ v3_5_control:
   charter_accepted_by_user: true
   preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   preimplementation_review_status: accepted_as_charter_design_basis
-  active_goal: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+  active_goal: null
   goal_1_status: closed_accepted
   goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -165,19 +165,31 @@ v3_5_control:
   goal_1_pi_core_patch_authorized: false
   goal_1_runtime_route_switch_authorized: false
   goal_1_closeout: docs/reports/V3_5_G1_CLOSEOUT.md
-  goal_2_status: activated_implementation_not_started
+  goal_2_status: closed_inconclusive
+  goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
-  goal_2_implementation_owner: future_top_level_goal_2_session_created_after_control_baseline
-  goal_2_control_baseline_commit: resulting_HEAD_of_goal_2_activation_revision
-  goal_2_bounded_implementation_commit_authorized: true
-  goal_2_real_execution_authorized: true_after_zero_access_preflight
-  goal_2_credential_reads_authorized: 2_after_zero_access_preflight
-  goal_2_external_network_authorized: true_after_zero_access_preflight
-  goal_2_real_model_calls_authorized: 32_after_zero_access_preflight
+  goal_2_implementation_owner: completed_top_level_session_019fdf5c-86a1-7b73-909f-9273ff3644b1
+  goal_2_control_baseline_commit: b44197e3a5465058c4cb327613d775943f5f8444
+  goal_2_initial_implementation_commit: ce58cdb35948c7f100773f3fb94762d23d7eccd5
+  goal_2_execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
+  goal_2_bounded_implementation_commit_authorized: consumed
+  goal_2_real_execution_authorized: consumed_invalid_pair
+  goal_2_credential_reads_observed: 1
+  goal_2_external_network_calls_observed: 16
+  goal_2_real_model_calls_observed: 16
   goal_2_real_cost_usd_hard_cap: 0.40
+  goal_2_real_cost_usd_observed: 0.000552272
+  goal_2_base_workspace_reached_reference_digest: true
+  goal_2_base_settled: false
+  goal_2_base_verifier_runs: 0
+  goal_2_candidate_started: false
+  goal_2_pair_integrity_valid: false
+  goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
-  goal_2_closeout_commit_authorized: true_if_exit_criteria_pass
-  goal_3_status: not_activated
+  goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
+  goal_2_5_status: bounded_postmortem_research_candidate_not_activated
+  goal_2_5_real_execution_authorized: false
+  goal_3_status: dependency_not_met_not_activated
   v3_5_final_acceptance_authorized: false
 
 retired_goal_candidate:
@@ -1810,6 +1822,8 @@ reference_analysis:
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
+  - docs/reports/V3_5_G2_CLOSEOUT.md
+  - docs/reports/V3_5_G2_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_5_G1_CLOSEOUT.md
   - docs/reports/V3_5_G1_IMPLEMENTATION_REPORT.md
   - docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
@@ -1958,9 +1972,14 @@ next_checkpoint:
   - no_active_goal_after_V3_closeout
   - V3_5_goal_1_closed_accepted_after_bounded_read_model_path_correction
   - V3_5_goal_2_short_case_contract_accepted_not_activated
+  - V3_5_goal_2_zero_access_implementation_and_payload_fairness_baseline_frozen
+  - V3_5_goal_2_single_real_pair_stopped_in_Base_at_request_budget_before_verifier
+  - V3_5_goal_2_closed_inconclusive_without_skill_effect_claim
+  - preserve_invalid_pair_and_persistent_Base_session_prefix
+  - bounded_termination_postmortem_required_before_any_Goal_2_5_contract
 
 open_user_decisions:
-  - none_until_contract_hard_stop_or_goal_2_disposition
+  - none_until_bounded_termination_postmortem_returns_for_Main_review
 ```
 
 ## Current Constraints
@@ -2182,7 +2201,13 @@ not crash recovery, exactly-once Tool effects, multi-writer durability or real
 model continuation. The catalog currently fails closed if missing/corrupt; an
 automatic rebuild command remains a non-blocking productization limitation.
 
-V3.5 Goal 2 is active under the accepted frozen Case Contract. One future top-level Goal
-2 Session owns the bounded zero-access implementation and, only after its implementation
-commit and Main preflight pass, the single frozen Base/Candidate real pair. Goal 3 and
-final V3.5 acceptance remain unauthorized.
+V3.5 Goal 2 is closed inconclusive under
+`CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP`. Its implementation and
+payload-fairness mechanism are frozen at `ed2dc14e695233411f96af162d92b405188b04cf`,
+but the only real sequence stopped during Base after 16 Provider/model requests. The Base
+workspace reached the calibrated reference bytes, yet the AgentHarness did not settle;
+the hidden external Verifier never ran and Candidate never started. Therefore no valid
+pair or Skill-effect claim exists. The invalid pair and persistent Base Session prefix are
+preserved. A bounded read-only termination postmortem may inform a separately reviewed
+Goal 2.5 candidate; no Goal 2.5 real execution, Goal 3 or final V3.5 acceptance is
+authorized.

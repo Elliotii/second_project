@@ -1,23 +1,25 @@
 # V3.5 Goal 2 — One Bounded Real Adaptive Skill Case Contract
 
 ```yaml
-status: accepted_activated_implementation_not_started
+status: closed_inconclusive_real_authority_consumed
 date: 2026-08-08
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
 goal_id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
 precondition: V3_5_G1_closed_accepted
-active_goal: true
+active_goal: false
 contract_accepted: true
-goal_activation_authorized: true
-implementation_authorized: true
-implementation_owner: future_top_level_goal_2_session_created_after_control_baseline
-credential_reads_authorized: 2_after_zero_access_preflight
-external_network_authorized: true_after_zero_access_preflight
-real_model_calls_authorized: 32_after_zero_access_preflight
-real_cost_usd_authorized: 0.40_whole_pair_hard_cap
-git_commit_authorized: bounded_implementation_and_main_closeout
+goal_activation_authorized: consumed
+implementation_authorized: consumed_completed_mechanism
+implementation_owner: completed_top_level_session_019fdf5c-86a1-7b73-909f-9273ff3644b1
+credential_reads_authorized: consumed_1_observed_no_further_authority
+external_network_authorized: consumed_16_calls_no_further_authority
+real_model_calls_authorized: consumed_16_calls_no_further_authority
+real_cost_usd_authorized: consumed_0.000552272_observed_no_further_authority
+git_commit_authorized: consumed_implementation_and_main_closeout
+goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
+goal_2_5_authorized: false
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
@@ -323,6 +325,7 @@ remaining_boundary:
   retry_fallback_replacement_extra_arm_or_case: not_authorized
 ```
 
-This Contract is accepted and activated. Real access remains mechanically gated behind
-the zero-access implementation/preflight and frozen execution baseline. Goal 3 and final
-V3.5 acceptance remain outside this authority.
+This Contract was accepted and activated. Its one-pair real authority is now consumed and
+the observed pair is formally closed as inconclusive under
+`CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP`. No retry, Goal 2.5, Goal 3 or
+final V3.5 authority follows from this historical Contract.

@@ -1,13 +1,17 @@
-# V3.5 Goal 2 Zero-Access Implementation Report
+# V3.5 Goal 2 Implementation and Frozen Real-Pair Report
 
 ```yaml
 goal_id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
-phase: zero_access_implementation_and_preflight
-status: READY_FOR_MAIN_CORRECTION_REVIEW
+phase: frozen_real_pair_terminal_review
+status: PAUSE_V3_5_G2_REAL_PAIR_INVALID_BASE_REQUEST_BUDGET
 control_baseline_commit: b44197e3a5465058c4cb327613d775943f5f8444
-implementation_commit: ce58cdb35948c7f100773f3fb94762d23d7eccd5
+initial_implementation_commit: ce58cdb35948c7f100773f3fb94762d23d7eccd5
+execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 goal_2_accepted: false
+real_pair_root: .runs/v3-5-g2/real-pair-20260808-01
+real_pair_status: invalid_pair
+real_pair_authority_consumed: true
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
@@ -158,16 +162,69 @@ base_real_arm_started: false
 candidate_real_arm_started: false
 ```
 
-No credential name was resolved or read by an executed Goal 2 path. The real-pair CLI was implemented but not invoked.
+These counters describe the completed implementation/correction phase before Main authorized real execution. No credential was resolved during that phase.
+
+## Sole frozen real-pair execution
+
+Main passed preflight and authorized exactly one pair from Execution Baseline `ed2dc14e695233411f96af162d92b405188b04cf` at `.runs/v3-5-g2/real-pair-20260808-01`.
+
+### Final pre-dispatch Gate
+
+`Fact`: immediately before credential access, HEAD was exact `ed2dc14e...`, its parent was `ce58cdb...`, Control Baseline `b44197e...` was an ancestor, tracked/staged status was clean, pinned Pi was exact `027a584...` and clean, and the pair root did not exist.
+
+`Fact`: fresh zero-access dispatch preflight and calibration reproduced:
+
+- Case Authority `43c2b1c2967826e61b236d3546f693a93424a127e25a5da9f4a0180617848fff`;
+- State selection `a708c5e42e739350b447510f0f5dd91a93cfb6216bd3e3296a3f7fd9e7d1913a`;
+- selected State version `2`, digest `0f6c5d44...`;
+- Skill source `152d0067...`, wrapper `329cca95...`;
+- preflight `dbe8f13b...` and calibration `a788f60d...`;
+- all pre-dispatch credential/network/Provider/model/cost counters `0`.
+
+The opaque wrapper loaded only `DEEPSEEK_API_KEY` from `D:/AI/AI_Projects/project2/.env.g005` into the single Node execution chain and removed the environment variable in `finally`. Its value was not printed, persisted, hashed or summarized.
+
+Exact authorized Node invocation inside that wrapper:
+
+```text
+node --experimental-loader ./workbench/scripts/v35g2-public-pi-loader.mjs ./workbench/scripts/v35g2-real-pair.ts --project-root . --pair-root .runs/v3-5-g2/real-pair-20260808-01 --historical-state-root D:/AI/AI_Projects/project2/.runs/v3-g3/shared-authority/sequence-489cb1c4-20d9-42af-8dd6-0b22aeb6cf5d/project-state --implementation-commit ed2dc14e695233411f96af162d92b405188b04cf --authorize-real-pair V3_5_G2_REAL_PAIR_ONCE
+```
+
+Command result: exit `1`. Base consumed 16 actual Provider/model requests. The 17th pre-dispatch request attempt was rejected locally with `Goal 3 provider request budget exceeded`; the Harness failure-report path then also failed closed with `Goal 3 Provider usage exceeded its pre-dispatch reservation`. `pause.json` records `status: invalid_pair` and one credential read plus 16 network/external-Provider/real-model calls. No retry, fallback, replacement, Candidate or extra Case occurred.
+
+### Persisted terminal facts
+
+| Metric | Base | Candidate | Pair total |
+|---|---:|---:|---:|
+| Credential resolutions | 1 | 0 | 1 |
+| Actual Provider/model requests | 16 | 0 | 16 |
+| Pre-dispatch request attempts | 17 | 0 | 17 |
+| Input tokens, including cache accounting | 18,448 | 0 | 18,448 |
+| Output tokens | 902 | 0 | 902 |
+| Total tokens | 19,350 | 0 | 19,350 |
+| Tool calls | 16 | 0 | 16 |
+| Cost USD | 0.000552272 | 0 | 0.000552272 |
+| Hidden external Verifier runs | 0 | 0 | 0 |
+
+`Fact`: the Base public JSONL Session exists with 34 entries: one user message, 16 real assistant `toolUse` messages, 16 Tool results and one local error assistant message. Its bounded historical-prefix digest is `abc4bdf6c0e1ba33df763d0b5d5d3c5c48c431c27e9238198daf60c42d44f327`.
+
+`Fact`: Base workspace final tree digest is `7bc3efd92e80fb559544ed45c59c3f0fdb7ebdb37cc5deeb67f48f68a1efe915`, equal to the calibration reference workspace. This is not a Verifier result: `verifier/result.json` does not exist because the arm did not settle within its request budget.
+
+`Fact`: Candidate workspace stayed at initial digest `4a45c560...`; no Candidate Run or Session was created. Protected bytes for both workspaces match frozen digest `85d2cfe5fbd7624a61b329dba945b42d955812fa6eede6f5e06d3d46ac262745`.
+
+`Fact`: Base Run contains only `binding.json` and the immutable Verifier source snapshot. It has no `runtime.json`, Goal 2 Manifest, Verifier result or `first-provider-payload.json`. Consequently first-payload normalized fairness is not persistently provable for this invalid pair.
+
+`Fact`: `inspectGoal2PairV35` returned `integrity_valid: false` because `comparison.json` does not exist. `readGoal2SkillComparisonV35` returned `source_status: unavailable` with null result and efficiency. The observed terminal status is `invalid_pair`; no valid Base/Candidate comparison label exists.
+
+`Fact`: post-terminal inspection revalidated the exact historical State authority tree digest `0c6167f8...`, selection/Skill/fixture/Verifier identities, clean source commit `ed2dc14e...`, and clean pinned Pi `027a584...`.
 
 ## Remaining limitations and stop point
 
-`Fact`: no real Base or Candidate outcome exists yet; no comparison result label may be claimed.
+`Fact`: the sole real authority is consumed. It produced an invalid Base budget-stop prefix, no Candidate, no external Verifier result and no comparison. No full Goal 2 evidence claim may be made.
 
 `Fact`: the emitted public Pi runtime/compiler used for local verification is the already-existing pinned `D:/AI/AI_Projects/project2/.runs/g006/pi` checkout. No dependency installation or network access occurred.
 
 `Fact`: the derived State selection remains intentionally bound to the accepted historical State path because Pi's public explicit-Skill wrapper hashes that location. Drift or absence fails closed before dispatch.
 
-`Recommendation`: Main should review the correction commit and ignored zero-access evidence, then either send the explicit same-Session real-pair follow-up or return a precise Hard Stop/correction disposition. This Session must not self-authorize real access.
+`Recommendation`: Main should preserve the pair root and review whether to close Goal 2 with an invalid/inconclusive limitation. Any rerun, replacement, new budget, correction or revised protocol would require new explicit authority and cannot be inferred from this report.
 
-`READY_FOR_MAIN_CORRECTION_REVIEW`
+`PAUSE_V3_5_G2_REAL_PAIR_INVALID_BASE_REQUEST_BUDGET`
