@@ -48,12 +48,15 @@ export interface BoundedToolProfile {
 	context: ToolProfileContext;
 	auditEvents: ToolAuditEvent[];
 	commandExecutions: CommandExecutionProjection[];
+	pendingSideEffects(): number;
 }
 
 export interface BoundedToolRestrictions {
 	allowed_tool_names?: readonly string[];
 	readable_paths?: readonly string[];
 	allow_repository_commands?: boolean;
+	expose_task_command_ids?: boolean;
+	terminate_on_successful_command_ids?: readonly string[];
 }
 
 const readSchema = Type.Object(
@@ -80,8 +83,6 @@ const writeSchema = Type.Object(
 	{ path: Type.String(), content: Type.String() },
 	{ additionalProperties: false },
 );
-const commandSchema = Type.Object({ command_id: Type.String() }, { additionalProperties: false });
-
 function projectText(text: string, byteBudget: number, forceTruncated = false): { text: string; truncated: boolean } {
 	const marker = "\n[truncated by V0-A tool result budget]";
 	const lines = text.split(/\r?\n/);
@@ -192,18 +193,21 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 	const auditEvents: ToolAuditEvent[] = [];
 	const commandExecutions: CommandExecutionProjection[] = [];
 	let sequence = 0;
+	let pendingSideEffects = 0;
 	const context: ToolProfileContext = {
 		workspaceRoot: canonicalRoot,
 		env: new NodeExecutionEnv({ cwd: canonicalRoot, shellEnv: boundedEnvironment() }),
 	};
 	const audit = <TParameters extends TSchema, TDetails>(
 		tool: ProfileTool<TParameters, TDetails>,
+		sideEffectful = false,
 	): ProfileTool<TParameters, TDetails> => {
 		const execute = tool.execute.bind(tool);
 		return {
 			...tool,
 			async execute(toolCallId, args, signal, onUpdate, executionContext) {
 				auditEvents.push({ sequence: ++sequence, type: "start", tool_call_id: toolCallId, tool_name: tool.name });
+				if (sideEffectful) pendingSideEffects++;
 				try {
 					const result = await execute(toolCallId, args, signal, onUpdate, executionContext);
 					auditEvents.push({ sequence: ++sequence, type: "end", tool_call_id: toolCallId, tool_name: tool.name });
@@ -217,10 +221,28 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 						error: error instanceof Error ? error.message : String(error),
 					});
 					throw error;
+				} finally {
+					if (sideEffectful) pendingSideEffects--;
 				}
 			},
 		};
 	};
+	const taskCommandIds = task.command_descriptors.map((descriptor) => descriptor.command_id);
+	const commandSchema = Type.Object(
+		{
+			command_id: restrictions.expose_task_command_ids && taskCommandIds.length > 0
+				? Type.Union(taskCommandIds.map((commandId) => Type.Literal(commandId)))
+				: Type.String(),
+		},
+		{ additionalProperties: false },
+	);
+	const commandDescription = restrictions.expose_task_command_ids
+		? `Run one frozen command descriptor by ID. Legal command IDs: ${taskCommandIds.join(", ") || "none"}. No arguments may be supplied.`
+		: "Run one frozen command descriptor by ID; no arguments may be supplied.";
+	const terminatingCommandIds = new Set(restrictions.terminate_on_successful_command_ids ?? []);
+	for (const commandId of terminatingCommandIds) {
+		if (!taskCommandIds.some((taskCommandId) => taskCommandId === commandId)) throw new Error(`terminating command ID is not a frozen task descriptor: ${commandId}`);
+	}
 
 	const piRead = createReadTool<ToolProfileContext>();
 	const piEdit = createEditTool<ToolProfileContext>();
@@ -322,7 +344,7 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 					executionContext,
 				);
 			},
-		}),
+		}, true),
 		audit<typeof writeSchema, unknown>({
 			name: "workspace_write",
 			label: "workspace_write",
@@ -339,11 +361,11 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 				});
 				return piWrite.execute(id, args, signal, onUpdate, executionContext);
 			},
-		}),
+		}, true),
 		audit<typeof commandSchema, undefined>({
 			name: "run_command",
 			label: "run_command",
-			description: "Run one frozen command descriptor by ID; no arguments may be supplied.",
+			description: commandDescription,
 			parameters: commandSchema,
 			async execute(_id, args) {
 				assertInputKeys(args, ["command_id"]);
@@ -366,12 +388,22 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 					...result,
 				};
 				commandExecutions.push(projection);
-				return { content: [{ type: "text", text: JSON.stringify(projection) }], details: undefined };
+				return {
+					content: [{ type: "text", text: JSON.stringify(projection) }],
+					details: undefined,
+					...(terminatingCommandIds.has(args.command_id) && result.exit_code === 0 && !result.timed_out ? { terminate: true as const } : {}),
+				};
 			},
-		}),
+		}, true),
 	];
 	const allowed = restrictions.allowed_tool_names ? new Set(restrictions.allowed_tool_names) : null;
-	return { tools: allowed ? tools.filter((tool) => allowed.has(tool.name)) : tools, context, auditEvents, commandExecutions };
+	return {
+		tools: allowed ? tools.filter((tool) => allowed.has(tool.name)) : tools,
+		context,
+		auditEvents,
+		commandExecutions,
+		pendingSideEffects: () => pendingSideEffects,
+	};
 }
 
 export function readProtectedBytes(workspaceRoot: string, task: BoundedTaskPolicy): Record<string, string> {
