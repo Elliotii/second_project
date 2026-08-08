@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_paused_after_pre_dispatch_infrastructure_defect
-  status: V3_5_G2_5_REAL_PAIR_PRE_ARM_PAUSE_PENDING_USER_DECISION
+  phase: v3_5_goal_2_5_pre_dispatch_correction_authorized
+  status: V3_5_G2_5_INFRASTRUCTURE_CORRECTION_AND_ONE_REPLACEMENT_AUTHORIZED
 
 active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 
@@ -35,7 +35,7 @@ last_completed_goal:
 
 current_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: real_pair_consumed_pre_arm_infrastructure_pause_pending_user_decision
+  status: bounded_pre_dispatch_correction_authorized_not_started
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
   control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
@@ -49,6 +49,10 @@ current_goal:
   real_pair: consumed_once_pre_arm_workspace_parent_enoent_no_replacement_authorized
   real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   main_disposition: PAUSE_V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_DEFECT_REQUIRES_NEW_AUTHORITY
+  amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
+  correction_control_baseline: resulting_HEAD_of_this_revision
+  correction_owner: future_fresh_top_level_zero_access_implementation_session
+  replacement_pair: authorized_once_after_corrected_execution_baseline
 
 next_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -197,7 +201,7 @@ v3_5_control:
   goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
-  goal_2_5_status: real_pair_consumed_pre_arm_infrastructure_pause_pending_user_decision
+  goal_2_5_status: bounded_pre_dispatch_correction_authorized_not_started
   goal_2_5_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   goal_2_5_research: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   goal_2_5_implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
@@ -221,13 +225,17 @@ v3_5_control:
   goal_2_5_real_pair_status: consumed_pre_arm_workspace_parent_enoent_no_replacement_authorized
   goal_2_5_real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   goal_2_5_main_disposition_report: docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
+  goal_2_5_pre_dispatch_amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
+  goal_2_5_correction_control_baseline: resulting_HEAD_of_this_revision
+  goal_2_5_correction_owner: future_fresh_top_level_zero_access_implementation_session
+  goal_2_5_replacement_pair_status: authorized_once_after_corrected_execution_baseline
   goal_2_5_focused_tests_after_audit_correction: 12_passed_0_failed_0_skipped
-  goal_2_5_real_execution_authorized: consumed_once_no_replacement_authorized
-  goal_2_5_credential_reads_authorized: consumed_with_execution_authority
+  goal_2_5_real_execution_authorized: one_replacement_after_corrected_execution_baseline
+  goal_2_5_credential_reads_authorized: 2_for_one_replacement_after_corrected_execution_baseline
   goal_2_5_credential_resolver_reads_observed: 0
-  goal_2_5_external_network_authorized: consumed_with_execution_authority
+  goal_2_5_external_network_authorized: true_for_one_replacement_after_corrected_execution_baseline
   goal_2_5_external_network_observed: 0
-  goal_2_5_real_model_calls_authorized: consumed_with_execution_authority
+  goal_2_5_real_model_calls_authorized: 32_for_one_replacement_after_corrected_execution_baseline
   goal_2_5_real_model_calls_observed: 0
   goal_2_5_real_cost_usd_observed: 0
   goal_2_5_real_cost_usd_hard_cap: 0.40
@@ -1865,6 +1873,7 @@ reference_analysis:
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
   - docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   - docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   - docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md

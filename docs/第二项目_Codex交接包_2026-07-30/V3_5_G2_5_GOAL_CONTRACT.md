@@ -1,7 +1,7 @@
 # V3.5 Goal 2.5 — Termination-safe Real Adaptive Skill Closure Contract
 
 ```yaml
-status: accepted_activated_real_pair_consumed_pre_arm_pause_pending_user_disposition
+status: accepted_activated_bounded_pre_dispatch_correction_and_one_replacement_authorized
 date: 2026-08-08
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
@@ -12,18 +12,24 @@ contract_accepted: true
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
 active_goal: true
-implementation_authorized: consumed_zero_access_implementation_and_corrections
-credential_reads_authorized: consumed_with_single_execution_authority_resolver_reads_observed_0
-external_network_authorized: consumed_with_single_execution_authority_observed_0
-real_model_calls_authorized: consumed_with_single_execution_authority_observed_0
+implementation_authorized: one_pre_dispatch_infrastructure_only_correction
+credential_reads_authorized: 2_for_one_replacement_after_corrected_execution_baseline
+external_network_authorized: true_for_one_replacement_after_corrected_execution_baseline
+real_model_calls_authorized: 32_for_one_replacement_after_corrected_execution_baseline
 git_commit_authorized: control_implementation_audit_execution_and_closeout_within_contract
 focused_audit_authorized: true_once_after_zero_access_candidate
-real_pair_authorized: consumed_once_pre_arm_no_replacement_authorized
+real_pair_authorized: one_replacement_after_corrected_execution_baseline
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
 
 This Contract is accepted and activated. The initial implementation phase has zero Credential, network and real-model authority. Real access becomes usable only after Main accepts the zero-access Candidate, one focused audit passes, and Main freezes an exact Execution Baseline. Goal 2 remains closed and its ignored real evidence remains immutable.
+
+The user accepted the bounded
+`V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md` after the first command stopped before
+either arm. The Amendment authorizes one caller-side directory correction, one cold-start
+regression, Main light review, a corrected Execution Baseline and exactly one replacement
+Pair. It does not reopen the audit or change any experiment semantic.
 
 ## 1. Goal question
 
