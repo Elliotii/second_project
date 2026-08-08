@@ -1,7 +1,7 @@
 # V3.5 Version Charter — Persistent & Inspectable Adaptive Harness Workbench
 
 ```yaml
-status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_research_pending
+status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_activated
 date: 2026-08-08
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
@@ -12,7 +12,7 @@ repository_baseline: 6c686f01928a44211119e75767190e221b319fe2
 v3_status: closed_accepted
 v3_disposition: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-active_goal: null
+active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -21,19 +21,19 @@ goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
 goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
 goal_2_status: closed_inconclusive
 goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
-goal_2_5_status: research_candidate_not_activated
+goal_2_5_status: accepted_activated_implementation_not_started
 goal_3_status: not_activated
-implementation_authorized: false
-real_model_calls_authorized: 0
-credential_reads_authorized: 0
-external_network_authorized: false
+implementation_authorized: true_goal_2_5_zero_access_initial_phase
+real_model_calls_authorized: 32_after_zero_access_main_review_and_focused_audit
+credential_reads_authorized: 2_after_zero_access_main_review_and_focused_audit
+external_network_authorized: true_after_zero_access_main_review_and_focused_audit
 pi_core_patch_authorized: false
 runtime_route_switch_authorized: false
-git_commit_authorized: goal_2_closeout_only
+git_commit_authorized: goal_2_5_control_implementation_audit_execution_and_closeout_within_contract
 control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
 ```
 
-> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 仅是等待有界诊断的候选，并未激活；Goal 3、V3.5 最终接受和 Pi 修改仍未授权。
+> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 已在有界诊断和 Main 校准后接受并激活；初始阶段仅允许零调用实现，真实访问必须等待 Main 验收、一次聚焦审计与精确 Execution Baseline。Goal 3、V3.5 最终接受和 Pi 修改仍未授权。
 
 ## 1. Version mission
 
@@ -280,7 +280,7 @@ only treatment delta = adaptive Skill binding
 
 ## 6. Goal 3 — Adaptive Harness Workbench WebUI & Demo
 
-> 当前依赖状态：Goal 2 没有形成有效 Base/Candidate evidence，因此本节的启动前提尚未满足。Goal 2.5 是否补足该证据，必须经过新的有界研究、Main 审查和用户授权；不得由 Goal 2 的历史权限自动推出。
+> 当前依赖状态：Goal 2 没有形成有效 Base/Candidate evidence，因此本节的启动前提尚未满足。Goal 2.5 已获独立 Contract/Activation，将尝试补足该证据；在其真实结果由 Main 和用户处置前，本节仍不得启动。
 
 ### 6.1 Preconditions and architecture
 
@@ -443,20 +443,23 @@ V3.5 完成后，在证据支持范围内可以声称：
 - continual self-evolution、semantic memory、自动路由或生产级多用户平台；
 - V3.5 WebUI 是完整 Pi IDE 或替代 Pi Runtime。
 
-## 11. Current control state after Goal 2 activation
+## 11. Current control state after Goal 2.5 activation
 
 ```yaml
-active_goal: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
+active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 goal_1_control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
 goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
 goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
-goal_2_case_contract: accepted_activated
-goal_2_activation_authorized: true
-goal_2_implementation_authorized: true
-goal_2_real_execution_authorized: true_after_zero_access_preflight
-goal_2_pair_cost_usd_hard_cap: 0.40
+goal_2_status: closed_inconclusive
+goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
+goal_2_execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
+goal_2_5_contract: accepted_activated_implementation_not_started
+goal_2_5_zero_access_implementation_authorized: true
+goal_2_5_focused_audit_authorized: true_once
+goal_2_5_real_pair_authorized: true_once_after_audited_execution_baseline
+goal_2_5_pair_cost_usd_hard_cap: 0.40
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
@@ -466,7 +469,9 @@ deterministic/Faux 的跨进程 Session reopen/continue、Session↔Run linkage 
 Model；不覆盖 in-flight crash recovery、exactly-once Tool effects、自动 catalog rebuild、
 多写者事务或真实模型 continuation。
 
-Goal 2 的短 Case Contract 已由用户接受并激活。Main 必须先创建干净 Control Baseline
-并启动一个新的顶层 Goal 2 Session；真实 Credential/network/model authority 只有在零调用
-实现、reference calibration、bounded implementation commit 和 Main preflight 全部通过后
-才生效。Goal 3 与 V3.5 最终接受仍须另行授权。
+Goal 2 已按 `CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP` 关闭；其 invalid
+pair 必须保留且不得重标。Goal 2.5 的新 Contract 已接受并激活。Main 必须先创建干净
+Control Baseline 并启动一个新的顶层零访问 Implementation Session；真实
+Credential/network/model authority 只有在零调用实现通过 Main 验收、一次窄范围独立审计并
+冻结精确 audited Execution Baseline 后，才可用于一次 Base-first/Candidate Pair。Goal 3 与
+V3.5 最终接受仍须另行授权。
