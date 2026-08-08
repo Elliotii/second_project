@@ -5,8 +5,8 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_audited_execution_baseline_ready_for_real_pair
-  status: V3_5_G2_5_AUDIT_PASS_EXECUTION_BASELINE_FREEZE
+  phase: v3_5_goal_2_5_paused_after_pre_dispatch_infrastructure_defect
+  status: V3_5_G2_5_REAL_PAIR_PRE_ARM_PAUSE_PENDING_USER_DECISION
 
 active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 
@@ -35,7 +35,7 @@ last_completed_goal:
 
 current_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: focused_audit_passed_execution_baseline_frozen_real_pair_pending
+  status: real_pair_consumed_pre_arm_infrastructure_pause_pending_user_decision
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
   control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
@@ -44,8 +44,11 @@ current_goal:
   focused_audit_correction_commit: 2df7da60a365ea2de5ca80e8ada1b59048779117
   main_review: passed_after_one_bounded_correction
   focused_audit: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
-  execution_baseline_commit: resulting_HEAD_of_this_revision
-  real_pair: authorized_once_pending_new_no_source_edit_execution_session
+  execution_baseline_commit: 12c64739eb0b1db715def18800c28ea728f31610
+  real_execution_owner: completed_top_level_session_019fe370-1abb-7923-a41a-922d975d0a32
+  real_pair: consumed_once_pre_arm_workspace_parent_enoent_no_replacement_authorized
+  real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
+  main_disposition: PAUSE_V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_DEFECT_REQUIRES_NEW_AUTHORITY
 
 next_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -194,7 +197,7 @@ v3_5_control:
   goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
-  goal_2_5_status: focused_audit_passed_execution_baseline_frozen_real_pair_pending
+  goal_2_5_status: real_pair_consumed_pre_arm_infrastructure_pause_pending_user_decision
   goal_2_5_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   goal_2_5_research: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   goal_2_5_implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
@@ -213,13 +216,20 @@ v3_5_control:
   goal_2_5_focused_audit_disposition: REVISE_V3_5_G2_5_FOCUSED_AUDIT
   goal_2_5_audit_findings: V3G25-AUDIT-P1-001_and_V3G25-AUDIT-P1-002
   goal_2_5_audit_finding_corrections: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
-  goal_2_5_execution_baseline_commit: resulting_HEAD_of_this_revision
-  goal_2_5_real_pair_status: authorized_once_pending_dispatch
+  goal_2_5_execution_baseline_commit: 12c64739eb0b1db715def18800c28ea728f31610
+  goal_2_5_real_execution_session: 019fe370-1abb-7923-a41a-922d975d0a32
+  goal_2_5_real_pair_status: consumed_pre_arm_workspace_parent_enoent_no_replacement_authorized
+  goal_2_5_real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
+  goal_2_5_main_disposition_report: docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
   goal_2_5_focused_tests_after_audit_correction: 12_passed_0_failed_0_skipped
-  goal_2_5_real_execution_authorized: true_once_after_audited_execution_baseline
-  goal_2_5_credential_reads_authorized: 2_after_audited_execution_baseline
-  goal_2_5_external_network_authorized: true_after_audited_execution_baseline
-  goal_2_5_real_model_calls_authorized: 32_after_audited_execution_baseline
+  goal_2_5_real_execution_authorized: consumed_once_no_replacement_authorized
+  goal_2_5_credential_reads_authorized: consumed_with_execution_authority
+  goal_2_5_credential_resolver_reads_observed: 0
+  goal_2_5_external_network_authorized: consumed_with_execution_authority
+  goal_2_5_external_network_observed: 0
+  goal_2_5_real_model_calls_authorized: consumed_with_execution_authority
+  goal_2_5_real_model_calls_observed: 0
+  goal_2_5_real_cost_usd_observed: 0
   goal_2_5_real_cost_usd_hard_cap: 0.40
   goal_2_5_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_3_status: waiting_for_goal_2_5_not_activated
@@ -1856,6 +1866,8 @@ required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   - docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
+  - docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
+  - docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
   - docs/reports/V3_5_G2_CLOSEOUT.md
   - docs/reports/V3_5_G2_IMPLEMENTATION_REPORT.md
@@ -2248,11 +2260,13 @@ the hidden external Verifier never ran and Candidate never started. Therefore no
 pair or Skill-effect claim exists. The invalid pair and persistent Base Session prefix are
 preserved.
 
-The bounded postmortem is now complete and the user accepted Main's combined correction:
-model-visible `public_test`, Pi public `terminate: true` on successful public check, and
-a strict V2-derived quiescent budget-terminal fallback with separate Trajectory and Task
-Outcomes. Goal 2.5 is accepted and activated for zero-access implementation. A new top-level
-Session must start from the clean Control Baseline; Credential/network/real-model authority
-remains mechanically unavailable until Main accepts the zero-access Candidate, one focused
-audit passes, and Main freezes an exact Execution Baseline. Goal 3 and final V3.5 acceptance
-remain unauthorized.
+Goal 2.5's zero-access implementation and bounded correction passed Main review; the same
+focused Audit Session closed both termination/Verifier findings, and Main froze audited
+Execution Baseline `12c64739eb0b1db715def18800c28ea728f31610`. The fresh no-source-edit
+execution Session invoked the single authorized command once. It stopped before Base arm
+creation because `prepareGoal25PairV35` had not created the intermediate `workspaces`
+parent required by the non-recursive temporary-copy helper. Credential-resolver, network,
+Provider/model, Tool and Verifier counts remained zero and cost was USD 0. The one Pair
+authority is consumed; no replacement is authorized. Goal 2.5 remains active but paused
+for the user's choice between one infrastructure-only correction/replacement Pair and an
+inconclusive closeout. Goal 3 and final V3.5 acceptance remain unauthorized.

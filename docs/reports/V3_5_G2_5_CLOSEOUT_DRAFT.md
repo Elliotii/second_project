@@ -1,109 +1,67 @@
 # V3.5 Goal 2.5 Closeout Draft
 
 ```yaml
-status: DRAFT_AUDIT_CORRECTION_READY_FOR_MAIN_REREVIEW_AND_HIT_ONLY_RECHECK
+status: DRAFT_PAUSED_AFTER_PRE_DISPATCH_INFRASTRUCTURE_DEFECT
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
-implementation_commit: SELF
-reviewed_candidate_commit: e852f90fa49ae9320896b91338bfb966e328cf98
-correction_commit: SELF
-audit_correction_starting_baseline: 0ee2ba3b00980222225fe6b816399bc47b064ef2
-audit_correction_commit: SELF
+audited_execution_baseline: 12c64739eb0b1db715def18800c28ea728f31610
+real_execution_session: 019fe370-1abb-7923-a41a-922d975d0a32
+real_pair_authority: consumed_pre_arm
 goal_closed: false
-real_pair_executed: false
+goal_accepted: false
 skill_effect_claim: none
 ```
 
 ## Draft disposition
 
-Fact: the Contract-bounded zero-access implementation and Main-review correction are
-complete. Strict TypeScript and all focused/narrow regressions pass, with exact access
-counters `0/0/0/0/0`.
+The zero-call implementation, bounded correction and focused audit passed. The only
+authorized real command then stopped before Base arm creation because the caller had not
+created `<pair-root>/workspaces` before requesting `<pair-root>/workspaces/base` from the
+non-recursive temporary-copy helper.
 
-Fact: this is not a Goal 2.5 Closeout. It is a corrected Candidate handoff draft for Main
-rereview. The two focused-audit findings are corrected but still require the same Audit
-Session's hit-only recheck. An audited Execution Baseline, one real Base/Candidate pair,
-final evidence review, and explicit user acceptance remain pending.
+This draft is not a successful Closeout. It records a paused active Goal pending the user's
+choice between one tightly bounded pre-dispatch correction/replacement Pair and an
+inconclusive closeout.
 
-## Completed in this phase
-
-- model-visible legal `public_test` command affordance with unknown-ID fail-closed behavior;
-- actual first-payload Tool-interface digest persistence and cross-arm equality proof;
-- public Pi successful-check Tool-result termination with failed/timeout non-termination;
-- typed seventeenth-attempt local refusal with 16 actual dispatches and actual-response-only
-  accounting;
-- reservation, usage, Tool, side-effect, Session, Workspace, protected-byte, payload, and
-  tamper-evident pre-Verifier checkpoint;
-- separate Trajectory and external-Verifier Task outcomes;
-- dormant Base-first/Candidate-second real-pair controller for the later no-source-edit phase;
-- authenticated settled-path record persisted before Verifier, with Runtime/payload
-  authentication, public Session reopen/Tool-result closure, and live Workspace/protected
-  recheck immediately before Verifier;
-- tracked exact-argument real-pair CLI using one one-Run authority per arm, an explicit
-  authorization token, audited-baseline gate, pinned Pi source gate, and environment-only
-  opaque credential resolution after gates;
-- bidirectional Session↔Run linkage with explicit pair-root Session ArtifactRef, entry count,
-  and stable entries digest;
-- focused tests, narrow regressions, ignored raw evidence, and the Implementation Report.
-- typed rejection of any Provider request attempted after a successful terminating
-  `public_test`, with invalid Trajectory classification and no Verifier/Candidate handoff;
-- budget-terminal live Session reference/count/digest/Tool-closure recheck plus current
-  Workspace/protected-byte recheck immediately before the Verifier;
-- hit-specific mixed-batch and post-checkpoint Session/Workspace/protected mutation tests.
-
-## Verification summary
+## Evidence summary
 
 ```yaml
-strict_typescript: pass
-focused_goal_2_5: 12_passed_0_failed
-goal_2_regression: 8_passed_0_failed
-goal_1_regression: 6_passed_0_failed
-v2_checkpoint_regression: 8_passed_0_failed
-unaffected_v3_regression_main_supplemental_preserved: 8_passed_0_failed
-credential_reads: 0
+strict_typescript_before_execution: pass
+focused_goal_2_5_after_audit_correction: 12_passed_0_failed
+focused_audit: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
+real_command_invocations: 1
+real_command_exit_code: 1
+base_started: 0
+candidate_started: 0
+credential_resolver_reads: 0
 network_calls: 0
-external_provider_calls: 0
-real_model_calls: 0
-real_cost_usd: 0
-real_pair_starts: 0
+provider_calls: 0
+model_calls: 0
+tool_calls: 0
+verifier_runs: 0
+cost_usd: 0
+retry_fallback_replacement_extra_pair_case: 0/0/0/0/0
 ```
 
-Exact commands, evidence paths, source delta, deviations, and Gate dispositions are in
-`docs/reports/V3_5_G2_5_IMPLEMENTATION_REPORT.md`.
+See:
 
-## Explicitly unverified
+- `docs/reports/V3_5_G2_5_IMPLEMENTATION_REPORT.md`
+- `docs/reports/V3_5_G2_5_FOCUSED_INDEPENDENT_AUDIT_REPORT.md`
+- `docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md`
+- `docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md`
 
-- real credential resolution and DeepSeek dispatch;
-- real-model behavior on either arm;
-- real request/token/cost evidence;
-- two real external-Verifier results;
-- real-pair first-payload fairness and comparison integrity;
-- hit-only focused re-audit disposition for `V3G25-AUDIT-P1-001` and
-  `V3G25-AUDIT-P1-002`;
-- Main/user acceptance and the V3.5 Version Question.
+## Exit Criteria
 
-## Required Main decisions
+Contract Exit Criteria 1–2 passed. Criteria 3–7 remain unmet because neither arm started
+and no external Verifier or comparison evidence exists.
 
-1. Review the two bounded focused-audit corrections and exact correction commit.
-2. Return only `V3G25-AUDIT-P1-001` and `V3G25-AUDIT-P1-002` to the same Audit Session for
-   hit-only recheck.
-3. Only after an accepted recheck, freeze the exact Execution Baseline and separately return
-   no-source-edit real-pair authority to this Session.
+## Required user decision
 
-## Prohibited claims at this draft stage
+Choose either:
 
-Do not claim Goal 2.5 PASS, Skill effectiveness, a valid real pair, Goal 3 authorization, or
-final V3.5 acceptance. Preserve Goal 2's inconclusive closeout unchanged.
+1. authorize one infrastructure-only correction, a cold-start regression, a corrected
+   Execution Baseline and exactly one replacement Pair under the unchanged experiment; or
+2. close Goal 2.5 inconclusive with Skill effect unproven.
 
-## CURRENT_STATE_UPDATE_PROPOSAL
-
-```yaml
-CURRENT_STATE_UPDATE_PROPOSAL:
-  active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: AUDIT_CORRECTION_READY_FOR_MAIN_REREVIEW_AND_HIT_ONLY_RECHECK
-  implementation_commit: USE_SESSION_HANDOFF_SHA
-  audit: two_findings_corrected_pending_hit_only_recheck
-  execution_baseline: not_frozen
-  real_pair: not_executed
-  acceptance: pending
-```
+Until that decision, do not claim Goal 2.5 PASS, alter the Case/treatment/budget, enter Goal
+3, or accept V3.5.

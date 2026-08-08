@@ -1,7 +1,7 @@
 # V3.5 Goal 2.5 — Termination-safe Real Adaptive Skill Closure Contract
 
 ```yaml
-status: accepted_activated_implementation_not_started
+status: accepted_activated_real_pair_consumed_pre_arm_pause_pending_user_disposition
 date: 2026-08-08
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
@@ -12,13 +12,13 @@ contract_accepted: true
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
 active_goal: true
-implementation_authorized: true_zero_access_initial_phase
-credential_reads_authorized: 2_after_zero_access_main_review_and_focused_audit
-external_network_authorized: true_after_zero_access_main_review_and_focused_audit
-real_model_calls_authorized: 32_after_zero_access_main_review_and_focused_audit
+implementation_authorized: consumed_zero_access_implementation_and_corrections
+credential_reads_authorized: consumed_with_single_execution_authority_resolver_reads_observed_0
+external_network_authorized: consumed_with_single_execution_authority_observed_0
+real_model_calls_authorized: consumed_with_single_execution_authority_observed_0
 git_commit_authorized: control_implementation_audit_execution_and_closeout_within_contract
 focused_audit_authorized: true_once_after_zero_access_candidate
-real_pair_authorized: true_once_after_audited_execution_baseline
+real_pair_authorized: consumed_once_pre_arm_no_replacement_authorized
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
