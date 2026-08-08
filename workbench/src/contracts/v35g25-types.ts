@@ -79,6 +79,47 @@ export interface Goal25PreVerifierCheckpointV35 {
 	checkpoint_digest: string;
 }
 
+export interface Goal25SettledVerifierHandoffV35 {
+	schema_version: 1;
+	run_id: string;
+	session_id: string;
+	trajectory_outcome: "settled";
+	task_outcome: null;
+	handoff_sequence: 1;
+	runtime_authenticated: true;
+	runtime_matches_expected: true;
+	session_reopen_equal: true;
+	tool_calls_closed: true;
+	workspace_unchanged_since_terminal: true;
+	protected_unchanged: true;
+	first_payload_authenticated: true;
+	handoff_before_verifier: true;
+	session_ref: string;
+	session_entry_count: number;
+	session_entries_sha256: string;
+	workspace_tree_sha256: string;
+	protected_bytes_sha256: string;
+	tool_interface_sha256: string;
+	runtime_ref: ArtifactRefV0B;
+	first_payload_ref: ArtifactRefV0B;
+	session_snapshot_ref: ArtifactRefV0B;
+	workspace_snapshot_ref: ArtifactRefV0B;
+	handoff_digest: string;
+}
+
+export interface Goal25SessionRunLinkV35 {
+	schema_version: 1;
+	arm: "base" | "candidate";
+	run_id: string;
+	run_ref: string;
+	session_id: string;
+	session_ref_root: "pair_root";
+	session_ref: ArtifactRefV0B;
+	session_entry_count: number;
+	session_entries_sha256: string;
+	link_digest: string;
+}
+
 export interface Goal25ArmOutcomeV35 {
 	schema_version: 1;
 	run_id: string;

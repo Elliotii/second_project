@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import { formatSkillInvocation, JsonlSessionRepo, type JsonlSessionMetadata, type Session } from "@earendil-works/pi-agent-core";
@@ -34,10 +35,14 @@ import { freezeGoal2RunBindingV35, materializeGoal2StateSelectionV35 } from "../
 import { GOAL25_LEGAL_COMMAND_IDS_V35, GOAL25_TOOL_RESTRICTIONS_V35 } from "../src/v35g25/case-v35g25.ts";
 import {
 	createGoal25PreVerifierCheckpointV35,
+	createGoal25SettledVerifierHandoffV35,
 	goal25CheckpointGateErrors,
+	handoffGoal25SettledVerifierV35,
 	handoffGoal25VerifierV35,
 } from "../src/v35g25/checkpoint-v35g25.ts";
+import { assertGoal25PinnedPiSourceV35, createGoal25RealPairPortFactoryV35, createGoal25SessionRunLinkV35 } from "../src/v35g25/pair-v35g25.ts";
 import { compareGoal25FirstProviderPayloadsV35 } from "../src/v35g25/payload-fairness-v35g25.ts";
+import { GOAL25_REAL_PAIR_AUTHORIZATION_TOKEN_V35, parseGoal25RealPairArgumentsV35 } from "../src/v35g25/real-entry-v35g25.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 
 const HISTORICAL_STATE = "D:/AI/AI_Projects/project2/.runs/v3-g3/shared-authority/sequence-489cb1c4-20d9-42af-8dd6-0b22aeb6cf5d/project-state";
@@ -122,6 +127,53 @@ function checkpointWith(
 	return changed;
 }
 
+async function successfulSettledRun(label: string): Promise<Awaited<ReturnType<typeof setupRun>> & {
+	runtime: Awaited<ReturnType<ReturnType<typeof createGoal25FauxExecutionPortV35>["execute"]>>;
+	firstPayloadRef: ArtifactRefV0B;
+	firstPayloadToolsSha256: string;
+	protectedBefore: Readonly<Record<string, string>>;
+}> {
+	const setup = await setupRun({ label, correctWorkspace: true });
+	const capture = createGoal2FirstProviderPayloadCaptureV35({
+		arm: "base",
+		runId: `${label}-run`,
+		taskPrompt: setup.taskPrompt,
+		expectedLastUserText: setup.taskPrompt,
+		skillWrapperSha256: null,
+	});
+	const protectedBefore = readProtectedBytes(setup.workspace, GOAL2_TASK_POLICY_V35);
+	const port = createGoal25FauxExecutionPortV35([toolResponse("run_command", { command_id: "public_test" }, `${label}-public-test`)]);
+	const runtime = await port.execute({
+		runRoot: setup.runRoot,
+		runId: `${label}-run`,
+		workspaceRoot: setup.workspace,
+		taskPrompt: setup.taskPrompt,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		frozen: setup.frozen,
+		caseAuthority: setup.caseAuthority,
+		executionSession: setup.session,
+		toolRestrictions: GOAL25_TOOL_RESTRICTIONS_V35,
+		beforeProviderPayload: capture.observe,
+	});
+	const firstPayload = capture.requireEvidence();
+	return { ...setup, runtime, firstPayloadRef: writeOnceJson(setup.runRoot, "first-provider-payload.json", firstPayload), firstPayloadToolsSha256: firstPayload.tools_sha256, protectedBefore };
+}
+
+async function createSettledHandoff(setup: Awaited<ReturnType<typeof successfulSettledRun>>) {
+	return await createGoal25SettledVerifierHandoffV35({
+		runRoot: setup.runRoot,
+		runtime: setup.runtime,
+		session: setup.session,
+		sessionEvidenceRoot: setup.runRoot,
+		sessionRoot: resolve(setup.runRoot, "sessions"),
+		workspaceRoot: setup.workspace,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		protectedBefore: setup.protectedBefore,
+		firstPayloadRef: setup.firstPayloadRef,
+		firstPayloadToolsSha256: setup.firstPayloadToolsSha256,
+	});
+}
+
 test("Goal 2.5 command affordance exposes exactly public_test and remains fail closed", async () => {
 	const setup = await setupRun({ label: "tool-affordance" });
 	const profile = createBoundedToolProfile(setup.workspace, GOAL2_TASK_POLICY_V35, GOAL25_TOOL_RESTRICTIONS_V35);
@@ -176,6 +228,82 @@ test("successful public_test persists its Tool Result, terminates, and settles e
 	assert.doesNotMatch(actualSurface, /git_status|git_diff|git_log|not_a_legal_command/);
 	assert.equal(capture.requireEvidence().tools_sha256, runtime.tool_interface_sha256);
 	assert.deepEqual(port.accessCounters, { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
+});
+
+test("settled handoff authenticates persisted Runtime, public Session, Workspace and first payload before one Verifier", async () => {
+	const setup = await successfulSettledRun("settled-handoff-valid");
+	const created = await createSettledHandoff(setup);
+	assert.equal(created.handoff.runtime_matches_expected, true);
+	assert.equal(created.handoff.session_reopen_equal, true);
+	assert.equal(created.handoff.tool_calls_closed, true);
+	assert.equal(created.handoff.session_entry_count, (await setup.session.getEntries()).length);
+	let verifierRuns = 0;
+	const outcome = await handoffGoal25SettledVerifierV35({
+		runRoot: setup.runRoot,
+		handoffRef: created.ref,
+		sessionRoot: resolve(setup.runRoot, "sessions"),
+		sessionEvidenceRoot: setup.runRoot,
+		workspaceRoot: setup.workspace,
+		taskPolicy: GOAL2_TASK_POLICY_V35,
+		protectedBefore: setup.protectedBefore,
+		expectedRunId: setup.runtime.run_id,
+		expectedSessionId: setup.runtime.session_id,
+		expectedToolInterfaceSha256: setup.runtime.tool_interface_sha256,
+		runVerifier: async () => {
+			assert.equal(existsSync(resolve(setup.runRoot, created.ref.path)), true);
+			verifierRuns++;
+			return "passed";
+		},
+	});
+	assert.equal(verifierRuns, 1);
+	assert.equal(outcome.trajectory_outcome, "settled");
+	assert.equal(outcome.task_outcome, "passed");
+	assert.equal(outcome.candidate_eligible, true);
+});
+
+test("settled handoff mismatches stop before every Verifier and Candidate start", async () => {
+	const scenarios: Array<[string, (setup: Awaited<ReturnType<typeof successfulSettledRun>>) => Promise<void> | void]> = [
+		["persisted Runtime tamper", (setup) => {
+			const runtime = JSON.parse(readFileSync(resolve(setup.runRoot, "runtime-v35g25.json"), "utf8")) as Record<string, unknown>;
+			runtime.provider_dispatches = Number(runtime.provider_dispatches) + 1;
+			writeFileSync(resolve(setup.runRoot, "runtime-v35g25.json"), `${JSON.stringify(runtime)}\n`);
+		}],
+		["Session Tool-result mismatch", async (setup) => {
+			const metadata = await setup.session.getMetadata();
+			const lines = readFileSync(metadata.path, "utf8").trim().split(/\r?\n/);
+			const filtered = lines.filter((line) => !line.includes('"role":"toolResult"'));
+			assert.ok(filtered.length < lines.length);
+			writeFileSync(metadata.path, `${filtered.join("\n")}\n`);
+		}],
+		["Workspace drift", (setup) => writeFileSync(resolve(setup.workspace, "src/subject.ts"), "export const drift = true;\n")],
+		["protected drift", (setup) => writeFileSync(resolve(setup.workspace, "package.json"), "{}\n")],
+		["missing first payload", (setup) => unlinkSync(resolve(setup.runRoot, setup.firstPayloadRef.path))],
+		["tampered first payload", (setup) => writeFileSync(resolve(setup.runRoot, setup.firstPayloadRef.path), "{}\n")],
+	];
+	for (const [label, mutate] of scenarios) {
+		const setup = await successfulSettledRun(`settled-negative-${label.replaceAll(" ", "-")}`);
+		const created = await createSettledHandoff(setup);
+		await mutate(setup);
+		let verifierRuns = 0;
+		let candidateStarts = 0;
+		await assert.rejects(async () => {
+			await handoffGoal25SettledVerifierV35({
+				runRoot: setup.runRoot,
+				handoffRef: created.ref,
+				sessionRoot: resolve(setup.runRoot, "sessions"),
+				sessionEvidenceRoot: setup.runRoot,
+				workspaceRoot: setup.workspace,
+				taskPolicy: GOAL2_TASK_POLICY_V35,
+				protectedBefore: setup.protectedBefore,
+				expectedRunId: setup.runtime.run_id,
+				expectedSessionId: setup.runtime.session_id,
+				expectedToolInterfaceSha256: setup.runtime.tool_interface_sha256,
+				runVerifier: async () => { verifierRuns++; candidateStarts++; return "failed"; },
+			});
+		}, /settled handoff inspection rejected/, label);
+		assert.equal(verifierRuns, 0, label);
+		assert.equal(candidateStarts, 0, label);
+	}
 });
 
 test("failed and timed-out public checks never return termination", async () => {
@@ -329,6 +457,75 @@ test("Base and Candidate actual first payloads are identical outside the frozen 
 	const fairness = compareGoal25FirstProviderPayloadsV35(payloads[0]!, payloads[1]!);
 	assert.equal(fairness.equal_outside_frozen_skill_treatment, true);
 	assert.equal(fairness.base_tool_interface_sha256, fairness.candidate_tool_interface_sha256);
+});
+
+test("arm evidence provides authenticated bidirectional Session and Run linkage", async () => {
+	const setup = await successfulSettledRun("session-run-link");
+	const created = await createGoal25SessionRunLinkV35({
+		pairRoot: setup.runRoot,
+		runRoot: setup.runRoot,
+		arm: "base",
+		runId: setup.runtime.run_id,
+		sessionId: setup.runtime.session_id,
+		session: setup.session,
+	});
+	assert.equal(created.link.run_ref, "goal25-manifest.json");
+	assert.equal(created.link.session_id, setup.runtime.session_id);
+	assert.equal(created.link.session_ref_root, "pair_root");
+	assert.equal(created.link.session_entry_count, (await setup.session.getEntries()).length);
+	assert.equal(created.link.session_entries_sha256, digestObject(await setup.session.getEntries()));
+	const linkBody = { ...created.link } as Record<string, unknown>;
+	delete linkBody.link_digest;
+	assert.equal(created.link.link_digest, digestObject(linkBody));
+	assert.equal(existsSync(resolve(setup.runRoot, created.link.session_ref.path)), true);
+});
+
+test("tracked real entry fails closed on arguments and composes two one-Run authorities with zero access", async () => {
+	let resolverReads = 0;
+	const resolver = { resolve: async () => { resolverReads++; return "must-not-be-read-during-composition"; } };
+	const invalidArguments: readonly string[][] = [
+		[],
+		["--project-root", PROJECT_ROOT, "--pair-root", root("missing-real-args")],
+		["--project-root", PROJECT_ROOT, "--pair-root", root("wrong-auth"), "--historical-state-root", HISTORICAL_STATE, "--execution-baseline", "a".repeat(40), "--authorize-real-pair", "WRONG"],
+		["--project-root", PROJECT_ROOT, "--pair-root", root("bad-baseline"), "--historical-state-root", HISTORICAL_STATE, "--execution-baseline", "not-a-commit", "--authorize-real-pair", GOAL25_REAL_PAIR_AUTHORIZATION_TOKEN_V35],
+	];
+	for (const args of invalidArguments) assert.throws(() => parseGoal25RealPairArgumentsV35(args), /required|authorization|Baseline/);
+	assert.equal(resolverReads, 0);
+	const workbenchRoot = resolve(PROJECT_ROOT, "workbench");
+	const noCredentialEnvironment = { ...process.env };
+	delete noCredentialEnvironment["DEEPSEEK_API_KEY"];
+	const missingCli = spawnSync(process.execPath, ["--experimental-loader", "./scripts/v35g2-public-pi-loader.mjs", "scripts/v35g25-real-pair.ts"], { cwd: workbenchRoot, encoding: "utf8", windowsHide: true, env: noCredentialEnvironment });
+	assert.notEqual(missingCli.status, 0);
+	const wrongCliPairRoot = resolve(TEST_ROOT, `cli-wrong-auth-${process.pid}-${Date.now()}`);
+	const wrongCli = spawnSync(process.execPath, [
+		"--experimental-loader", "./scripts/v35g2-public-pi-loader.mjs", "scripts/v35g25-real-pair.ts",
+		"--project-root", PROJECT_ROOT,
+		"--pair-root", wrongCliPairRoot,
+		"--historical-state-root", HISTORICAL_STATE,
+		"--execution-baseline", "a".repeat(40),
+		"--authorize-real-pair", "WRONG",
+	], { cwd: workbenchRoot, encoding: "utf8", windowsHide: true, env: noCredentialEnvironment });
+	assert.notEqual(wrongCli.status, 0);
+	assert.equal(existsSync(wrongCliPairRoot), false);
+	assert.equal(resolverReads, 0);
+	const parsed = parseGoal25RealPairArgumentsV35([
+		"--project-root", PROJECT_ROOT,
+		"--pair-root", root("valid-real-args"),
+		"--historical-state-root", HISTORICAL_STATE,
+		"--execution-baseline", "a".repeat(40),
+		"--authorize-real-pair", GOAL25_REAL_PAIR_AUTHORIZATION_TOKEN_V35,
+	]);
+	assert.equal(parsed.expectedExecutionBaseline, "a".repeat(40));
+	assert.doesNotThrow(() => assertGoal25PinnedPiSourceV35());
+	const counters = { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 };
+	const factory = createGoal25RealPairPortFactoryV35({ credentialResolver: resolver });
+	const base = factory("base", counters);
+	const candidate = factory("candidate", counters);
+	assert.throws(() => factory("base", counters), /already constructed/);
+	assert.equal(resolverReads, 0);
+	assert.deepEqual({ ...counters, real_cost_usd: 0 }, { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0, real_cost_usd: 0 });
+	await base.close();
+	await candidate.close();
 });
 
 test("zero-access suite counters remain exactly 0/0/0/0/0", () => {

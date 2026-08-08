@@ -1,14 +1,15 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { formatSkillInvocation, JsonlSessionRepo } from "@earendil-works/pi-agent-core";
+import { relative, resolve, sep } from "node:path";
+import { formatSkillInvocation, JsonlSessionRepo, type JsonlSessionMetadata, type Session } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
-import type { Goal25ArmOutcomeV35, Goal25RuntimeEvidenceV35 } from "../contracts/v35g25-types.ts";
+import type { Goal25ArmOutcomeV35, Goal25RuntimeEvidenceV35, Goal25SessionRunLinkV35 } from "../contracts/v35g25-types.ts";
 import type { ArtifactRefV0B, VerifierResultV0B } from "../contracts/v0b-types.ts";
 import { artifactRef, writeOnceBytes, writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, sha256, treeDigest } from "../hash.ts";
-import type { Goal25AccessCountersV35, Goal25ExecutionPortV35 } from "../pi/pi-adapter-v35g25.ts";
+import { createGoal25DeepSeekExecutionPortV35, type Goal25AccessCountersV35, type Goal25ExecutionPortV35 } from "../pi/pi-adapter-v35g25.ts";
 import { readProtectedBytes } from "../pi/tool-profile.ts";
+import { createOneRunProviderAuthorityV1B, type OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
 import { inspectGoal3CaseAuthorityV3 } from "../state/case-authority-v3.ts";
 import { runExternalVerifierV0B } from "../verifier/runner.ts";
 import { createTemporaryWorkspace } from "../workspace/temp-copy.ts";
@@ -28,6 +29,7 @@ import { freezeGoal2RunBindingV35, materializeGoal2StateSelectionV35 } from "../
 import { GOAL25_TOOL_RESTRICTIONS_V35 } from "./case-v35g25.ts";
 import {
 	createGoal25PreVerifierCheckpointV35,
+	createGoal25SettledVerifierHandoffV35,
 	handoffGoal25SettledVerifierV35,
 	handoffGoal25VerifierV35,
 } from "./checkpoint-v35g25.ts";
@@ -36,6 +38,8 @@ import { compareGoal25FirstProviderPayloadsV35 } from "./payload-fairness-v35g25
 export type Goal25ArmV35 = "base" | "candidate";
 
 export const GOAL25_PAIR_ID_V35 = "v35-g25-stable-unique-pair-01";
+export const GOAL25_PINNED_PI_COMMIT_V35 = "027a5847901b5dde30270abaa1041046cd2b4b55";
+export const GOAL25_PINNED_PI_ROOT_V35 = "D:/AI/AI_Projects/project2/.upstream/pi";
 export const GOAL25_IDS_V35 = Object.freeze({
 	base: { session: "v35-g25-stable-unique-base-session-01", run: "v35-g25-stable-unique-base-run-01" },
 	candidate: { session: "v35-g25-stable-unique-candidate-session-01", run: "v35-g25-stable-unique-candidate-run-01" },
@@ -63,6 +67,12 @@ export interface Goal25ArmManifestV35 {
 	verifier_ref: ArtifactRefV0B;
 	outcome_ref: ArtifactRefV0B;
 	checkpoint_ref: ArtifactRefV0B | null;
+	settled_handoff_ref: ArtifactRefV0B | null;
+	session_link_ref: ArtifactRefV0B;
+	session_ref_root: "pair_root";
+	session_ref: ArtifactRefV0B;
+	session_entry_count: number;
+	session_entries_sha256: string;
 	trajectory_outcome: Goal25ArmOutcomeV35["trajectory_outcome"];
 	task_outcome: Goal25ArmOutcomeV35["task_outcome"];
 	request_attempts: number;
@@ -74,6 +84,8 @@ export interface Goal25ArmManifestV35 {
 	tool_interface_sha256: string;
 	manifest_digest: string;
 }
+
+function portable(value: string): string { return value.split(sep).join("/"); }
 
 export interface Goal25ComparisonV35 {
 	schema_version: 1;
@@ -96,11 +108,45 @@ export interface Goal25ComparisonV35 {
 	comparison_digest: string;
 }
 
+export async function createGoal25SessionRunLinkV35(options: {
+	pairRoot: string;
+	runRoot: string;
+	arm: Goal25ArmV35;
+	runId: string;
+	sessionId: string;
+	session: Session<JsonlSessionMetadata>;
+}): Promise<{ link: Goal25SessionRunLinkV35; ref: ArtifactRefV0B }> {
+	const metadata = await options.session.getMetadata();
+	const entries = await options.session.getEntries();
+	if (metadata.id !== options.sessionId || entries.length < 2) throw new Error("Goal 2.5 Session/Run linkage identity invalid");
+	const sessionRef = artifactRef(options.pairRoot, resolve(metadata.path), "application/x-ndjson", false);
+	const body: Omit<Goal25SessionRunLinkV35, "link_digest"> = {
+		schema_version: 1,
+		arm: options.arm,
+		run_id: options.runId,
+		run_ref: portable(relative(options.pairRoot, resolve(options.runRoot, "goal25-manifest.json"))),
+		session_id: options.sessionId,
+		session_ref_root: "pair_root",
+		session_ref: sessionRef,
+		session_entry_count: entries.length,
+		session_entries_sha256: digestObject(entries),
+	};
+	const link = { ...body, link_digest: digestObject(body) };
+	return { link, ref: writeOnceJson(options.runRoot, "session-run-link.json", link) };
+}
+
 function assertExecutionBaseline(projectRoot: string, expectedExecutionBaseline: string): void {
 	if (!/^[a-f0-9]{40}$/.test(expectedExecutionBaseline)) throw new Error("Goal 2.5 audited Execution Baseline identity invalid");
 	const head = spawnSync("git", ["rev-parse", "HEAD"], { cwd: projectRoot, encoding: "utf8", windowsHide: true });
-	const status = spawnSync("git", ["status", "--short", "--untracked-files=all"], { cwd: projectRoot, encoding: "utf8", windowsHide: true });
+	const status = spawnSync("git", ["status", "--short", "--untracked-files=no"], { cwd: projectRoot, encoding: "utf8", windowsHide: true });
 	if (head.status !== 0 || head.stdout.trim() !== expectedExecutionBaseline || status.status !== 0 || status.stdout.trim() !== "") throw new Error("Goal 2.5 source is not the exact clean audited Execution Baseline");
+}
+
+export function assertGoal25PinnedPiSourceV35(): void {
+	const safeDirectory = `safe.directory=${GOAL25_PINNED_PI_ROOT_V35}`;
+	const head = spawnSync("git", ["-c", safeDirectory, "rev-parse", "HEAD"], { cwd: GOAL25_PINNED_PI_ROOT_V35, encoding: "utf8", windowsHide: true });
+	const status = spawnSync("git", ["-c", safeDirectory, "status", "--short", "--untracked-files=no"], { cwd: GOAL25_PINNED_PI_ROOT_V35, encoding: "utf8", windowsHide: true });
+	if (head.status !== 0 || head.stdout.trim() !== GOAL25_PINNED_PI_COMMIT_V35 || status.status !== 0 || status.stdout.trim() !== "") throw new Error("Goal 2.5 pinned Pi source identity or tracked cleanliness invalid");
 }
 
 export async function prepareGoal25PairV35(options: {
@@ -207,6 +253,7 @@ async function executeArm(options: {
 	if (firstPayload.tools_sha256 !== runtime.tool_interface_sha256) throw new Error("Goal 2.5 Tool-interface capture mismatch");
 	const firstPayloadRef = writeOnceJson(runRoot, "first-provider-payload.json", firstPayload);
 	let checkpointRef: ArtifactRefV0B | null = null;
+	let settledHandoffRef: ArtifactRefV0B | null = null;
 	if (runtime.trajectory_outcome === "pre_dispatch_budget_terminal") {
 		const created = await createGoal25PreVerifierCheckpointV35({
 			runRoot,
@@ -219,7 +266,21 @@ async function executeArm(options: {
 			firstPayloadToolsSha256: firstPayload.tools_sha256,
 		});
 		checkpointRef = created.ref;
-	} else if (runtime.trajectory_outcome !== "settled") {
+	} else if (runtime.trajectory_outcome === "settled") {
+		const created = await createGoal25SettledVerifierHandoffV35({
+			runRoot,
+			runtime,
+			session,
+			sessionEvidenceRoot: options.prepared.pairRoot,
+			sessionRoot: resolve(options.prepared.pairRoot, "sessions"),
+			workspaceRoot,
+			taskPolicy: GOAL2_TASK_POLICY_V35,
+			protectedBefore,
+			firstPayloadRef,
+			firstPayloadToolsSha256: firstPayload.tools_sha256,
+		});
+		settledHandoffRef = created.ref;
+	} else {
 		throw new Error(`Goal 2.5 ${options.arm} trajectory is invalid`);
 	}
 	let verifierRuns = 0;
@@ -243,8 +304,21 @@ async function executeArm(options: {
 	};
 	const outcome = checkpointRef
 		? await handoffGoal25VerifierV35({ runRoot, checkpointRef, expectedToolInterfaceSha256: runtime.tool_interface_sha256, runVerifier })
-		: await handoffGoal25SettledVerifierV35({ runRoot, runtime, firstPayloadRef, firstPayloadToolsSha256: firstPayload.tools_sha256, runVerifier });
+		: await handoffGoal25SettledVerifierV35({
+			runRoot,
+			handoffRef: settledHandoffRef!,
+			sessionRoot: resolve(options.prepared.pairRoot, "sessions"),
+			sessionEvidenceRoot: options.prepared.pairRoot,
+			workspaceRoot,
+			taskPolicy: GOAL2_TASK_POLICY_V35,
+			protectedBefore,
+			expectedRunId: ids.run,
+			expectedSessionId: ids.session,
+			expectedToolInterfaceSha256: runtime.tool_interface_sha256,
+			runVerifier,
+		});
 	if (verifierRuns !== 1 || verifierResult === null) throw new Error("Goal 2.5 external Verifier did not run exactly once");
+	const sessionLink = await createGoal25SessionRunLinkV35({ pairRoot: options.prepared.pairRoot, runRoot, arm: options.arm, runId: ids.run, sessionId: ids.session, session });
 	const manifestBody: Omit<Goal25ArmManifestV35, "manifest_digest"> = {
 		schema_version: 1,
 		arm: options.arm,
@@ -259,6 +333,12 @@ async function executeArm(options: {
 		verifier_ref: artifactRef(runRoot, "verifier/result.json", "application/json", false),
 		outcome_ref: artifactRef(runRoot, "outcome.json", "application/json", false),
 		checkpoint_ref: checkpointRef,
+		settled_handoff_ref: settledHandoffRef,
+		session_link_ref: sessionLink.ref,
+		session_ref_root: "pair_root",
+		session_ref: sessionLink.link.session_ref,
+		session_entry_count: sessionLink.link.session_entry_count,
+		session_entries_sha256: sessionLink.link.session_entries_sha256,
 		trajectory_outcome: outcome.trajectory_outcome,
 		task_outcome: outcome.task_outcome,
 		request_attempts: runtime.request_attempts,
@@ -276,6 +356,35 @@ async function executeArm(options: {
 	const manifest = { ...manifestBody, manifest_digest: digestObject(manifestBody) };
 	const localManifestRef = writeOnceJson(runRoot, "goal25-manifest.json", manifest);
 	return { manifest, ref: artifactRef(options.prepared.pairRoot, resolve(runRoot, localManifestRef.path), "application/json", false), firstPayload };
+}
+
+export function createGoal25RealPairPortFactoryV35(options: {
+	credentialResolver: OpaqueCredentialResolverV1;
+}): (arm: Goal25ArmV35, counters: Goal25AccessCountersV35) => Goal25ExecutionPortV35 {
+	const constructed = new Set<Goal25ArmV35>();
+	return (arm, counters) => {
+		if (constructed.has(arm)) throw new Error(`Goal 2.5 ${arm} one-Run authority was already constructed`);
+		constructed.add(arm);
+		return createGoal25DeepSeekExecutionPortV35({
+			authority: createOneRunProviderAuthorityV1B({ authorized: true, resolver: options.credentialResolver }),
+			accessCounters: counters,
+		});
+	};
+}
+
+export async function executeGoal25RealPairV35(options: {
+	projectRoot: string;
+	prepared: PreparedGoal25PairV35;
+	expectedExecutionBaseline: string;
+	credentialResolver: OpaqueCredentialResolverV1;
+}): Promise<Goal25ComparisonV35> {
+	return await executeGoal25PairV35({
+		projectRoot: options.projectRoot,
+		prepared: options.prepared,
+		expectedExecutionBaseline: options.expectedExecutionBaseline,
+		sourceIdentityVerifier: assertGoal25PinnedPiSourceV35,
+		executionPortFactory: createGoal25RealPairPortFactoryV35({ credentialResolver: options.credentialResolver }),
+	});
 }
 
 export async function executeGoal25PairV35(options: {
