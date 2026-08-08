@@ -1,13 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
-import { JsonlSessionRepo, type JsonlSessionMetadata, type Session } from "@earendil-works/pi-agent-core";
+import { formatSkillInvocation, JsonlSessionRepo, type JsonlSessionMetadata, type Session } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import type { VerifierResultV0B } from "../contracts/v0b-types.ts";
 import type { DirectPiRuntimeEvidenceV3 } from "../contracts/v3g3-types.ts";
-import type { Goal2ArmManifestV35, Goal2ArmV35, Goal2ComparisonV35, Goal2EfficiencyLabelV35, Goal2ResultLabelV35, Goal2SessionRecordV35 } from "../contracts/v35g2-types.ts";
+import type { Goal2ArmManifestV35, Goal2ArmV35, Goal2ComparisonV35, Goal2EfficiencyLabelV35, Goal2FirstProviderPayloadEvidenceV35, Goal2ResultLabelV35, Goal2SessionRecordV35 } from "../contracts/v35g2-types.ts";
 import { artifactRef, readJsonArtifact, writeOnceBytes, writeOnceJson } from "../evidence/artifacts.ts";
-import { digestObject, treeDigest } from "../hash.ts";
+import { digestObject, sha256, treeDigest } from "../hash.ts";
 import { createGoal3DeepSeekExecutionPortV3, type Goal3ExecutionPortV3, type Goal3RealAccessCountersV3 } from "../pi/pi-adapter-v3.ts";
 import { GOAL3_BUDGET_PROFILE_V3 } from "../pi/runtime-profile-v3.ts";
 import { createOneRunProviderAuthorityV1B, type OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
@@ -16,6 +16,7 @@ import { readProtectedBytes } from "../pi/tool-profile.ts";
 import { createTemporaryWorkspace } from "../workspace/temp-copy.ts";
 import { assertFrozenGoal2CaseBytesV35, GOAL2_BASE_RUN_ID_V35, GOAL2_BASE_SESSION_ID_V35, GOAL2_CANDIDATE_RUN_ID_V35, GOAL2_CANDIDATE_SESSION_ID_V35, GOAL2_CASE_AUTHORITY_DIGEST_V35, GOAL2_CASE_ID_V35, GOAL2_COMPARISON_ID_V35, GOAL2_EFFECTIVE_TOOL_SURFACE_DIGEST_V35, GOAL2_PROJECT_ID_V35, GOAL2_TASK_POLICY_V35, GOAL2_TOOL_RESTRICTIONS_V35, GOAL2_WORKSPACE_DIGEST_V35, goal2FixturePathsV35, goal2VerifierTaskV35, materializeGoal2CaseAuthorityV35, requireFrozenInstructionV35 } from "./case-v35g2.ts";
 import { freezeGoal2RunBindingV35, inspectGoal2StateSelectionV35, materializeGoal2StateSelectionV35 } from "./state-selection-v35g2.ts";
+import { createGoal2FirstProviderPayloadCaptureV35, goal2PayloadFairnessDigestV35, validateGoal2FirstPayloadEvidenceV35 } from "./payload-fairness-v35g2.ts";
 
 interface PreparedPairV35 {
 	pairRoot: string;
@@ -100,9 +101,17 @@ async function executeArm(options: PairExecutionOptionsV35 & { arm: Goal2ArmV35;
 	const session = await createFreshSession(options.repo, options.arm, workspaceRoot);
 	const metadata = await session.getMetadata();
 	const frozen = await freezeGoal2RunBindingV35({ arm: options.arm, selectionAuthorityRoot: options.selectionAuthorityRoot, caseAuthorityPath: options.caseAuthorityPath, runRoot });
+	const taskPrompt = requireFrozenInstructionV35(options.projectRoot);
+	const skillWrapper = frozen.adaptiveSkill === null ? null : formatSkillInvocation(frozen.adaptiveSkill);
+	if (skillWrapper !== null && sha256(skillWrapper) !== frozen.binding.adaptive_skill_wrapper_sha256) throw new Error("Goal 2 frozen Skill wrapper bytes drifted");
+	const expectedLastUserText = skillWrapper === null ? taskPrompt : `${skillWrapper}\n\n${taskPrompt}`;
+	const payloadCapture = createGoal2FirstProviderPayloadCaptureV35({ arm: options.arm, runId: ids.run, taskPrompt, expectedLastUserText, skillWrapperSha256: skillWrapper === null ? null : sha256(skillWrapper) });
 	const started = Date.now();
-	const result = await executeGoal3RunV3({ projectRoot: options.projectRoot, runRoot, runId: ids.run, caseId: GOAL2_CASE_ID_V35, caseAuthorityPath: options.caseAuthorityPath, workspaceRoot, taskPrompt: requireFrozenInstructionV35(options.projectRoot), taskPolicy: GOAL2_TASK_POLICY_V35, verifierTask: goal2VerifierTaskV35(options.projectRoot), verifierSourcePath: goal2FixturePathsV35(options.projectRoot).verifier, frozen, executionPort: options.executionPortFactory(options.arm, options.counters), executionSession: session, toolRestrictions: GOAL2_TOOL_RESTRICTIONS_V35, verifierWorkspaceEnvironmentKey: "V35_WORKSPACE" });
+	const result = await executeGoal3RunV3({ projectRoot: options.projectRoot, runRoot, runId: ids.run, caseId: GOAL2_CASE_ID_V35, caseAuthorityPath: options.caseAuthorityPath, workspaceRoot, taskPrompt, taskPolicy: GOAL2_TASK_POLICY_V35, verifierTask: goal2VerifierTaskV35(options.projectRoot), verifierSourcePath: goal2FixturePathsV35(options.projectRoot).verifier, frozen, executionPort: options.executionPortFactory(options.arm, options.counters), executionSession: session, toolRestrictions: GOAL2_TOOL_RESTRICTIONS_V35, beforeProviderPayload: payloadCapture.observe, verifierWorkspaceEnvironmentKey: "V35_WORKSPACE" });
 	const elapsedMs = Math.max(0, Date.now() - started);
+	const firstProviderPayload = payloadCapture.requireEvidence();
+	if (!validateGoal2FirstPayloadEvidenceV35(firstProviderPayload)) throw new Error("Goal 2 first Provider payload evidence digest invalid");
+	const firstProviderPayloadRef = writeOnceJson(runRoot, "first-provider-payload.json", firstProviderPayload);
 	const runtime = readJsonArtifact<DirectPiRuntimeEvidenceV3>(runRoot, "runtime.json");
 	const verifier = readJsonArtifact<VerifierResultV0B>(runRoot, "verifier/result.json");
 	if (runtime.session_id !== ids.session || runtime.run_id !== ids.run || runtime.binding_digest !== frozen.binding.binding_digest || verifier.status === "invalid") throw new Error("Goal 2 arm runtime/Session/Verifier lineage invalid");
@@ -121,7 +130,7 @@ async function executeArm(options: PairExecutionOptionsV35 & { arm: Goal2ArmV35;
 	const v3ManifestRef = artifactRef(runRoot, "manifest.json", "application/json", false);
 	const bindingRef = artifactRef(runRoot, "binding.json", "application/json", false);
 	const selection = await inspectGoal2StateSelectionV35({ authorityRoot: options.selectionAuthorityRoot });
-	const manifestBody: Omit<Goal2ArmManifestV35, "manifest_digest"> = { schema_version: 1, project_id: GOAL2_PROJECT_ID_V35, case_id: GOAL2_CASE_ID_V35, arm: options.arm, run_id: ids.run, session_id: ids.session, workspace_id: workspaceId(options.arm), initial_workspace_digest: initialDigest, final_workspace_digest: treeDigest(workspaceRoot), protected_before_digest: protectedBefore, protected_after_digest: protectedAfter, task_prompt_sha256: result.manifest.task_prompt_sha256, state_selection_digest: selection.authority.authority_digest, binding_digest: frozen.binding.binding_digest, case_authority_digest: result.manifest.case_authority_digest, effective_tool_surface_digest: GOAL2_EFFECTIVE_TOOL_SURFACE_DIGEST_V35, v3_manifest_ref: v3ManifestRef, binding_ref: bindingRef, final_subject_ref: artifactRef(runRoot, finalSubjectPath, "text/typescript; charset=utf-8", false), runtime_ref: runtimeRef, verifier_ref: verifierRef, session_record_ref: artifactRef(runRoot, sessionRecordRef.path, "application/json", false), verifier_status: verifier.status, external_verifier_runs: 1, provider_requests: runtime.provider_requests, tool_calls: runtime.tool_calls, tokens: runtime.input_tokens + runtime.output_tokens, cost_usd: runtime.cost_usd, elapsed_ms: elapsedMs, semantic_diff_lines: semanticDiffLines(initialSubject, finalSubject) };
+	const manifestBody: Omit<Goal2ArmManifestV35, "manifest_digest"> = { schema_version: 1, project_id: GOAL2_PROJECT_ID_V35, case_id: GOAL2_CASE_ID_V35, arm: options.arm, run_id: ids.run, session_id: ids.session, workspace_id: workspaceId(options.arm), initial_workspace_digest: initialDigest, final_workspace_digest: treeDigest(workspaceRoot), protected_before_digest: protectedBefore, protected_after_digest: protectedAfter, task_prompt_sha256: result.manifest.task_prompt_sha256, state_selection_digest: selection.authority.authority_digest, binding_digest: frozen.binding.binding_digest, case_authority_digest: result.manifest.case_authority_digest, effective_tool_surface_digest: GOAL2_EFFECTIVE_TOOL_SURFACE_DIGEST_V35, v3_manifest_ref: v3ManifestRef, binding_ref: bindingRef, final_subject_ref: artifactRef(runRoot, finalSubjectPath, "text/typescript; charset=utf-8", false), runtime_ref: runtimeRef, verifier_ref: verifierRef, session_record_ref: artifactRef(runRoot, sessionRecordRef.path, "application/json", false), first_provider_payload_ref: artifactRef(runRoot, firstProviderPayloadRef.path, "application/json", false), verifier_status: verifier.status, external_verifier_runs: 1, provider_requests: runtime.provider_requests, tool_calls: runtime.tool_calls, tokens: runtime.input_tokens + runtime.output_tokens, cost_usd: runtime.cost_usd, elapsed_ms: elapsedMs, semantic_diff_lines: semanticDiffLines(initialSubject, finalSubject) };
 	const manifest = { ...manifestBody, manifest_digest: digestObject(manifestBody) };
 	writeOnceJson(runRoot, "goal2-manifest.json", manifest);
 	return manifest;
@@ -141,6 +150,24 @@ function labels(base: Goal2ArmManifestV35, candidate: Goal2ArmManifestV35): { re
 
 function assertArmBudgets(manifest: Goal2ArmManifestV35): void {
 	if (manifest.provider_requests < 1 || manifest.provider_requests > GOAL3_BUDGET_PROFILE_V3.provider_requests_max || manifest.tool_calls > GOAL3_BUDGET_PROFILE_V3.tool_calls_max || manifest.tokens > GOAL3_BUDGET_PROFILE_V3.token_limit || manifest.cost_usd > GOAL3_BUDGET_PROFILE_V3.cost_usd_max) throw new Error("Goal 2 arm budget invalid");
+}
+
+function payloadEvidence(pairRoot: string, manifest: Goal2ArmManifestV35): Goal2FirstProviderPayloadEvidenceV35 {
+	const runRoot = resolve(pairRoot, "runs", manifest.run_id);
+	return readJsonArtifact<Goal2FirstProviderPayloadEvidenceV35>(runRoot, manifest.first_provider_payload_ref.path);
+}
+
+function payloadFairnessValid(base: Goal2FirstProviderPayloadEvidenceV35, candidate: Goal2FirstProviderPayloadEvidenceV35): boolean {
+	return validateGoal2FirstPayloadEvidenceV35(base)
+		&& validateGoal2FirstPayloadEvidenceV35(candidate)
+		&& base.normalized_payload_sha256 === candidate.normalized_payload_sha256
+		&& base.normalized_messages_sha256 === candidate.normalized_messages_sha256
+		&& base.system_messages_sha256 === candidate.system_messages_sha256
+		&& base.tools_sha256 === candidate.tools_sha256
+		&& base.model_sha256 === candidate.model_sha256
+		&& base.request_fields_sha256 === candidate.request_fields_sha256
+		&& base.payload_top_level_keys_sha256 === candidate.payload_top_level_keys_sha256
+		&& base.treatment_marker_sha256 === candidate.treatment_marker_sha256;
 }
 
 export async function executeGoal2PairV35(options: PairExecutionOptionsV35): Promise<Goal2ComparisonV35> {
@@ -164,7 +191,9 @@ export async function executeGoal2PairV35(options: PairExecutionOptionsV35): Pro
 		const pairCounters = aggregate();
 		if (pairCounters.credential_reads > 2 || pairCounters.real_model_calls > 32 || base.cost_usd + candidate.cost_usd > 0.40 || pairCounters.network_calls !== pairCounters.real_model_calls || pairCounters.external_provider_calls !== pairCounters.real_model_calls) throw new Error("Goal 2 pair aggregate budget invalid");
 		const observed = labels(base, candidate);
-		const body: Omit<Goal2ComparisonV35, "comparison_digest"> = { schema_version: 1, comparison_id: GOAL2_COMPARISON_ID_V35, project_id: GOAL2_PROJECT_ID_V35, case_id: GOAL2_CASE_ID_V35, arm_order: ["base", "candidate"], base_run_id: base.run_id, candidate_run_id: candidate.run_id, base_manifest_ref: artifactRef(options.pairRoot, portable(relative(options.pairRoot, armManifestPath(options.pairRoot, "base"))), "application/json", false), candidate_manifest_ref: artifactRef(options.pairRoot, portable(relative(options.pairRoot, armManifestPath(options.pairRoot, "candidate"))), "application/json", false), state_selection_digest: selection.authority.authority_digest, case_authority_digest: base.case_authority_digest, fairness_valid: base.initial_workspace_digest === candidate.initial_workspace_digest && base.task_prompt_sha256 === candidate.task_prompt_sha256 && base.case_authority_digest === candidate.case_authority_digest && base.state_selection_digest === candidate.state_selection_digest && base.protected_before_digest === base.protected_after_digest && candidate.protected_before_digest === candidate.protected_after_digest, result: observed.result, efficiency: observed.efficiency };
+		const basePayload = payloadEvidence(options.pairRoot, base);
+		const candidatePayload = payloadEvidence(options.pairRoot, candidate);
+		const body: Omit<Goal2ComparisonV35, "comparison_digest"> = { schema_version: 1, comparison_id: GOAL2_COMPARISON_ID_V35, project_id: GOAL2_PROJECT_ID_V35, case_id: GOAL2_CASE_ID_V35, arm_order: ["base", "candidate"], base_run_id: base.run_id, candidate_run_id: candidate.run_id, base_manifest_ref: artifactRef(options.pairRoot, portable(relative(options.pairRoot, armManifestPath(options.pairRoot, "base"))), "application/json", false), candidate_manifest_ref: artifactRef(options.pairRoot, portable(relative(options.pairRoot, armManifestPath(options.pairRoot, "candidate"))), "application/json", false), state_selection_digest: selection.authority.authority_digest, case_authority_digest: base.case_authority_digest, normalized_first_provider_payload_sha256: basePayload.normalized_payload_sha256, payload_fairness_digest: goal2PayloadFairnessDigestV35(basePayload, candidatePayload), fairness_valid: base.initial_workspace_digest === candidate.initial_workspace_digest && base.task_prompt_sha256 === candidate.task_prompt_sha256 && base.case_authority_digest === candidate.case_authority_digest && base.state_selection_digest === candidate.state_selection_digest && base.protected_before_digest === base.protected_after_digest && candidate.protected_before_digest === candidate.protected_after_digest && payloadFairnessValid(basePayload, candidatePayload), result: observed.result, efficiency: observed.efficiency };
 		if (!body.fairness_valid) throw new Error("Goal 2 pair fairness invalid");
 		const comparison = { ...body, comparison_digest: digestObject(body) };
 		writeOnceJson(options.pairRoot, "comparison.json", comparison);

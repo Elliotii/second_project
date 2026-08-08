@@ -37,6 +37,32 @@ export interface Goal2SessionRecordV35 {
 	record_digest: string;
 }
 
+export interface Goal2FirstProviderPayloadEvidenceV35 {
+	schema_version: 1;
+	project_id: string;
+	case_id: string;
+	arm: Goal2ArmV35;
+	run_id: string;
+	capture_ordinal: 1;
+	message_count: number;
+	last_user_message_index: number;
+	treatment_kind: "task_prompt" | "skill_wrapper_plus_task_prompt";
+	task_prompt_sha256: string;
+	skill_wrapper_sha256: string | null;
+	expected_last_user_text_sha256: string;
+	actual_last_user_text_sha256: string;
+	treatment_marker_sha256: string;
+	payload_sha256: string;
+	normalized_payload_sha256: string;
+	normalized_messages_sha256: string;
+	system_messages_sha256: string;
+	tools_sha256: string;
+	model_sha256: string;
+	request_fields_sha256: string;
+	payload_top_level_keys_sha256: string;
+	evidence_digest: string;
+}
+
 export interface Goal2ArmManifestV35 {
 	schema_version: 1;
 	project_id: string;
@@ -60,6 +86,7 @@ export interface Goal2ArmManifestV35 {
 	runtime_ref: ArtifactRefV0B;
 	verifier_ref: ArtifactRefV0B;
 	session_record_ref: ArtifactRefV0B;
+	first_provider_payload_ref: ArtifactRefV0B;
 	verifier_status: "passed" | "failed";
 	external_verifier_runs: 1;
 	provider_requests: number;
@@ -83,6 +110,8 @@ export interface Goal2ComparisonV35 {
 	candidate_manifest_ref: ArtifactRefV0B;
 	state_selection_digest: string;
 	case_authority_digest: string;
+	normalized_first_provider_payload_sha256: string;
+	payload_fairness_digest: string;
 	fairness_valid: boolean;
 	result: Goal2ResultLabelV35;
 	efficiency: Goal2EfficiencyLabelV35;

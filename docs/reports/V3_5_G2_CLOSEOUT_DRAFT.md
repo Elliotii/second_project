@@ -4,7 +4,7 @@
 goal_id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
 document_status: draft_for_main
 goal_2_accepted: false
-implementation_status: READY_FOR_MAIN_PREFLIGHT
+implementation_status: READY_FOR_MAIN_CORRECTION_REVIEW
 real_pair_status: not_started
 credential_reads: 0
 network_calls: 0
@@ -31,6 +31,7 @@ Can the accepted historical adaptive Skill be explicitly selected from isolated 
 | Exactly one real Base and Candidate through Direct Pi | Pending Main authorization |
 | Same external Verifier exactly once per arm | Deterministically tested; pending real pair |
 | Persistent Session/Run/Tool/Verifier/comparison evidence and safe Read Model | Implemented and deterministically tested; pending real evidence |
+| Actual first Provider payload differs only by exact Skill treatment text | Corrected and deterministically/tamper tested; pending frozen real pair |
 | Accept observed result without hunting/replacement/tuning | Pending real result |
 | Pi, accepted V3 authority and prior facts unchanged | Satisfied at this stop point |
 
@@ -38,12 +39,13 @@ Can the accepted historical adaptive Skill be explicitly selected from isolated 
 
 Main should verify:
 
-1. the returned implementation commit is the clean HEAD and contains only the bounded changed-file set;
+1. the returned correction commit has parent `ce58cdb35948c7f100773f3fb94762d23d7eccd5`, is the clean HEAD and contains only the bounded correction/report set;
 2. frozen fixture, Verifier, Skill, State, profile, budget and Case Authority digests match `V3_5_G2_IMPLEMENTATION_REPORT.md`;
-3. `.runs/v3-5-g2/preflight-implementation/zero-access-preflight.json` and `.runs/v3-5-g2/reference-calibration/calibration.json` show zero access and a passing calibration;
+3. `.runs/v3-5-g2/preflight-correction-ce58/zero-access-preflight.json` and `.runs/v3-5-g2/reference-calibration-correction-ce58/calibration.json` show zero access and a passing calibration;
 4. the read-only historical State root and pinned Pi checkout remain unchanged;
 5. the real entry point still requires the exact implementation commit and explicit token `V3_5_G2_REAL_PAIR_ONCE`;
-6. no source, fixture, Verifier, Case Authority, budget or evidence-schema correction remains before the first Provider request.
+6. each arm's `first-provider-payload.json` is digest-only, captures ordinal one, proves the exact Base/Candidate user text, and has a shared normalized payload identity outside that text;
+7. no source, fixture, Verifier, Case Authority, budget or evidence-schema correction remains before the first Provider request.
 
 If Main passes preflight, the only permitted follow-up in this same top-level Session is the already frozen sequence:
 
@@ -78,4 +80,4 @@ No Skill win is required. Valid, fair, persistent evidence is the completion tar
 - Goal 3 and final V3.5 acceptance remain unauthorized.
 - Pi patches, private imports, SDK/Extension/RPC/server switching, retries, fallbacks, replacement Cases and extra arms remain forbidden.
 
-Draft disposition: `READY_FOR_MAIN_PREFLIGHT`; not a Goal acceptance.
+Draft disposition: `READY_FOR_MAIN_CORRECTION_REVIEW`; not a Goal acceptance.

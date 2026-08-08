@@ -3,15 +3,16 @@
 ```yaml
 goal_id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
 phase: zero_access_implementation_and_preflight
-status: READY_FOR_MAIN_PREFLIGHT
+status: READY_FOR_MAIN_CORRECTION_REVIEW
 control_baseline_commit: b44197e3a5465058c4cb327613d775943f5f8444
+implementation_commit: ce58cdb35948c7f100773f3fb94762d23d7eccd5
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 goal_2_accepted: false
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
 
-The exact implementation commit SHA is returned to Main after the authorized commit is created. A tracked report cannot contain its own commit SHA because its bytes participate in that SHA.
+Main returned one bounded pre-dispatch correction against implementation commit `ce58cdb35948c7f100773f3fb94762d23d7eccd5`. The correction commit SHA is returned to Main after it is created; a tracked report cannot contain its own SHA because its bytes participate in that SHA.
 
 ## Gate A
 
@@ -38,6 +39,30 @@ The exact implementation commit SHA is returned to Main after the authorized com
 `Fact`: `inspectGoal2PairV35` validates exact evidence keys, digests, paths, Session historical prefixes, Case/State/binding/runtime/Verifier lineage, treatment identity, usage and aggregate budgets. It permits later Session continuation while preserving the original Run prefix and final subject snapshot.
 
 `Fact`: `readGoal2SkillComparisonV35` replaces the Goal 2 unavailable-only boundary with an allowlisted comparison projection containing identities, result, efficiency and bounded usage only. It does not expose raw Session payloads, tool arguments, reasoning, credentials, absolute paths, hidden Verifier bytes or reference bytes.
+
+## Main-requested bounded payload-fairness correction
+
+`Fact`: Main preflight identified that V3 `model_payload_sha256` could represent a later request and therefore did not independently prove the actual first Provider payload treatment boundary. Real access remained forbidden while this defect was corrected.
+
+`Fact`: the public Direct Pi adapter now exposes one optional pre-dispatch payload-observation callback without changing the accepted V3 runtime artifact schema or semantics. Goal 2 owns a capture that records the first actual `before_provider_payload` value exactly once and ignores later payloads.
+
+`Fact`: `first-provider-payload.json` persists no raw payload, message, reasoning or credential material. It contains only identities, counts and SHA-256 digests for the canonical payload, treatment-normalized payload/messages, system/developer messages, tools, model, remaining request fields and top-level keys.
+
+`Fact`: capture fails before Provider transport if Base is not the exact task text or Candidate is not exact `formatSkillInvocation(historical Skill) + "\n\n" + task`. Only a string or one text content block is accepted; missing, wrong, repeated or appended treatment text fails closed.
+
+`Fact`: `inspectGoal2PairV35` validates the bounded artifact and reference, recomputes its digest and Session lineage, reconstructs the exact Candidate text from the isolated selected Skill plus the frozen Base task, and requires canonical equality after replacing only the exact last-user treatment text with one common marker. `comparison.fairness_valid` now depends on that same normalized first-payload proof.
+
+Correction file delta before reports:
+
+- `workbench/src/contracts/v35g2-types.ts`;
+- `workbench/src/pi/pi-adapter-v3.ts`;
+- `workbench/src/run-v3.ts`;
+- `workbench/src/v35g2/payload-fairness-v35g2.ts` (new);
+- `workbench/src/v35g2/pair-v35g2.ts`;
+- `workbench/src/v35g2/inspect-v35g2.ts`;
+- `workbench/tests/v35g2-real-adaptive-skill.test.ts`.
+
+Focused coverage now includes the actual public Direct Pi/Faux payload path, exact wrong/missing/extra Skill treatment rejection, missing/tampered evidence, non-treatment request-field drift, and stability of the first capture after a later payload.
 
 ## Changed files and principal symbols
 
@@ -102,10 +127,22 @@ All commands ran from the isolated Goal 2 worktree unless an explicit `-C` path 
 11. `git diff --check` — exit `0`.
 12. Protected-file `git diff --name-only -- AGENTS.md CURRENT_STATE.md <Charter> <Contract> .upstream/pi` — exit `0`; blank.
 
+### Bounded correction commands and results
+
+1. `git rev-parse HEAD; git status --short; git show --no-patch --format="%H%n%P%n%s" HEAD` — exit `0`; exact clean parent `ce58cdb35948c7f100773f3fb94762d23d7eccd5` before correction.
+2. `node D:\AI\AI_Projects\project2\.runs\g006\pi\node_modules\typescript\bin\tsc -p workbench/tsconfig.v35g2.json --noEmit` — first correction iteration exit `1` for one missing test import; corrected in scope. Final run exit `0`.
+3. `node --experimental-loader ./workbench/scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 workbench/tests/v35g2-real-adaptive-skill.test.ts` — first correction iteration exit `1`, `7/8` passed, exposing the public Faux single-text-block payload shape; corrected without relaxing exact text. Final run exit `0`, `8/8` passed.
+4. `node --experimental-loader ./workbench/scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 workbench/tests/v35-persistent-session.test.ts workbench/tests/v3g3-admission.test.ts` — exit `0`, `7/7` passed (`6` Goal 1 plus `1` V3 admission).
+5. `node --experimental-loader ./workbench/scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 workbench/tests/v3g3-selective-reuse.test.ts` — sandbox run exit `1` with `EPERM` at its historical external ignored evidence root and no source assertion failure; approved rerun exit `0`, `7/7` passed.
+6. `node --experimental-loader ./workbench/scripts/v35g2-public-pi-loader.mjs ./workbench/scripts/v35g2-zero-access-preflight.ts --project-root . --output-root .runs/v3-5-g2/preflight-correction-ce58 --historical-state-root D:/AI/AI_Projects/project2/.runs/v3-g3/shared-authority/sequence-489cb1c4-20d9-42af-8dd6-0b22aeb6cf5d/project-state` — exit `0`; unchanged preflight digest `dbe8f13b...`; every access/cost counter `0`.
+7. `node --experimental-loader ./workbench/scripts/v35g2-public-pi-loader.mjs ./workbench/scripts/v35g2-reference-calibration.ts --project-root . --output-root .runs/v3-5-g2/reference-calibration-correction-ce58` — exit `0`; public check `0`, Verifier `0/passed`, unchanged calibration digest `a788f60d...`, every access/cost counter `0`.
+
 Ignored evidence:
 
 - `.runs/v3-5-g2/preflight-implementation/zero-access-preflight.json`;
 - `.runs/v3-5-g2/reference-calibration/calibration.json` and bounded outputs/workspace;
+- `.runs/v3-5-g2/preflight-correction-ce58/zero-access-preflight.json`;
+- `.runs/v3-5-g2/reference-calibration-correction-ce58/calibration.json` and bounded outputs/workspace;
 - disposable focused-test evidence under `.runs/v3-5-g2/tests/`;
 - fresh disposable V3 regression evidence created by the accepted historical test under its hardcoded ignored authority root.
 
@@ -131,6 +168,6 @@ No credential name was resolved or read by an executed Goal 2 path. The real-pai
 
 `Fact`: the derived State selection remains intentionally bound to the accepted historical State path because Pi's public explicit-Skill wrapper hashes that location. Drift or absence fails closed before dispatch.
 
-`Recommendation`: Main should review this commit and ignored preflight/calibration evidence, then either send the explicit same-Session real-pair follow-up or return one bounded correction. This Session must not self-authorize real access.
+`Recommendation`: Main should review the correction commit and ignored zero-access evidence, then either send the explicit same-Session real-pair follow-up or return a precise Hard Stop/correction disposition. This Session must not self-authorize real access.
 
-`READY_FOR_MAIN_PREFLIGHT`
+`READY_FOR_MAIN_CORRECTION_REVIEW`

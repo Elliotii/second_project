@@ -34,6 +34,7 @@ export interface BoundExecutionOptionsV3 {
 	caseAuthority: Goal3CaseAuthorityV3;
 	executionSession?: Session<SessionMetadata>;
 	toolRestrictions?: BoundedToolRestrictions;
+	beforeProviderPayload?: (payload: unknown) => void;
 }
 
 interface RuntimeCountersV3 extends Goal3RealAccessCountersV3 {
@@ -112,6 +113,7 @@ async function runHarnessV3(options: BoundExecutionOptionsV3 & {
 		return undefined;
 	});
 	const offPayload = harness.on("before_provider_payload", (event) => {
+		options.beforeProviderPayload?.(event.payload);
 		payloadDigest = sha256(stableJson(event.payload));
 		return { payload: event.payload };
 	});
@@ -173,7 +175,13 @@ export function createGoal3FauxExecutionPortV3(): Goal3ExecutionPortV3 {
 			const registration = fauxProvider({ api: GOAL3_FAUX_PROVIDER_PROFILE_V3.api, provider: GOAL3_FAUX_PROVIDER_PROFILE_V3.provider_id, models: [{ id: GOAL3_FAUX_PROVIDER_PROFILE_V3.model_id, name: "V3-G3 Frozen Faux Model", reasoning: false, input: ["text", "image"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128_000, maxTokens: 16_384 }] });
 			models.setProvider(registration.provider);
 			let captured: ModelVisibleProjectionV1 | null = null;
-			registration.setResponses([(context, requestOptions, _state, model) => { captured = projectActualInitialRequestV1(context, requestOptions, model); return fauxAssistantMessage("V3-G3 deterministic run settled", { timestamp: 1 }); }]);
+			registration.setResponses([async (context, requestOptions, _state, model) => {
+				captured = projectActualInitialRequestV1(context, requestOptions, model);
+				const payload = { model: model.id, messages: [...(context.systemPrompt ? [{ role: "system", content: context.systemPrompt }] : []), ...context.messages], tools: context.tools ?? [], stream: true };
+				options.beforeProviderPayload?.(payload);
+				await requestOptions?.onPayload?.(payload, model);
+				return fauxAssistantMessage("V3-G3 deterministic run settled", { timestamp: 1 });
+			}]);
 			const counters: RuntimeCountersV3 = { dispatch_attempts: 0, provider_dispatches: 0, credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0, provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0 };
 			const runtime = await runHarnessV3({ ...options, profile: GOAL3_FAUX_PROVIDER_PROFILE_V3, models, model: registration.getModel(), counters, capturedProjection: () => captured });
 			if (registration.state.callCount !== 1 || registration.getPendingResponseCount() !== 0) throw new Error("Direct Pi Faux provider did not dispatch exactly once");
