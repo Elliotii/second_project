@@ -1,10 +1,11 @@
 # V3.5 Version Charter — Persistent & Inspectable Adaptive Harness Workbench
 
 ```yaml
-status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_closed_accepted_goal_3_activated_not_started
+status: closed_accepted
 date: 2026-08-09
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
+final_acceptance_by_user: 2026-08-09
 version: V3.5
 project: Agent Harness Reliability Workbench
 version_mission: persistent_inspectable_explainable_demonstrable_adaptive_harness
@@ -12,7 +13,7 @@ repository_baseline: 6c686f01928a44211119e75767190e221b319fe2
 v3_status: closed_accepted
 v3_disposition: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-active_goal: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -23,19 +24,30 @@ goal_2_status: closed_inconclusive
 goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
 goal_2_5_status: closed_accepted
 goal_2_5_disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
-goal_3_status: activated_implementation_not_started
+goal_3_status: closed_accepted
 goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
-implementation_authorized: true_goal_3_contract_only
+goal_3_disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
+goal_3_control_baseline_commit: 23592060f8fafd87d40180daef1a2350473978ae
+goal_3_implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
+goal_3_closeout: docs/reports/V3_5_G3_CLOSEOUT.md
+v3_5_status: closed_accepted
+v3_5_disposition: PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE
+v3_5_closeout: docs/reports/V3_5_CLOSEOUT.md
+implementation_authorized: consumed
 real_model_calls_authorized: 0
 credential_reads_authorized: 0
-external_network_authorized: false_loopback_127_0_0_1_only_separately_authorized
+external_network_authorized: false
 pi_core_patch_authorized: false
 runtime_route_switch_authorized: false
-git_commit_authorized: goal_3_control_baseline_plus_one_contract_bounded_implementation_commit
-control_baseline_commit: resulting_HEAD_of_goal_3_activation_revision
+git_commit_authorized: consumed_goal_3_and_v3_5_closeout
+control_baseline_commit: 23592060f8fafd87d40180daef1a2350473978ae
+next_version_authorized: false
 ```
 
-> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 已在有界修正后完成有效真实 Pair，并以 `PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED` 正式接受和关闭。Goal 3 Contract 已接受并激活，实施尚未开始；V3.5 最终接受和 Pi 修改仍未授权。
+> 本 Charter 已由用户接受并完成。Goal 1、Goal 2.5 和 Goal 3 已按各自有限
+> disposition 正式接受；Goal 2 保持 inconclusive，原 invalid Pair 不得重标。V3.5 已以
+> `PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE`
+> 正式关闭。没有 active Goal，后续版本和 Pi 修改均未授权。
 
 ## 1. Version mission
 
@@ -445,7 +457,10 @@ V3.5 完成后，在证据支持范围内可以声称：
 - continual self-evolution、semantic memory、自动路由或生产级多用户平台；
 - V3.5 WebUI 是完整 Pi IDE 或替代 Pi Runtime。
 
-## 11. Current control state after Goal 2.5 acceptance
+## 11. Historical control state after Goal 2.5 acceptance
+
+The following block records the frozen state immediately before Goal 3 implementation. It
+is retained for provenance and is superseded by Section 12.
 
 ```yaml
 active_goal: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -511,3 +526,33 @@ Base/Candidate 均 settled 且通过冻结外部 Verifier，但单个 Case 未�
 优势。所有 Goal 2.5 执行权限均已消耗。Goal 3 Contract 已正式接受并激活；Main 将创建并
 核验本控制修订的精确 Baseline，随后生成固定 SHA 的 Prompt 并创建新的顶层 Implementation
 Session。Goal 3 与 V3.5 最终接受仍须在实施证据和 Main 审查后另行决定。
+
+## 12. Final accepted version state
+
+```yaml
+active_goal: null
+goal_1_status: closed_accepted
+goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+goal_2_status: closed_inconclusive
+goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
+goal_2_5_status: closed_accepted
+goal_2_5_disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+goal_3_status: closed_accepted
+goal_3_disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
+goal_3_control_baseline_commit: 23592060f8fafd87d40180daef1a2350473978ae
+goal_3_implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
+v3_5_status: closed_accepted
+v3_5_disposition: PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE
+v3_5_closeout: docs/reports/V3_5_CLOSEOUT.md
+real_model_calls_authorized: consumed_no_further_calls_authorized
+credential_reads_authorized: consumed_no_further_reads_authorized
+external_network_authorized: consumed_no_further_network_authorized
+pi_core_patch_authorized: false
+next_version_authorized: false
+```
+
+The accepted version supports the bounded claims in Section 10. Goal 2 remains
+inconclusive; Goal 2.5 supplies one valid real Pair but no Skill-superiority claim. Goal 3
+adds a loopback-only safe Read Model and local UI without moving evidence, Verifier,
+promotion or State authority into the browser. Any V4 or later work requires a new
+user-authorized design review.

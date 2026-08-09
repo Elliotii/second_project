@@ -5,52 +5,39 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_3_activated_implementation_not_started
-  status: V3_5_G3_ACTIVE_FROM_CONTROL_BASELINE
+  phase: v3_5_completed
+  status: V3_5_CLOSED_ACCEPTED
 
-active_goal: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+active_goal: null
 
 last_executed_goal:
-  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
-  corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
-  comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
+  disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
+  control_baseline_commit: 23592060f8fafd87d40180daef1a2350473978ae
+  implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
 
 last_closed_goal:
-  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
-  closeout: docs/reports/V3_5_G2_5_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
+  disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
+  closeout: docs/reports/V3_5_G3_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
-  implementation_baseline_commit: 91fb8be73f809a67bedf58efcf520914ce93f737
-
-current_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
-  status: activated_implementation_not_started
+  status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
-  implementation_owner: future_new_top_level_goal_3_session
-  control_baseline_commit: resulting_HEAD_of_activation_revision
-  implementation_authorized: true
-  loopback_http_authorized: true_127_0_0_1_only
-  bounded_implementation_commit_authorized: true_once_within_contract_allowlist
-  credential_reads_authorized: 0
-  external_network_authorized: false
-  real_model_calls_authorized: 0
-  pi_core_patch_authorized: false
-  runtime_route_switch_authorized: false
+  disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
+  implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
+
+current_goal: null
 
 next_goal:
-  id: V3_5_VERSION_CLOSEOUT
-  status: candidate_only_waiting_for_goal_3_acceptance
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  id: null
+  status: no_goal_authorized
+  note: V4_or_later_requires_new_user_authorized_design_review
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -150,7 +137,7 @@ v3_5_control:
   charter_accepted_by_user: true
   preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   preimplementation_review_status: accepted_as_charter_design_basis
-  active_goal: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+  active_goal: null
   goal_1_status: closed_accepted
   goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -250,19 +237,34 @@ v3_5_control:
   goal_2_5_real_model_calls_observed: 6
   goal_2_5_real_cost_usd_hard_cap: 0.40
   goal_2_5_retry_fallback_replacement_extra_arm_case_authorized: false
-  goal_3_status: activated_implementation_not_started
+  goal_3_status: closed_accepted
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
   goal_3_contract_accepted_by_user: 2026_08_09
   goal_3_activation_authorized: consumed
-  goal_3_implementation_authorized: true
-  goal_3_implementation_owner: future_new_top_level_goal_3_session
-  goal_3_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_activation_revision
-  goal_3_control_baseline_commit: resulting_HEAD_of_activation_revision
-  goal_3_loopback_http_authorized: true_127_0_0_1_only
-  goal_3_bounded_implementation_commit_authorized: true_once_within_contract_allowlist
-  goal_3_real_model_calls_authorized: 0
+  goal_3_implementation_authorized: consumed_completed
+  goal_3_implementation_owner: completed_top_level_session_019fe550-10f3-7880-9502-4307722cd877
+  goal_3_control_baseline_commit_authorized: consumed
+  goal_3_control_baseline_commit: 23592060f8fafd87d40180daef1a2350473978ae
+  goal_3_implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
+  goal_3_disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
+  goal_3_closeout: docs/reports/V3_5_G3_CLOSEOUT.md
+  goal_3_loopback_http_authorized: consumed_for_local_tests_and_demo
+  goal_3_bounded_implementation_commit_authorized: consumed_once
+  goal_3_strict_typescript: passed
+  goal_3_focused_and_affected_tests: 37_passed_0_failed_0_skipped
+  goal_3_main_browser_review: passed_session_create_continue_comparison_adaptation_state_history_no_console_errors
+  goal_3_credential_reads_observed: 0
+  goal_3_external_network_observed: 0
+  goal_3_provider_model_calls_observed: 0
+  goal_3_real_model_calls_observed: 0
+  goal_3_real_model_calls_authorized: consumed_zero_no_further_calls_authorized
   goal_3_rollback_surface: deferred_no_state_mutation_http_endpoint
-  v3_5_final_acceptance_authorized: false
+  v3_5_status: closed_accepted
+  v3_5_disposition: PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE
+  v3_5_closeout: docs/reports/V3_5_CLOSEOUT.md
+  v3_5_final_acceptance_authorized: consumed_accepted_by_user_2026_08_09
+  active_goal: null
+  next_version_authorized: false
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -638,6 +640,12 @@ completed_work:
   - V3_G3_real_execution_main_review_passed_without_audit_trigger
   - V3_G3_closed_accepted_with_single_real_prompt_path_limitation
   - V3_closed_accepted_with_bounded_harness_state_adaptation_claims
+  - V3_5_G1_closed_accepted_with_persistent_settled_session_run_foundation
+  - V3_5_G2_closed_inconclusive_with_original_invalid_pair_preserved
+  - V3_5_G2_5_closed_accepted_with_one_valid_real_pair_and_no_skill_advantage_observed
+  - V3_5_G3_closed_accepted_with_loopback_safe_read_model_and_local_webui
+  - V3_5_main_browser_walkthrough_passed
+  - V3_5_closed_accepted_as_persistent_inspectable_adaptive_harness_workbench
 
 workspace:
   git_initialized: true
@@ -1892,6 +1900,9 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/V3_5_CLOSEOUT.md
+  - docs/reports/V3_5_G3_CLOSEOUT.md
+  - docs/V3_5_ARCHITECTURE_AND_INTERVIEW_GUIDE.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
   - docs/reports/V3_5_G2_5_CLOSEOUT.md
@@ -1991,7 +2002,7 @@ required_reading:
   - docs/reports/CURRENT_RUNTIME_RISK_RECLASSIFICATION.md
   - docs/reports/PI_CC_HARNESS_COMPARISON_MATRIX.md
 
-next_checkpoint:
+historical_checkpoints:
   - V3_charter_accepted_and_formalized
   - V3_goal_1_closed_accepted_with_zero_call_mechanism_and_one_bounded_real_proposal
   - preserve_V3_goal_1_candidate_and_staged_inactive_state_evidence
@@ -2062,11 +2073,24 @@ next_checkpoint:
   - V3_5_goal_2_5_contract_accepted_and_goal_activated
   - next_step_create_and_verify_Goal_2_5_control_baseline_then_start_new_top_level_zero_access_session
 
+next_checkpoint:
+  - V3_5_closed_accepted
+  - active_goal_null
+  - preserve_Goal_2_inconclusive_and_Goal_2_5_no_skill_advantage_facts
+  - no_later_version_or_real_access_authorized
+
 open_user_decisions:
-  - none_until_contract_hard_stop_or_final_Goal_2_5_real_evidence_disposition
+  - none_for_V3_5
+  - any_V4_or_later_work_requires_new_user_authorized_design_review
 ```
 
 ## Current Constraints
+
+- V3.5 is closed and accepted; no Goal is active.
+- Do not reopen V2, V3 or V3.5, start V4, call a model, read a Credential, use external
+  network or modify Pi without new explicit user authority.
+- Preserve Goal 2 as inconclusive and Goal 2.5 as one valid Pair with no observed Skill
+  task-success advantage.
 
 - Keep `.upstream/pi` immutable as the reference checkout.
 - Preserve `.runs/g002` and `.runs/g003` as ignored generated evidence; do not

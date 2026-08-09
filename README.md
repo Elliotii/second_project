@@ -1,52 +1,95 @@
-# Agent Harness Reliability Workbench
+# Adaptive Coding Agent Harness Workbench
 
-本仓库用于研究和实现第二项目：一个基于候选 Coding Agent Runtime Pi 的可靠性 Workbench。
+这是一个基于公共 Pi `AgentHarness` 的可靠性优先 Coding Agent Workbench。它不重新
+实现 Agent Loop，而是在 Pi 外部增加受控 Workspace、Run/Attempt、环境 Verifier、
+Trace/Evidence、有限恢复、Harness State 生命周期、持久 Session 和安全可检查界面。
 
-项目希望通过受控 Workspace、确定性环境验证、关键运行事实记录和 Baseline / Candidate 对照，判断一条 Harness Policy 是否真正改善 Coding Task 的结果。
+## 当前状态
 
-## 当前阶段
-
-```text
-实施前研究完成
-→ 工作区 Bootstrap
-→ Pi Source Audit
-→ Deterministic Integration Spike
-→ Real-model Feasibility
-→ 冻结 V0
+```yaml
+latest_version: V3.5
+status: closed_accepted
+active_goal: null
+pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
+pi_core_patches: 0
 ```
 
-当前尚未确认 Pi 为最终基座，也尚未冻结正式架构或 Completion Policy。
+V3.5 的正式定位是：
 
-G001 静态源码审计已经通过独立验收。Direct `pi-agent-core`
-`AgentHarness` 仅被接受为 G002 最小动态 Go Gate 的主候选；最终 Pi Go、
-真实使用路径和 V0 架构仍未冻结。
+> **Persistent & Inspectable Adaptive Harness Workbench**
+
+当前系统能够保存并重开 settled Session、关联 Session 与 Run/evidence、展示 recovery
+与 Base/Candidate comparison、持久化 Harness State 的 Promote/Reject/Rollback 和
+selective binding，并通过本地 WebUI 解释完整的适配证据链。
+
+## 架构
+
+```text
+Browser
+  -> 127.0.0.1-only API/static UI
+  -> Workbench application + safe Read Model
+  -> Session / Run / Verifier / State controllers
+  -> public Direct Pi AgentHarness
+  -> bounded Workspace + external environment Verifier
+```
+
+Pi 负责公共 Agent/Tool/Session Runtime。Workbench 负责环境结果、实验身份、证据、
+恢复预算、State publication 和可检查投影。浏览器和模型都不拥有 Verifier、Promotion、
+hard budget/security 或 active-State authority。
+
+## 本地演示
+
+从 `workbench/` 运行：
+
+```powershell
+npm run v35g3:demo
+```
+
+然后打开 `http://127.0.0.1:43135`。
+
+演示使用 dependency-free 静态 UI 和 Node 内置 HTTP，只绑定 IPv4 loopback。默认数据是
+sanitized、derived、non-authoritative 的 deterministic/Faux projection。浏览器不存在
+任意文件路径、Credential、Provider、shell、artifact download 或 State mutation 接口。
+
+## 版本路线结果
+
+| Version | 结果 |
+|---|---|
+| V0 | 最小真实 Coding Task、Workspace、Session、Trace、Verifier 和 Outcome 闭环 |
+| V1 | Baseline、Skill-only、Skill + Runtime Control 的有界描述性比较 |
+| V2 | 有界多路径恢复和环境选择机制；真实 Negative evidence 不完整 |
+| V3 | Evidence → Candidate → Validate → Promote/Reject/Rollback → selective binding |
+| V3.5 | persistent Session/Run、一个有效真实 Skill Pair、local inspectable WebUI |
+
+V3.5 Goal 2.5 的真实 Pair 中 Base 与 Candidate 都通过，Candidate 使用更多 tokens；项目
+不声称 Skill 获胜、普遍提升或统计显著性。
 
 ## 必读文件
 
-1. [CURRENT_STATE.md](./CURRENT_STATE.md)
-2. [第二项目当前规划](./SECOND_PROJECT_CURRENT_PLAN第二项目当前规划.md)
-3. [第二项目研究与实现上游包](./SECOND_PROJECT_RESEARCH_AND_IMPLEMENTATION_CONTEXT第二项目研究与实现上游包.md)
-4. [第二项目实施前证据审查决策支持报告](./deep-research-report第二项目实施前证据审查决策支持报告.md)
+1. [Current State](./CURRENT_STATE.md)
+2. [V3.5 Closeout](./docs/reports/V3_5_CLOSEOUT.md)
+3. [Architecture, Demo and Interview Guide](./docs/V3_5_ARCHITECTURE_AND_INTERVIEW_GUIDE.md)
+4. [Goal 3 Demo Guide](./docs/reports/V3_5_G3_DEMO_GUIDE.md)
+5. [Workbench implementation guide](./workbench/README.md)
+6. [Current project plan](./SECOND_PROJECT_CURRENT_PLAN第二项目当前规划.md)
 
 ## 目录边界
 
-- `.upstream/pi/`：本地 Pi 上游检出，不计入个人代码，不允许修改；
-- `docs/research/`：源码审计与能力证据；
-- `docs/goals/`：跨 Session 的可执行 Goal Contract；
-- `docs/decisions/`：用户确认后的 ADR；
-- `docs/reports/`：Goal Closeout、Spike 和实验报告；
-- `spikes/`：基座与接口验证代码，不是正式 Workbench；
-- `fixtures/tasks/`：可复现任务夹具；
-- `.runs/`：生成的 Workspace、Trace、Outcome 和 Report，不进入 Git；
-- `workbench/`：仅在 Pi Go 且 V0 Charter 冻结后创建。
+- `.upstream/pi/`：固定只读 Pi checkout，不计入项目实现；
+- `workbench/`：正式 Workbench 源码和测试；
+- `fixtures/`：冻结任务、Verifier 和 portable demo projection；
+- `docs/reports/`：Goal/Version evidence、审查和 Closeout；
+- `docs/decisions/`：已接受 ADR；
+- `.runs/`：生成的 Workspace、Session、Trace 和 evidence，不进入 Git；
+- `reference/`：用户控制的只读研究资料，不进入项目提交。
 
-## 当前禁止
+## 准确的能力边界
 
-- 未经明确授权提交 Git Commit；
-- 修改 `.upstream/pi`；
-- 在动态 Spike、真实模型可行性与 V0 Charter 通过前创建正式 Workbench；
-- 在 `.upstream/pi` 内安装依赖或生成构建产物；
-- 未经新证据与架构复核把 G002 切换到 WSL、SDK 或 RPC；
-- 将候选判断写成已确认事实；
-- 将单任务 Spike 写成 Policy 效果结论；
-- 提前引入 MCP、Godot、Multi-Agent、Web UI、SQLite 或通用 Sandbox。
+本项目可以声称 persistent settled Session、environment-grounded verification、bounded
+recovery、typed Harness State 和 local inspectability。
+
+本项目不声称 in-flight crash recovery、exactly-once Tool effects、production multi-user
+durability、general Skill superiority、semantic Memory、Router/Curator、自动 continual
+self-evolution、完整 IDE 或 Pi feature parity。
+
+V4 或后续版本尚未授权。

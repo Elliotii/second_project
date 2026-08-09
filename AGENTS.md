@@ -2,35 +2,33 @@
 
 ## Purpose
 
-This repository is building an Adaptive Coding Agent Harness on the accepted Agent Harness Reliability Workbench foundation. V0 and V1 are complete and accepted. V2 is closed with the limited disposition `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`; do not label V2-B as a full PASS. V3 is closed and accepted with `PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION`. V3.5 is the active productization version: `Persistent & Inspectable Adaptive Harness Workbench`. V3.5 Goal 1 is closed and accepted with `PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION`. Goal 2 is closed inconclusive under `CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP`: its mechanism is frozen, but its only real sequence stopped in Base before Verifier/Candidate, so no Skill-effect claim exists. Goal 2.5 is closed and accepted under `PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED`: its single frozen replacement Pair completed with both Base and Candidate settled and passing the external Verifier, while no task-success advantage was observed for the Skill on that one Case. All Goal 2.5 execution authority is consumed. Goal 3 Contract is accepted and activated; its implementation has not started. Main must commit and verify the activation Control Baseline, pin that SHA in the launch Prompt and create one new top-level Goal 3 Implementation Session. Only Contract-scoped source/tests/reports, `127.0.0.1` HTTP and one bounded implementation commit are authorized; real access, external network, dependency install, Pi change and final acceptance remain unauthorized.
+This repository contains the accepted V0–V3.5 implementation of a reliability-first
+Adaptive Coding Agent Harness built on public Direct Pi `AgentHarness`.
 
-> Current V2 closeout update (2026-08-07): the user accepted the limited closeout
-> `ACCEPT_V2_MECHANISM_EVIDENCE_WITH_NEGATIVE_INCOMPLETE_LIMITATION`. V2-B and V2
-> are closed and no Goal is active. Sequence `v2b-r2-real-20260807-02` demonstrated
-> the controlled real A/B recovery and selection mechanism, but its sole real
-> Negative produced no Verifier result. Preserve the formal
-> `PAUSE_V2_B_R2_NEGATIVE_NOT_VALID` evidence and do not claim a full V2-B PASS.
-> No further V2 execution is authorized. V3 Goal 1 consumed exactly one bounded
-> Credential/network/Provider/model call, with zero retry/fallback/replacement, and
-> is closed and accepted. Its real Candidate remains inactive. Goal 2 completed with
-> zero Credential/network/Provider/model access and did not activate that real
-> Candidate; its accepted evidence is deterministic/Faux mechanism evidence only.
-> Goal 3 and V3 are closed and accepted. The sole real Goal 3 Run consumed one
-> opaque Credential read, six Provider/model requests, 12,291 tokens, seven Tool
-> calls and USD 0.0007371112 with zero retry/fallback/replacement. Preserve its
-> single-real-path/no-comparator limitation and the disclosed Main-worktree
-> evidence-location deviation. V3 remains closed; V3.5 may consume its accepted
-> artifacts without reopening it. V3.5 Goal 1 proved public Pi JSONL settled
-> Session reopen/continue across processes, explicit Session↔Run linkage and a
-> safe bounded Read Model with zero real access. Its accepted implementation is
-> the two-commit chain `4122b3c...` + path-boundary correction `0b62fb7...`.
-> Goal 2 consumed its sole real authority. Base reached the calibrated workspace bytes but
-> did not settle within 16 actual Provider requests; no external Verifier or Candidate ran.
-> Preserve the invalid pair and do not retry or relabel it. Goal 2.5's bounded diagnosis,
-> Main review, Contract acceptance and separate Activation gates are now satisfied. Its
-> initial top-level Implementation Session must remain at zero Credential/network/model
-> access. The single real pair is gated behind Main acceptance of the zero-access Candidate,
-> one fresh focused termination/Verifier audit and an exact audited Execution Baseline.
+V3.5 is closed and accepted as
+`PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE`.
+No Goal is active and no later version is authorized.
+
+Preserve these binding facts:
+
+- V2 is closed with limited mechanism evidence; its sole real Negative produced no
+  Verifier result, so V2-B is not a full PASS.
+- V3 is closed and accepted with one external-real-model prompt-addendum path; do not
+  generalize causal improvement or adaptive-Skill behavior from it.
+- V3.5 Goal 1 proves settled deterministic/Faux Pi Session reopen/continue across
+  processes, explicit Session↔Run linkage and a safe Read Model. It does not prove
+  in-flight crash recovery, exactly-once Tool effects or real-model continuation.
+- V3.5 Goal 2 remains closed inconclusive. Preserve its invalid Base budget-stop Pair.
+- V3.5 Goal 2.5 is closed and accepted from one valid frozen replacement Pair. Base and
+  Candidate both passed; Candidate used more tokens and no Skill task-success advantage
+  was observed.
+- V3.5 Goal 3 is closed and accepted at implementation commit
+  `b5c34033a4ff64d2bacd01279823611193834920`. Its HTTP surface is loopback-only,
+  evidence projections are non-authoritative, and browser State mutation is deferred.
+- Fixed Pi remains `027a5847901b5dde30270abaa1041046cd2b4b55` with zero Pi Core patches.
+- All V3.5 Credential, external-network, Provider/model and real-execution authority is
+  consumed. Do not create a new Goal, reopen an accepted version or enter V4 without
+  explicit user authorization.
 
 ## Required Read Order
 

@@ -982,3 +982,67 @@ G002 只验证最小动态协议，不安装依赖到 `.upstream/pi`，不使用
 最终项目仍应能够用一句话解释：
 
 > **我没有重新实现 Coding Agent；我基于 Pi 构建了一层可实际使用、可自动验证、可复现失败并能用对照实验管理 Harness Policy 的可靠性 Workbench。**
+
+---
+
+# 15. V3.5 Final Closeout — Current Authority
+
+> 本节是 2026-08-09 的当前路线状态，覆盖本文件早期“当前状态/下一步”快照；早期章节
+> 继续作为规划与决策 provenance 保留。
+
+## 15.1 Current state
+
+```yaml
+latest_version: V3.5
+status: closed_accepted
+active_goal: null
+disposition: PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE
+pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
+pi_core_patches: 0
+next_version_authorized: false
+```
+
+V3.5 已把 V3 的 Adaptive Harness State 能力产品化为：
+
+```text
+settled persistent Session
+→ Session / Run / Verifier / State evidence
+→ safe Read Model
+→ bounded comparison and adaptation lineage
+→ loopback-only local WebUI and reproducible demo
+```
+
+## 15.2 Accepted Goal results
+
+- Goal 1：跨进程重开和继续 settled deterministic/Faux Pi Session、Session↔Run 和安全
+  Read Model；不声称 in-flight crash recovery 或 real-model continuation。
+- Goal 2：原真实 Pair 在 Base request budget 停止，以 inconclusive 关闭并保留。
+- Goal 2.5：一个有效真实 Pair 的 Base/Candidate 都通过；Candidate 使用更多 tokens，未
+  观察到 Skill 的任务成功优势。
+- Goal 3：本地 loopback API、WebUI、portable demo 和 evidence-grounded adaptation
+  inspectability 完成；浏览器没有 State mutation authority。
+
+## 15.3 Current project identity
+
+项目当前可概括为：
+
+> **一个可靠性优先、环境反馈驱动、支持有界恢复和 Harness State 适配，并能持久保存、
+> 检查和解释其 Session、Run、Verifier、comparison 与 State lineage 的 Adaptive Coding
+> Agent Harness Workbench。**
+
+Direct Pi `AgentHarness` 仍是已接受 Runtime。Pi SDK/Extension 是未来出现具体交互、
+打包、权限、Worktree 或兼容需求时的有界参考候选，不是当前静默路线切换。
+
+## 15.4 Next-step rule
+
+当前不自动进入 V4。任何下一版本必须重新完成：
+
+```text
+concrete product/portfolio question
+→ bounded primary-source/current-code review
+→ explicit version boundary and non-goals
+→ user acceptance and Activation
+```
+
+不得因为 V3.5 已完成而自动建设 Router、Curator、Experience Platform、semantic Memory、
+multi-user service、database、streaming subsystem、IDE 或 Pi feature parity。

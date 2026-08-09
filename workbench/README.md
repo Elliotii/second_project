@@ -332,3 +332,8 @@ Only the versioned overview, Session, V2/Goal 2.5 comparison, adaptation,
 State-history and three fixed static routes are served. There is no artifact
 download, shell, arbitrary path/command, Provider, environment, Credential or
 State-mutation endpoint. Browser rollback mutation is explicitly deferred.
+
+V3.5 is closed and accepted. The authoritative version result and bounded claims are in
+`../docs/reports/V3_5_CLOSEOUT.md`; the architecture and interview reading path is in
+`../docs/V3_5_ARCHITECTURE_AND_INTERVIEW_GUIDE.md`. The valid Goal 2.5 Pair does not prove
+Skill superiority: both arms passed and the Candidate used more tokens.
