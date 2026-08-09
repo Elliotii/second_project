@@ -24,7 +24,7 @@ export interface PersistentRunCatalogRefV35 {
 	created_at: string;
 }
 
-export interface PersistentRunManifestV35 {
+export interface PersistentFauxRunManifestV35 {
 	schema_version: 1;
 	run_id: string;
 	project_id: string;
@@ -51,6 +51,47 @@ export interface PersistentRunManifestV35 {
 	real_model_calls: 0;
 }
 
+export interface PersistentRealRunManifestV35 {
+	schema_version: 2;
+	mode: "real_product_smoke";
+	run_id: string;
+	project_id: string;
+	workspace_id: string;
+	workspace_path_sha256: string;
+	session_id: string;
+	session_ref: string;
+	session_entry_count_after_turn: number;
+	session_entries_sha256_after_turn: string;
+	catalog_session_identity_sha256: string;
+	created_at: string;
+	settled: true;
+	prior_run_id: string | null;
+	prior_context_message_count: number;
+	prior_context_sha256: string;
+	provider_observed_prior_context_sha256: string;
+	final_context_message_count: number;
+	prompt_sha256: string;
+	provider_requests: number;
+	tool_call_ids: string[];
+	tool_result_ids: string[];
+	credential_reads: number;
+	network_calls: number;
+	external_provider_calls: number;
+	real_model_calls: number;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: number;
+	wall_time_ms: number;
+	verifier_id: string;
+	verifier_status: "passed" | "failed";
+	verifier_ref: string;
+	outcome: "passed" | "failed";
+	outcome_ref: string;
+	binding_status: "not_applicable";
+}
+
+export type PersistentRunManifestV35 = PersistentFauxRunManifestV35 | PersistentRealRunManifestV35;
+
 export interface SafeSessionMessageV35 {
 	entry_id: string;
 	role: "user" | "assistant" | "tool";
@@ -68,6 +109,15 @@ export interface SafeRunViewV35 {
 	provider_requests: number;
 	tool_call_count: number;
 	context_reconstructed: boolean;
+	mode: "deterministic_faux" | "real_product_smoke";
+	prior_run_id: string | null;
+	input_tokens: number | "not_recorded";
+	output_tokens: number | "not_recorded";
+	cost_usd: number | "not_recorded";
+	verifier_id: string | "not_recorded";
+	verifier_status: "passed" | "failed" | "not_recorded";
+	outcome: "passed" | "failed" | "not_recorded";
+	binding_status: "not_applicable" | "not_recorded";
 	source_ref: string;
 }
 

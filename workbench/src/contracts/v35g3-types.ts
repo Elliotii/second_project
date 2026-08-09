@@ -109,7 +109,7 @@ export interface Goal3DemoProjectionV35 {
 	accepted_goal25_comparison_digest: string;
 	overview: {
 		product: "Persistent & Inspectable Adaptive Harness Workbench";
-		mode: "deterministic_faux_demo";
+		mode: "deterministic_faux_demo" | "real_product_smoke";
 		notice: string;
 	};
 	v2_recovery: V2RecoverySafeViewV35;

@@ -25,12 +25,62 @@ export interface PersistentSessionServiceOptionsV35 {
 	projectId: string;
 	workspaceRoot: string;
 	workspaceId: string;
+	turnExecutor?: PersistentTurnExecutorV35;
 }
 
 export interface PersistentTurnResultV35 {
 	manifest: PersistentRunManifestV35;
 	view: SafeSessionViewV35;
 	listed_before: string[];
+}
+
+export interface PersistentTurnExecutionInputV35 {
+	session: Session<JsonlSessionMetadata>;
+	sessionId: string;
+	runId: string;
+	runRoot: string;
+	workspaceRoot: string;
+	prompt: string;
+	priorMessages: unknown[];
+	priorContextSha256: string;
+	priorRunId: string | null;
+	priorRunCount: number;
+	priorUsage: {
+		provider_requests: number;
+		tool_calls: number;
+		input_tokens: number;
+		output_tokens: number;
+		cost_usd: number;
+		wall_time_ms: number;
+	};
+}
+
+export interface PersistentRealTurnExecutionV35 {
+	mode: "real_product_smoke";
+	settled_events: 1;
+	provider_observed_prior_context_sha256: string;
+	provider_requests: number;
+	credential_reads: number;
+	network_calls: number;
+	external_provider_calls: number;
+	real_model_calls: number;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: number;
+	wall_time_ms: number;
+	tool_call_ids: string[];
+	tool_result_ids: string[];
+	verifier_id: string;
+	verifier_status: "passed" | "failed";
+	verifier_ref: "verifier/result.json";
+	outcome: "passed" | "failed";
+	outcome_ref: "outcome.json";
+	binding_status: "not_applicable";
+}
+
+export interface PersistentTurnExecutorV35 {
+	readonly mode: "real_product_smoke";
+	execute(input: PersistentTurnExecutionInputV35): Promise<PersistentRealTurnExecutionV35>;
 }
 
 function assertIdentifier(value: string, label: string): void {
@@ -199,7 +249,12 @@ function projectSessionEntries(entries: readonly SessionTreeEntry[]): SafeSessio
 function parseRunManifest(value: unknown): PersistentRunManifestV35 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Run Manifest is invalid");
 	const run = value as PersistentRunManifestV35;
-	if (run.schema_version !== 1 || !IDENTIFIER.test(run.run_id) || !IDENTIFIER.test(run.project_id) || !IDENTIFIER.test(run.workspace_id) || !IDENTIFIER.test(run.session_id) || !SHA256.test(run.workspace_path_sha256) || !Number.isSafeInteger(run.session_entry_count_after_turn) || run.session_entry_count_after_turn < 1 || !SHA256.test(run.session_entries_sha256_after_turn) || !SHA256.test(run.catalog_session_identity_sha256) || !SHA256.test(run.prior_context_sha256) || !SHA256.test(run.provider_observed_prior_context_sha256) || !SHA256.test(run.prompt_sha256) || run.settled !== true || !Array.isArray(run.tool_call_ids) || !Array.isArray(run.tool_result_ids) || run.credential_reads !== 0 || run.network_calls !== 0 || run.external_provider_calls !== 0 || run.real_model_calls !== 0) throw new Error("Run Manifest schema is invalid");
+	if (!IDENTIFIER.test(run.run_id) || !IDENTIFIER.test(run.project_id) || !IDENTIFIER.test(run.workspace_id) || !IDENTIFIER.test(run.session_id) || !SHA256.test(run.workspace_path_sha256) || !Number.isSafeInteger(run.session_entry_count_after_turn) || run.session_entry_count_after_turn < 1 || !SHA256.test(run.session_entries_sha256_after_turn) || !SHA256.test(run.catalog_session_identity_sha256) || !SHA256.test(run.prior_context_sha256) || !SHA256.test(run.provider_observed_prior_context_sha256) || !SHA256.test(run.prompt_sha256) || run.settled !== true || !Array.isArray(run.tool_call_ids) || !Array.isArray(run.tool_result_ids)) throw new Error("Run Manifest schema is invalid");
+	if (run.schema_version === 1) {
+		if (run.credential_reads !== 0 || run.network_calls !== 0 || run.external_provider_calls !== 0 || run.real_model_calls !== 0) throw new Error("Run Manifest schema is invalid");
+		return run;
+	}
+	if (run.schema_version !== 2 || run.mode !== "real_product_smoke" || (run.prior_run_id !== null && !IDENTIFIER.test(run.prior_run_id)) || ![run.provider_requests, run.credential_reads, run.network_calls, run.external_provider_calls, run.real_model_calls, run.input_tokens, run.output_tokens, run.wall_time_ms].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || !Number.isFinite(run.cost_usd) || run.cost_usd < 0 || !IDENTIFIER.test(run.verifier_id) || (run.verifier_status !== "passed" && run.verifier_status !== "failed") || (run.outcome !== "passed" && run.outcome !== "failed") || run.binding_status !== "not_applicable" || run.verifier_ref !== "verifier/result.json" || run.outcome_ref !== "outcome.json") throw new Error("Run Manifest schema is invalid");
 	return run;
 }
 
@@ -210,6 +265,7 @@ export class PersistentSessionServiceV35 {
 	private readonly workspaceId: string;
 	private readonly workspaceDigest: string;
 	private readonly repo: JsonlSessionRepo;
+	private readonly turnExecutor: PersistentTurnExecutorV35 | undefined;
 
 	constructor(options: PersistentSessionServiceOptionsV35) {
 		assertIdentifier(options.projectId, "project ID");
@@ -219,6 +275,7 @@ export class PersistentSessionServiceV35 {
 		this.projectId = options.projectId;
 		this.workspaceId = options.workspaceId;
 		this.workspaceDigest = workspacePathDigest(this.workspaceRoot);
+		this.turnExecutor = options.turnExecutor;
 		this.repo = new JsonlSessionRepo({ fs: new NodeExecutionEnv({ cwd: this.dataRoot, shellEnv: {} }), sessionsRoot: resolve(this.dataRoot, "sessions") });
 		if (!existsSync(resolve(this.dataRoot, CATALOG_FILE))) {
 			if (readdirSync(this.dataRoot).length > 0) throw new Error("Session catalog is missing from a non-empty data root");
@@ -305,6 +362,85 @@ export class PersistentSessionServiceV35 {
 		const priorContext = await session.buildContext();
 		const priorMessages = structuredClone(priorContext.messages);
 		const priorDigest = digestObject(priorMessages);
+		if (this.turnExecutor) {
+			const priorManifests = entry.run_refs.map((reference) => parseRunManifest(readJsonArtifact<PersistentRunManifestV35>(resolve(resolveOperationalRef(this.dataRoot, reference.run_ref), ".."), "manifest.json")));
+			const priorUsage = priorManifests.reduce((total, manifest) => ({
+				provider_requests: total.provider_requests + manifest.provider_requests,
+				tool_calls: total.tool_calls + manifest.tool_call_ids.length,
+				input_tokens: total.input_tokens + (manifest.schema_version === 2 ? manifest.input_tokens : 0),
+				output_tokens: total.output_tokens + (manifest.schema_version === 2 ? manifest.output_tokens : 0),
+				cost_usd: total.cost_usd + (manifest.schema_version === 2 ? manifest.cost_usd : 0),
+				wall_time_ms: total.wall_time_ms + (manifest.schema_version === 2 ? manifest.wall_time_ms : 0),
+			}), { provider_requests: 0, tool_calls: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: 0 });
+			const runRoot = resolve(this.dataRoot, "runs", options.runId);
+			mkdirSync(resolve(this.dataRoot, "runs"), { recursive: true });
+			mkdirSync(runRoot, { recursive: false });
+			const executed = await this.turnExecutor.execute({
+				session,
+				sessionId: options.sessionId,
+				runId: options.runId,
+				runRoot,
+				workspaceRoot: this.workspaceRoot,
+				prompt: options.prompt,
+				priorMessages,
+				priorContextSha256: priorDigest,
+				priorRunId: entry.run_refs.at(-1)?.run_id ?? null,
+				priorRunCount: entry.run_refs.length,
+				priorUsage,
+			});
+			if (executed.settled_events !== 1 || executed.provider_observed_prior_context_sha256 !== priorDigest || executed.credential_reads !== 1 || executed.provider_requests < 1 || executed.network_calls !== executed.provider_requests || executed.external_provider_calls !== executed.provider_requests || executed.real_model_calls !== executed.provider_requests) throw new Error("real persistent turn evidence is invalid");
+			const entries = await session.getEntries();
+			const finalContext = await session.buildContext();
+			if (executed.tool_call_ids.length !== executed.tool_result_ids.length || stableJson(executed.tool_call_ids) !== stableJson(executed.tool_result_ids)) throw new Error("real persistent Session Tool lifecycle is incomplete");
+			const verifier = readJsonArtifact<Record<string, unknown>>(runRoot, executed.verifier_ref);
+			const outcome = readJsonArtifact<Record<string, unknown>>(runRoot, executed.outcome_ref);
+			if (verifier.verifier_id !== executed.verifier_id || verifier.status !== executed.verifier_status || outcome.run_id !== options.runId || outcome.verifier_status !== executed.verifier_status || outcome.outcome !== executed.outcome) throw new Error("real Run Verifier/Outcome evidence mismatch");
+			const createdAt = new Date().toISOString();
+			const sessionRef = portable(relative(this.dataRoot, resolve(metadata.path)));
+			const manifest: PersistentRunManifestV35 = {
+				schema_version: 2,
+				mode: "real_product_smoke",
+				run_id: options.runId,
+				project_id: this.projectId,
+				workspace_id: this.workspaceId,
+				workspace_path_sha256: this.workspaceDigest,
+				session_id: options.sessionId,
+				session_ref: sessionRef,
+				session_entry_count_after_turn: entries.length,
+				session_entries_sha256_after_turn: digestObject(entries),
+				catalog_session_identity_sha256: catalogEntryIdentity(entry),
+				created_at: createdAt,
+				settled: true,
+				prior_run_id: entry.run_refs.at(-1)?.run_id ?? null,
+				prior_context_message_count: priorMessages.length,
+				prior_context_sha256: priorDigest,
+				provider_observed_prior_context_sha256: executed.provider_observed_prior_context_sha256,
+				final_context_message_count: finalContext.messages.length,
+				prompt_sha256: sha256(options.prompt),
+				provider_requests: executed.provider_requests,
+				tool_call_ids: executed.tool_call_ids,
+				tool_result_ids: executed.tool_result_ids,
+				credential_reads: executed.credential_reads,
+				network_calls: executed.network_calls,
+				external_provider_calls: executed.external_provider_calls,
+				real_model_calls: executed.real_model_calls,
+				input_tokens: executed.input_tokens,
+				output_tokens: executed.output_tokens,
+				cost_usd: executed.cost_usd,
+				wall_time_ms: executed.wall_time_ms,
+				verifier_id: executed.verifier_id,
+				verifier_status: executed.verifier_status,
+				verifier_ref: executed.verifier_ref,
+				outcome: executed.outcome,
+				outcome_ref: executed.outcome_ref,
+				binding_status: "not_applicable",
+			};
+			writeOnceJson(runRoot, "manifest.json", manifest);
+			entry.run_refs.push({ run_id: options.runId, run_ref: portable(relative(this.dataRoot, resolve(runRoot, "manifest.json"))), created_at: createdAt });
+			entry.updated_at = createdAt;
+			writeCatalog(this.dataRoot, catalog);
+			return { manifest, view: await this.inspect(options.sessionId), listed_before: listedBefore };
+		}
 		const models = createModels();
 		const registration = fauxProvider({ provider: `v35-faux-${options.runId}` });
 		models.setProvider(registration.provider);
@@ -392,7 +528,29 @@ export class PersistentSessionServiceV35 {
 			if (manifest.run_id !== reference.run_id || manifest.session_id !== entry.session_id || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.workspace_path_sha256 !== this.workspaceDigest || manifest.session_ref !== entry.pi_session_ref || manifest.catalog_session_identity_sha256 !== catalogEntryIdentity(entry)) throw new Error("catalog/Run authority identity mismatch");
 			if (sessionEntries.length < manifest.session_entry_count_after_turn || digestObject(sessionEntries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("Run/Session historical prefix identity mismatch");
 			if (manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256) throw new Error("Run prior-context proof is invalid");
-			return { run_id: manifest.run_id, created_at: manifest.created_at, settled: true, provider_requests: manifest.provider_requests, tool_call_count: manifest.tool_call_ids.length, context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256, source_ref: reference.run_ref };
+			if (manifest.schema_version === 2) {
+				const verifier = readJsonArtifact<Record<string, unknown>>(runRoot, manifest.verifier_ref);
+				const outcome = readJsonArtifact<Record<string, unknown>>(runRoot, manifest.outcome_ref);
+				if (verifier.verifier_id !== manifest.verifier_id || verifier.status !== manifest.verifier_status || outcome.run_id !== manifest.run_id || outcome.session_id !== manifest.session_id || outcome.verifier_id !== manifest.verifier_id || outcome.verifier_status !== manifest.verifier_status || outcome.outcome !== manifest.outcome || outcome.binding_status !== manifest.binding_status || outcome.context_reconstructed !== true) throw new Error("real Run Verifier/Outcome evidence mismatch");
+			}
+			return {
+				run_id: manifest.run_id,
+				created_at: manifest.created_at,
+				settled: true,
+				provider_requests: manifest.provider_requests,
+				tool_call_count: manifest.tool_call_ids.length,
+				context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256,
+				mode: manifest.schema_version === 2 ? manifest.mode : "deterministic_faux",
+				prior_run_id: manifest.schema_version === 2 ? manifest.prior_run_id : null,
+				input_tokens: manifest.schema_version === 2 ? manifest.input_tokens : "not_recorded",
+				output_tokens: manifest.schema_version === 2 ? manifest.output_tokens : "not_recorded",
+				cost_usd: manifest.schema_version === 2 ? manifest.cost_usd : "not_recorded",
+				verifier_id: manifest.schema_version === 2 ? manifest.verifier_id : "not_recorded",
+				verifier_status: manifest.schema_version === 2 ? manifest.verifier_status : "not_recorded",
+				outcome: manifest.schema_version === 2 ? manifest.outcome : "not_recorded",
+				binding_status: manifest.schema_version === 2 ? manifest.binding_status : "not_recorded",
+				source_ref: reference.run_ref,
+			};
 		});
 		return { schema_version: 1, session_id: entry.session_id, project_id: entry.project_id, workspace_id: entry.workspace_id, title: entry.title, created_at: entry.created_at, updated_at: entry.updated_at, parent_session_id: entry.parent_session_id, messages: projectSessionEntries(sessionEntries), runs, source_status: "available" };
 	}
