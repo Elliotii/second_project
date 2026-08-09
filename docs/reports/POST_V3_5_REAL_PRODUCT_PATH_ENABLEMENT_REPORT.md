@@ -1,0 +1,214 @@
+# Post-V3.5 Real Product Path Enablement Report
+
+```yaml
+status: bounded_correction_complete_pending_main_acceptance
+date: 2026-08-10
+kind: bounded_post_closeout_product_maintenance
+planning_baseline_commit: 2256de499c0412a610719d4c40df83c16680cf30
+planning_baseline_parent: e4e64d148d07ea5ed189365486fecbb525b78af9
+initial_candidate_commit: c9c9e42175fe854ed9d0a431598042e96f64d7bb
+correction_parent_commit: c9c9e42175fe854ed9d0a431598042e96f64d7bb
+correction_commit: pending_resulting_commit_self_identity_reported_in_final
+pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
+real_credential_reads_observed: 0
+external_network_calls_observed: 0
+external_provider_calls_observed: 0
+real_model_calls_observed: 0
+actual_product_smoke_executed: false
+current_state_modified: false
+pi_modified: false
+```
+
+## 1. Baselines and authority
+
+**Fact.** Gate A started from exact `HEAD`
+`2256de499c0412a610719d4c40df83c16680cf30`, whose parent was exactly
+`e4e64d148d07ea5ed189365486fecbb525b78af9`. Its Planning delta contained only:
+
+- `docs/reports/POST_V3_5_PRODUCT_SMOKE_TEST_PLAN.md`;
+- `docs/reports/POST_V3_5_REAL_PRODUCT_PATH_ENABLEMENT_SESSION_START_PROMPT.md`.
+
+The first bounded implementation produced candidate
+`c9c9e42175fe854ed9d0a431598042e96f64d7bb`. Main returned
+`REVISE_BOUNDED_BEFORE_AUDIT`, and this report records the one authorized correction on
+that exact parent. No accepted control-state document was changed.
+
+The emitted public Pi checkout selected by
+`workbench/scripts/v35g2-public-pi-loader.mjs` is
+`D:\AI\AI_Projects\project2\.runs\g006\pi` at exact commit
+`027a5847901b5dde30270abaa1041046cd2b4b55`, with clean tracked status and the emitted
+agent and DeepSeek provider modules present. The source worktree itself has no
+`.upstream/pi` directory.
+
+## 2. Final bounded design
+
+The accepted deterministic/Faux default remains unchanged. Only the explicit host
+launcher injects the `real_product_smoke` executor into
+`PersistentSessionServiceV35`. The real route remains public `JsonlSessionRepo` plus
+Direct public `AgentHarness`, fixed `deepseek-v4-flash`, retry 0, fallback 0, bounded
+workspace Tools, one frozen logical `public_test`, an external Verifier, ordinary Outcome,
+and a schema-v2 Run Manifest. The browser still supplies only `run_id` and `prompt`.
+
+The corrected host Authority digest now freezes:
+
+- one exact `session_id`;
+- exact ordinal-1 and ordinal-2 `run_id` values;
+- both prompt digests and both Verifier source identities;
+- project, workspace and initial Workspace identities;
+- fixed Provider profile and Tool policy;
+- a per-turn envelope and a whole-journey envelope.
+
+Before Credential resolution or model construction, execution checks the input
+Session/Run/ordinal/prior-Run chain, prompt digest, initial Workspace, prior cumulative
+budget and the same fail-closed Session/catalog/Run inspection used by the Read Model.
+Wrong Session, wrong Run, replay, a third Run, a second Session, linked evidence tamper
+and prior reference substitution are rejected before resolver/model access.
+
+For every new schema-v2 Run, the catalog reference binds the exact Manifest bytes. The
+Manifest binds exact Verifier-result and Outcome bytes, in addition to the existing Pi
+Session prefix/count digest and identity fields. Schema-v1 Faux and historical Run parsing
+remain compatible; no migration subsystem was introduced.
+
+The deferred file Credential resolver records only file metadata at composition. At
+actual resolution it rechecks ordinary non-link status, link count, lexical path,
+canonical path, device, inode and birth time before opening; it confirms the opened handle
+and the path again around the read. A replaced or newly linked source fails closed. The
+Credential path is still host-only and absent from browser/API inputs.
+
+## 3. Exact source delta
+
+The initial candidate had parent Planning baseline and changed these 11 paths:
+
+- `workbench/package.json`;
+- `workbench/scripts/post-v35-real-smoke-faux-driver.ts`;
+- `workbench/scripts/start-post-v35-real-smoke.ts`;
+- `workbench/src/contracts/post-v35-real-types.ts`;
+- `workbench/src/contracts/v35-types.ts`;
+- `workbench/src/contracts/v35g3-types.ts`;
+- `workbench/src/session/persistent-session-v35.ts`;
+- `workbench/src/session/real-smoke-turn-v35.ts`;
+- `workbench/src/webui/static/app.js`;
+- `workbench/src/webui/static/index.html`;
+- `workbench/tests/post-v35-real-product-enablement.test.ts`.
+
+The bounded correction modifies exactly these seven implementation/test paths and adds
+this final report as its eighth path:
+
+- `workbench/scripts/post-v35-real-smoke-faux-driver.ts` - safe test-only resolver/model
+  access audit and create-only action;
+- `workbench/scripts/start-post-v35-real-smoke.ts` - identity-preserving deferred resolver;
+- `workbench/src/contracts/post-v35-real-types.ts` - exact Session/Run IDs and both budgets;
+- `workbench/src/contracts/v35-types.ts` - optional catalog Manifest digest for v1
+  compatibility and required v2 evidence digests;
+- `workbench/src/session/persistent-session-v35.ts` - prior inspection and
+  catalog/Manifest/Verifier/Outcome byte-identity chain;
+- `workbench/src/session/real-smoke-turn-v35.ts` - identity pre-dispatch Gates, two-level
+  budget enforcement and deferred Credential identity helper;
+- `workbench/tests/post-v35-real-product-enablement.test.ts` - replay, wrong-ID, budget,
+  tamper, substitution and Credential-swap coverage;
+- `docs/reports/POST_V3_5_REAL_PRODUCT_PATH_ENABLEMENT_REPORT.md` - this report.
+
+No Pi source, dependency, fixture authority, accepted Closeout, Charter,
+`CURRENT_STATE.md`, historical evidence, Goal 2.5 evidence, State authority or promotion
+authority changed.
+
+## 4. Verification commands and exact results
+
+| Command | Exit | Exact result |
+|---|---:|---|
+| `git rev-parse HEAD` and `git rev-parse HEAD^` at correction start | 0 | exact initial candidate and Planning parent |
+| `npm.cmd run v35g2:typecheck` | 0 | strict TypeScript passed |
+| `npm.cmd run postv35:enablement:test` | 0 | 8 passed, 0 failed, 0 skipped |
+| correction's first `npm.cmd run v35g1:test` | 1 | 5 passed, 1 failed: new substitution check changed the accepted missing-path error classification |
+| final `npm.cmd run v35g1:test` after bounded classification fix | 0 | 6 passed, 0 failed, 0 skipped |
+| `npm.cmd run v35g3:test` | 0 | 6 passed, 0 failed, 0 skipped |
+| `git diff --check` | 0 | no whitespace errors |
+| pinned Pi `rev-parse HEAD` / `status --short` | 0 / 0 | exact pinned SHA / clean |
+
+Final executable test total: **20 passed, 0 failed, 0 skipped**.
+
+The initial implementation history also retains this required fact: the very first
+`npm.cmd run v35g1:test` exited 1 with pre-test `ERR_MODULE_NOT_FOUND` because the accepted
+ignored Goal 1 loader fixture was absent in this worktree. After the identical ignored
+loader was materialized under `.runs/v3-5-g1/runtime/`, that initial run passed 6/6. The
+loader remains ignored and is not part of either commit.
+
+The final enablement tests prove with a safe test-only access log that resolver and model
+factory call counts stay exactly zero for wrong Session, wrong Run, replay, third Run,
+prior Outcome tamper and catalog Run-reference substitution. They also cover exact
+per-turn/whole limits and swapped/hardlinked Credential test files. The two-process proof
+still completes the same authorized Session's two exact Runs and reconstructs the
+authenticated Pi Session prefix.
+
+## 5. Zero-access evidence
+
+**Fact.** No real Credential file was inspected or resolved. No external network,
+Provider or real-model call occurred. Observed real-access counts are `0/0/0/0`.
+
+Tests used only ignored temporary files, an in-memory sentinel Credential, the public Faux
+Provider, local loopback HTTP and local subprocesses. Schema-v2 test Manifests contain
+deliberately nonzero simulated counters; these do not represent real access. No dependency
+installation, Pi patch, private Pi import, SDK/Extension/RPC switch or Goal 2.5 rerun
+occurred.
+
+## 6. Frozen budget behavior
+
+```yaml
+real_session_turns: 2
+retry: 0
+fallback: 0
+replacement: 0
+per_turn:
+  provider_requests_total_max: 16
+  tool_calls_total_max: 24
+  combined_tokens_total_max: 131072
+  cost_usd_total_max: 0.20
+  wall_time_ms_max: 900000
+whole_journey:
+  provider_requests_total_max: 32
+  tool_calls_total_max: 48
+  combined_tokens_total_max: 262144
+  cost_usd_total_max: 0.40
+  wall_time_total_ms_max: 1800000
+```
+
+Request and Tool limits are checked before the excess operation. Known usage is checked
+against both envelopes during and after the turn. The effective Provider timeout is the
+smaller of the per-turn 15-minute limit and remaining whole-journey time. Exhausted prior
+whole-journey capacity stops before Credential resolution.
+
+## 7. Suggested separate real startup
+
+Only after Main acceptance and separate Smoke execution authority, freeze an ignored
+authority JSON whose digest includes the exact `session_id`, the two exact `run_id`s,
+both budget objects and all identities listed above. From `workbench`:
+
+```powershell
+npm.cmd run postv35:real-smoke -- --port 43135 `
+  --data-root <smoke-root>\data `
+  --workspace-root <smoke-root>\workspace `
+  --authority <smoke-root>\authority\real-smoke-authority.json `
+  --credential-file <opaque-host-credential-file>
+```
+
+Expected startup event:
+
+```json
+{"schema_version":1,"event":"post_v35_real_smoke_started","host":"127.0.0.1","port":43135,"url":"http://127.0.0.1:43135","mode":"real_product_smoke","authority_digest":"<sha256>"}
+```
+
+This report does not authorize or perform that command.
+
+## 8. Remaining unverified items and stop point
+
+- Current real DeepSeek availability, request accounting and actual cost remain unverified.
+- Real two-turn context reconstruction, behavioral continuation, Workspace result and both
+  real Verifiers remain unverified.
+- Actual server PID stop/restart/listener checks and browser walkthrough in real mode remain
+  unverified.
+- This slice does not prove crash recovery, exactly-once Tool effects, multi-writer
+  durability, general Skill benefit or production remote security.
+
+**Recommendation.** Submit the bounded correction commit to Main for acceptance/audit.
+Do not begin the real Product Smoke Test from this Session. No V3.5 reopen, V3.6/V4,
+State mutation, promotion or architecture acceptance is claimed here.

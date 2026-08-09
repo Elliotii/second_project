@@ -1,4 +1,4 @@
-import { lstatSync, readFileSync } from "node:fs";
+import { closeSync, fstatSync, lstatSync, openSync, readFileSync, realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { AgentHarness } from "@earendil-works/pi-agent-core";
 import {
@@ -8,7 +8,7 @@ import {
 } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { TaskSpecV0B } from "../contracts/v0b-types.ts";
-import type { PostV35RealSmokeAuthority, PostV35SmokeTurnAuthority } from "../contracts/post-v35-real-types.ts";
+import type { PostV35RealSmokeAuthority, PostV35SmokePerTurnBudget, PostV35SmokeTurnAuthority, PostV35SmokeWholeJourneyBudget } from "../contracts/post-v35-real-types.ts";
 import { artifactRef, writeOnceBytes, writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, fileSha256, sha256, stableJson, treeDigest } from "../hash.ts";
 import { GOAL3_DEEPSEEK_PROVIDER_PROFILE_V3 } from "../pi/runtime-profile-v3.ts";
@@ -20,11 +20,18 @@ import type { PersistentRealTurnExecutionV35, PersistentTurnExecutionInputV35, P
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 const REQUIRED_WRITABLE_PATHS = ["src/**", "test/**"];
-const REQUIRED_BUDGET = Object.freeze({
+const REQUIRED_PER_TURN_BUDGET = Object.freeze({
 	provider_requests_total_max: 16,
 	tool_calls_total_max: 24,
 	combined_tokens_total_max: 131_072,
 	cost_usd_total_max: 0.2,
+	wall_time_ms_max: 900_000,
+});
+const REQUIRED_WHOLE_JOURNEY_BUDGET = Object.freeze({
+	provider_requests_total_max: 32,
+	tool_calls_total_max: 48,
+	combined_tokens_total_max: 262_144,
+	cost_usd_total_max: 0.4,
 	wall_time_total_ms_max: 1_800_000,
 });
 
@@ -41,6 +48,65 @@ export interface PostV35RealModelFactory {
 	create(credential: string): Promise<PostV35RealModelRuntime> | PostV35RealModelRuntime;
 }
 
+export interface PostV35BudgetUsage {
+	provider_requests: number;
+	tool_calls: number;
+	combined_tokens: number;
+	cost_usd: number;
+	wall_time_ms: number;
+}
+
+export function assertPostV35BudgetV35(current: PostV35BudgetUsage, prior: PostV35BudgetUsage, perTurn: PostV35SmokePerTurnBudget, wholeJourney: PostV35SmokeWholeJourneyBudget): void {
+	if (current.provider_requests > perTurn.provider_requests_total_max || current.tool_calls > perTurn.tool_calls_total_max || current.combined_tokens > perTurn.combined_tokens_total_max || current.cost_usd > perTurn.cost_usd_total_max || current.wall_time_ms > perTurn.wall_time_ms_max) throw new Error("real-smoke per-turn budget exceeded");
+	if (prior.provider_requests + current.provider_requests > wholeJourney.provider_requests_total_max || prior.tool_calls + current.tool_calls > wholeJourney.tool_calls_total_max || prior.combined_tokens + current.combined_tokens > wholeJourney.combined_tokens_total_max || prior.cost_usd + current.cost_usd > wholeJourney.cost_usd_total_max || prior.wall_time_ms + current.wall_time_ms > wholeJourney.wall_time_total_ms_max) throw new Error("real-smoke whole-journey budget exceeded");
+}
+
+interface CredentialFileIdentityV35 {
+	path: string;
+	real_path: string;
+	dev: number;
+	ino: number;
+	birthtime_ms: number;
+}
+
+function credentialFileIdentity(pathValue: string): CredentialFileIdentityV35 {
+	const path = resolve(pathValue);
+	const stats = lstatSync(path);
+	if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1) throw new Error("Credential source must be one ordinary non-link host file");
+	return { path, real_path: realpathSync.native(path), dev: stats.dev, ino: stats.ino, birthtime_ms: stats.birthtimeMs };
+}
+
+function sameCredentialFile(left: CredentialFileIdentityV35, right: CredentialFileIdentityV35): boolean {
+	return left.path === right.path && left.real_path === right.real_path && left.dev === right.dev && left.ino === right.ino && left.birthtime_ms === right.birthtime_ms;
+}
+
+export function createDeferredCredentialFileResolverV35(pathValue: string): OpaqueCredentialResolverV1 {
+	const expected = credentialFileIdentity(pathValue);
+	return {
+		async resolve(): Promise<string> {
+			const before = credentialFileIdentity(expected.path);
+			if (!sameCredentialFile(expected, before)) throw new Error("Credential source file identity changed before resolution");
+			const handle = openSync(expected.path, "r");
+			let content: string;
+			try {
+				const opened = fstatSync(handle);
+				if (!opened.isFile() || opened.nlink !== 1 || opened.dev !== expected.dev || opened.ino !== expected.ino || opened.birthtimeMs !== expected.birthtime_ms) throw new Error("Credential source file identity changed during resolution");
+				content = readFileSync(handle, "utf8");
+			} finally {
+				closeSync(handle);
+			}
+			const after = credentialFileIdentity(expected.path);
+			if (!sameCredentialFile(expected, after)) throw new Error("Credential source file identity changed during resolution");
+			const matches = content.split(/\r?\n/).flatMap((line) => {
+				const match = line.match(/^\s*DEEPSEEK_API_KEY\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))\s*$/);
+				return match ? [match[1] ?? match[2] ?? match[3] ?? ""] : [];
+			});
+			if (matches.length !== 1 || matches[0] === "") throw new Error("opaque Credential source is invalid");
+			return matches[0]!;
+		},
+	};
+}
+
 function exactKeys(value: Record<string, unknown>, expected: readonly string[], label: string): void {
 	if (stableJson(Object.keys(value).sort()) !== stableJson([...expected].sort())) throw new Error(`${label} fields are invalid`);
 }
@@ -52,8 +118,8 @@ function safeRelativePath(value: string, label: string): void {
 function parseTurn(value: unknown, ordinal: 1 | 2): PostV35SmokeTurnAuthority {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("real-smoke turn authority is invalid");
 	const turn = value as Record<string, unknown>;
-	exactKeys(turn, ["ordinal", "prompt_sha256", "verifier_id", "verifier_source_path", "verifier_sha256", "verifier_timeout_ms", "verifier_output_limit_bytes"], "real-smoke turn authority");
-	if (turn.ordinal !== ordinal || typeof turn.prompt_sha256 !== "string" || !SHA256.test(turn.prompt_sha256) || typeof turn.verifier_id !== "string" || !ID.test(turn.verifier_id) || typeof turn.verifier_source_path !== "string" || typeof turn.verifier_sha256 !== "string" || !SHA256.test(turn.verifier_sha256) || !Number.isSafeInteger(turn.verifier_timeout_ms) || Number(turn.verifier_timeout_ms) < 1 || Number(turn.verifier_timeout_ms) > 120_000 || !Number.isSafeInteger(turn.verifier_output_limit_bytes) || Number(turn.verifier_output_limit_bytes) < 1 || Number(turn.verifier_output_limit_bytes) > 1_048_576) throw new Error("real-smoke turn authority values are invalid");
+	exactKeys(turn, ["ordinal", "run_id", "prompt_sha256", "verifier_id", "verifier_source_path", "verifier_sha256", "verifier_timeout_ms", "verifier_output_limit_bytes"], "real-smoke turn authority");
+	if (turn.ordinal !== ordinal || typeof turn.run_id !== "string" || !ID.test(turn.run_id) || typeof turn.prompt_sha256 !== "string" || !SHA256.test(turn.prompt_sha256) || typeof turn.verifier_id !== "string" || !ID.test(turn.verifier_id) || typeof turn.verifier_source_path !== "string" || typeof turn.verifier_sha256 !== "string" || !SHA256.test(turn.verifier_sha256) || !Number.isSafeInteger(turn.verifier_timeout_ms) || Number(turn.verifier_timeout_ms) < 1 || Number(turn.verifier_timeout_ms) > 120_000 || !Number.isSafeInteger(turn.verifier_output_limit_bytes) || Number(turn.verifier_output_limit_bytes) < 1 || Number(turn.verifier_output_limit_bytes) > 1_048_576) throw new Error("real-smoke turn authority values are invalid");
 	const verifierPath = resolve(turn.verifier_source_path);
 	const stats = lstatSync(verifierPath);
 	if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1 || fileSha256(verifierPath) !== turn.verifier_sha256) throw new Error("real-smoke Verifier source identity is invalid");
@@ -63,8 +129,8 @@ function parseTurn(value: unknown, ordinal: 1 | 2): PostV35SmokeTurnAuthority {
 export function parsePostV35RealSmokeAuthority(value: unknown): PostV35RealSmokeAuthority {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("real-smoke authority is invalid");
 	const authority = value as Record<string, unknown>;
-	exactKeys(authority, ["schema_version", "mode", "project_id", "workspace_id", "initial_workspace_sha256", "system_prompt", "task_policy", "provider_profile", "binding_status", "budget", "turns", "authority_digest"], "real-smoke authority");
-	if (authority.schema_version !== 1 || authority.mode !== "real_product_smoke" || typeof authority.project_id !== "string" || !ID.test(authority.project_id) || typeof authority.workspace_id !== "string" || !ID.test(authority.workspace_id) || typeof authority.initial_workspace_sha256 !== "string" || !SHA256.test(authority.initial_workspace_sha256) || typeof authority.system_prompt !== "string" || Buffer.byteLength(authority.system_prompt, "utf8") < 1 || Buffer.byteLength(authority.system_prompt, "utf8") > 16_384 || authority.provider_profile !== "deepseek-v4-flash" || authority.binding_status !== "not_applicable" || typeof authority.authority_digest !== "string" || !SHA256.test(authority.authority_digest)) throw new Error("real-smoke authority values are invalid");
+	exactKeys(authority, ["schema_version", "mode", "project_id", "workspace_id", "session_id", "initial_workspace_sha256", "system_prompt", "task_policy", "provider_profile", "binding_status", "per_turn_budget", "whole_journey_budget", "turns", "authority_digest"], "real-smoke authority");
+	if (authority.schema_version !== 1 || authority.mode !== "real_product_smoke" || typeof authority.project_id !== "string" || !ID.test(authority.project_id) || typeof authority.workspace_id !== "string" || !ID.test(authority.workspace_id) || typeof authority.session_id !== "string" || !ID.test(authority.session_id) || typeof authority.initial_workspace_sha256 !== "string" || !SHA256.test(authority.initial_workspace_sha256) || typeof authority.system_prompt !== "string" || Buffer.byteLength(authority.system_prompt, "utf8") < 1 || Buffer.byteLength(authority.system_prompt, "utf8") > 16_384 || authority.provider_profile !== "deepseek-v4-flash" || authority.binding_status !== "not_applicable" || typeof authority.authority_digest !== "string" || !SHA256.test(authority.authority_digest)) throw new Error("real-smoke authority values are invalid");
 	if (!authority.task_policy || typeof authority.task_policy !== "object" || Array.isArray(authority.task_policy)) throw new Error("real-smoke Tool policy is invalid");
 	const policy = authority.task_policy as Record<string, unknown>;
 	exactKeys(policy, ["writable_paths", "protected_paths", "command_descriptors"], "real-smoke Tool policy");
@@ -75,7 +141,8 @@ export function parsePostV35RealSmokeAuthority(value: unknown): PostV35RealSmoke
 	const command = descriptor as Record<string, unknown>;
 	exactKeys(command, ["command_id", "executable", "argv", "cwd", "timeout_seconds", "max_combined_output_bytes"], "real-smoke command descriptor");
 	if (command.command_id !== "public_test" || command.executable !== "current_node_executable" || stableJson(command.argv) !== stableJson(["--test"]) || command.cwd !== "workspace" || !Number.isSafeInteger(command.timeout_seconds) || Number(command.timeout_seconds) < 1 || Number(command.timeout_seconds) > 120 || !Number.isSafeInteger(command.max_combined_output_bytes) || Number(command.max_combined_output_bytes) < 1 || Number(command.max_combined_output_bytes) > 1_048_576) throw new Error("real-smoke command descriptor values are invalid");
-	if (!authority.budget || typeof authority.budget !== "object" || Array.isArray(authority.budget) || stableJson(authority.budget) !== stableJson(REQUIRED_BUDGET)) throw new Error("real-smoke budget is not the frozen envelope");
+	if (!authority.per_turn_budget || typeof authority.per_turn_budget !== "object" || Array.isArray(authority.per_turn_budget) || stableJson(authority.per_turn_budget) !== stableJson(REQUIRED_PER_TURN_BUDGET)) throw new Error("real-smoke per-turn budget is not the frozen envelope");
+	if (!authority.whole_journey_budget || typeof authority.whole_journey_budget !== "object" || Array.isArray(authority.whole_journey_budget) || stableJson(authority.whole_journey_budget) !== stableJson(REQUIRED_WHOLE_JOURNEY_BUDGET)) throw new Error("real-smoke whole-journey budget is not the frozen envelope");
 	if (!Array.isArray(authority.turns) || authority.turns.length !== 2) throw new Error("real-smoke turn list is invalid");
 	parseTurn(authority.turns[0], 1);
 	parseTurn(authority.turns[1], 2);
@@ -119,12 +186,15 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 	return Object.freeze({
 		mode: "real_product_smoke" as const,
 		async execute(input: PersistentTurnExecutionInputV35): Promise<PersistentRealTurnExecutionV35> {
+			if (input.sessionId !== authority.session_id) throw new Error("real-smoke Session identity does not match frozen host authority");
 			if (input.priorRunCount > 1 || (input.priorRunCount === 0) !== (input.priorRunId === null)) throw new Error("real-smoke permits exactly two ordered Runs");
 			const turn = authority.turns[input.priorRunCount];
-			if (!turn || sha256(input.prompt) !== turn.prompt_sha256) throw new Error("browser prompt does not match frozen host authority");
+			if (!turn || input.runId !== turn.run_id || (input.priorRunCount === 1 && input.priorRunId !== authority.turns[0].run_id)) throw new Error("real-smoke Run identity or ordinal does not match frozen host authority");
+			if (sha256(input.prompt) !== turn.prompt_sha256) throw new Error("browser prompt does not match frozen host authority");
 			if (input.priorRunCount === 0 && treeDigest(input.workspaceRoot) !== authority.initial_workspace_sha256) throw new Error("real-smoke initial Workspace identity mismatch");
-			const budget = authority.budget;
-			if (input.priorUsage.provider_requests >= budget.provider_requests_total_max || input.priorUsage.tool_calls >= budget.tool_calls_total_max || input.priorUsage.input_tokens + input.priorUsage.output_tokens >= budget.combined_tokens_total_max || input.priorUsage.cost_usd >= budget.cost_usd_total_max || input.priorUsage.wall_time_ms >= budget.wall_time_total_ms_max) throw new Error("real-smoke whole-session budget is exhausted");
+			const priorBudgetUsage: PostV35BudgetUsage = { provider_requests: input.priorUsage.provider_requests, tool_calls: input.priorUsage.tool_calls, combined_tokens: input.priorUsage.input_tokens + input.priorUsage.output_tokens, cost_usd: input.priorUsage.cost_usd, wall_time_ms: input.priorUsage.wall_time_ms };
+			assertPostV35BudgetV35({ provider_requests: 0, tool_calls: 0, combined_tokens: 0, cost_usd: 0, wall_time_ms: 0 }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
+			if (priorBudgetUsage.provider_requests >= authority.whole_journey_budget.provider_requests_total_max || priorBudgetUsage.tool_calls >= authority.whole_journey_budget.tool_calls_total_max || priorBudgetUsage.combined_tokens >= authority.whole_journey_budget.combined_tokens_total_max || priorBudgetUsage.cost_usd >= authority.whole_journey_budget.cost_usd_total_max || priorBudgetUsage.wall_time_ms >= authority.whole_journey_budget.wall_time_total_ms_max) throw new Error("real-smoke whole-journey budget is exhausted before dispatch");
 			const verifierSource = readFileSync(resolve(turn.verifier_source_path));
 			const verifierSnapshotPath = writeOnceBytes(input.runRoot, "verifier/source.mjs", verifierSource);
 			const verifierSnapshotRef = artifactRef(input.runRoot, verifierSnapshotPath, "text/javascript; charset=utf-8", false);
@@ -140,7 +210,8 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 				expose_task_command_ids: true,
 				terminate_on_successful_command_ids: ["public_test"],
 			});
-			const harness = new AgentHarness({ models: runtime.models, session: input.session, model: runtime.model, tools: tools.tools, toolContext: tools.context, systemPrompt: authority.system_prompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: budget.wall_time_total_ms_max - input.priorUsage.wall_time_ms } });
+			const remainingJourneyMs = authority.whole_journey_budget.wall_time_total_ms_max - input.priorUsage.wall_time_ms;
+			const harness = new AgentHarness({ models: runtime.models, session: input.session, model: runtime.model, tools: tools.tools, toolContext: tools.context, systemPrompt: authority.system_prompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: Math.min(authority.per_turn_budget.wall_time_ms_max, remainingJourneyMs) } });
 			let settledEvents = 0;
 			let providerRequests = 0;
 			let inputTokens = 0;
@@ -166,11 +237,13 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 				return { messages: event.messages };
 			});
 			const offRequest = harness.on("before_provider_request", () => {
-				if (input.priorUsage.provider_requests + ++providerRequests > budget.provider_requests_total_max) throw new Error("real-smoke Provider request budget exceeded before dispatch");
+				providerRequests++;
+				assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: Math.max(0, Date.now() - started) }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
 				return undefined;
 			});
 			const offTool = harness.on("tool_call", () => {
-				if (input.priorUsage.tool_calls + ++toolCallAttempts > budget.tool_calls_total_max) throw new Error("real-smoke Tool-call budget exceeded");
+				toolCallAttempts++;
+				assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: Math.max(0, Date.now() - started) }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
 				return undefined;
 			});
 			try {
@@ -181,7 +254,7 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 			}
 			const wallTimeMs = Math.max(0, Date.now() - started);
 			if (settledEvents !== 1 || observedPriorDigest !== input.priorContextSha256 || tools.pendingSideEffects() !== 0) throw new Error("real-smoke Direct AgentHarness turn did not settle safely");
-			if (input.priorUsage.input_tokens + input.priorUsage.output_tokens + inputTokens + outputTokens > budget.combined_tokens_total_max || input.priorUsage.cost_usd + costUsd > budget.cost_usd_total_max || input.priorUsage.wall_time_ms + wallTimeMs > budget.wall_time_total_ms_max) throw new Error("real-smoke usage exceeded the frozen whole-session budget");
+			assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: wallTimeMs }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
 			const starts = tools.auditEvents.filter((event) => event.type === "start").map((event) => event.tool_call_id);
 			const entries = await input.session.getEntries();
 			const results = entries.flatMap((entry) => entry.type === "message" && entry.message.role === "toolResult" ? [entry.message.toolCallId] : []).slice(-starts.length);

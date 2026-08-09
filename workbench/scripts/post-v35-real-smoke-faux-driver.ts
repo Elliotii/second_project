@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall, type AssistantMessage } from "@earendil-works/pi-ai";
 import { PersistentSessionServiceV35 } from "../src/session/persistent-session-v35.ts";
@@ -25,6 +25,7 @@ if (required.some((key) => args[key] === undefined)) throw new Error("test drive
 const authority = loadPostV35RealSmokeAuthority(args["--authority"]!);
 const modelFactory: PostV35RealModelFactory = {
 	create() {
+		if (args["--access-audit"]) appendFileSync(resolve(args["--access-audit"]), `${JSON.stringify({ event: "model_factory", run_id: args["--run-id"] })}\n`);
 		const models = createModels();
 		const registration = fauxProvider({ provider: `post-v35-faux-real-${args["--run-id"]}` });
 		models.setProvider(registration.provider);
@@ -37,9 +38,13 @@ const modelFactory: PostV35RealModelFactory = {
 	},
 };
 mkdirSync(resolve(args["--data-root"]!), { recursive: true });
-const executor = createPostV35RealSmokeTurnExecutor({ authorized: true, authority, credentialResolver: { async resolve(): Promise<string> { return "IN_MEMORY_TEST_CREDENTIAL"; } }, modelFactory });
+const executor = createPostV35RealSmokeTurnExecutor({ authorized: true, authority, credentialResolver: { async resolve(): Promise<string> { if (args["--access-audit"]) appendFileSync(resolve(args["--access-audit"]), `${JSON.stringify({ event: "credential_resolver", run_id: args["--run-id"] })}\n`); return "IN_MEMORY_TEST_CREDENTIAL"; } }, modelFactory });
 const service = new PersistentSessionServiceV35({ dataRoot: args["--data-root"]!, projectId: authority.project_id, workspaceRoot: args["--workspace-root"]!, workspaceId: authority.workspace_id, turnExecutor: executor });
-if (args["--action"] === "create") await service.create({ sessionId: args["--session-id"]!, title: "Post-V3.5 real path proof" });
+if (args["--action"] === "create" || args["--action"] === "create-only") await service.create({ sessionId: args["--session-id"]!, title: "Post-V3.5 real path proof" });
 else if (args["--action"] !== "continue") throw new Error("test driver action is invalid");
+if (args["--action"] === "create-only") {
+	process.stdout.write(`${JSON.stringify({ created: true })}\n`);
+	process.exit(0);
+}
 const result = await service.executeTurn({ sessionId: args["--session-id"]!, runId: args["--run-id"]!, prompt: args["--prompt"]! });
 process.stdout.write(`${JSON.stringify(result)}\n`);

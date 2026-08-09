@@ -1,9 +1,8 @@
-import { lstatSync, mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
-import type { OpaqueCredentialResolverV1 } from "../src/provider/fixed-provider-v1.ts";
 import { readAdaptationLineageSafeV35, readGoal25ComparisonSafeV35, readStateHistorySafeV35, readV2RecoverySafeV35 } from "../src/read-model/workbench-v35g3.ts";
 import { PersistentSessionServiceV35 } from "../src/session/persistent-session-v35.ts";
-import { createPostV35RealSmokeTurnExecutor, loadPostV35RealSmokeAuthority } from "../src/session/real-smoke-turn-v35.ts";
+import { createDeferredCredentialFileResolverV35, createPostV35RealSmokeTurnExecutor, loadPostV35RealSmokeAuthority } from "../src/session/real-smoke-turn-v35.ts";
 import { Goal3WorkbenchApplicationV35 } from "../src/webui/application-v35g3.ts";
 import { loadGoal3DemoProjectionV35 } from "../src/webui/projection-v35g3.ts";
 import { createGoal3LoopbackServerV35 } from "../src/webui/server-v35g3.ts";
@@ -42,22 +41,6 @@ function parseArguments(argv: readonly string[]): ArgumentsPostV35 {
 	return values as ArgumentsPostV35;
 }
 
-function deferredCredentialResolver(pathValue: string): OpaqueCredentialResolverV1 {
-	const path = resolve(pathValue);
-	const stats = lstatSync(path);
-	if (!stats.isFile() || stats.isSymbolicLink()) throw new Error("Credential source must be an ordinary host file");
-	return {
-		async resolve(): Promise<string> {
-			const matches = readFileSync(path, "utf8").split(/\r?\n/).flatMap((line) => {
-				const match = line.match(/^\s*DEEPSEEK_API_KEY\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))\s*$/);
-				return match ? [match[1] ?? match[2] ?? match[3] ?? ""] : [];
-			});
-			if (matches.length !== 1 || matches[0] === "") throw new Error("opaque Credential source is invalid");
-			return matches[0]!;
-		},
-	};
-}
-
 const options = parseArguments(process.argv.slice(2));
 const projectRoot = resolve(import.meta.dirname, "../..");
 const authority = loadPostV35RealSmokeAuthority(options.authority);
@@ -68,7 +51,7 @@ if (options.pairRoot) projection.goal25_comparison = readGoal25ComparisonSafeV35
 if (options.v2Root) projection.v2_recovery = readV2RecoverySafeV35({ sourceRoot: options.v2Root });
 if (options.v3Root) projection.adaptation = readAdaptationLineageSafeV35({ sourceRoot: options.v3Root });
 if (options.stateRoot && options.stateProjectId) projection.state_history = await readStateHistorySafeV35({ stateRoot: options.stateRoot, projectId: options.stateProjectId });
-const executor = createPostV35RealSmokeTurnExecutor({ authorized: true, authority, credentialResolver: deferredCredentialResolver(options.credentialFile) });
+const executor = createPostV35RealSmokeTurnExecutor({ authorized: true, authority, credentialResolver: createDeferredCredentialFileResolverV35(options.credentialFile) });
 const sessionService = new PersistentSessionServiceV35({ dataRoot: options.dataRoot, projectId: authority.project_id, workspaceRoot: options.workspaceRoot, workspaceId: authority.workspace_id, turnExecutor: executor });
 const application = new Goal3WorkbenchApplicationV35({ sessionService, projection });
 const server = createGoal3LoopbackServerV35(application);

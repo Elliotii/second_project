@@ -1,15 +1,24 @@
 import type { BoundedTaskPolicy } from "../types.ts";
 
-export interface PostV35SmokeBudget {
+export interface PostV35SmokePerTurnBudget {
 	provider_requests_total_max: 16;
 	tool_calls_total_max: 24;
 	combined_tokens_total_max: 131072;
 	cost_usd_total_max: 0.2;
+	wall_time_ms_max: 900000;
+}
+
+export interface PostV35SmokeWholeJourneyBudget {
+	provider_requests_total_max: 32;
+	tool_calls_total_max: 48;
+	combined_tokens_total_max: 262144;
+	cost_usd_total_max: 0.4;
 	wall_time_total_ms_max: 1800000;
 }
 
 export interface PostV35SmokeTurnAuthority {
 	ordinal: 1 | 2;
+	run_id: string;
 	prompt_sha256: string;
 	verifier_id: string;
 	verifier_source_path: string;
@@ -23,12 +32,14 @@ export interface PostV35RealSmokeAuthority {
 	mode: "real_product_smoke";
 	project_id: string;
 	workspace_id: string;
+	session_id: string;
 	initial_workspace_sha256: string;
 	system_prompt: string;
 	task_policy: BoundedTaskPolicy;
 	provider_profile: "deepseek-v4-flash";
 	binding_status: "not_applicable";
-	budget: PostV35SmokeBudget;
+	per_turn_budget: PostV35SmokePerTurnBudget;
+	whole_journey_budget: PostV35SmokeWholeJourneyBudget;
 	turns: [PostV35SmokeTurnAuthority, PostV35SmokeTurnAuthority];
 	authority_digest: string;
 }

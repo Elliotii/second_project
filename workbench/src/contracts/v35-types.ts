@@ -22,6 +22,7 @@ export interface PersistentRunCatalogRefV35 {
 	run_id: string;
 	run_ref: string;
 	created_at: string;
+	manifest_sha256?: string;
 }
 
 export interface PersistentFauxRunManifestV35 {
@@ -85,8 +86,10 @@ export interface PersistentRealRunManifestV35 {
 	verifier_id: string;
 	verifier_status: "passed" | "failed";
 	verifier_ref: string;
+	verifier_sha256: string;
 	outcome: "passed" | "failed";
 	outcome_ref: string;
+	outcome_sha256: string;
 	binding_status: "not_applicable";
 }
 

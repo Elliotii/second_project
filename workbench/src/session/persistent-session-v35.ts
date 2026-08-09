@@ -5,7 +5,7 @@ import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall } from "@earendil-works/pi-ai";
 import type { PersistentRunManifestV35, PersistentSessionCatalogEntryV35, PersistentSessionCatalogV35, SafeRunViewV35, SafeSessionMessageV35, SafeSessionViewV35 } from "../contracts/v35-types.ts";
 import { readJsonArtifact, writeOnceJson } from "../evidence/artifacts.ts";
-import { digestObject, sha256, stableJson } from "../hash.ts";
+import { digestObject, fileSha256, sha256, stableJson } from "../hash.ts";
 import { createBoundedToolProfile } from "../pi/tool-profile.ts";
 
 const CATALOG_FILE = "catalog-v1.json";
@@ -167,7 +167,7 @@ function parseCatalog(value: unknown): PersistentSessionCatalogV35 {
 		if (seen.has(entry.session_id)) throw new Error("Session catalog contains duplicate identity");
 		seen.add(entry.session_id);
 		for (const run of entry.run_refs) {
-			if (!run || !IDENTIFIER.test(run.run_id) || typeof run.run_ref !== "string" || typeof run.created_at !== "string") throw new Error("Session catalog Run reference is invalid");
+			if (!run || !IDENTIFIER.test(run.run_id) || typeof run.run_ref !== "string" || typeof run.created_at !== "string" || (run.manifest_sha256 !== undefined && (typeof run.manifest_sha256 !== "string" || !SHA256.test(run.manifest_sha256)))) throw new Error("Session catalog Run reference is invalid");
 			if (seenRuns.has(run.run_id)) throw new Error("Session catalog contains duplicate Run identity");
 			seenRuns.add(run.run_id);
 		}
@@ -254,7 +254,7 @@ function parseRunManifest(value: unknown): PersistentRunManifestV35 {
 		if (run.credential_reads !== 0 || run.network_calls !== 0 || run.external_provider_calls !== 0 || run.real_model_calls !== 0) throw new Error("Run Manifest schema is invalid");
 		return run;
 	}
-	if (run.schema_version !== 2 || run.mode !== "real_product_smoke" || (run.prior_run_id !== null && !IDENTIFIER.test(run.prior_run_id)) || ![run.provider_requests, run.credential_reads, run.network_calls, run.external_provider_calls, run.real_model_calls, run.input_tokens, run.output_tokens, run.wall_time_ms].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || !Number.isFinite(run.cost_usd) || run.cost_usd < 0 || !IDENTIFIER.test(run.verifier_id) || (run.verifier_status !== "passed" && run.verifier_status !== "failed") || (run.outcome !== "passed" && run.outcome !== "failed") || run.binding_status !== "not_applicable" || run.verifier_ref !== "verifier/result.json" || run.outcome_ref !== "outcome.json") throw new Error("Run Manifest schema is invalid");
+	if (run.schema_version !== 2 || run.mode !== "real_product_smoke" || (run.prior_run_id !== null && !IDENTIFIER.test(run.prior_run_id)) || ![run.provider_requests, run.credential_reads, run.network_calls, run.external_provider_calls, run.real_model_calls, run.input_tokens, run.output_tokens, run.wall_time_ms].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || !Number.isFinite(run.cost_usd) || run.cost_usd < 0 || !IDENTIFIER.test(run.verifier_id) || (run.verifier_status !== "passed" && run.verifier_status !== "failed") || (run.outcome !== "passed" && run.outcome !== "failed") || run.binding_status !== "not_applicable" || run.verifier_ref !== "verifier/result.json" || !SHA256.test(run.verifier_sha256) || run.outcome_ref !== "outcome.json" || !SHA256.test(run.outcome_sha256)) throw new Error("Run Manifest schema is invalid");
 	return run;
 }
 
@@ -363,7 +363,9 @@ export class PersistentSessionServiceV35 {
 		const priorMessages = structuredClone(priorContext.messages);
 		const priorDigest = digestObject(priorMessages);
 		if (this.turnExecutor) {
+			await this.inspect(options.sessionId);
 			const priorManifests = entry.run_refs.map((reference) => parseRunManifest(readJsonArtifact<PersistentRunManifestV35>(resolve(resolveOperationalRef(this.dataRoot, reference.run_ref), ".."), "manifest.json")));
+			if (priorManifests.some((manifest) => manifest.schema_version !== 2)) throw new Error("real-smoke Session cannot mix deterministic/Faux and real Run history");
 			const priorUsage = priorManifests.reduce((total, manifest) => ({
 				provider_requests: total.provider_requests + manifest.provider_requests,
 				tool_calls: total.tool_calls + manifest.tool_call_ids.length,
@@ -395,6 +397,8 @@ export class PersistentSessionServiceV35 {
 			const verifier = readJsonArtifact<Record<string, unknown>>(runRoot, executed.verifier_ref);
 			const outcome = readJsonArtifact<Record<string, unknown>>(runRoot, executed.outcome_ref);
 			if (verifier.verifier_id !== executed.verifier_id || verifier.status !== executed.verifier_status || outcome.run_id !== options.runId || outcome.verifier_status !== executed.verifier_status || outcome.outcome !== executed.outcome) throw new Error("real Run Verifier/Outcome evidence mismatch");
+			const verifierSha256 = fileSha256(resolveOperationalRef(runRoot, executed.verifier_ref));
+			const outcomeSha256 = fileSha256(resolveOperationalRef(runRoot, executed.outcome_ref));
 			const createdAt = new Date().toISOString();
 			const sessionRef = portable(relative(this.dataRoot, resolve(metadata.path)));
 			const manifest: PersistentRunManifestV35 = {
@@ -431,12 +435,14 @@ export class PersistentSessionServiceV35 {
 				verifier_id: executed.verifier_id,
 				verifier_status: executed.verifier_status,
 				verifier_ref: executed.verifier_ref,
+				verifier_sha256: verifierSha256,
 				outcome: executed.outcome,
 				outcome_ref: executed.outcome_ref,
+				outcome_sha256: outcomeSha256,
 				binding_status: "not_applicable",
 			};
-			writeOnceJson(runRoot, "manifest.json", manifest);
-			entry.run_refs.push({ run_id: options.runId, run_ref: portable(relative(this.dataRoot, resolve(runRoot, "manifest.json"))), created_at: createdAt });
+			const manifestRef = writeOnceJson(runRoot, "manifest.json", manifest);
+			entry.run_refs.push({ run_id: options.runId, run_ref: portable(relative(this.dataRoot, resolve(runRoot, "manifest.json"))), created_at: createdAt, manifest_sha256: manifestRef.sha256 });
 			entry.updated_at = createdAt;
 			writeCatalog(this.dataRoot, catalog);
 			return { manifest, view: await this.inspect(options.sessionId), listed_before: listedBefore };
@@ -523,12 +529,16 @@ export class PersistentSessionServiceV35 {
 		const sessionEntries = await session.getEntries();
 		const runs: SafeRunViewV35[] = entry.run_refs.map((reference) => {
 			const manifestPath = resolveOperationalRef(this.dataRoot, reference.run_ref);
+			if (reference.run_ref !== portable(`runs${sep}${reference.run_id}${sep}manifest.json`)) throw new Error("catalog Run reference path substitution rejected");
 			const runRoot = resolve(manifestPath, "..");
+			if (reference.manifest_sha256 !== undefined && fileSha256(manifestPath) !== reference.manifest_sha256) throw new Error("catalog/Run Manifest byte identity mismatch");
 			const manifest = parseRunManifest(readJsonArtifact<PersistentRunManifestV35>(runRoot, "manifest.json"));
 			if (manifest.run_id !== reference.run_id || manifest.session_id !== entry.session_id || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.workspace_path_sha256 !== this.workspaceDigest || manifest.session_ref !== entry.pi_session_ref || manifest.catalog_session_identity_sha256 !== catalogEntryIdentity(entry)) throw new Error("catalog/Run authority identity mismatch");
 			if (sessionEntries.length < manifest.session_entry_count_after_turn || digestObject(sessionEntries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("Run/Session historical prefix identity mismatch");
 			if (manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256) throw new Error("Run prior-context proof is invalid");
 			if (manifest.schema_version === 2) {
+				if (reference.manifest_sha256 === undefined) throw new Error("real Run catalog Manifest digest is missing");
+				if (fileSha256(resolveOperationalRef(runRoot, manifest.verifier_ref)) !== manifest.verifier_sha256 || fileSha256(resolveOperationalRef(runRoot, manifest.outcome_ref)) !== manifest.outcome_sha256) throw new Error("real Run Verifier/Outcome byte identity mismatch");
 				const verifier = readJsonArtifact<Record<string, unknown>>(runRoot, manifest.verifier_ref);
 				const outcome = readJsonArtifact<Record<string, unknown>>(runRoot, manifest.outcome_ref);
 				if (verifier.verifier_id !== manifest.verifier_id || verifier.status !== manifest.verifier_status || outcome.run_id !== manifest.run_id || outcome.session_id !== manifest.session_id || outcome.verifier_id !== manifest.verifier_id || outcome.verifier_status !== manifest.verifier_status || outcome.outcome !== manifest.outcome || outcome.binding_status !== manifest.binding_status || outcome.context_reconstructed !== true) throw new Error("real Run Verifier/Outcome evidence mismatch");
