@@ -1,21 +1,30 @@
-# V3.5 Goal 3 — Adaptive Harness Workbench WebUI & Demo Contract Draft
+# V3.5 Goal 3 — Adaptive Harness Workbench WebUI & Demo Contract
 
 ```yaml
-status: draft_pending_user_review
+status: accepted_activated_implementation_not_started
 date: 2026-08-09
 goal_id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
 preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
 goal_1_dependency: closed_accepted
 goal_2_evidence_dependency: satisfied_by_closed_accepted_goal_2_5
-active_goal: false
-implementation_authorized: false
+accepted_goal_2_5_evidence_root: C:/Users/HUAWEI/.codex/worktrees/d073/project2/.runs/v3-5-g2-5/real-pair-replacement-20260809-01
+accepted_goal_2_5_comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
+accepted_goal_2_5_comparison_file_sha256: 26e398c922d1b78e3a5784b83875077156f63bd7eb42f6d46e5d7ccf0d636da9
+active_goal: true
+contract_accepted: true
+accepted_by_user: 2026-08-09
+formalized_by_main_session: 2026-08-09
+activation_authorized_by_user: 2026-08-09
+implementation_authorized: true
 implementation_owner: future_new_top_level_goal_3_session
-control_baseline_commit_authorized: false
-bounded_implementation_commit_authorized: false
+implementation_started: false
+control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_activation_revision
+control_baseline_commit: resulting_HEAD_of_activation_revision
+bounded_implementation_commit_authorized: true_once_within_contract_allowlist
 credential_reads_authorized: 0
 external_network_authorized: false
-loopback_http_authorized: false_until_activation
+loopback_http_authorized: true_127_0_0_1_only
 real_model_calls_authorized: 0
 dependency_install_authorized: false
 pi_core_patch_authorized: false
@@ -23,10 +32,14 @@ private_pi_import_authorized: false
 runtime_route_switch_authorized: false
 goal_3_final_acceptance_authorized: false
 v3_5_final_acceptance_authorized: false
+rollback_surface: deferred_no_state_mutation_http_endpoint
 ```
 
-This draft freezes no execution authority. User acceptance of a future formal Contract must
-remain separate from Activation and the Control Baseline Commit.
+This Contract is accepted and activated by separate user authority. Main must first create
+and verify the clean Control Baseline Commit represented by this activation revision, then
+generate a launch Prompt that pins its exact SHA and create one new top-level Goal 3
+Implementation Session. No Goal implementation may begin before that Session passes Gate
+A from the exact baseline.
 
 ## 1. Goal question
 
@@ -54,6 +67,10 @@ Runtime, State authority, Skill experiment or self-evolution mechanism.
 6. Direct public `AgentHarness` remains the Runtime route. Pi Core, Verifier authority,
    promotion authority, hard budgets and accepted State semantics remain immutable.
 
+The accepted Goal 2.5 evidence root named above is read-only implementation and Main-review
+input. It must never be served to the browser as a local path, modified, relocated or
+treated as a portable repository fixture.
+
 ## 3. Minimum architecture
 
 ```text
@@ -77,10 +94,13 @@ Required design choices:
 
 ### 4.1 Read Model completion
 
-Add the smallest schema-aware adapter required to project the accepted Goal 2.5 Pair. It
-must authenticate its comparison and Manifest references/digests and expose the already
-frozen result; it must not call the older Goal 2 exact-key Inspector on a Goal 2.5 schema,
-coerce one schema into the other, or recompute comparison semantics in the browser.
+Add one read-only `inspectGoal25PairV35`-class boundary and the smallest schema-aware
+adapter required to project the accepted Goal 2.5 Pair. The Inspector must validate exact
+keys, comparison/Manifest/outcome/link digests, ArtifactRef containment, Base/Candidate
+membership, settled handoff, Verifier count/status, fairness identity and aggregate
+counters. It must not import or invoke the real execution entry, mutate evidence, call the
+older Goal 2 exact-key Inspector on a Goal 2.5 schema, coerce one schema into the other, or
+recompute comparison semantics in the browser.
 
 Compose a stable Goal 3 view from existing services/adapters for:
 
@@ -95,6 +115,22 @@ Compose a stable Goal 3 view from existing services/adapters for:
 Historical absence must render as `not_recorded`/`unavailable`, never as invented data.
 The Read Model remains derived navigation/presentation data, not a new truth store.
 
+The aggregate application view should remain one versioned safe contract, with these
+top-level projections rather than a generalized query platform:
+
+```text
+WorkbenchOverviewV35G3
+SessionList / SafeSessionView
+RunOutcomeView
+RecoveryComparisonView
+SkillComparisonView
+AdaptationLineageView
+StateHistoryView
+```
+
+Names may be adjusted by the implementation Session, but the browser must depend on these
+safe semantic views, not raw artifact shapes.
+
 ### 4.2 Thin local API
 
 Provide a constructor/configuration boundary that accepts only Main/host-selected,
@@ -108,10 +144,31 @@ allowlisted roots and services. The API must:
 - return safe projections only—no raw Session JSONL, private reasoning, provider payload,
   Credential material, environment values or arbitrary artifact bytes;
 - invoke create/open/continue only through `PersistentSessionServiceV35`;
-- if rollback is exposed, require an opaque configured authority ID, exact expected-active
-  identity and explicit confirmation, then call `rollbackActiveStateV3`; never write State
-  files directly. Tests and demo must use a Goal-owned disposable authority, not mutate the
-  accepted V3 authority.
+- expose no generic artifact-download, shell, filesystem, environment, Credential,
+  arbitrary-provider or arbitrary-command endpoint;
+- keep Harness State mutation out of the first WebUI. State history, promotion/rejection/
+  rollback decisions and current active identity are visible, but the browser has no
+  rollback write endpoint. Existing `rollbackActiveStateV3` remains the proven authority
+  path and can be exposed in a later separately reviewed operator-control increment.
+
+The recommended bounded route surface is:
+
+```text
+GET  /api/v1/overview
+GET  /api/v1/sessions
+GET  /api/v1/sessions/{session_id}
+POST /api/v1/sessions
+POST /api/v1/sessions/{session_id}/turns
+GET  /api/v1/comparisons/{resource_id}
+GET  /api/v1/adaptations/{resource_id}
+GET  /api/v1/state/{resource_id}
+GET  /, /app.js, /styles.css
+```
+
+Exact internal names may change, but adding raw-artifact, arbitrary-path, shell, provider,
+Credential or State-mutation routes is outside the Contract. Session write requests must
+use bounded JSON bodies and the existing deterministic/Faux Goal 1 execution service; the
+UI must label that mode accurately and must not imply real-model continuation.
 
 External network, Credential access and real model calls remain zero. Loopback HTTP is the
 only network-shaped behavior contemplated by this Goal.
@@ -125,13 +182,31 @@ The first UI must provide:
 3. Run/Verifier/Outcome details with source-reference/digest drill-down metadata;
 4. V2 recovery and Goal 2.5 Base/Candidate comparison views;
 5. adaptation lineage, Prompt/Skill diff, State/version history and binding explanation;
-6. guarded rollback only if the existing controller can be exposed without widening its
-   authority boundary;
+6. rollback history and current active identity, with an explicit notice that rollback
+   mutation is not exposed in this inspectability-first version;
 7. a reproducible post-run demo command and short usage guide.
 
 The UI must state the accepted Goal 2.5 conclusion accurately: both arms passed and no
 task-success advantage was observed for the Skill. It must not display a winner merely to
 make the demonstration more attractive.
+
+### 4.4 Reproducible demo data
+
+The implementation must support live local evidence roots selected by the host before
+startup, but a clone should not depend on ignored `.runs/` data being present to render a
+useful demonstration. Therefore Goal 3 may commit one small, sanitized, typed demo
+projection containing no raw Session/provider payload or Credential material.
+
+The projection must:
+
+- identify itself as derived demo data, never authority;
+- preserve the accepted Goal 2.5 comparison digest and source identity;
+- include enough V2/V3/Goal 2.5 lineage to exercise every primary view;
+- be reproducibly generated or checked against typed Read Model output;
+- contain no fabricated winner, hidden answer, private reasoning or absolute local path.
+
+Live-source adapter tests and demo-projection tests remain separate: the projection makes
+the UI portable; it does not replace direct validation of accepted evidence.
 
 ## 5. Source and deliverable boundary
 
@@ -140,9 +215,11 @@ The dedicated Session may modify only the smallest necessary subset of:
 ```text
 workbench/src/contracts/*v35*.ts
 workbench/src/read-model/
+workbench/src/v35g25/inspect-v35g25.ts  # new read-only Inspector only
 workbench/src/webui/                 # new, thin API/application/UI boundary
 workbench/tests/v35g3-*.test.ts
 workbench/scripts/*v35g3*            # bounded demo/start entry only
+fixtures/v3-5/goal3-demo/            # sanitized typed demo projection only
 workbench/package.json               # scripts only; no dependency addition
 workbench/README.md                   # short Goal 3 run instructions only
 docs/reports/V3_5_G3_IMPLEMENTATION_REPORT.md
@@ -171,11 +248,23 @@ At minimum the dedicated Session must run and record:
 3. Goal 1 persistent Session regressions;
 4. affected V3 State/rollback regressions if rollback is exposed;
 5. direct projection of the accepted Goal 2.5 comparison from a host-configured,
-   read-only evidence root, or a Main-verifiable equivalent with exact accepted digest;
+   read-only evidence root with the exact accepted digest;
 6. HTTP security tests for loopback binding, method/route allowlists, traversal, static
-   file containment, malformed IDs and safe redaction;
+   file containment, malformed IDs, oversized request bodies and safe redaction;
 7. a post-run browser/API smoke demonstration with zero Credential, external network,
    Provider/model and real-model access.
+
+The focused test matrix is limited to four groups:
+
+```text
+A. Goal 2.5 Inspector + Read Model integrity/tamper cases
+B. persistent Session list/open/create/continue application cases
+C. loopback API/static/path/redaction cases
+D. browser/demo smoke plus affected Goal 1 and V3 read regressions
+```
+
+No full historical suite or independent audit is required unless a concrete failure shows
+that an accepted authority boundary changed.
 
 Normal TypeScript, serialization, HTTP, CSS, fixture and path defects are ordinary Goal
 work and may be corrected by the same implementation Session.
@@ -192,8 +281,8 @@ work and may be corrected by the same implementation Session.
    `243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f`.
 5. Adaptation lineage, Prompt/Skill diff, State/version history and selective-binding
    reason are explainable end to end from existing evidence.
-6. Any exposed rollback uses the existing guarded controller and expected-active identity;
-   otherwise the UI states rollback is deferred rather than providing an unsafe shortcut.
+6. Rollback history and active identity are visible; State mutation is explicitly deferred
+   and no direct or indirect State write endpoint exists.
 7. API/static serving cannot access arbitrary paths or expose secrets/private reasoning,
    and accepted authority files are not directly mutable from the browser.
 8. The reproducible post-run demo passes with zero Credential, external network,
@@ -211,6 +300,67 @@ Independent audit is not scheduled by default. Main performs a narrow security/a
 review of the HTTP/path/redaction/rollback boundary. A separate focused audit is proposed
 only if concrete evidence shows a high-risk boundary defect or accepted authority change.
 One ordinary correction does not create R1/R2, a replacement Session or an Amendment.
+
+### 8.1 Single-Session implementation sequence
+
+After Activation, the top-level Goal 3 Session should complete four vertical slices in one
+continuous Goal rather than creating separate Stage Sessions:
+
+```text
+Gate A — exact Control Baseline, clean tracked tree, pinned clean Pi, zero-access preflight
+  ↓
+Slice A — Goal 2.5 read-only Inspector + versioned Read Model
+  ↓ focused tests
+Slice B — loopback API + deterministic Session application operations
+  ↓ focused tests
+Slice C — static WebUI + adaptation/comparison/state-history views
+  ↓ browser/API smoke
+Slice D — sanitized demo projection + demo command + concise reports
+  ↓ strict TypeScript + affected regressions + bounded implementation commit
+  ↓ stop for Main review
+```
+
+The Session may repair ordinary Contract-allowlisted TypeScript, schema, fixture, HTTP,
+CSS and path defects and continue. It must not ask Main to create a new Stage for such
+defects.
+
+### 8.2 Main review and acceptance sequence
+
+Main performs one bounded review after the implementation commit:
+
+1. verify exact parent/commit, source allowlist, tracked cleanliness and Pi identity;
+2. inspect the Goal 2.5 read-only validation path and confirm the accepted comparison
+   digest against the preserved real evidence;
+3. rerun strict TypeScript and the four focused test groups;
+4. start the server on an ephemeral `127.0.0.1` port and exercise safe/hostile HTTP cases;
+5. inspect the UI/demo output for factual wording, redaction and complete adaptation
+   lineage;
+6. return one bundled bounded correction to the same Goal Session by default if necessary;
+   ordinary remaining defects may continue in that Session when scope/architecture stay
+   unchanged—do not close the Goal merely because a numeric correction count was reached;
+7. if Exit Criteria pass and no Hard Stop is hit, Main proposes Goal 3 acceptance and
+   V3.5 final Closeout to the user.
+
+No Candidate Audit Baseline, independent Audit Session, R1/R2 or real Execution Session is
+planned. A fresh focused audit becomes a user decision only if Main reproduces a concrete
+high-risk path/redaction/authority defect that cannot be resolved and verified by the
+bounded review above.
+
+A second material correction triggers a short Main complexity checkpoint: restate the
+Goal question, evidence obtained, missing evidence and whether the remaining work is
+ordinary implementation or an architecture/scope change. Only the latter requires user
+decision; ordinary bounded defects continue in the same Session.
+
+### 8.3 Post-Goal version closeout
+
+After user acceptance of Goal 3, Main may perform one documentation-only V3.5 closeout:
+
+- formal Goal 3 Closeout and `CURRENT_STATE.md` synchronization;
+- final V3.5 Closeout and bounded claim list;
+- concise Architecture/README/demo/interview consolidation based on frozen code/evidence;
+- one final V3.5 closeout commit after explicit user authorization.
+
+This is not a fourth technical Goal and must not add features or rerun V2/V3/Goal 2.5.
 
 ## 9. Hard stops
 
@@ -239,23 +389,23 @@ It may not claim production security, remote/multi-user operation, realtime stre
 general Skill superiority, arbitrary historical migration, crash recovery, exactly-once
 Tool effects, full IDE capability or final V3.5 acceptance.
 
-## 11. User decisions required
+## 11. Accepted decisions and next authority
 
 ```yaml
+accepted_decisions:
+  - decision: accept_and_formalize_goal_3_contract_without_activation
+    accepted_by_user: 2026-08-09
+    consequence: Goal_question_scope_and_Exit_Criteria_are_frozen_while_active_goal_remains_null
+  - decision: defer_UI_rollback
+    accepted_by_user: 2026-08-09
+    consequence: Goal_3_has_no_State_mutation_HTTP_endpoint
+  - decision: authorize_activation_control_baseline_loopback_http_and_bounded_goal_commit
+    accepted_by_user: 2026-08-09
+    consequence: permits_Main_to_activate_Goal_3_create_and_verify_the_Control_Baseline_start_one_top_level_Session_and_allow_127_0_0_1_only_HTTP_tests_demo_plus_one_bounded_commit
 user_decisions_required:
-  - decision: accept_formalize_and_activate_goal_3_contract
-    evidence: goal_1_and_goal_2_5_dependencies_are_closed_and_accepted
-    options: [accept_and_activate, request_bounded_revision, defer]
-    recommendation: accept_and_activate
-    consequence: permits_Main_to_create_a_clean_Control_Baseline_and_start_one_new_top_level_Goal_3_Implementation_Session
-  - decision: authorize_loopback_only_http_and_bounded_goal_commit
-    evidence: Goal_3_requires_local_API_and_a_dedicated_implementation_commit_but_no_external_network
-    options: [authorize_with_activation, keep_unauthorized]
-    recommendation: authorize_with_activation
-    consequence: permits_127_0_0_1_local_API_tests_demo_and_one_bounded_implementation_commit
-  - decision: rollback_surface
-    evidence: existing_controller_is_guarded_but_browser_mutation_expands_security_review_surface
-    options: [expose_only_against_configured_disposable_authority, defer_UI_rollback]
-    recommendation: expose_only_against_configured_disposable_authority
-    consequence: demonstrates_existing_guarded_lifecycle_without_mutating_accepted_V3_authority
+  - decision: final_Goal_3_and_V3_5_acceptance_after_Main_review
+    evidence: implementation_and_Main_review_not_yet_completed
+    options: [accept_after_evidence, request_bounded_correction, reject_or_pause]
+    recommendation: decide_only_after_the_dedicated_Session_report_and_Main_review
+    consequence: no_final_acceptance_is_granted_by_Activation
 ```

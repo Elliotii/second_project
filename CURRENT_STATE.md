@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_closed_accepted_goal_3_contract_draft_pending_review
-  status: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+  phase: v3_5_goal_3_activated_implementation_not_started
+  status: V3_5_G3_ACTIVE_FROM_CONTROL_BASELINE
 
-active_goal: null
+active_goal: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
 
 last_executed_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
@@ -33,14 +33,24 @@ last_completed_goal:
   implementation_baseline_commit: 91fb8be73f809a67bedf58efcf520914ce93f737
 
 current_goal:
-  id: null
-  status: none
-  authority: null
+  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+  status: activated_implementation_not_started
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
+  implementation_owner: future_new_top_level_goal_3_session
+  control_baseline_commit: resulting_HEAD_of_activation_revision
+  implementation_authorized: true
+  loopback_http_authorized: true_127_0_0_1_only
+  bounded_implementation_commit_authorized: true_once_within_contract_allowlist
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  real_model_calls_authorized: 0
+  pi_core_patch_authorized: false
+  runtime_route_switch_authorized: false
 
 next_goal:
-  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
-  status: contract_draft_pending_user_review_not_activated
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT_DRAFT.md
+  id: V3_5_VERSION_CLOSEOUT
+  status: candidate_only_waiting_for_goal_3_acceptance
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -140,7 +150,7 @@ v3_5_control:
   charter_accepted_by_user: true
   preimplementation_review: docs/reports/V3_5_PREIMPLEMENTATION_REVIEW.md
   preimplementation_review_status: accepted_as_charter_design_basis
-  active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+  active_goal: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
   goal_1_status: closed_accepted
   goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
   goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -240,8 +250,18 @@ v3_5_control:
   goal_2_5_real_model_calls_observed: 6
   goal_2_5_real_cost_usd_hard_cap: 0.40
   goal_2_5_retry_fallback_replacement_extra_arm_case_authorized: false
-  goal_3_status: contract_draft_pending_user_review_not_activated
-  goal_3_contract_draft: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT_DRAFT.md
+  goal_3_status: activated_implementation_not_started
+  goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
+  goal_3_contract_accepted_by_user: 2026_08_09
+  goal_3_activation_authorized: consumed
+  goal_3_implementation_authorized: true
+  goal_3_implementation_owner: future_new_top_level_goal_3_session
+  goal_3_control_baseline_commit_authorized: consumed_by_resulting_HEAD_of_activation_revision
+  goal_3_control_baseline_commit: resulting_HEAD_of_activation_revision
+  goal_3_loopback_http_authorized: true_127_0_0_1_only
+  goal_3_bounded_implementation_commit_authorized: true_once_within_contract_allowlist
+  goal_3_real_model_calls_authorized: 0
+  goal_3_rollback_surface: deferred_no_state_mutation_http_endpoint
   v3_5_final_acceptance_authorized: false
 
 retired_goal_candidate:
@@ -1873,7 +1893,7 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT_DRAFT.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
   - docs/reports/V3_5_G2_5_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
@@ -2286,6 +2306,10 @@ digest `243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f`
 authenticated the fair Pair. Both used three Provider dispatches and three Tool calls;
 Candidate used 770 more total tokens, while both passed. The accepted bounded claim is one
 valid real adaptive-Skill comparison with no observed task-success advantage on the single
-Case; no general Skill-effect claim is allowed. Goal 3 now has a draft Contract for user
-review but is not activated or implementation-authorized. Final V3.5 acceptance remains
-unauthorized.
+Case; no general Skill-effect claim is allowed. Goal 3's Contract is accepted and activated
+by separate user authority. This activation revision is the pending Control Baseline;
+after its exact Commit SHA is verified, Main may generate the fixed launch Prompt and
+create one new top-level Goal 3 Implementation Session. Only `127.0.0.1` HTTP and one
+Contract-bounded implementation commit are authorized; Credential, external network,
+Provider/model, real-model and Pi-change authority remain zero/false. Final Goal 3 and
+V3.5 acceptance remain unauthorized.
