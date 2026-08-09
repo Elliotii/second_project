@@ -1,7 +1,7 @@
 # V3.5 Version Charter — Persistent & Inspectable Adaptive Harness Workbench
 
 ```yaml
-status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_pass_recommended_pending_user_acceptance
+status: accepted_goal_1_closed_goal_2_closed_inconclusive_goal_2_5_closed_accepted_goal_3_draft_pending_review
 date: 2026-08-09
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
@@ -12,7 +12,7 @@ repository_baseline: 6c686f01928a44211119e75767190e221b319fe2
 v3_status: closed_accepted
 v3_disposition: PASS_V3_HARNESS_STATE_ADAPTATION_WITH_SINGLE_REAL_PROMPT_PATH_LIMITATION
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
-active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 goal_1_implementation_owner: completed_top_level_session_019fde3d-d9c0-78b3-a5e3-0b4da427ab31
@@ -21,19 +21,20 @@ goal_1_implementation_commit: 4122b3cb88c2e35b946e4129d5977c0fdb2c7309
 goal_1_correction_commit: 0b62fb7447c76373fab1a4e26df15f29dd72dfa5
 goal_2_status: closed_inconclusive
 goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
-goal_2_5_status: execution_complete_valid_real_pair_pass_recommended_pending_user_acceptance
-goal_3_status: not_activated
-implementation_authorized: consumed_goal_2_5_zero_access_candidate_and_bounded_correction
-real_model_calls_authorized: consumed_by_goal_2_5_replacement_observed_6
-credential_reads_authorized: consumed_by_goal_2_5_replacement_observed_2
-external_network_authorized: consumed_by_goal_2_5_replacement_observed_6
+goal_2_5_status: closed_accepted
+goal_2_5_disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+goal_3_status: contract_draft_pending_user_review_not_activated
+implementation_authorized: false
+real_model_calls_authorized: 0
+credential_reads_authorized: 0
+external_network_authorized: false
 pi_core_patch_authorized: false
 runtime_route_switch_authorized: false
-git_commit_authorized: goal_2_5_control_implementation_audit_execution_and_closeout_within_contract
-control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
+git_commit_authorized: goal_2_5_closeout_commit_only_in_current_revision
+control_baseline_commit: null_no_active_goal
 ```
 
-> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 已在有界诊断和 Main 校准后接受并激活；初始阶段仅允许零调用实现，真实访问必须等待 Main 验收、一次聚焦审计与精确 Execution Baseline。Goal 3、V3.5 最终接受和 Pi 修改仍未授权。
+> 本 Charter 已由用户接受并正式化。Goal 1 已正式接受。Goal 2 的实现机制已冻结，但唯一真实 Pair 在 Base request budget 处停止，现以 inconclusive 收口。Goal 2.5 已在有界修正后完成有效真实 Pair，并以 `PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED` 正式接受和关闭。Goal 3 只有契约草案，尚未激活；V3.5 最终接受和 Pi 修改仍未授权。
 
 ## 1. Version mission
 
@@ -280,7 +281,7 @@ only treatment delta = adaptive Skill binding
 
 ## 6. Goal 3 — Adaptive Harness Workbench WebUI & Demo
 
-> 当前依赖状态：Goal 2 没有形成有效 Base/Candidate evidence，因此本节的启动前提尚未满足。Goal 2.5 已获独立 Contract/Activation，将尝试补足该证据；在其真实结果由 Main 和用户处置前，本节仍不得启动。
+> 当前依赖状态：Goal 1 已接受；Goal 2.5 的有效 Base/Candidate evidence 已冻结并正式接受，因此 Goal 3 的证据依赖已满足。Goal 3 仍须用户审查正式 Contract 并另行授权 Activation 后才能启动。
 
 ### 6.1 Preconditions and architecture
 
@@ -443,10 +444,10 @@ V3.5 完成后，在证据支持范围内可以声称：
 - continual self-evolution、semantic memory、自动路由或生产级多用户平台；
 - V3.5 WebUI 是完整 Pi IDE 或替代 Pi Runtime。
 
-## 11. Current control state after Goal 2.5 Main zero-access review
+## 11. Current control state after Goal 2.5 acceptance
 
 ```yaml
-active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+active_goal: null
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
 goal_1_control_baseline_commit: 745847d3f9e9579ea98a2d64c657b4c9d3ee91d1
@@ -456,7 +457,7 @@ goal_2_status: closed_inconclusive
 goal_2_disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
 goal_2_execution_baseline_commit: ed2dc14e695233411f96af162d92b405188b04cf
 goal_2_5_contract: accepted_activated
-goal_2_5_status: execution_complete_valid_real_pair_pass_recommended_pending_user_acceptance
+goal_2_5_status: closed_accepted
 goal_2_5_control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
 goal_2_5_zero_access_candidate_commit: e852f90fa49ae9320896b91338bfb966e328cf98
 goal_2_5_zero_access_correction_commit: 6c5ccf7fbc76c5bc51355e707b7eabb194974b19
@@ -471,7 +472,7 @@ goal_2_5_focused_audit_final_disposition: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT
 goal_2_5_execution_baseline_commit: 12c64739eb0b1db715def18800c28ea728f31610
 goal_2_5_real_execution_session: 019fe370-1abb-7923-a41a-922d975d0a32
 goal_2_5_real_pair_authorized: consumed_once_pre_arm_no_replacement_authorized
-goal_2_5_real_pair_status: consumed_pre_arm_workspace_parent_enoent_pending_user_decision
+goal_2_5_initial_real_pair_status: consumed_pre_arm_workspace_parent_enoent_then_superseded_by_authorized_replacement
 goal_2_5_real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
 goal_2_5_main_disposition_report: docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
 goal_2_5_pre_dispatch_amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
@@ -482,10 +483,12 @@ goal_2_5_corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
 goal_2_5_replacement_execution_session: 019fe38f-7c3d-7a02-92c3-0f7eef53196f
 goal_2_5_replacement_pair_status: consumed_once_successfully
 goal_2_5_comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
-goal_2_5_main_recommendation: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
-goal_2_5_acceptance: pending_user_decision
+goal_2_5_disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+goal_2_5_acceptance: accepted_by_user_2026_08_09
+goal_2_5_closeout: docs/reports/V3_5_G2_5_CLOSEOUT.md
 goal_2_5_replacement_pair_authorized: consumed_once_successfully_no_further_execution
 goal_2_5_pair_cost_usd_hard_cap: 0.40
+goal_3_contract: draft_pending_user_review
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
 ```
@@ -496,8 +499,7 @@ Model；不覆盖 in-flight crash recovery、exactly-once Tool effects、自动 
 多写者事务或真实模型 continuation。
 
 Goal 2 已按 `CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP` 关闭；其 invalid
-pair 必须保留且不得重标。Goal 2.5 的新 Contract 已接受并激活。Main 必须先创建干净
-Control Baseline 并启动一个新的顶层零访问 Implementation Session；真实
-Credential/network/model authority 只有在零调用实现通过 Main 验收、一次窄范围独立审计并
-冻结精确 audited Execution Baseline 后，才可用于一次 Base-first/Candidate Pair。Goal 3 与
-V3.5 最终接受仍须另行授权。
+pair 必须保留且不得重标。Goal 2.5 已完成并正式接受：唯一有效 replacement Pair 的
+Base/Candidate 均 settled 且通过冻结外部 Verifier，但单个 Case 未观察到 Skill 的任务成功
+优势。所有 Goal 2.5 执行权限均已消耗。Goal 3 只有草案且尚未激活；V3.5 最终接受仍须
+另行授权。

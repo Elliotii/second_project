@@ -5,63 +5,42 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_goal_2_5_execution_complete_pending_user_acceptance
-  status: V3_5_G2_5_VALID_REAL_PAIR_PASS_RECOMMENDED
+  phase: v3_5_goal_2_5_closed_accepted_goal_3_contract_draft_pending_review
+  status: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
 
-active_goal: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+active_goal: null
 
 last_executed_goal:
   id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: execution_complete_pending_user_acceptance
+  status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED_recommended
+  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
   corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
   comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
 
 last_closed_goal:
-  id: V3_5_G2_REAL_ADAPTIVE_SKILL_CLOSURE
-  status: closed_inconclusive
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_REAL_ADAPTIVE_SKILL_CASE_CONTRACT.md
-  disposition: CLOSE_V3_5_G2_INCONCLUSIVE_BASE_REQUEST_BUDGET_STOP
-  closeout: docs/reports/V3_5_G2_CLOSEOUT.md
+  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
+  status: closed_accepted
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
+  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+  closeout: docs/reports/V3_5_G2_5_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
+  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
-  disposition: PASS_V3_5_G1_PERSISTENT_SESSION_RUN_FOUNDATION
-  implementation_baseline_commit: resulting_HEAD_of_goal_1_acceptance_revision
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
+  disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+  implementation_baseline_commit: 91fb8be73f809a67bedf58efcf520914ce93f737
 
 current_goal:
-  id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
-  status: execution_complete_valid_real_pair_pass_recommended_pending_user_acceptance
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
-  implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
-  control_baseline_commit: 6e56a3f7e6048f74a46791af463c4e2d2f98f5b8
-  zero_access_candidate_commit: e852f90fa49ae9320896b91338bfb966e328cf98
-  zero_access_correction_commit: 6c5ccf7fbc76c5bc51355e707b7eabb194974b19
-  focused_audit_correction_commit: 2df7da60a365ea2de5ca80e8ada1b59048779117
-  main_review: passed_after_one_bounded_correction
-  focused_audit: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
-  execution_baseline_commit: 12c64739eb0b1db715def18800c28ea728f31610
-  real_execution_owner: completed_top_level_session_019fe370-1abb-7923-a41a-922d975d0a32
-  real_pair: consumed_once_pre_arm_workspace_parent_enoent_no_replacement_authorized
-  real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
-  main_disposition: PAUSE_V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_DEFECT_REQUIRES_NEW_AUTHORITY
-  amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
-  correction_control_baseline: 9a0f38301bebb5934b34909f8c012a1c84c2d0af
-  correction_owner: completed_top_level_session_019fe386-a1b1-72f2-a3d6-aefec1e24954
-  correction_commit: 6d3f4601ca47c57473bb737eb88e08a471f7d60e
-  corrected_execution_baseline: 91fb8be73f809a67bedf58efcf520914ce93f737
-  replacement_pair: consumed_once_successfully
-  replacement_execution_owner: completed_top_level_session_019fe38f-7c3d-7a02-92c3-0f7eef53196f
-  comparison_digest: 243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f
-  main_recommendation: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+  id: null
+  status: none
+  authority: null
 
 next_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
-  status: charter_defined_waiting_for_goal_2_5_not_authorized
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  status: contract_draft_pending_user_review_not_activated
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT_DRAFT.md
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -205,7 +184,7 @@ v3_5_control:
   goal_2_skill_effect: unproven
   goal_2_retry_fallback_replacement_extra_arm_case_authorized: false
   goal_2_closeout: docs/reports/V3_5_G2_CLOSEOUT.md
-  goal_2_5_status: execution_complete_valid_real_pair_pass_recommended_pending_user_acceptance
+  goal_2_5_status: closed_accepted
   goal_2_5_contract: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   goal_2_5_research: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
   goal_2_5_implementation_owner: replacement_top_level_session_019fe257-c912-72a1-ac1f-b7dd3b8cf217
@@ -217,7 +196,7 @@ v3_5_control:
   goal_2_5_focused_tests: 10_passed_0_failed_0_skipped
   goal_2_5_narrow_regressions: goal_2_8_goal_1_6_v2_checkpoint_8_all_passed
   goal_2_5_zero_access_observed: credentials_0_network_0_external_provider_0_model_0_cost_0
-  goal_2_5_zero_access_implementation_authorized: true
+  goal_2_5_zero_access_implementation_authorized: consumed
   goal_2_5_focused_audit_authorized: consumed_revise_two_findings
   goal_2_5_focused_audit_session: 019fe241-6a78-79e2-8c3d-2444095a9f02
   goal_2_5_focused_audit_baseline: e174808550211f2236c3a5c08a350a45d1bcab48
@@ -226,7 +205,7 @@ v3_5_control:
   goal_2_5_audit_finding_corrections: PASS_V3_5_G2_5_FOCUSED_AUDIT_AFTER_HIT_RECHECK
   goal_2_5_execution_baseline_commit: 12c64739eb0b1db715def18800c28ea728f31610
   goal_2_5_real_execution_session: 019fe370-1abb-7923-a41a-922d975d0a32
-  goal_2_5_real_pair_status: consumed_pre_arm_workspace_parent_enoent_no_replacement_authorized
+  goal_2_5_real_pair_status: consumed_once_successfully_after_authorized_infrastructure_correction
   goal_2_5_real_pair_report: docs/reports/V3_5_G2_5_REAL_PAIR_EXECUTION_REPORT.md
   goal_2_5_main_disposition_report: docs/reports/V3_5_G2_5_MAIN_DISPOSITION_REPORT.md
   goal_2_5_pre_dispatch_amendment: docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
@@ -246,22 +225,23 @@ v3_5_control:
   goal_2_5_real_access_observed: credential_reads_2_network_6_external_provider_6_model_6
   goal_2_5_real_usage_observed: input_4762_output_374_total_5136_tool_calls_6_verifiers_2
   goal_2_5_real_cost_usd_observed: 0.0002796752
-  goal_2_5_main_recommendation: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
-  goal_2_5_acceptance: pending_user_decision
+  goal_2_5_disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+  goal_2_5_acceptance: accepted_by_user_2026_08_09
+  goal_2_5_closeout: docs/reports/V3_5_G2_5_CLOSEOUT.md
   goal_2_5_pre_dispatch_correction_tests: strict_typescript_passed_goal_2_5_13_passed_goal_2_8_passed
   goal_2_5_pre_dispatch_correction_access: credentials_0_network_0_external_provider_0_model_0_cost_0
   goal_2_5_focused_tests_after_audit_correction: 12_passed_0_failed_0_skipped
   goal_2_5_real_execution_authorized: consumed_one_replacement_no_further_execution
   goal_2_5_credential_reads_authorized: consumed_by_replacement
-  goal_2_5_credential_resolver_reads_observed: 0
+  goal_2_5_credential_resolver_reads_observed: 2
   goal_2_5_external_network_authorized: consumed_by_replacement
-  goal_2_5_external_network_observed: 0
+  goal_2_5_external_network_observed: 6
   goal_2_5_real_model_calls_authorized: consumed_by_replacement
-  goal_2_5_real_model_calls_observed: 0
-  goal_2_5_real_cost_usd_observed: 0
+  goal_2_5_real_model_calls_observed: 6
   goal_2_5_real_cost_usd_hard_cap: 0.40
   goal_2_5_retry_fallback_replacement_extra_arm_case_authorized: false
-  goal_3_status: waiting_for_goal_2_5_not_activated
+  goal_3_status: contract_draft_pending_user_review_not_activated
+  goal_3_contract_draft: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT_DRAFT.md
   v3_5_final_acceptance_authorized: false
 
 retired_goal_candidate:
@@ -1893,6 +1873,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT_DRAFT.md
+  - docs/reports/V3_5_G2_5_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_GOAL_CONTRACT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_5_G2_5_PRE_DISPATCH_INFRASTRUCTURE_AMENDMENT.md
   - docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
@@ -2292,15 +2274,18 @@ the hidden external Verifier never ran and Candidate never started. Therefore no
 pair or Skill-effect claim exists. The invalid pair and persistent Base Session prefix are
 preserved.
 
-Goal 2.5's zero-access implementation and focused termination/Verifier audit passed. The
-first real command stopped before Base because the caller had not created the direct
-`workspaces` parent. Under the user's bounded Amendment, a one-line-class caller correction
-and absent-Pair-root regression passed Main review, producing corrected Execution Baseline
+Goal 2.5 is closed and accepted under
+`PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED`. Its zero-access implementation
+and focused termination/Verifier audit passed. The first real command stopped before Base
+because the caller had not created the direct `workspaces` parent. Under the user's bounded
+Amendment, a one-line-class caller correction and absent-Pair-root regression passed Main
+review, producing corrected Execution Baseline
 `91fb8be73f809a67bedf58efcf520914ce93f737`. The single replacement Pair then completed:
 Base and Candidate each settled, each passed one frozen external Verifier, and comparison
 digest `243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f`
 authenticated the fair Pair. Both used three Provider dispatches and three Tool calls;
-Candidate used 770 more total tokens, while both passed. Main therefore recommends Goal
-2.5 PASS as a valid real adaptive-Skill comparison with no observed task-success advantage
-on the single Case. User acceptance remains pending; Goal 3 and final V3.5 acceptance are
-still unauthorized.
+Candidate used 770 more total tokens, while both passed. The accepted bounded claim is one
+valid real adaptive-Skill comparison with no observed task-success advantage on the single
+Case; no general Skill-effect claim is allowed. Goal 3 now has a draft Contract for user
+review but is not activated or implementation-authorized. Final V3.5 acceptance remains
+unauthorized.

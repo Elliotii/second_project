@@ -1,7 +1,7 @@
 # V3.5 Goal 2.5 — Termination-safe Real Adaptive Skill Closure Contract
 
 ```yaml
-status: accepted_activated_execution_complete_pass_recommended_pending_user_acceptance
+status: closed_accepted
 date: 2026-08-08
 goal_id: V3_5_G2_5_TERMINATION_SAFE_REAL_SKILL_CLOSURE
 charter: docs/第二项目_Codex交接包_2026-07-30/V3_5_CHARTER.md
@@ -11,16 +11,19 @@ research_basis: docs/reports/V3_5_G2_TERMINATION_POSTMORTEM.md
 contract_accepted: true
 accepted_by_user: 2026-08-08
 formalized_by_main_session: 2026-08-08
-active_goal: true
+active_goal: false
 implementation_authorized: consumed_one_pre_dispatch_infrastructure_only_correction
 credential_reads_authorized: consumed_by_replacement_observed_2
 external_network_authorized: consumed_by_replacement_observed_6
 real_model_calls_authorized: consumed_by_replacement_observed_6
-git_commit_authorized: control_implementation_audit_execution_and_closeout_within_contract
-focused_audit_authorized: true_once_after_zero_access_candidate
+git_commit_authorized: consumed
+focused_audit_authorized: consumed
 real_pair_authorized: consumed_once_successfully_no_further_execution
 goal_3_authorized: false
 v3_5_final_acceptance_authorized: false
+final_disposition: PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED
+accepted_and_closed_by_user: 2026-08-09
+closeout: docs/reports/V3_5_G2_5_CLOSEOUT.md
 ```
 
 This Contract is accepted and activated. The initial implementation phase has zero Credential, network and real-model authority. Real access becomes usable only after Main accepts the zero-access Candidate, one focused audit passes, and Main freezes an exact Execution Baseline. Goal 2 remains closed and its ignored real evidence remains immutable.
@@ -271,6 +274,13 @@ Not allowed:
 - Goal 2 was retroactively repaired or reopened;
 - arbitrary crash/timeout/post-dispatch failure is Verifier-eligible;
 - V3.5 or Goal 3 is accepted.
+
+## 11.1 Final acceptance record
+
+The user accepted and closed Goal 2.5 on 2026-08-09 under
+`PASS_V3_5_G2_5_VALID_REAL_PAIR_NO_SKILL_ADVANTAGE_OBSERVED`. All execution authority in
+this Contract and its Amendment is consumed. This acceptance does not authorize another
+Pair, Goal 3 implementation, final V3.5 acceptance or any broader Skill-effect claim.
 
 ## 12. Accepted binding decisions
 
