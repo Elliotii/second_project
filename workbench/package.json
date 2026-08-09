@@ -29,6 +29,8 @@
     "v35g25:typecheck": "node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit",
     "v35g25:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v35g25-termination-safe.test.ts",
     "v35g25:real-pair": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/v35g25-real-pair.ts",
+    "v35g3:demo": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/start-v35g3-demo.ts",
+    "v35g3:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v35g3-*.test.ts",
     "v35g2:calibrate": "node --experimental-loader scripts/v35g2-public-pi-loader.mjs scripts/v35g2-reference-calibration.ts --project-root .. --output-root ../.runs/v3-5-g2/reference-calibration"
   },
   "dependencies": {

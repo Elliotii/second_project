@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "projection_kind": "v35_goal3_sanitized_demo",
+  "derived_non_authoritative": true,
+  "accepted_goal25_comparison_digest": "243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f",
+  "overview": {
+    "product": "Persistent & Inspectable Adaptive Harness Workbench",
+    "mode": "deterministic_faux_demo",
+    "notice": "This portable projection is derived and non-authoritative. Runtime evidence remains authoritative, and deterministic Session continuation is labeled Faux."
+  },
+  "v2_recovery": {
+    "schema_version": 1,
+    "kind": "v2_recovery",
+    "source_status": "available",
+    "outcome": "mechanism_demonstrated_real_negative_incomplete",
+    "selected_candidate_id": "candidate-a-retained-history",
+    "candidate_ids": ["candidate-a-retained-history", "candidate-b-fresh-session"],
+    "note": "Both recovery Candidates passed and the frozen Selector selected A. The real initial-pass Negative lacked a Verifier result, so V2 is not a full PASS.",
+    "source_refs": ["docs/reports/V2_CLOSEOUT.md"]
+  },
+  "goal25_comparison": {
+    "schema_version": 1,
+    "kind": "goal25_skill_comparison",
+    "source_status": "available",
+    "derived_non_authoritative": true,
+    "pair_id": "v35-g25-stable-unique-pair-01",
+    "comparison_digest": "243d1c476385333d297bff296b69d9dd5d7be87ea041b25c974cc5dc7a7d920f",
+    "payload_fairness_digest": "6d7288f5637e022b0bc1c5c3ea2052208ebfeccce30cfd47218b292af1f64043",
+    "result_statement": "Both arms passed; no task-success advantage was observed for the Skill; Candidate used more tokens.",
+    "base": {
+      "arm": "base",
+      "run_id": "v35-g25-stable-unique-base-run-01",
+      "session_id": "v35-g25-stable-unique-base-session-01",
+      "trajectory_outcome": "settled",
+      "task_outcome": "passed",
+      "verifier_status": "passed",
+      "verifier_id": "v35-stable-unique-verifier",
+      "request_attempts": 3,
+      "provider_dispatches": 3,
+      "input_tokens": 1983,
+      "output_tokens": 200,
+      "tool_calls": 3,
+      "cost_usd": 0.0001404424,
+      "manifest_digest": "081164fed15bbf327d830adc5affef2363690d7d57f6c298bb4f9de86e331c4b",
+      "binding_digest": "dc8c64d45e5f07385062a34c65a45a2436c7412974e1c9d6785ace4e39d788e2",
+      "case_authority_digest": "43c2b1c2967826e61b236d3546f693a93424a127e25a5da9f4a0180617848fff",
+      "tool_interface_sha256": "92c9898d61c0f14a7f6ab9e4b7ee1119650347eb6823bb4fe542a3ab0ba5b3ec",
+      "session_entries_sha256": "6d0f127e6eeaf4fe63e68c12014d772b473ad6f649d1ce143f79a185f6830c39",
+      "source_ref": "runs/base/goal25-manifest.json"
+    },
+    "candidate": {
+      "arm": "candidate",
+      "run_id": "v35-g25-stable-unique-candidate-run-01",
+      "session_id": "v35-g25-stable-unique-candidate-session-01",
+      "trajectory_outcome": "settled",
+      "task_outcome": "passed",
+      "verifier_status": "passed",
+      "verifier_id": "v35-stable-unique-verifier",
+      "request_attempts": 3,
+      "provider_dispatches": 3,
+      "input_tokens": 2779,
+      "output_tokens": 174,
+      "tool_calls": 3,
+      "cost_usd": 0.0001392328,
+      "manifest_digest": "38e87339df877c0c58e443f093a7567efb7ac3f1e6c68be8944816017e856fee",
+      "binding_digest": "dfe8dd960b1e774c53ce0aebe7fe91a0e893fab797689252e123dd74cdee7998",
+      "case_authority_digest": "43c2b1c2967826e61b236d3546f693a93424a127e25a5da9f4a0180617848fff",
+      "tool_interface_sha256": "92c9898d61c0f14a7f6ab9e4b7ee1119650347eb6823bb4fe542a3ab0ba5b3ec",
+      "session_entries_sha256": "7dcb20fc5ca5da8a5a305058f7b0d40ce20db9c0b4e4d0ccd858f8fb23f53ff4",
+      "source_ref": "runs/candidate/goal25-manifest.json"
+    },
+    "aggregates": {
+      "credential_reads": 2,
+      "network_calls": 6,
+      "external_provider_calls": 6,
+      "real_model_calls": 6,
+      "provider_dispatches": 6,
+      "input_tokens": 4762,
+      "output_tokens": 374,
+      "cost_usd": 0.0002796752
+    },
+    "source_refs": ["comparison.json", "runs/base/goal25-manifest.json", "runs/candidate/goal25-manifest.json"]
+  },
+  "adaptation": {
+    "schema_version": 1,
+    "kind": "v3_adaptation_lineage",
+    "source_status": "available",
+    "run_id": "v3g3-run-case4-rollback-prior-version",
+    "runtime_path": "prompt_addendum",
+    "stages": [
+      { "stage": "evidence", "status": "not_recorded", "label": "Frozen evidence", "digest": null, "source_ref": null },
+      { "stage": "diagnosis", "status": "not_recorded", "label": "Diagnosis", "digest": null, "source_ref": null },
+      { "stage": "lesson", "status": "not_recorded", "label": "Lesson", "digest": null, "source_ref": null },
+      { "stage": "prompt_or_skill", "status": "available", "label": "Prompt addendum / adaptive Skill", "digest": "0f6c5d44c815a0d1b267d7fdf2e0c01f50eb640d06da72fe9ff8fab343249927", "source_ref": "state/version-2" },
+      { "stage": "validation", "status": "available", "label": "Symmetric validation", "digest": "431ec866455b3086cd85ecdb79f45b5ff130c75bd3627104c8c18404d2e65b0c", "source_ref": "validation/case2-skill" },
+      { "stage": "decision", "status": "available", "label": "Promote, reject or rollback", "digest": "9199f961c1b6efe15e36028946dead21e6d44c5785e105c984a81736bd5922b1", "source_ref": "state/decision-4" },
+      { "stage": "active_state", "status": "available", "label": "Active State v1", "digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "source_ref": "state/active" },
+      { "stage": "selective_binding", "status": "available", "label": "Selective task binding", "digest": "dfe8dd960b1e774c53ce0aebe7fe91a0e893fab797689252e123dd74cdee7998", "source_ref": "run/binding" }
+    ],
+    "prompt_diff": "+ Add a bounded prompt addendum only for the admitted task context.",
+    "skill_diff": "+ Bind adaptive-inefficient-success only to matching prior-pass TypeScript maintenance lineage.",
+    "selective_binding_explanation": "Evidence supports a candidate; validation and a recorded decision determine accepted State; a later Run binds only accepted entries whose task and failure-lineage predicates match. The browser is a projection, not an authority."
+  },
+  "state_history": {
+    "schema_version": 1,
+    "source_status": "available",
+    "active": {
+      "binding_revision": 3,
+      "state_version": 1,
+      "state_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d",
+      "decision_id": "decision-9199f961c1b6efe15e36028946dead21"
+    },
+    "versions": [
+      { "state_version": 2, "state_digest": "0f6c5d44c815a0d1b267d7fdf2e0c01f50eb640d06da72fe9ff8fab343249927", "parent_state_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "entry_kinds": ["adaptive_skill"] },
+      { "state_version": 1, "state_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "parent_state_digest": "a56e2f2327e40af17c226ec1df91a8bebff03377b26fbb8bfbd095f03cc7fc1f", "entry_kinds": ["prompt_addendum"] },
+      { "state_version": 0, "state_digest": "a56e2f2327e40af17c226ec1df91a8bebff03377b26fbb8bfbd095f03cc7fc1f", "parent_state_digest": null, "entry_kinds": [] }
+    ],
+    "decisions": [
+      { "decision_sequence": 0, "decision_id": "decision-88def36ff4845c3744ec7c1f73e04238", "kind": "initialize", "result": "initialized", "reason": "initial_state", "prior_state_digest": null, "next_state_digest": "a56e2f2327e40af17c226ec1df91a8bebff03377b26fbb8bfbd095f03cc7fc1f", "rollback_target_digest": null, "decision_digest": "88def36ff4845c3744ec7c1f73e042385475dcda40ff9558b09c707d2de201bb" },
+      { "decision_sequence": 1, "decision_id": "decision-f143dbc535ba03109b802d5e426f2fe4", "kind": "promotion", "result": "promoted", "reason": "base_failed_candidate_passed", "prior_state_digest": "a56e2f2327e40af17c226ec1df91a8bebff03377b26fbb8bfbd095f03cc7fc1f", "next_state_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "rollback_target_digest": null, "decision_digest": "f143dbc535ba03109b802d5e426f2fe43cd121116800eea3254d482e8d05fad2" },
+      { "decision_sequence": 2, "decision_id": "decision-bbdd88e62173a96ffe325bdf50dc6d40", "kind": "promotion", "result": "promoted", "reason": "both_passed_material_improvement", "prior_state_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "next_state_digest": "0f6c5d44c815a0d1b267d7fdf2e0c01f50eb640d06da72fe9ff8fab343249927", "rollback_target_digest": null, "decision_digest": "bbdd88e62173a96ffe325bdf50dc6d403981f0be73da81c7ca2e51acb2d0d8f9" },
+      { "decision_sequence": 3, "decision_id": "decision-4612726089078cad168ece1507d0a7fb", "kind": "rejection", "result": "rejected", "reason": "both_failed", "prior_state_digest": "0f6c5d44c815a0d1b267d7fdf2e0c01f50eb640d06da72fe9ff8fab343249927", "next_state_digest": "0f6c5d44c815a0d1b267d7fdf2e0c01f50eb640d06da72fe9ff8fab343249927", "rollback_target_digest": null, "decision_digest": "4612726089078cad168ece1507d0a7fb343b7a8c4f04eda889324281db4060a2" },
+      { "decision_sequence": 4, "decision_id": "decision-9199f961c1b6efe15e36028946dead21", "kind": "rollback", "result": "rolled_back", "reason": "operator_rollback", "prior_state_digest": "0f6c5d44c815a0d1b267d7fdf2e0c01f50eb640d06da72fe9ff8fab343249927", "next_state_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "rollback_target_digest": "744ccd9ddce76f92b0b838f02253161748b9edb1e9071c8218bdf97f96ba2a7d", "decision_digest": "9199f961c1b6efe15e36028946dead21e6d44c5785e105c984a81736bd5922b1" }
+    ],
+    "rollback_mutation": "deferred"
+  }
+}

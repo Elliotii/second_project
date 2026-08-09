@@ -305,3 +305,30 @@ npm run v2b:r2
 
 This command is a zero-access deterministic proof. It does not authorize the
 fresh R2 audit or real Execution Session.
+
+## V3.5 Goal 3 local inspectable workbench
+
+Start the portable deterministic demo from `workbench/`:
+
+```powershell
+npm run v35g3:demo
+```
+
+Open `http://127.0.0.1:43135`. The server binds only to IPv4 loopback. Session
+create and continue use `PersistentSessionServiceV35`; continuation is the
+bounded deterministic/Faux route. The committed projection under
+`fixtures/v3-5/goal3-demo/` is sanitized, derived and non-authoritative. It
+preserves the accepted Goal 2.5 comparison digest but contains no raw Session,
+Provider payload, private reasoning, Credential or host path.
+
+Hosts may configure live read-only evidence before startup without exposing a
+filesystem path to the browser:
+
+```powershell
+npm run v35g3:demo -- --pair-root <goal-2.5-pair-root> --v2-root <v2-terminal-root> --v3-root <v3-run-root> --state-root <state-root> --state-project-id <project-id>
+```
+
+Only the versioned overview, Session, V2/Goal 2.5 comparison, adaptation,
+State-history and three fixed static routes are served. There is no artifact
+download, shell, arbitrary path/command, Provider, environment, Credential or
+State-mutation endpoint. Browser rollback mutation is explicitly deferred.

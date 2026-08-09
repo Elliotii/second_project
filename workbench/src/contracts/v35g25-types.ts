@@ -133,3 +133,76 @@ export interface Goal25ArmOutcomeV35 {
 	tool_interface_sha256: string;
 	outcome_digest: string;
 }
+
+export interface Goal25ArmManifestV35 {
+	schema_version: 1;
+	arm: "base" | "candidate";
+	run_id: string;
+	session_id: string;
+	initial_workspace_sha256: string;
+	final_workspace_sha256: string;
+	binding_digest: string;
+	case_authority_digest: string;
+	runtime_ref: ArtifactRefV0B;
+	first_payload_ref: ArtifactRefV0B;
+	verifier_ref: ArtifactRefV0B;
+	outcome_ref: ArtifactRefV0B;
+	checkpoint_ref: ArtifactRefV0B | null;
+	settled_handoff_ref: ArtifactRefV0B | null;
+	session_link_ref: ArtifactRefV0B;
+	session_ref_root: "pair_root";
+	session_ref: ArtifactRefV0B;
+	session_entry_count: number;
+	session_entries_sha256: string;
+	trajectory_outcome: Goal25TrajectoryOutcomeV35;
+	task_outcome: Goal25TaskOutcomeV35;
+	request_attempts: number;
+	provider_dispatches: number;
+	input_tokens: number;
+	output_tokens: number;
+	tool_calls: number;
+	cost_usd: number;
+	tool_interface_sha256: string;
+	manifest_digest: string;
+}
+
+export interface Goal25ComparisonV35 {
+	schema_version: 1;
+	pair_id: string;
+	arm_order: ["base", "candidate"];
+	base_manifest_ref: ArtifactRefV0B;
+	candidate_manifest_ref: ArtifactRefV0B;
+	tool_interface_sha256: string;
+	payload_fairness_digest: string;
+	base_task_outcome: Goal25TaskOutcomeV35;
+	candidate_task_outcome: Goal25TaskOutcomeV35;
+	credential_reads: number;
+	network_calls: number;
+	external_provider_calls: number;
+	real_model_calls: number;
+	provider_dispatches: number;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: number;
+	comparison_digest: string;
+}
+
+export interface Goal25ArmInspectionV35 {
+	arm: "base" | "candidate";
+	manifest: Goal25ArmManifestV35;
+	runtime: Goal25RuntimeEvidenceV35;
+	outcome: Goal25ArmOutcomeV35;
+	verifier_status: "passed" | "failed" | "invalid";
+	verifier_id: string;
+	manifest_source_ref: string;
+}
+
+export interface Goal25PairInspectionV35 {
+	schema_version: 1;
+	integrity_valid: boolean;
+	errors: string[];
+	comparison: Goal25ComparisonV35 | null;
+	base: Goal25ArmInspectionV35 | null;
+	candidate: Goal25ArmInspectionV35 | null;
+	comparison_source_ref: "comparison.json";
+}
