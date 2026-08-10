@@ -1,7 +1,7 @@
 # Post-V3.5 Product Smoke Test Plan
 
 ```yaml
-status: accepted_as_next_step_basis
+status: completed_and_closed
 date: 2026-08-10
 kind: post_closeout_product_smoke_plan
 reopens_v3_5: false
@@ -11,10 +11,12 @@ goal_3_implementation: b5c34033a4ff64d2bacd01279823611193834920
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 real_model_calls_authorized_by_this_plan: 0
 source_changes_authorized_by_this_plan: 0
-current_real_product_journey_readiness: blocked_before_dispatch
+current_real_product_journey_readiness: passed
 accepted_by_user_for_next_step: 2026-08-10
 zero_call_enablement_preparation_authorized: true
-real_smoke_execution_authorized: false
+real_smoke_execution_authorized: authorized_separately_and_consumed
+real_smoke_execution_completed: true
+real_smoke_report: docs/reports/POST_V3_5_PRODUCT_SMOKE_TEST_REPORT.md
 ```
 
 ## 1. Purpose and non-goals
