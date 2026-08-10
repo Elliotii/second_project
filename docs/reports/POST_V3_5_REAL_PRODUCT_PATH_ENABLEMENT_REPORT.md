@@ -1,7 +1,7 @@
 # Post-V3.5 Real Product Path Enablement Report
 
 ```yaml
-status: post_audit_bounded_correction_complete_pending_hit_only_reaudit
+status: ordinary_post_smoke_startup_maintenance_complete_pending_main_review
 date: 2026-08-10
 kind: bounded_post_closeout_product_maintenance
 planning_baseline_commit: 2256de499c0412a610719d4c40df83c16680cf30
@@ -13,6 +13,8 @@ focused_audit_head: 2ce81ebf74bafe6d3819218cee32fc021cabe9f6
 focused_audit_disposition: AUDIT_FINDINGS
 post_audit_correction_parent: 2ce81ebf74bafe6d3819218cee32fc021cabe9f6
 post_audit_correction_commit: pending_resulting_commit_self_identity_reported_in_final
+ordinary_startup_maintenance_parent: 0c6032409c08f0eebcfacf69dafe341e1219fdf7
+ordinary_startup_maintenance_commit: pending_resulting_commit_self_identity_reported_in_final
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 real_credential_reads_observed: 0
 external_network_calls_observed: 0
@@ -272,3 +274,45 @@ This report does not authorize or perform that command.
 re-audit of P1-001 and P1-002.
 Do not begin the real Product Smoke Test from this Session. No V3.5 reopen, V3.6/V4,
 State mutation, promotion or architecture acceptance is claimed here.
+
+## 9. Ordinary post-smoke startup maintenance
+
+**Fact.** This maintenance started from exact clean HEAD
+`0c6032409c08f0eebcfacf69dafe341e1219fdf7`. The only finding was an ordinary launcher
+argument bug: `parseArguments()` initialized `values.port` to `43135` and then used an
+already-defined value as its duplicate detector, so every explicit `--port` was rejected.
+
+The bounded fix separates explicit-argument tracking from defaults. A `Set` now rejects a
+second occurrence of any recognized argument, while `43135` is applied only after parsing
+when `--port` was omitted. Explicit ports retain the existing safe-integer and `0..65535`
+validation. Authority, evidence, Credential, budget, Provider and journey semantics are
+unchanged.
+
+The focused zero-call regression starts the real-smoke launcher with explicit `--port 0`,
+an ignored test Workspace/Authority, and an intentionally invalid dummy Credential file.
+It observes the loopback startup event with an assigned positive port and immediately
+terminates the child process. Startup succeeds despite invalid Credential content, proving
+that the launcher did not resolve or read it. A second subprocess supplies duplicate
+`--port` arguments and fails with the frozen launcher-argument error.
+
+This maintenance modifies exactly three paths:
+
+- `workbench/scripts/start-post-v35-real-smoke.ts`;
+- `workbench/tests/post-v35-real-product-enablement.test.ts`;
+- `docs/reports/POST_V3_5_REAL_PRODUCT_PATH_ENABLEMENT_REPORT.md`.
+
+Verification:
+
+| Command | Exit | Exact result |
+|---|---:|---|
+| entry HEAD/status Gate | 0 | exact `0c6032409c08f0eebcfacf69dafe341e1219fdf7`; clean |
+| `npm.cmd run v35g2:typecheck` | 0 | strict TypeScript passed |
+| `npm.cmd run postv35:enablement:test` | 0 | 11 passed, 0 failed, 0 skipped |
+| `npm.cmd run v35g3:test` | 0 | 6 passed, 0 failed, 0 skipped |
+| `git diff --check` | 0 | no whitespace errors |
+| pinned Pi HEAD/status | 0 / 0 | exact `027a5847901b5dde30270abaa1041046cd2b4b55`; clean |
+
+Goal 1 was not run because neither its source nor persistence behavior was affected.
+The already completed real Journey was not rerun. It used the same default port `43135`,
+so this explicit-argument parsing defect does not invalidate its evidence. This maintenance
+read no real Credential and made zero external network, Provider or model calls.

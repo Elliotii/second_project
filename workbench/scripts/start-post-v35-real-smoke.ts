@@ -21,13 +21,15 @@ interface ArgumentsPostV35 {
 }
 
 function parseArguments(argv: readonly string[]): ArgumentsPostV35 {
-	const values: Partial<ArgumentsPostV35> = { port: 43135 };
+	const values: Partial<ArgumentsPostV35> = {};
+	const seen = new Set<keyof ArgumentsPostV35>();
 	const names: Record<string, keyof ArgumentsPostV35> = { "--port": "port", "--data-root": "dataRoot", "--workspace-root": "workspaceRoot", "--authority": "authority", "--credential-file": "credentialFile", "--pair-root": "pairRoot", "--v2-root": "v2Root", "--v3-root": "v3Root", "--state-root": "stateRoot", "--state-project-id": "stateProjectId" };
 	if (argv.length % 2 !== 0) throw new Error("real-smoke launcher arguments are invalid");
 	for (let index = 0; index < argv.length; index += 2) {
 		const key = names[argv[index] ?? ""];
 		const value = argv[index + 1];
-		if (!key || value === undefined || values[key] !== undefined) throw new Error("real-smoke launcher arguments are invalid");
+		if (!key || value === undefined || seen.has(key)) throw new Error("real-smoke launcher arguments are invalid");
+		seen.add(key);
 		if (key === "port") {
 			const port = Number(value);
 			if (!Number.isSafeInteger(port) || port < 0 || port > 65_535) throw new Error("real-smoke port is invalid");
@@ -36,6 +38,7 @@ function parseArguments(argv: readonly string[]): ArgumentsPostV35 {
 			(values as Record<string, string | number | undefined>)[key] = value;
 		}
 	}
+	values.port ??= 43135;
 	if (values.dataRoot === undefined || values.workspaceRoot === undefined || values.authority === undefined || values.credentialFile === undefined) throw new Error("real-smoke host arguments are incomplete");
 	if ((values.stateRoot === undefined) !== (values.stateProjectId === undefined)) throw new Error("State root and State project ID must be configured together");
 	return values as ArgumentsPostV35;

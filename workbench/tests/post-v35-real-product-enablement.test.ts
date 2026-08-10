@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, linkSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
@@ -170,6 +170,40 @@ test("deferred Credential resolver reads only at resolve and rejects replaced or
 	const deferredLinked = createDeferredCredentialFileResolverV35(linked);
 	linkSync(linked, secondLink);
 	await assert.rejects(deferredLinked.resolve(), /ordinary non-link/);
+});
+
+test("real-smoke launcher accepts explicit port zero without resolving Credential and rejects duplicate port", async () => {
+	const fixture = roots("launcher-port");
+	const dummyCredential = resolve(fixture.root, "dummy-invalid.env");
+	writeFileSync(dummyCredential, "THIS_IS_NOT_A_CREDENTIAL\n");
+	const common = ["--experimental-loader", LOADER, "scripts/start-post-v35-real-smoke.ts", "--data-root", fixture.dataRoot, "--workspace-root", fixture.workspaceRoot, "--authority", fixture.authorityPath, "--credential-file", dummyCredential];
+	const child = spawn(process.execPath, [...common, "--port", "0"], { cwd: WORKBENCH_ROOT, env: { NO_COLOR: "1" }, stdio: ["ignore", "pipe", "pipe"] });
+	let stderr = "";
+	child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString("utf8"); });
+	try {
+		const started = await new Promise<Record<string, unknown>>((fulfill, reject) => {
+			let stdout = "";
+			const timer = setTimeout(() => reject(new Error(`launcher startup timed out: ${stderr}`)), 10_000);
+			child.stdout.on("data", (chunk: Buffer) => {
+				stdout += chunk.toString("utf8");
+				const line = stdout.split(/\r?\n/).find((entry) => entry.trim().startsWith("{"));
+				if (!line) return;
+				clearTimeout(timer);
+				fulfill(JSON.parse(line) as Record<string, unknown>);
+			});
+			child.once("exit", (code) => { clearTimeout(timer); reject(new Error(`launcher exited before startup event (${String(code)}): ${stderr}`)); });
+		});
+		assert.equal(started.event, "post_v35_real_smoke_started");
+		assert.equal(started.host, "127.0.0.1");
+		assert.ok(typeof started.port === "number" && Number.isSafeInteger(started.port) && started.port > 0);
+	} finally {
+		const exited = child.exitCode === null ? new Promise<void>((fulfill) => child.once("exit", () => fulfill())) : Promise.resolve();
+		child.kill();
+		await exited;
+	}
+	const duplicate = spawnSync(process.execPath, [...common, "--port", "0", "--port", "1"], { cwd: WORKBENCH_ROOT, encoding: "utf8", env: { NO_COLOR: "1" } });
+	assert.notEqual(duplicate.status, 0);
+	assert.match(duplicate.stderr, /launcher arguments are invalid/);
 });
 
 test("browser cannot supply Provider, Credential, roots, commands or Verifier source", async () => {
