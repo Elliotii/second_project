@@ -1,6 +1,6 @@
 # Current State
 
-> Updated: 2026-08-09
+> Updated: 2026-08-10
 
 ```yaml
 project:
@@ -265,6 +265,36 @@ v3_5_control:
   v3_5_final_acceptance_authorized: consumed_accepted_by_user_2026_08_09
   active_goal: null
   next_version_authorized: false
+
+post_v3_5_maintenance:
+  product_smoke_status: closed_accepted
+  product_smoke_disposition: ACCEPT_POST_V3_5_REAL_CROSS_PROCESS_PRODUCT_SMOKE
+  product_smoke_closeout: docs/reports/POST_V3_5_MAINTENANCE_CLOSEOUT.md
+  bilingual_webui_status: closed_accepted_as_additive_post_v3_5_maintenance
+  bilingual_webui_scope: presentation_only_no_API_authority_evidence_or_runtime_semantic_change
+  bilingual_webui_verification: strict_typescript_passed_v35g3_11_passed_postv35_11_passed_browser_switch_passed_no_console_errors
+  bilingual_webui_closeout: docs/reports/V3_6_CONTROL_BASELINE_HOUSEKEEPING_REPORT.md
+  additional_credential_reads: 0
+  additional_external_network_calls: 0
+  additional_provider_model_calls: 0
+  additional_real_model_calls: 0
+
+v3_6_planning_control:
+  planning: docs/reports/V3_6_OPEN_INTERACTIVE_AGENT_MODE_PREIMPLEMENTATION_PLANNING.md
+  planning_status: accepted_preimplementation_planning
+  independent_review_status: accepted_no_further_planning_revision_required
+  open_agent_ui_design_input: docs/reports/OPEN_AGENT_UI_PRODUCTIZATION_DESIGN_RECOMMENDATION.md
+  open_agent_ui_design_input_authority: reference_only_not_charter_or_spec
+  control_baseline_housekeeping: completed_resulting_HEAD_of_this_revision
+  active_goal: null
+  execution_backend_selected: false
+  execution_backend_selection_authorized: false
+  charter_created: false
+  implementation_authorized: false
+  credential_reads_authorized: 0
+  real_model_calls_authorized: 0
+  pi_core_patch_authorized: false
+  next_action: await_separate_user_authorization_for_execution_backend_selection_gate
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS

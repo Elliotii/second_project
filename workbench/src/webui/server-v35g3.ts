@@ -7,6 +7,7 @@ const MAX_BODY_BYTES = 16_384;
 const ID = "[A-Za-z0-9][A-Za-z0-9._-]{0,127}";
 const SESSION_ROUTE = new RegExp(`^/api/v1/sessions/(${ID})$`);
 const TURN_ROUTE = new RegExp(`^/api/v1/sessions/(${ID})/turns$`);
+type StaticAssetName = "index.html" | "app.js" | "styles.css" | "i18n.js" | "i18n.css";
 
 class HttpError extends Error {
 	readonly status: number;
@@ -19,14 +20,14 @@ function send(res: ServerResponse, status: number, body: unknown): void {
 	res.end(bytes);
 }
 
-function staticAsset(name: "index.html" | "app.js" | "styles.css"): { bytes: Buffer; mediaType: string } {
+function staticAsset(name: StaticAssetName): { bytes: Buffer; mediaType: string } {
 	const path = resolve(import.meta.dirname, "static", name);
 	const stats = lstatSync(path);
 	if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1) throw new HttpError(500, "static asset unavailable");
 	return { bytes: readFileSync(path), mediaType: name.endsWith(".html") ? "text/html; charset=utf-8" : name.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8" };
 }
 
-function sendStatic(res: ServerResponse, name: "index.html" | "app.js" | "styles.css"): void {
+function sendStatic(res: ServerResponse, name: StaticAssetName): void {
 	const asset = staticAsset(name);
 	res.writeHead(200, { "content-type": asset.mediaType, "content-length": asset.bytes.length, "cache-control": "no-store", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
 	res.end(asset.bytes);
@@ -73,6 +74,8 @@ async function route(app: Goal3WorkbenchApplicationV35, req: IncomingMessage, re
 		if (path === "/") return sendStatic(res, "index.html");
 		if (path === "/app.js") return sendStatic(res, "app.js");
 		if (path === "/styles.css") return sendStatic(res, "styles.css");
+		if (path === "/i18n.js") return sendStatic(res, "i18n.js");
+		if (path === "/i18n.css") return sendStatic(res, "i18n.css");
 		if (path === "/api/v1/overview") return send(res, 200, app.overview());
 		if (path === "/api/v1/sessions") return send(res, 200, await app.sessions());
 		const session = path.match(SESSION_ROUTE);

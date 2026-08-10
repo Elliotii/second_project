@@ -7,7 +7,10 @@ Adaptive Coding Agent Harness built on public Direct Pi `AgentHarness`.
 
 V3.5 is closed and accepted as
 `PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE`.
-No Goal is active and no later version is authorized.
+The post-V3.5 real two-Turn product smoke and the additive English/Simplified-Chinese
+WebUI maintenance are also closed and accepted. V3.6 preimplementation planning is
+accepted as design input only. No Goal is active; the Execution Backend Selection Gate,
+V3.6 Charter, implementation, Credential/model access and Pi changes remain unauthorized.
 
 Preserve these binding facts:
 

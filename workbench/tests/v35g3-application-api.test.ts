@@ -56,10 +56,18 @@ test("loopback API and static UI enforce routes, methods, body bounds, content t
 		assert.equal(html.status, 200);
 		const htmlText = await html.text();
 		assert.match(htmlText, /Adaptive Harness Workbench|Browser rollback mutation is deferred/);
+		assert.match(htmlText, /data-locale="zh-CN"|data-i18n="nav\.comparisons"/);
 		assert.match(html.headers.get("content-security-policy") ?? "", /default-src 'self'/);
 		const js = await fetch(`${address.url}/app.js`);
 		assert.equal(js.status, 200);
 		assert.match(await js.text(), /comparisons\/goal25/);
+		const i18n = await fetch(`${address.url}/i18n.js`);
+		assert.equal(i18n.status, 200);
+		assert.match(i18n.headers.get("content-type") ?? "", /text\/javascript/);
+		assert.match(await i18n.text(), /adaptive-harness-workbench\.locale|自适应 Harness 工作台/);
+		const i18nCss = await fetch(`${address.url}/i18n.css`);
+		assert.equal(i18nCss.status, 200);
+		assert.match(i18nCss.headers.get("content-type") ?? "", /text\/css/);
 
 		const created = await fetch(`${address.url}/api/v1/sessions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ session_id: "api-session", title: "API Session" }) });
 		assert.equal(created.status, 201);
@@ -75,6 +83,7 @@ test("loopback API and static UI enforce routes, methods, body bounds, content t
 		assert.equal((await raw(address.port, "/api/v1/state/rollback", "POST", { "content-type": "application/json" }, "{}")).status, 404);
 		assert.equal((await raw(address.port, "/api/v1/overview", "DELETE")).status, 405);
 		assert.equal((await raw(address.port, "/api/v1/unknown")).status, 404);
+		assert.equal((await raw(address.port, "/translations.json")).status, 404);
 		assert.equal((await raw(address.port, "/api/v1/sessions", "POST", { "content-type": "text/plain" }, "{}")).status, 415);
 		assert.equal((await raw(address.port, "/api/v1/sessions", "POST", { "content-type": "application/json", "content-length": 20_000 }, "x".repeat(20_000))).status, 413);
 		assert.equal((await raw(address.port, "/api/v1/sessions", "POST", { "content-type": "application/json" }, "{broken")).status, 400);

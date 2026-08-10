@@ -1,0 +1,39 @@
+header {
+  min-height: 88px;
+  height: auto;
+  gap: 18px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.locale-switch {
+  display: flex;
+  gap: 4px;
+}
+
+.locale-switch button {
+  padding: 5px 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.locale-switch button[aria-pressed="true"] {
+  border-color: var(--mint);
+  color: var(--mint);
+}
+
+@media (max-width: 780px) {
+  header {
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    align-items: flex-end;
+  }
+}

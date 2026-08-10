@@ -3,25 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Adaptive Harness Workbench</title>
+  <title data-i18n="page.title">Adaptive Harness Workbench</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/i18n.css">
 </head>
 <body>
-  <header><div><span class="eyebrow">V3.5 · Goal 3</span><h1>Adaptive Harness Workbench</h1></div><div id="product-mode" class="mode">Local · loading mode</div></header>
+  <header>
+    <div><span class="eyebrow" data-i18n="product.version">V3.5 · Goal 3</span><h1 data-i18n="product.title">Adaptive Harness Workbench</h1></div>
+    <div class="header-actions">
+      <div class="locale-switch" role="group" data-i18n-aria-label="language.selector" aria-label="Interface language">
+        <button type="button" data-locale="zh-CN" lang="zh-CN">中文</button>
+        <button type="button" data-locale="en" lang="en">English</button>
+      </div>
+      <div id="product-mode" class="mode" data-i18n="product.loading">Local · loading mode</div>
+    </div>
+  </header>
   <div class="shell">
     <aside>
-      <h2>Sessions</h2>
+      <h2 data-i18n="sidebar.sessions">Sessions</h2>
       <div id="sessions" class="session-list" aria-live="polite"></div>
-      <form id="create-session"><label>New Session ID<input name="session_id" value="demo-session" required></label><label>Title<input name="title" value="Local inspection" required></label><button>Create</button></form>
+      <form id="create-session"><label><span data-i18n="form.newSessionId">New Session ID</span><input name="session_id" value="demo-session" required></label><label><span data-i18n="form.title">Title</span><input name="title" value="Local inspection" required></label><button data-i18n="action.create">Create</button></form>
     </aside>
     <main>
-      <nav aria-label="Workbench views">
-        <button data-view="conversation" class="active">Session</button><button data-view="comparison">Comparisons</button><button data-view="adaptation">Adaptation</button><button data-view="state">State history</button>
+      <nav data-i18n-aria-label="nav.label" aria-label="Workbench views">
+        <button data-view="conversation" class="active" data-i18n="nav.session">Session</button><button data-view="comparison" data-i18n="nav.comparisons">Comparisons</button><button data-view="adaptation" data-i18n="nav.adaptation">Adaptation</button><button data-view="state" data-i18n="nav.stateHistory">State history</button>
       </nav>
-      <section id="conversation" class="view active"><div class="section-head"><div><span class="eyebrow">Session ≠ Run</span><h2>Conversation and Tool trace</h2></div></div><div id="session-detail" class="empty">Choose or create a Session.</div><form id="continue-session" hidden><label>Run ID<input name="run_id" value="demo-run" required></label><label><span id="turn-label">Prompt</span><textarea name="prompt" required>Inspect the bounded workspace and continue deterministically.</textarea></label><button id="turn-submit">Continue</button></form></section>
-      <section id="comparison" class="view"><div class="section-head"><div><span class="eyebrow">Frozen evidence</span><h2>Base / Candidate comparisons</h2></div></div><div id="goal25"></div><div id="v2"></div></section>
-      <section id="adaptation" class="view"><div class="section-head"><div><span class="eyebrow">Inspectable lineage</span><h2>How evidence becomes selective binding</h2></div></div><div id="lineage"></div><div id="diffs"></div></section>
-      <section id="state" class="view"><div class="section-head"><div><span class="eyebrow">Read-only authority projection</span><h2>State, decisions, versions and rollback</h2></div></div><div class="notice">Browser rollback mutation is deferred. This view never writes State.</div><div id="state-content"></div></section>
+      <section id="conversation" class="view active"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.sessionRun">Session ≠ Run</span><h2 data-i18n="heading.conversation">Conversation and Tool trace</h2></div></div><div id="session-detail" class="empty" data-i18n="empty.chooseSession">Choose or create a Session.</div><form id="continue-session" hidden><label><span data-i18n="form.runId">Run ID</span><input name="run_id" value="demo-run" required></label><label><span id="turn-label" data-i18n="form.prompt">Prompt</span><textarea name="prompt" required>Inspect the bounded workspace and continue deterministically.</textarea></label><button id="turn-submit" data-i18n="action.continue">Continue</button></form></section>
+      <section id="comparison" class="view"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.frozenEvidence">Frozen evidence</span><h2 data-i18n="heading.comparisons">Base / Candidate comparisons</h2></div></div><div id="goal25"></div><div id="v2"></div></section>
+      <section id="adaptation" class="view"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.inspectableLineage">Inspectable lineage</span><h2 data-i18n="heading.adaptation">How evidence becomes selective binding</h2></div></div><div id="lineage"></div><div id="diffs"></div></section>
+      <section id="state" class="view"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.readOnlyAuthority">Read-only authority projection</span><h2 data-i18n="heading.state">State, decisions, versions and rollback</h2></div></div><div class="notice" data-i18n="notice.stateReadOnly">Browser rollback mutation is deferred. This view never writes State.</div><div id="state-content"></div></section>
     </main>
   </div>
   <template id="error-template"><div class="error" role="alert"></div></template>
