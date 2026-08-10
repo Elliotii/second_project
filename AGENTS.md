@@ -15,6 +15,10 @@ Version Question, Charter, Goal acceptance, integration and final claim; Goal 1 
 implementation must be delegated to separate new top-level Implementation Sessions.
 Docker Desktop installation and license acceptance still require the user. Pi Core changes,
 a second backend, Host command fallback, SDK/Extension/RPC switching and V4 remain unauthorized.
+V3.6 Goal 1 is active under `V3_6_G1_GOAL_CONTRACT.md`; it is a zero-Credential,
+zero-network, zero-Provider/model, no-Docker implementation owned by a new top-level
+Implementation Session. Main may review, return ordinary defects to that Session and integrate,
+but must not silently implement Goal 1 source.
 
 Preserve these binding facts:
 

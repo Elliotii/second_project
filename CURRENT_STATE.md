@@ -8,7 +8,7 @@ project:
   phase: v3_6_active
   status: V3_6_FULL_OWNERSHIP_ACTIVATED
 
-active_goal: V3_6_VERSION_EXECUTION
+active_goal: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 
 last_executed_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -33,15 +33,15 @@ last_completed_goal:
   implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
 
 current_goal:
-  id: V3_6_VERSION_EXECUTION
-  status: phase_0_control_closeout
-  authority: docs/reports/V3_6_FULL_OWNERSHIP_ACTIVATION_RESPONSE.md
+  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  status: activated_pending_dedicated_implementation_start
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
   execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
 
 next_goal:
-  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
-  status: authorized_pending_charter_and_control_baseline
-  note: Main_may_freeze_Charter_and_start_new_top_level_Implementation_Session_without_another_user_gate
+  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+  status: authorized_after_goal_1_acceptance_and_docker_readiness
+  note: no_parallel_implementation_before_goal_1_acceptance
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -300,9 +300,16 @@ v3_6_planning_control:
   full_ownership_activation: docs/reports/V3_6_FULL_OWNERSHIP_ACTIVATION_RESPONSE.md
   full_ownership_activation_status: accepted_activated
   long_running_execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
-  active_goal: V3_6_VERSION_EXECUTION
+  charter: docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
+  charter_status: accepted_activated
+  goal_1_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
+  goal_1_status: activated_pending_dedicated_implementation_start
+  goal_1_control_baseline: git_commit_containing_this_state
+  goal_1_implementation_owner: new_top_level_goal_1_implementation_session
+  goal_1_implementation_started: false
+  active_goal: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
   version_owner: current_main_session
-  charter_created: false
+  charter_created: true
   implementation_authorized: true_within_accepted_v3_6_scope
   docker_cli_observed: absent_before_goal_2_readiness
   docker_desktop_install_and_license_acceptance: requires_user_action
