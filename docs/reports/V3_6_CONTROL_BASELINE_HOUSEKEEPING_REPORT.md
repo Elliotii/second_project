@@ -5,7 +5,8 @@ status: closed_accepted
 date: 2026-08-10
 kind: pre_v3_6_control_baseline_housekeeping
 baseline_parent: 4cddf4e804aeb02629fd6cefe456a28a06492da8
-control_baseline_commit: resulting_HEAD_of_this_revision
+control_baseline_commit: 00d0524a80b9c30f5ec141b733fb757e7a5f59d4
+control_baseline_tree: be0ee4864250f7b29c803a9ba5c69f80be20668c
 active_goal: null
 execution_backend_selected: false
 execution_backend_selection_authorized: false
@@ -86,7 +87,9 @@ Execution Backend Selection Gate:
 
 ## 5. Final repository boundary
 
-The Control Baseline is the resulting clean tracked HEAD of this revision. The exact
-commit SHA and tree identity are verified by Main after commit creation. Generated
-housekeeping artifacts remain ignored under `.runs/`; no other tracked or untracked item
-is intentionally carried beyond this baseline.
+The accepted housekeeping Control Baseline is commit
+`00d0524a80b9c30f5ec141b733fb757e7a5f59d4`, tree
+`be0ee4864250f7b29c803a9ba5c69f80be20668c`. Main verified that exact revision with a
+clean tracked worktree and zero non-ignored untracked files. Generated housekeeping
+artifacts remain ignored under `.runs/`; no other tracked or untracked item is carried in
+the active baseline checkout.

@@ -285,7 +285,10 @@ v3_6_planning_control:
   independent_review_status: accepted_no_further_planning_revision_required
   open_agent_ui_design_input: docs/reports/OPEN_AGENT_UI_PRODUCTIZATION_DESIGN_RECOMMENDATION.md
   open_agent_ui_design_input_authority: reference_only_not_charter_or_spec
-  control_baseline_housekeeping: completed_resulting_HEAD_of_this_revision
+  control_baseline_housekeeping: completed
+  control_baseline_commit: 00d0524a80b9c30f5ec141b733fb757e7a5f59d4
+  control_baseline_tree: be0ee4864250f7b29c803a9ba5c69f80be20668c
+  control_baseline_identity_closeout: docs/reports/V3_6_CONTROL_BASELINE_IDENTITY_CLOSEOUT.md
   active_goal: null
   execution_backend_selected: false
   execution_backend_selection_authorized: false
