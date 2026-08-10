@@ -5,7 +5,7 @@ export const messages = Object.freeze({
   en: Object.freeze({
     "page.title": "Adaptive Harness Workbench",
     "product.title": "Adaptive Harness Workbench",
-    "product.version": "V3.5 · Goal 3",
+    "product.version": "V3.6 · Open task control plane",
     "product.loading": "Local · loading mode",
     "language.selector": "Interface language",
     "sidebar.sessions": "Sessions",
@@ -141,7 +141,7 @@ export const messages = Object.freeze({
   "zh-CN": Object.freeze({
     "page.title": "自适应 Harness 工作台",
     "product.title": "自适应 Harness 工作台",
-    "product.version": "V3.5 · 目标 3",
+    "product.version": "V3.6 · 开放任务控制平面",
     "product.loading": "本地 · 正在加载模式",
     "language.selector": "界面语言",
     "sidebar.sessions": "会话（Sessions）",

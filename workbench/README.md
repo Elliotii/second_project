@@ -337,3 +337,26 @@ V3.5 is closed and accepted. The authoritative version result and bounded claims
 `../docs/reports/V3_5_CLOSEOUT.md`; the architecture and interview reading path is in
 `../docs/V3_5_ARCHITECTURE_AND_INTERVIEW_GUIDE.md`. The valid Goal 2.5 Pair does not prove
 Skill superiority: both arms passed and the Candidate used more tokens.
+
+## V3.6 Goal 1 open-task control plane
+
+Start the deterministic zero-access Goal 1 surface from `workbench/`:
+
+```powershell
+npm run v36g1:demo
+```
+
+Open `http://127.0.0.1:43136`. The browser submits only a registered opaque project ID,
+`inspect_only` or planned `bounded_edit`, free task text, an optional title, and an
+optional existing Session ID. The Host generates Session/Run IDs, creates a link-free
+managed copy, pins Project/Profile/code/State/backend/provider-policy/capability
+identities, and writes immutable interactive Run Authority before the deterministic Faux
+dispatch seam. Continuing a Session keeps those identities; using current Source or
+Active State creates a new Session.
+
+Free tasks remain `unverified`, have no formal Outcome, and are ineligible for
+comparison, adaptation, and promotion. Goal 1 exposes read-only Workspace previews and
+separates Pi native Skill metadata from Harness Adaptation/binding metadata. It executes
+no project command, Docker command, external Provider/model call, Source apply, or State
+mutation. `bounded_edit` is planned capability metadata only in Goal 1; file writes and
+the registered Docker command path are not enabled until a separately accepted Goal 2.

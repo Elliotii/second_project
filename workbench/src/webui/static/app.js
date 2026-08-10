@@ -30,6 +30,7 @@ const displayValue = (value) => {
   return value;
 };
 let activeSession = null;
+let activeV36Session = null;
 
 function applyStaticTranslations() {
   document.documentElement.lang = i18n.locale;
@@ -127,6 +128,77 @@ async function loadOverview() {
   $("#product-mode").textContent = value.mode === "real_product_smoke" ? i18n.t("mode.real") : i18n.t("mode.faux");
   $("#turn-label").textContent = value.mode === "real_product_smoke" ? i18n.t("form.realPrompt") : i18n.t("form.fauxPrompt");
   $("#turn-submit").textContent = value.mode === "real_product_smoke" ? i18n.t("action.realTurn") : i18n.t("action.fauxTurn");
+}
+
+function renderV36Session(session) {
+  activeV36Session = session.session_id;
+  const form = $("#v36-task-form");
+  form.elements.session_id.value = session.session_id;
+  form.elements.project_id.value = session.project_id;
+  form.elements.requested_mode.value = session.requested_mode;
+  const root = $("#v36-session-detail");
+  root.replaceChildren();
+  const authority = card("Host-minted pinned Session", null);
+  authority.append(
+    metric("Session", session.session_id), metric("Project", session.project_id), metric("Managed Workspace", session.workspace_id), metric("Mode", session.requested_mode),
+    metric("Session pin", session.pins.session_pin_digest), metric("Code identity", session.pins.code_identity), metric("Harness State", session.pins.harness_state_digest),
+    metric("Backend profile", session.pins.execution_backend_profile_digest), metric("Provider policy", session.pins.provider_model_policy_digest)
+  );
+  root.append(authority);
+  const safety = card("Truthful interactive semantics", null);
+  safety.append(
+    metric("Verification", session.verification.mode), metric("Formal Outcome", session.verification.formal_outcome), metric("Comparison eligible", session.verification.comparison_eligible),
+    metric("Adaptation eligible", session.verification.adaptation_eligible), metric("Promotion eligible", session.verification.promotion_eligible),
+    metric("Project commands", session.capabilities.project_commands), metric("Source apply", session.capabilities.source_apply)
+  );
+  root.append(safety);
+  const resources = text("div", "", "grid");
+  resources.append(card("Pi native Skills (read-only)", text("pre", JSON.stringify(session.pi_native_skills, null, 2))), card("Harness Adaptations / bindings (read-only)", text("pre", JSON.stringify(session.harness_adaptations, null, 2))));
+  root.append(resources);
+  const runs = text("div", "", "grid");
+  for (const run of session.runs) {
+    const item = card(run.run_id, null);
+    item.append(metric("Authority", run.authority_digest), metric("Settled", run.settled), metric("Verification", run.verification_mode), metric("Command execution", run.command_execution));
+    runs.append(item);
+  }
+  root.append(card("Interactive evidence", runs));
+  loadV36Workspace(session.session_id).catch(failure);
+}
+
+async function loadV36Workspace(sessionId) {
+  const tree = await api(`/api/v1/v36/sessions/${sessionId}/workspace`);
+  const files = text("div", "", "card");
+  files.append(text("h3", "Managed Workspace tree (read-only)"));
+  for (const entry of tree.entries) {
+    const row = text("div", "", "metric");
+    row.append(text("span", entry.path), text("span", entry.kind === "file" ? `${entry.bytes} bytes` : "directory"));
+    if (entry.kind === "file" && /^[A-Za-z0-9._/-]+$/.test(entry.path)) row.addEventListener("click", async () => {
+      try {
+        const preview = await api(`/api/v1/v36/sessions/${sessionId}/workspace/files/${entry.path}`);
+        files.append(card(`Preview: ${preview.path}`, text("pre", preview.text)));
+      } catch (error) { failure(error); }
+    });
+    files.append(row);
+  }
+  $("#v36-session-detail").append(files);
+}
+
+async function loadV36() {
+  try {
+    const value = await api("/api/v1/v36/projects");
+    const form = $("#v36-task-form");
+    form.elements.project_id.replaceChildren();
+    for (const project of value.projects) {
+      const option = document.createElement("option");
+      option.value = project.project_id;
+      option.textContent = `${project.display_name} · ${project.supported_modes.join(" / ")}`;
+      form.elements.project_id.append(option);
+    }
+    $("#v36-open-task").hidden = false;
+    $(".v36-nav").hidden = false;
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+  }
 }
 
 async function loadComparisons() {
@@ -267,6 +339,20 @@ $("#continue-session").addEventListener("submit", async (event) => {
     await loadSessions(activeSession);
   } catch (error) { failure(error); }
 });
+$("#v36-task-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const title = String(data.get("title") ?? "").trim();
+  const sessionId = String(data.get("session_id") ?? "").trim();
+  const request = { project_id: data.get("project_id"), requested_mode: data.get("requested_mode"), task_text: data.get("task_text"), ...(title ? { title } : {}), ...(sessionId ? { session_id: sessionId } : {}) };
+  try {
+    const session = await api("/api/v1/v36/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(request) });
+    document.querySelectorAll("nav button,.view").forEach((node) => node.classList.remove("active"));
+    $(".v36-nav").classList.add("active");
+    $("#open-control").classList.add("active");
+    renderV36Session(session);
+  } catch (error) { failure(error); }
+});
 
 applyStaticTranslations();
-Promise.all([loadOverview(), loadSessions()]).catch(failure);
+Promise.all([loadOverview(), loadSessions(), loadV36()]).catch(failure);

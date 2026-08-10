@@ -9,7 +9,7 @@
 </head>
 <body>
   <header>
-    <div><span class="eyebrow" data-i18n="product.version">V3.5 · Goal 3</span><h1 data-i18n="product.title">Adaptive Harness Workbench</h1></div>
+    <div><span class="eyebrow" data-i18n="product.version">V3.6 · Open task control plane</span><h1 data-i18n="product.title">Adaptive Harness Workbench</h1></div>
     <div class="header-actions">
       <div class="locale-switch" role="group" data-i18n-aria-label="language.selector" aria-label="Interface language">
         <button type="button" data-locale="zh-CN" lang="zh-CN">中文</button>
@@ -20,14 +20,28 @@
   </header>
   <div class="shell">
     <aside>
+      <section id="v36-open-task" hidden>
+        <span class="eyebrow">Open task / 开放任务</span>
+        <h2>Host-minted authority / 主机铸造权限</h2>
+        <p class="muted">The browser selects only a registered project and mode. Paths, commands, Provider policy, State and budgets remain Host-owned.</p>
+        <form id="v36-task-form">
+          <label>Registered project / 已登记项目<select name="project_id" required></select></label>
+          <label>Mode / 模式<select name="requested_mode"><option value="inspect_only">Inspect only / 仅检查</option><option value="bounded_edit">Bounded edit (commands disabled) / 有界编辑（命令禁用）</option></select></label>
+          <label>Task / 任务<textarea name="task_text" required>Inspect the managed workspace and explain the relevant files.</textarea></label>
+          <label>Optional title / 可选标题<input name="title"></label>
+          <label>Existing Session ID (continue pinned) / 现有会话 ID（继续固定身份）<input name="session_id"></label>
+          <button>Start or continue / 新建或继续</button>
+        </form>
+      </section>
       <h2 data-i18n="sidebar.sessions">Sessions</h2>
       <div id="sessions" class="session-list" aria-live="polite"></div>
       <form id="create-session"><label><span data-i18n="form.newSessionId">New Session ID</span><input name="session_id" value="demo-session" required></label><label><span data-i18n="form.title">Title</span><input name="title" value="Local inspection" required></label><button data-i18n="action.create">Create</button></form>
     </aside>
     <main>
       <nav data-i18n-aria-label="nav.label" aria-label="Workbench views">
-        <button data-view="conversation" class="active" data-i18n="nav.session">Session</button><button data-view="comparison" data-i18n="nav.comparisons">Comparisons</button><button data-view="adaptation" data-i18n="nav.adaptation">Adaptation</button><button data-view="state" data-i18n="nav.stateHistory">State history</button>
+        <button data-view="open-control" class="v36-nav" hidden>Open control / 开放控制</button><button data-view="conversation" class="active" data-i18n="nav.session">Session</button><button data-view="comparison" data-i18n="nav.comparisons">Comparisons</button><button data-view="adaptation" data-i18n="nav.adaptation">Adaptation</button><button data-view="state" data-i18n="nav.stateHistory">State history</button>
       </nav>
+      <section id="open-control" class="view"><div class="section-head"><div><span class="eyebrow">Pinned authority / 固定权限</span><h2>Interactive Session, evidence and managed Workspace</h2></div></div><div class="notice">Free tasks are unverified, have no formal Outcome, and are ineligible for comparison, adaptation and promotion. Goal 1 executes no project command and performs no Source apply.</div><div id="v36-session-detail" class="empty">Start or continue an open task from the registered Project Profile.</div></section>
       <section id="conversation" class="view active"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.sessionRun">Session ≠ Run</span><h2 data-i18n="heading.conversation">Conversation and Tool trace</h2></div></div><div id="session-detail" class="empty" data-i18n="empty.chooseSession">Choose or create a Session.</div><form id="continue-session" hidden><label><span data-i18n="form.runId">Run ID</span><input name="run_id" value="demo-run" required></label><label><span id="turn-label" data-i18n="form.prompt">Prompt</span><textarea name="prompt" required>Inspect the bounded workspace and continue deterministically.</textarea></label><button id="turn-submit" data-i18n="action.continue">Continue</button></form></section>
       <section id="comparison" class="view"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.frozenEvidence">Frozen evidence</span><h2 data-i18n="heading.comparisons">Base / Candidate comparisons</h2></div></div><div id="goal25"></div><div id="v2"></div></section>
       <section id="adaptation" class="view"><div class="section-head"><div><span class="eyebrow" data-i18n="eyebrow.inspectableLineage">Inspectable lineage</span><h2 data-i18n="heading.adaptation">How evidence becomes selective binding</h2></div></div><div id="lineage"></div><div id="diffs"></div></section>

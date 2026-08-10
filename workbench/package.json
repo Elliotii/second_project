@@ -33,6 +33,8 @@
     "postv35:real-smoke": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/start-post-v35-real-smoke.ts",
     "postv35:enablement:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/post-v35-real-product-enablement.test.ts",
     "v35g3:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v35g3-*.test.ts",
+    "v36g1:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v36g1*.test.ts",
+    "v36g1:demo": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/start-v36g1-demo.ts",
     "v35g2:calibrate": "node --experimental-loader scripts/v35g2-public-pi-loader.mjs scripts/v35g2-reference-calibration.ts --project-root .. --output-root ../.runs/v3-5-g2/reference-calibration"
   },
   "dependencies": {
