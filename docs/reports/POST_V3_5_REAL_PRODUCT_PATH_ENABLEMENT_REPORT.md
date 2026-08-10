@@ -1,7 +1,7 @@
 # Post-V3.5 Real Product Path Enablement Report
 
 ```yaml
-status: bounded_correction_complete_pending_main_acceptance
+status: post_audit_bounded_correction_complete_pending_hit_only_reaudit
 date: 2026-08-10
 kind: bounded_post_closeout_product_maintenance
 planning_baseline_commit: 2256de499c0412a610719d4c40df83c16680cf30
@@ -9,6 +9,10 @@ planning_baseline_parent: e4e64d148d07ea5ed189365486fecbb525b78af9
 initial_candidate_commit: c9c9e42175fe854ed9d0a431598042e96f64d7bb
 correction_parent_commit: c9c9e42175fe854ed9d0a431598042e96f64d7bb
 correction_commit: pending_resulting_commit_self_identity_reported_in_final
+focused_audit_head: 2ce81ebf74bafe6d3819218cee32fc021cabe9f6
+focused_audit_disposition: AUDIT_FINDINGS
+post_audit_correction_parent: 2ce81ebf74bafe6d3819218cee32fc021cabe9f6
+post_audit_correction_commit: pending_resulting_commit_self_identity_reported_in_final
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 real_credential_reads_observed: 0
 external_network_calls_observed: 0
@@ -32,6 +36,12 @@ The first bounded implementation produced candidate
 `c9c9e42175fe854ed9d0a431598042e96f64d7bb`. Main returned
 `REVISE_BOUNDED_BEFORE_AUDIT`, and this report records the one authorized correction on
 that exact parent. No accepted control-state document was changed.
+
+The independent focused audit then reviewed exact HEAD
+`2ce81ebf74bafe6d3819218cee32fc021cabe9f6` and returned `AUDIT_FINDINGS` for two bounded
+P1 gaps: the schema-v2 prior-Run chain was not semantically authenticated, and the wall
+budgets were reused as per-request timeouts rather than enforced as one hard Turn/journey
+deadline. The post-audit correction described below has that exact audited HEAD as parent.
 
 The emitted public Pi checkout selected by
 `workbench/scripts/v35g2-public-pi-loader.mjs` is
@@ -69,11 +79,26 @@ Manifest binds exact Verifier-result and Outcome bytes, in addition to the exist
 Session prefix/count digest and identity fields. Schema-v1 Faux and historical Run parsing
 remain compatible; no migration subsystem was introduced.
 
+The post-audit correction makes this one authenticated ordered history: schema-v2 Run 1
+must record `prior_run_id: null`, each later schema-v2 Run must name the immediately
+preceding validated catalog Run, and its authenticated Session prefix count must increase
+strictly. One internal validation helper returns both the safe projection and the exact
+validated Manifest instances; `executeTurn()` aggregates prior usage directly from those
+instances rather than rereading an unassociated sequence.
+
 The deferred file Credential resolver records only file metadata at composition. At
 actual resolution it rechecks ordinary non-link status, link count, lexical path,
 canonical path, device, inode and birth time before opening; it confirms the opened handle
 and the path again around the read. A replaced or newly linked source fails closed. The
 Credential path is still host-only and absent from browser/API inputs.
+
+One hard deadline now starts before Credential resolution and model construction. It
+covers setup, every Provider request, Tool/settled closure and the frozen external
+Verifier. The public Pi `before_provider_request` hook returns a fresh `timeoutMs` equal to
+the positive remaining minimum of the 15-minute Turn and 30-minute journey allowances.
+The Verifier receives the smaller of its frozen timeout and that same remaining allowance,
+and an outer bounded deadline remains active around it. `wall_time_ms` is measured from the
+same start through completed Verifier evidence.
 
 ## 3. Exact source delta
 
@@ -108,6 +133,18 @@ this final report as its eighth path:
   tamper, substitution and Credential-swap coverage;
 - `docs/reports/POST_V3_5_REAL_PRODUCT_PATH_ENABLEMENT_REPORT.md` - this report.
 
+The post-audit bounded correction on parent `2ce81ebf74bafe6d3819218cee32fc021cabe9f6`
+modifies exactly these four paths:
+
+- `workbench/src/session/persistent-session-v35.ts` - shared authenticated schema-v2
+  history helper, prior-Run chain and strictly increasing Session prefix count;
+- `workbench/src/session/real-smoke-turn-v35.ts` - one setup-to-Verifier hard deadline and
+  per-request remaining-time patches through the public Pi hook;
+- `workbench/tests/post-v35-real-product-enablement.test.ts` - linked chain/count tamper,
+  zero-access continuation and deterministic no-sleep deadline regressions;
+- `docs/reports/POST_V3_5_REAL_PRODUCT_PATH_ENABLEMENT_REPORT.md` - audit disposition,
+  correction and exact evidence updates.
+
 No Pi source, dependency, fixture authority, accepted Closeout, Charter,
 `CURRENT_STATE.md`, historical evidence, Goal 2.5 evidence, State authority or promotion
 authority changed.
@@ -125,13 +162,34 @@ authority changed.
 | `git diff --check` | 0 | no whitespace errors |
 | pinned Pi `rev-parse HEAD` / `status --short` | 0 / 0 | exact pinned SHA / clean |
 
-Final executable test total: **20 passed, 0 failed, 0 skipped**.
+Post-audit bounded correction verification:
+
+| Command | Exit | Exact result |
+|---|---:|---|
+| `git rev-parse HEAD; git rev-parse HEAD^; git status --short` at entry | 0 | exact audited HEAD `2ce81ebf...`, expected parent `c9c9e421...`, clean |
+| first `npm.cmd run v35g2:typecheck` after test addition | 1 | two strict errors: optional Faux `streamOptions` dereferenced in the new deadline test |
+| final `npm.cmd run v35g2:typecheck` | 0 | strict TypeScript passed after bounded optional-access fix |
+| `npm.cmd run postv35:enablement:test` | 0 | 10 passed, 0 failed, 0 skipped |
+| `npm.cmd run v35g1:test` | 0 | 6 passed, 0 failed, 0 skipped |
+| `npm.cmd run v35g3:test` | 0 | 6 passed, 0 failed, 0 skipped |
+| `git diff --check` | 0 | no whitespace errors |
+| first sandboxed pinned-Pi Git check | 1 | Git `dubious ownership`; no Pi read/write or repository mutation occurred |
+| pinned Pi checks with command-local `safe.directory` | 0 / 0 | exact pinned SHA / clean |
+
+Final post-audit executable test total: **22 passed, 0 failed, 0 skipped**.
 
 The initial implementation history also retains this required fact: the very first
 `npm.cmd run v35g1:test` exited 1 with pre-test `ERR_MODULE_NOT_FOUND` because the accepted
 ignored Goal 1 loader fixture was absent in this worktree. After the identical ignored
 loader was materialized under `.runs/v3-5-g1/runtime/`, that initial run passed 6/6. The
 loader remains ignored and is not part of either commit.
+
+The focused audit history is also retained: its first direct Goal 1 run exited 1 with one
+inner-helper `ERR_MODULE_NOT_FOUND` before the ignored loader precondition was supplied;
+the rerun passed 6/6. Its linked prior-chain tamper reproduction exited 0 and demonstrated
+that audited HEAD accepted `prior_run_id: "forged-prior"`. The post-audit regression now
+recomputes both Manifest and catalog digests after the same semantic tamper and proves
+that both inspection and continuation reject before resolver/model access.
 
 The final enablement tests prove with a safe test-only access log that resolver and model
 factory call counts stay exactly zero for wrong Session, wrong Run, replay, third Run,
@@ -173,9 +231,10 @@ whole_journey:
 ```
 
 Request and Tool limits are checked before the excess operation. Known usage is checked
-against both envelopes during and after the turn. The effective Provider timeout is the
-smaller of the per-turn 15-minute limit and remaining whole-journey time. Exhausted prior
-whole-journey capacity stops before Credential resolution.
+against both envelopes during and after the turn. Each Provider request receives only the
+current positive remainder, not a reused full timeout. Credential/model setup,
+AgentHarness settled closure and the frozen Verifier share the same deadline; exhausted
+prior whole-journey capacity stops before Credential resolution.
 
 ## 7. Suggested separate real startup
 
@@ -209,6 +268,7 @@ This report does not authorize or perform that command.
 - This slice does not prove crash recovery, exactly-once Tool effects, multi-writer
   durability, general Skill benefit or production remote security.
 
-**Recommendation.** Submit the bounded correction commit to Main for acceptance/audit.
+**Recommendation.** Submit the post-audit bounded correction commit to Main for hit-only
+re-audit of P1-001 and P1-002.
 Do not begin the real Product Smoke Test from this Session. No V3.5 reopen, V3.6/V4,
 State mutation, promotion or architecture acceptance is claimed here.

@@ -363,8 +363,7 @@ export class PersistentSessionServiceV35 {
 		const priorMessages = structuredClone(priorContext.messages);
 		const priorDigest = digestObject(priorMessages);
 		if (this.turnExecutor) {
-			await this.inspect(options.sessionId);
-			const priorManifests = entry.run_refs.map((reference) => parseRunManifest(readJsonArtifact<PersistentRunManifestV35>(resolve(resolveOperationalRef(this.dataRoot, reference.run_ref), ".."), "manifest.json")));
+			const priorManifests = this.validatedRunHistory(entry, await session.getEntries()).map(({ manifest }) => manifest);
 			if (priorManifests.some((manifest) => manifest.schema_version !== 2)) throw new Error("real-smoke Session cannot mix deterministic/Faux and real Run history");
 			const priorUsage = priorManifests.reduce((total, manifest) => ({
 				provider_requests: total.provider_requests + manifest.provider_requests,
@@ -522,28 +521,30 @@ export class PersistentSessionServiceV35 {
 		return { manifest, view: await this.inspect(options.sessionId), listed_before: listedBefore };
 	}
 
-	async inspect(sessionId: string): Promise<SafeSessionViewV35> {
-		const catalog = this.catalog();
-		const entry = this.expectedEntry(catalog, sessionId);
-		const { session } = await this.openVerified(entry);
-		const sessionEntries = await session.getEntries();
-		const runs: SafeRunViewV35[] = entry.run_refs.map((reference) => {
+	private validatedRunHistory(entry: PersistentSessionCatalogEntryV35, sessionEntries: readonly SessionTreeEntry[]): Array<{ manifest: PersistentRunManifestV35; view: SafeRunViewV35 }> {
+		const validated: Array<{ manifest: PersistentRunManifestV35; view: SafeRunViewV35 }> = [];
+		for (const [index, reference] of entry.run_refs.entries()) {
 			const manifestPath = resolveOperationalRef(this.dataRoot, reference.run_ref);
 			if (reference.run_ref !== portable(`runs${sep}${reference.run_id}${sep}manifest.json`)) throw new Error("catalog Run reference path substitution rejected");
 			const runRoot = resolve(manifestPath, "..");
-			if (reference.manifest_sha256 !== undefined && fileSha256(manifestPath) !== reference.manifest_sha256) throw new Error("catalog/Run Manifest byte identity mismatch");
-			const manifest = parseRunManifest(readJsonArtifact<PersistentRunManifestV35>(runRoot, "manifest.json"));
+			const manifestBytes = readFileSync(manifestPath);
+			if (reference.manifest_sha256 !== undefined && sha256(manifestBytes) !== reference.manifest_sha256) throw new Error("catalog/Run Manifest byte identity mismatch");
+			const manifest = parseRunManifest(JSON.parse(manifestBytes.toString("utf8")) as unknown);
 			if (manifest.run_id !== reference.run_id || manifest.session_id !== entry.session_id || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.workspace_path_sha256 !== this.workspaceDigest || manifest.session_ref !== entry.pi_session_ref || manifest.catalog_session_identity_sha256 !== catalogEntryIdentity(entry)) throw new Error("catalog/Run authority identity mismatch");
 			if (sessionEntries.length < manifest.session_entry_count_after_turn || digestObject(sessionEntries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("Run/Session historical prefix identity mismatch");
 			if (manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256) throw new Error("Run prior-context proof is invalid");
 			if (manifest.schema_version === 2) {
+				const expectedPriorRunId = index === 0 ? null : entry.run_refs[index - 1]!.run_id;
+				if (manifest.prior_run_id !== expectedPriorRunId) throw new Error("real Run prior-Run chain identity mismatch");
+				const previousManifest = validated.at(-1)?.manifest;
+				if (previousManifest && manifest.session_entry_count_after_turn <= previousManifest.session_entry_count_after_turn) throw new Error("real Run Session prefix count is not strictly increasing");
 				if (reference.manifest_sha256 === undefined) throw new Error("real Run catalog Manifest digest is missing");
 				if (fileSha256(resolveOperationalRef(runRoot, manifest.verifier_ref)) !== manifest.verifier_sha256 || fileSha256(resolveOperationalRef(runRoot, manifest.outcome_ref)) !== manifest.outcome_sha256) throw new Error("real Run Verifier/Outcome byte identity mismatch");
 				const verifier = readJsonArtifact<Record<string, unknown>>(runRoot, manifest.verifier_ref);
 				const outcome = readJsonArtifact<Record<string, unknown>>(runRoot, manifest.outcome_ref);
 				if (verifier.verifier_id !== manifest.verifier_id || verifier.status !== manifest.verifier_status || outcome.run_id !== manifest.run_id || outcome.session_id !== manifest.session_id || outcome.verifier_id !== manifest.verifier_id || outcome.verifier_status !== manifest.verifier_status || outcome.outcome !== manifest.outcome || outcome.binding_status !== manifest.binding_status || outcome.context_reconstructed !== true) throw new Error("real Run Verifier/Outcome evidence mismatch");
 			}
-			return {
+			const view: SafeRunViewV35 = {
 				run_id: manifest.run_id,
 				created_at: manifest.created_at,
 				settled: true,
@@ -561,7 +562,17 @@ export class PersistentSessionServiceV35 {
 				binding_status: manifest.schema_version === 2 ? manifest.binding_status : "not_recorded",
 				source_ref: reference.run_ref,
 			};
-		});
+			validated.push({ manifest, view });
+		}
+		return validated;
+	}
+
+	async inspect(sessionId: string): Promise<SafeSessionViewV35> {
+		const catalog = this.catalog();
+		const entry = this.expectedEntry(catalog, sessionId);
+		const { session } = await this.openVerified(entry);
+		const sessionEntries = await session.getEntries();
+		const runs = this.validatedRunHistory(entry, sessionEntries).map(({ view }) => view);
 		return { schema_version: 1, session_id: entry.session_id, project_id: entry.project_id, workspace_id: entry.workspace_id, title: entry.title, created_at: entry.created_at, updated_at: entry.updated_at, parent_session_id: entry.parent_session_id, messages: projectSessionEntries(sessionEntries), runs, source_status: "available" };
 	}
 }

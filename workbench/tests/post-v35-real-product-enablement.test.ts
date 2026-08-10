@@ -3,10 +3,12 @@ import { spawnSync } from "node:child_process";
 import { existsSync, linkSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall, type AssistantMessage } from "@earendil-works/pi-ai";
 import type { PostV35RealSmokeAuthority } from "../src/contracts/post-v35-real-types.ts";
+import type { VerifierResultV0B } from "../src/contracts/v0b-types.ts";
 import { digestObject, fileSha256, sha256, stableJson, treeDigest } from "../src/hash.ts";
 import { PersistentSessionServiceV35 } from "../src/session/persistent-session-v35.ts";
-import { assertPostV35BudgetV35, createDeferredCredentialFileResolverV35, createPostV35RealSmokeTurnExecutor, parsePostV35RealSmokeAuthority } from "../src/session/real-smoke-turn-v35.ts";
+import { assertPostV35BudgetV35, createDeferredCredentialFileResolverV35, createPostV35RealSmokeTurnExecutor, parsePostV35RealSmokeAuthority, type PostV35RealModelFactory } from "../src/session/real-smoke-turn-v35.ts";
 import { Goal3WorkbenchApplicationV35 } from "../src/webui/application-v35g3.ts";
 import { loadGoal3DemoProjectionV35 } from "../src/webui/projection-v35g3.ts";
 import { createGoal3LoopbackServerV35 } from "../src/webui/server-v35g3.ts";
@@ -69,6 +71,45 @@ function runProcess(action: "create" | "continue", fixture: ReturnType<typeof ro
 function accessEvents(fixture: ReturnType<typeof roots>): string[] {
 	const path = resolve(fixture.root, "access-audit.jsonl");
 	return existsSync(path) ? readFileSync(path, "utf8").trim().split(/\r?\n/).filter(Boolean) : [];
+}
+
+function withUsage(message: AssistantMessage): AssistantMessage {
+	return { ...message, usage: { input: 11, output: 7, cacheRead: 0, cacheWrite: 0, totalTokens: 18, cost: { input: 0.000001, output: 0.000001, cacheRead: 0, cacheWrite: 0, total: 0.000002 } } };
+}
+
+function deadlineModelFactory(runId: string, observeRequest: (timeoutMs: number | undefined) => void): PostV35RealModelFactory {
+	return {
+		create() {
+			const models = createModels();
+			const registration = fauxProvider({ provider: `post-v35-deadline-${runId}` });
+			models.setProvider(registration.provider);
+			registration.setResponses([
+				(_context, streamOptions) => { observeRequest(streamOptions?.timeoutMs); return withUsage(fauxAssistantMessage(fauxToolCall("workspace_write", { path: "src/result.txt", content: "turn-one\n" }, { id: `${runId}-write` }), { stopReason: "toolUse" })); },
+				(_context, streamOptions) => { observeRequest(streamOptions?.timeoutMs); return withUsage(fauxAssistantMessage(fauxToolCall("run_command", { command_id: "public_test" }, { id: `${runId}-test` }), { stopReason: "toolUse" })); },
+			]);
+			return { models, model: registration.getModel(), async close(): Promise<void> {} };
+		},
+	};
+}
+
+function passedVerifierResult(options: { task: { verifier_id: string; verifier_sha256: string; verifier_command: { timeout_ms: number; output_limit_bytes: number } }; attemptId: string; verifierSnapshotRef: VerifierResultV0B["execution"]["source_snapshot_ref"]; verifierSnapshotPath: string; projectRoot: string }): VerifierResultV0B {
+	return {
+		schema_version: 1,
+		verifier_id: options.task.verifier_id,
+		verifier_sha256: options.task.verifier_sha256,
+		attempt_id: options.attemptId,
+		started_at: "2000-01-01T00:00:00.000Z",
+		completed_at: "2000-01-01T00:00:00.001Z",
+		duration_ms: 1,
+		execution: { executable: process.execPath, executable_identity: { node_version: process.version }, argv: [options.verifierSnapshotPath], cwd: options.projectRoot, cwd_identity: "project_root", shell: false, environment_allowlist_keys: ["NO_COLOR", "V35_WORKSPACE"], timeout_ms: options.task.verifier_command.timeout_ms, output_limit_bytes: options.task.verifier_command.output_limit_bytes, source_snapshot_ref: options.verifierSnapshotRef, source_sha256: options.task.verifier_sha256, source_digest_verified: true },
+		status: "passed",
+		exit_code: 0,
+		timed_out: false,
+		summary: "passed",
+		full_output_ref: options.verifierSnapshotRef,
+		full_output_sha256: options.verifierSnapshotRef.sha256,
+		invalid_reason: null,
+	};
 }
 
 test("Faux default remains unchanged and real mode requires explicit host authority without touching a resolver", async () => {
@@ -227,6 +268,76 @@ test("prior evidence tamper and catalog reference substitution fail before acces
 	assert.notEqual(afterSubstitution.status, 0);
 	assert.match(afterSubstitution.stderr, /path substitution/);
 	assert.equal(accessEvents(substituted).length, substituteCount);
+});
+
+test("schema-v2 prior-Run chain and increasing Session prefix counts are authenticated before access", async () => {
+	const fixture = roots("prior-chain-authenticated");
+	runProcess("create", fixture, "real-run-one", PROMPT_ONE);
+	runProcess("continue", fixture, "real-run-two", PROMPT_TWO);
+	const count = accessEvents(fixture).length;
+	const firstManifestPath = resolve(fixture.dataRoot, "runs/real-run-one/manifest.json");
+	const secondManifestPath = resolve(fixture.dataRoot, "runs/real-run-two/manifest.json");
+	const catalogPath = resolve(fixture.dataRoot, "catalog-v1.json");
+	const firstManifest = JSON.parse(readFileSync(firstManifestPath, "utf8")) as Record<string, unknown>;
+	const originalSecond = JSON.parse(readFileSync(secondManifestPath, "utf8")) as Record<string, unknown>;
+	const catalog = JSON.parse(readFileSync(catalogPath, "utf8")) as { sessions: Array<{ run_refs: Array<{ manifest_sha256?: string }> }> };
+	const reader = new PersistentSessionServiceV35({ dataRoot: fixture.dataRoot, projectId: fixture.authority.project_id, workspaceRoot: fixture.workspaceRoot, workspaceId: fixture.authority.workspace_id });
+
+	const nonIncreasing = { ...originalSecond, session_entry_count_after_turn: firstManifest.session_entry_count_after_turn, session_entries_sha256_after_turn: firstManifest.session_entries_sha256_after_turn };
+	writeFileSync(secondManifestPath, `${stableJson(nonIncreasing)}\n`);
+	catalog.sessions[0]!.run_refs[1]!.manifest_sha256 = fileSha256(secondManifestPath);
+	writeFileSync(catalogPath, `${stableJson(catalog)}\n`);
+	await assert.rejects(reader.inspect("real-session"), /prefix count is not strictly increasing/);
+
+	const forgedChain = { ...originalSecond, prior_run_id: "forged-prior" };
+	writeFileSync(secondManifestPath, `${stableJson(forgedChain)}\n`);
+	catalog.sessions[0]!.run_refs[1]!.manifest_sha256 = fileSha256(secondManifestPath);
+	writeFileSync(catalogPath, `${stableJson(catalog)}\n`);
+	await assert.rejects(reader.inspect("real-session"), /prior-Run chain identity mismatch/);
+	const continuation = spawnProcess("continue", fixture, "real-run-three", PROMPT_TWO);
+	assert.notEqual(continuation.status, 0);
+	assert.match(continuation.stderr, /prior-Run chain identity mismatch/);
+	assert.equal(accessEvents(fixture).length, count);
+});
+
+test("one hard deadline shrinks request timeouts and covers setup and Verifier without sleeping", async () => {
+	const successful = roots("deadline-success");
+	let now = 10_000;
+	const requestTimeouts: Array<number | undefined> = [];
+	let verifierTimeout = 0;
+	const successfulExecutor = createPostV35RealSmokeTurnExecutor({
+		authorized: true,
+		authority: successful.authority,
+		credentialResolver: { async resolve(): Promise<string> { now += 100; return "IN_MEMORY_TEST_CREDENTIAL"; } },
+		modelFactory: deadlineModelFactory("real-run-one", (timeoutMs) => { requestTimeouts.push(timeoutMs); if (requestTimeouts.length === 1) now += 300_000; }),
+		testOnlyClock: () => now,
+		testOnlyVerifierRunner: async (options) => { verifierTimeout = options.task.verifier_command.timeout_ms; now += 5_000; return passedVerifierResult(options); },
+	});
+	const successfulService = new PersistentSessionServiceV35({ dataRoot: successful.dataRoot, projectId: successful.authority.project_id, workspaceRoot: successful.workspaceRoot, workspaceId: successful.authority.workspace_id, turnExecutor: successfulExecutor });
+	await successfulService.create({ sessionId: "real-session", title: "deadline" });
+	const result = await successfulService.executeTurn({ sessionId: "real-session", runId: "real-run-one", prompt: PROMPT_ONE });
+	assert.equal(requestTimeouts.length, 2);
+	assert.ok(Number(requestTimeouts[1]) < Number(requestTimeouts[0]));
+	assert.equal(verifierTimeout, 30_000);
+	assert.equal(result.manifest.schema_version, 2);
+	if (result.manifest.schema_version === 2) assert.equal(result.manifest.wall_time_ms, 305_100);
+
+	const setupExpired = roots("deadline-setup-expired");
+	let setupNow = 20_000;
+	let setupModelCalls = 0;
+	const setupExecutor = createPostV35RealSmokeTurnExecutor({ authorized: true, authority: setupExpired.authority, credentialResolver: { async resolve(): Promise<string> { setupNow += 900_001; return "IN_MEMORY_TEST_CREDENTIAL"; } }, modelFactory: { create() { setupModelCalls++; throw new Error("model must not be constructed after setup deadline"); } }, testOnlyClock: () => setupNow });
+	const setupService = new PersistentSessionServiceV35({ dataRoot: setupExpired.dataRoot, projectId: setupExpired.authority.project_id, workspaceRoot: setupExpired.workspaceRoot, workspaceId: setupExpired.authority.workspace_id, turnExecutor: setupExecutor });
+	await setupService.create({ sessionId: "real-session", title: "deadline setup" });
+	await assert.rejects(setupService.executeTurn({ sessionId: "real-session", runId: "real-run-one", prompt: PROMPT_ONE }), /deadline/);
+	assert.equal(setupModelCalls, 0);
+
+	const verifierExpired = roots("deadline-verifier-expired");
+	let verifierNow = 30_000;
+	const verifierExecutor = createPostV35RealSmokeTurnExecutor({ authorized: true, authority: verifierExpired.authority, credentialResolver: { async resolve(): Promise<string> { return "IN_MEMORY_TEST_CREDENTIAL"; } }, modelFactory: deadlineModelFactory("real-run-one", () => undefined), testOnlyClock: () => verifierNow, testOnlyVerifierRunner: async (options) => { verifierNow += 900_001; return passedVerifierResult(options); } });
+	const verifierService = new PersistentSessionServiceV35({ dataRoot: verifierExpired.dataRoot, projectId: verifierExpired.authority.project_id, workspaceRoot: verifierExpired.workspaceRoot, workspaceId: verifierExpired.authority.workspace_id, turnExecutor: verifierExecutor });
+	await verifierService.create({ sessionId: "real-session", title: "deadline verifier" });
+	await assert.rejects(verifierService.executeTurn({ sessionId: "real-session", runId: "real-run-one", prompt: PROMPT_ONE }), /deadline/);
+	assert.equal(existsSync(resolve(verifierExpired.dataRoot, "runs/real-run-one/manifest.json")), false);
 });
 
 test("frozen Tool policy, prompt identity, third Run and authoritative evidence mismatches fail closed", async () => {

@@ -56,6 +56,39 @@ export interface PostV35BudgetUsage {
 	wall_time_ms: number;
 }
 
+interface PostV35TurnDeadlineV35 {
+	elapsedMs(): number;
+	remainingMs(): number;
+	run<T>(operation: () => Promise<T> | T, label: string): Promise<T>;
+}
+
+function createPostV35TurnDeadlineV35(clock: () => number, startedMs: number, priorWallTimeMs: number, perTurnLimitMs: number, wholeJourneyLimitMs: number): PostV35TurnDeadlineV35 {
+	const elapsedMs = (): number => Math.max(0, clock() - startedMs);
+	const remainingMs = (): number => {
+		const remaining = Math.floor(Math.min(perTurnLimitMs - elapsedMs(), wholeJourneyLimitMs - priorWallTimeMs - elapsedMs()));
+		if (!Number.isSafeInteger(remaining) || remaining < 1) throw new Error("real-smoke hard Turn/whole-journey deadline exhausted");
+		return remaining;
+	};
+	return {
+		elapsedMs,
+		remainingMs,
+		async run<T>(operation: () => Promise<T> | T, label: string): Promise<T> {
+			const timeoutMs = remainingMs();
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			try {
+				const result = await Promise.race([
+					Promise.resolve().then(operation),
+					new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error(`real-smoke hard deadline expired during ${label}`)), timeoutMs); }),
+				]);
+				remainingMs();
+				return result;
+			} finally {
+				if (timer) clearTimeout(timer);
+			}
+		},
+	};
+}
+
 export function assertPostV35BudgetV35(current: PostV35BudgetUsage, prior: PostV35BudgetUsage, perTurn: PostV35SmokePerTurnBudget, wholeJourney: PostV35SmokeWholeJourneyBudget): void {
 	if (current.provider_requests > perTurn.provider_requests_total_max || current.tool_calls > perTurn.tool_calls_total_max || current.combined_tokens > perTurn.combined_tokens_total_max || current.cost_usd > perTurn.cost_usd_total_max || current.wall_time_ms > perTurn.wall_time_ms_max) throw new Error("real-smoke per-turn budget exceeded");
 	if (prior.provider_requests + current.provider_requests > wholeJourney.provider_requests_total_max || prior.tool_calls + current.tool_calls > wholeJourney.tool_calls_total_max || prior.combined_tokens + current.combined_tokens > wholeJourney.combined_tokens_total_max || prior.cost_usd + current.cost_usd > wholeJourney.cost_usd_total_max || prior.wall_time_ms + current.wall_time_ms > wholeJourney.wall_time_total_ms_max) throw new Error("real-smoke whole-journey budget exceeded");
@@ -178,11 +211,15 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 	authority: PostV35RealSmokeAuthority;
 	credentialResolver?: OpaqueCredentialResolverV1;
 	modelFactory?: PostV35RealModelFactory;
+	testOnlyClock?: () => number;
+	testOnlyVerifierRunner?: typeof runExternalVerifierV0B;
 }): PersistentTurnExecutorV35 {
 	if (!options.authorized || !options.credentialResolver) throw new Error("real-smoke host authority and opaque Credential resolver are required");
 	const authority = parsePostV35RealSmokeAuthority(options.authority);
 	const resolver = options.credentialResolver;
 	const modelFactory = options.modelFactory ?? createPostV35DeepSeekModelFactory();
+	const clock = options.testOnlyClock ?? Date.now;
+	const verifierRunner = options.testOnlyVerifierRunner ?? runExternalVerifierV0B;
 	return Object.freeze({
 		mode: "real_product_smoke" as const,
 		async execute(input: PersistentTurnExecutionInputV35): Promise<PersistentRealTurnExecutionV35> {
@@ -195,23 +232,23 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 			const priorBudgetUsage: PostV35BudgetUsage = { provider_requests: input.priorUsage.provider_requests, tool_calls: input.priorUsage.tool_calls, combined_tokens: input.priorUsage.input_tokens + input.priorUsage.output_tokens, cost_usd: input.priorUsage.cost_usd, wall_time_ms: input.priorUsage.wall_time_ms };
 			assertPostV35BudgetV35({ provider_requests: 0, tool_calls: 0, combined_tokens: 0, cost_usd: 0, wall_time_ms: 0 }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
 			if (priorBudgetUsage.provider_requests >= authority.whole_journey_budget.provider_requests_total_max || priorBudgetUsage.tool_calls >= authority.whole_journey_budget.tool_calls_total_max || priorBudgetUsage.combined_tokens >= authority.whole_journey_budget.combined_tokens_total_max || priorBudgetUsage.cost_usd >= authority.whole_journey_budget.cost_usd_total_max || priorBudgetUsage.wall_time_ms >= authority.whole_journey_budget.wall_time_total_ms_max) throw new Error("real-smoke whole-journey budget is exhausted before dispatch");
+			const deadline = createPostV35TurnDeadlineV35(clock, clock(), priorBudgetUsage.wall_time_ms, authority.per_turn_budget.wall_time_ms_max, authority.whole_journey_budget.wall_time_total_ms_max);
 			const verifierSource = readFileSync(resolve(turn.verifier_source_path));
 			const verifierSnapshotPath = writeOnceBytes(input.runRoot, "verifier/source.mjs", verifierSource);
 			const verifierSnapshotRef = artifactRef(input.runRoot, verifierSnapshotPath, "text/javascript; charset=utf-8", false);
 			if (verifierSnapshotRef.sha256 !== turn.verifier_sha256) throw new Error("real-smoke Verifier snapshot identity mismatch");
 			let credentialReads = 0;
-			const credential = await resolver.resolve();
+			const credential = await deadline.run(() => resolver.resolve(), "Credential resolution");
 			credentialReads++;
 			if (typeof credential !== "string" || credential.length === 0) throw new Error("opaque Credential resolution failed");
-			const runtime = await modelFactory.create(credential);
+			const runtime = await deadline.run(() => modelFactory.create(credential), "model construction");
 			const tools = createBoundedToolProfile(input.workspaceRoot, authority.task_policy, {
 				allowed_tool_names: ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"],
 				allow_repository_commands: false,
 				expose_task_command_ids: true,
 				terminate_on_successful_command_ids: ["public_test"],
 			});
-			const remainingJourneyMs = authority.whole_journey_budget.wall_time_total_ms_max - input.priorUsage.wall_time_ms;
-			const harness = new AgentHarness({ models: runtime.models, session: input.session, model: runtime.model, tools: tools.tools, toolContext: tools.context, systemPrompt: authority.system_prompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: Math.min(authority.per_turn_budget.wall_time_ms_max, remainingJourneyMs) } });
+			const harness = new AgentHarness({ models: runtime.models, session: input.session, model: runtime.model, tools: tools.tools, toolContext: tools.context, systemPrompt: authority.system_prompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: deadline.remainingMs() } });
 			let settledEvents = 0;
 			let providerRequests = 0;
 			let inputTokens = 0;
@@ -219,7 +256,6 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 			let costUsd = 0;
 			let toolCallAttempts = 0;
 			let observedPriorDigest = "";
-			const started = Date.now();
 			const unsubscribe = harness.subscribe((event) => {
 				if (event.type === "settled") settledEvents++;
 				if (event.type === "message_end" && event.message.role === "assistant") {
@@ -237,24 +273,24 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 				return { messages: event.messages };
 			});
 			const offRequest = harness.on("before_provider_request", () => {
+				const requestTimeoutMs = deadline.remainingMs();
 				providerRequests++;
-				assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: Math.max(0, Date.now() - started) }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
-				return undefined;
+				assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: deadline.elapsedMs() }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
+				return { streamOptions: { timeoutMs: requestTimeoutMs } };
 			});
 			const offTool = harness.on("tool_call", () => {
+				deadline.remainingMs();
 				toolCallAttempts++;
-				assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: Math.max(0, Date.now() - started) }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
+				assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: deadline.elapsedMs() }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
 				return undefined;
 			});
 			try {
-				await harness.prompt(input.prompt);
-				await harness.waitForIdle();
+				await deadline.run(async () => { await harness.prompt(input.prompt); await harness.waitForIdle(); }, "AgentHarness turn and settled closure");
 			} finally {
 				unsubscribe(); offContext(); offRequest(); offTool(); await harness.abort(); await runtime.close();
 			}
-			const wallTimeMs = Math.max(0, Date.now() - started);
 			if (settledEvents !== 1 || observedPriorDigest !== input.priorContextSha256 || tools.pendingSideEffects() !== 0) throw new Error("real-smoke Direct AgentHarness turn did not settle safely");
-			assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: wallTimeMs }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
+			deadline.remainingMs();
 			const starts = tools.auditEvents.filter((event) => event.type === "start").map((event) => event.tool_call_id);
 			const entries = await input.session.getEntries();
 			const results = entries.flatMap((entry) => entry.type === "message" && entry.message.role === "toolResult" ? [entry.message.toolCallId] : []).slice(-starts.length);
@@ -274,13 +310,16 @@ export function createPostV35RealSmokeTurnExecutor(options: {
 				acceptance_visibility: "hidden_external",
 				tool_profile_id: "post_v35_real_smoke_bounded_local",
 				command_descriptors: authority.task_policy.command_descriptors.map((descriptor) => ({ ...descriptor, argv: [...descriptor.argv] })),
-				verifier_command: { executable: "current_node_executable", argv: ["<verifier_snapshot>"], cwd: "project", timeout_ms: turn.verifier_timeout_ms, output_limit_bytes: turn.verifier_output_limit_bytes },
+				verifier_command: { executable: "current_node_executable", argv: ["<verifier_snapshot>"], cwd: "project", timeout_ms: Math.min(turn.verifier_timeout_ms, deadline.remainingMs()), output_limit_bytes: turn.verifier_output_limit_bytes },
 			};
-			const verifier = await runExternalVerifierV0B({ projectRoot: input.runRoot, runRoot: input.runRoot, workspaceRoot: input.workspaceRoot, attemptId: `${input.runId}-attempt`, task, verifierSnapshotPath, verifierSnapshotRef, outputPath: "verifier/output.txt", workspaceEnvironmentKey: "V35_WORKSPACE" });
+			const verifier = await deadline.run(() => verifierRunner({ projectRoot: input.runRoot, runRoot: input.runRoot, workspaceRoot: input.workspaceRoot, attemptId: `${input.runId}-attempt`, task, verifierSnapshotPath, verifierSnapshotRef, outputPath: "verifier/output.txt", workspaceEnvironmentKey: "V35_WORKSPACE" }), "external Verifier");
 			if (verifier.status === "invalid") throw new Error("real-smoke external Verifier result is invalid");
 			writeOnceJson(input.runRoot, "verifier/result.json", verifier);
 			const outcome = verifier.status;
 			writeOnceJson(input.runRoot, "outcome.json", { schema_version: 1, run_id: input.runId, session_id: input.sessionId, verifier_id: turn.verifier_id, verifier_status: verifier.status, outcome, binding_status: "not_applicable", context_reconstructed: true });
+			const wallTimeMs = deadline.elapsedMs();
+			deadline.remainingMs();
+			assertPostV35BudgetV35({ provider_requests: providerRequests, tool_calls: toolCallAttempts, combined_tokens: inputTokens + outputTokens, cost_usd: costUsd, wall_time_ms: wallTimeMs }, priorBudgetUsage, authority.per_turn_budget, authority.whole_journey_budget);
 			return {
 				mode: "real_product_smoke",
 				settled_events: 1,
