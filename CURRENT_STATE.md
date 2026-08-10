@@ -5,10 +5,10 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_5_completed
-  status: V3_5_CLOSED_ACCEPTED
+  phase: v3_6_active
+  status: V3_6_FULL_OWNERSHIP_ACTIVATED
 
-active_goal: null
+active_goal: V3_6_VERSION_EXECUTION
 
 last_executed_goal:
   id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
@@ -32,12 +32,16 @@ last_completed_goal:
   disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
   implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
 
-current_goal: null
+current_goal:
+  id: V3_6_VERSION_EXECUTION
+  status: phase_0_control_closeout
+  authority: docs/reports/V3_6_FULL_OWNERSHIP_ACTIVATION_RESPONSE.md
+  execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
 
 next_goal:
-  id: null
-  status: no_goal_authorized
-  note: V4_or_later_requires_new_user_authorized_design_review
+  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  status: authorized_pending_charter_and_control_baseline
+  note: Main_may_freeze_Charter_and_start_new_top_level_Implementation_Session_without_another_user_gate
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -289,15 +293,24 @@ v3_6_planning_control:
   control_baseline_commit: 00d0524a80b9c30f5ec141b733fb757e7a5f59d4
   control_baseline_tree: be0ee4864250f7b29c803a9ba5c69f80be20668c
   control_baseline_identity_closeout: docs/reports/V3_6_CONTROL_BASELINE_IDENTITY_CLOSEOUT.md
-  active_goal: null
-  execution_backend_selected: false
-  execution_backend_selection_authorized: false
+  execution_backend_selection_report: docs/reports/V3_6_EXECUTION_BACKEND_SELECTION_REPORT.md
+  execution_backend_selection_status: closed_accepted
+  execution_backend_selected: docker_engine_linux_container_via_docker_desktop_wsl2
+  execution_backend_selection_authorized: consumed_closed
+  full_ownership_activation: docs/reports/V3_6_FULL_OWNERSHIP_ACTIVATION_RESPONSE.md
+  full_ownership_activation_status: accepted_activated
+  long_running_execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
+  active_goal: V3_6_VERSION_EXECUTION
+  version_owner: current_main_session
   charter_created: false
-  implementation_authorized: false
-  credential_reads_authorized: 0
-  real_model_calls_authorized: 0
+  implementation_authorized: true_within_accepted_v3_6_scope
+  docker_cli_observed: absent_before_goal_2_readiness
+  docker_desktop_install_and_license_acceptance: requires_user_action
+  credential_reads_authorized: bounded_real_product_acceptance_after_execution_baseline
+  real_model_calls_authorized: bounded_real_product_acceptance_after_execution_baseline
   pi_core_patch_authorized: false
-  next_action: await_separate_user_authorization_for_execution_backend_selection_gate
+  second_backend_or_host_fallback_authorized: false
+  next_action: freeze_charter_and_activate_goal_1
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS

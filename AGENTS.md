@@ -8,9 +8,13 @@ Adaptive Coding Agent Harness built on public Direct Pi `AgentHarness`.
 V3.5 is closed and accepted as
 `PASS_V3_5_PERSISTENT_INSPECTABLE_ADAPTIVE_HARNESS_WORKBENCH_WITH_BOUNDED_SINGLE_CASE_SKILL_EVIDENCE`.
 The post-V3.5 real two-Turn product smoke and the additive English/Simplified-Chinese
-WebUI maintenance are also closed and accepted. V3.6 preimplementation planning is
-accepted as design input only. No Goal is active; the Execution Backend Selection Gate,
-V3.6 Charter, implementation, Credential/model access and Pi changes remain unauthorized.
+WebUI maintenance are also closed and accepted. V3.6 preimplementation planning and the
+Docker Engine Linux container via Docker Desktop WSL2 backend selection are accepted.
+The user has activated V3.6 under the accepted Full-Ownership Mandate. Main owns the
+Version Question, Charter, Goal acceptance, integration and final claim; Goal 1 and Goal 2
+implementation must be delegated to separate new top-level Implementation Sessions.
+Docker Desktop installation and license acceptance still require the user. Pi Core changes,
+a second backend, Host command fallback, SDK/Extension/RPC switching and V4 remain unauthorized.
 
 Preserve these binding facts:
 
