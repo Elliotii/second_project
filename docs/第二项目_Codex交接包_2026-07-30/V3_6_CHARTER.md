@@ -11,7 +11,10 @@ implementation_goals: 2
 goal_1_status: closed_accepted
 goal_1_disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 goal_1_implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
-docker_readiness_status: paused_user_owned_prerequisite_required
+docker_readiness_status: closed_passed
+docker_readiness_report: docs/reports/V3_6_DOCKER_READINESS_REPORT.md
+goal_2_status: accepted_activated
+goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
 pi_core_patch_authorized: false
 second_backend_authorized: false
 host_command_fallback_authorized: false

@@ -6,9 +6,9 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_6_active
-  status: V3_6_GOAL_1_CLOSED_DOCKER_READINESS_PAUSED
+  status: V3_6_GOAL_2_ACTIVATED
 
-active_goal: V3_6_DOCKER_READINESS_GATE
+active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
 
 last_executed_goal:
   id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
@@ -33,15 +33,15 @@ last_completed_goal:
   implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
 
 current_goal:
-  id: V3_6_DOCKER_READINESS_GATE
-  status: paused_user_owned_docker_desktop_installation_and_license_acceptance_required
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
+  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+  status: accepted_activated_pending_new_top_level_implementation_session
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
   execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
 
 next_goal:
-  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
-  status: authorized_but_blocked_pending_docker_readiness
-  note: do_not_start_until_selected_docker_backend_passes_readiness_gate
+  id: V3_6_FINAL_CLOSEOUT
+  status: authorized_after_goal_2_deterministic_and_bounded_real_acceptance
+  note: no_V4_or_scope_expansion
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -315,18 +315,29 @@ v3_6_planning_control:
   goal_1_strict_typescript: passed
   goal_1_real_access: credentials_0_network_0_provider_0_model_0_docker_project_commands_0
   goal_1_closeout: docs/reports/V3_6_G1_CLOSEOUT.md
-  active_goal: V3_6_DOCKER_READINESS_GATE
+  docker_readiness_report: docs/reports/V3_6_DOCKER_READINESS_REPORT.md
+  docker_readiness_status: closed_passed
+  docker_readiness_evidence_sha256: fb9662b476ba84b6c556290847f8e1a2d5eb6054dc54e3adf39af37b15b5bcf5
+  docker_desktop_version: 4.85.0_235549
+  docker_client_server_version: 29.6.2_29.6.2
+  docker_context: desktop-linux
+  docker_platform: linux_amd64
+  docker_image: node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03
+  goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
+  goal_2_status: accepted_activated_pending_new_top_level_implementation_session
+  goal_2_implementation_owner: new_top_level_goal_2_implementation_session
+  goal_2_implementation_real_access: credentials_0_provider_0_model_0
+  active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
   version_owner: current_main_session
   charter_created: true
   implementation_authorized: true_within_accepted_v3_6_scope
-  docker_readiness_status: paused_user_owned_prerequisite_required
-  docker_cli_observed: absent_on_2026-08-11
-  docker_desktop_install_and_license_acceptance: requires_user_action
+  docker_cli_observed: present_and_engine_ready_on_2026-08-11
+  docker_desktop_install_and_license_acceptance: user_authorized_completed
   credential_reads_authorized: bounded_real_product_acceptance_after_execution_baseline
   real_model_calls_authorized: bounded_real_product_acceptance_after_execution_baseline
   pi_core_patch_authorized: false
   second_backend_or_host_fallback_authorized: false
-  next_action: user_install_and_accept_docker_desktop_then_main_reruns_readiness_gate
+  next_action: commit_goal_2_control_baseline_and_start_new_top_level_implementation_session
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -1963,6 +1974,8 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
+  - docs/reports/V3_6_DOCKER_READINESS_REPORT.md
   - docs/reports/V3_6_G1_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
   - docs/reports/V3_6_EXECUTION_BACKEND_SELECTION_REPORT.md

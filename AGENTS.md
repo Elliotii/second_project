@@ -18,10 +18,12 @@ implementation commit `81bc7c8b5667efaa0c10df507a7a0d2a59827e1e`. It proves only
 zero-access Host authority, pinned persistent Session, safe managed-copy inspection and
 deterministic/Faux continuation substrate stated in its Closeout.
 
-V3.6 is currently paused at the Charter-defined Docker Readiness Gate because the Docker
-CLI is absent. Docker Desktop installation and license acceptance are user-owned actions.
-Do not start Goal 2, select another backend or add Host fallback until the selected Docker
-Engine Linux-container backend passes readiness. Pi Core changes, a second backend,
+V3.6 Docker Readiness is closed and passed on Docker Desktop 4.85.0 / Engine 29.6.2
+with exact image `node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03`.
+Goal 2 is active under `V3_6_G2_GOAL_CONTRACT.md` and must be implemented by a new
+top-level Implementation Session from its exact Control Baseline. The implementation
+Session has Docker/deterministic-test authority but zero Credential, Provider/model and
+real-model authority. Pi Core changes, a second backend, Host fallback,
 SDK/Extension/RPC switching and V4 remain unauthorized.
 
 Preserve these binding facts:
