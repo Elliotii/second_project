@@ -43,7 +43,7 @@ export const FROZEN_DOCKER_PROFILE_V36: DockerBackendProfileV36 = Object.freeze(
 	profile_digest: digestObject(PROFILE_BODY),
 });
 
-interface CliResultV36 {
+export interface DockerCliResultV36 {
 	code: number | null;
 	stdout: Buffer;
 	stderr: Buffer;
@@ -51,6 +51,16 @@ interface CliResultV36 {
 	timedOut: boolean;
 	spawnError: boolean;
 }
+
+export interface DockerCliInvocationV36 {
+	executable: string;
+	args: readonly string[];
+	timeout_ms: number;
+	on_timeout?: () => Promise<void>;
+	capture_limit?: number;
+}
+
+export type DockerCliRunnerV36 = (invocation: DockerCliInvocationV36) => Promise<DockerCliResultV36>;
 
 export interface DockerRegisteredCommandResultV36 {
 	command_id: string;
@@ -74,7 +84,7 @@ function safeOutput(bytes: Buffer, limit: number): string {
 		.replace(/\bBearer\s+[^\s]+/gi, "Bearer [credential omitted]");
 }
 
-async function runCli(executable: string, args: readonly string[], timeoutMs: number, onTimeout?: () => Promise<void>, captureLimit = 1_048_576): Promise<CliResultV36> {
+async function runCli(executable: string, args: readonly string[], timeoutMs: number, onTimeout?: () => Promise<void>, captureLimit = 1_048_576): Promise<DockerCliResultV36> {
 	return await new Promise((accept) => {
 		const env: NodeJS.ProcessEnv = { NO_COLOR: "1" };
 		for (const key of ["SystemRoot", "WINDIR", "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "APPDATA", "LOCALAPPDATA", "PATH", "Path"]) if (process.env[key] !== undefined) env[key] = process.env[key];
@@ -132,10 +142,16 @@ function parseVersion(stdout: Buffer): void {
 
 export class DockerRegisteredCommandExecutorV36 {
 	private readonly dockerExecutable: string;
+	private readonly cliRunner: DockerCliRunnerV36;
 
-	constructor(options: { dockerExecutable: string }) {
+	constructor(options: { dockerExecutable: string; testOnlyCliRunner?: DockerCliRunnerV36 }) {
 		if (typeof options.dockerExecutable !== "string" || options.dockerExecutable.length === 0) throw new Error("docker Host configuration is unavailable");
 		this.dockerExecutable = options.dockerExecutable;
+		this.cliRunner = options.testOnlyCliRunner ?? (async (invocation) => await runCli(invocation.executable, invocation.args, invocation.timeout_ms, invocation.on_timeout, invocation.capture_limit));
+	}
+
+	private async cli(args: readonly string[], timeoutMs: number, onTimeout?: () => Promise<void>, captureLimit?: number): Promise<DockerCliResultV36> {
+		return await this.cliRunner({ executable: this.dockerExecutable, args, timeout_ms: timeoutMs, ...(onTimeout ? { on_timeout: onTimeout } : {}), ...(captureLimit === undefined ? {} : { capture_limit: captureLimit }) });
 	}
 
 	async execute(options: { workspaceRoot: string; evidenceRoot: string; descriptor: CommandDescriptor }): Promise<DockerRegisteredCommandResultV36> {
@@ -153,25 +169,23 @@ export class DockerRegisteredCommandExecutorV36 {
 			schema_version: 1, execution_id: executionId, command_id: options.descriptor.command_id, authority_digest: authority.authority_digest, backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest, status: "preflight_failed",
 			create: { attempted: false, succeeded: false, container_identity: null }, start: { attempted: false, succeeded: false }, output: { stdout: "", stderr: "", combined_bytes_observed: 0, truncated: false }, inspect: { attempted: false, succeeded: false, exit_code: null, oom_killed: null, mount_count: null, profile_match: false }, timeout: { triggered: false, wall_timeout_ms: 30000 }, kill: { attempted: false, succeeded: false }, remove: { attempted: false, succeeded: false }, exit_code: null, timed_out: false, cleanup_complete: false, error_code: null, terminal_digest: "",
 		};
-		let created = false;
 		try {
-			const version = await runCli(this.dockerExecutable, ["--context", "desktop-linux", "version", "--format", "{{json .}}"], 10_000);
+			const version = await this.cli(["--context", "desktop-linux", "version", "--format", "{{json .}}"], 10_000);
 			if (version.code !== 0 || version.spawnError) throw new Error("docker_runtime_unavailable");
 			parseVersion(version.stdout);
-			const image = await runCli(this.dockerExecutable, ["--context", "desktop-linux", "image", "inspect", IMAGE, "--format", "{{.Id}}|{{.Os}}|{{.Architecture}}"], 10_000);
+			const image = await this.cli(["--context", "desktop-linux", "image", "inspect", IMAGE, "--format", "{{.Id}}|{{.Os}}|{{.Architecture}}"], 10_000);
 			if (image.code !== 0) throw new Error("docker_image_identity_mismatch");
 			validateDockerImageIdentityV36(image.stdout.toString("utf8"));
 			terminal.create.attempted = true;
 			const createArgs = ["--context", "desktop-linux", "create", "--name", name, "--pull", "never", "--platform", "linux/amd64", "--network", "none", "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=67108864", "--user", "65532:65532", "--cpus", "0.5", "--memory", "536870912", "--memory-swap", "536870912", "--pids-limit", "64", "--ulimit", "nofile=1024:1024", "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--mount", `type=bind,src=${workspaceRoot},dst=/workspace`, "--workdir", "/workspace", IMAGE, "node", ...options.descriptor.argv];
-			const create = await runCli(this.dockerExecutable, createArgs, 10_000);
+			const create = await this.cli(createArgs, 10_000);
 			if (create.code !== 0 || create.spawnError) throw new Error("docker_create_failed");
-			created = true;
 			terminal.create.succeeded = true;
 			terminal.create.container_identity = sha256(create.stdout.toString("utf8").trim());
 			terminal.start.attempted = true;
-			const start = await runCli(this.dockerExecutable, ["--context", "desktop-linux", "start", "--attach", name], FROZEN_DOCKER_PROFILE_V36.wall_timeout_ms, async () => {
+			const start = await this.cli(["--context", "desktop-linux", "start", "--attach", name], FROZEN_DOCKER_PROFILE_V36.wall_timeout_ms, async () => {
 				terminal.kill.attempted = true;
-				const killed = await runCli(this.dockerExecutable, ["--context", "desktop-linux", "kill", name], 10_000);
+				const killed = await this.cli(["--context", "desktop-linux", "kill", name], 10_000);
 				terminal.kill.succeeded = killed.code === 0;
 			}, FROZEN_DOCKER_PROFILE_V36.combined_output_budget_bytes + 1);
 			terminal.start.succeeded = !start.spawnError;
@@ -182,7 +196,7 @@ export class DockerRegisteredCommandExecutorV36 {
 			const stderrBudget = Math.max(0, FROZEN_DOCKER_PROFILE_V36.combined_output_budget_bytes - stdoutBudget);
 			terminal.output = { stdout: safeOutput(start.stdout, stdoutBudget), stderr: safeOutput(start.stderr, stderrBudget), combined_bytes_observed: observed, truncated: observed > FROZEN_DOCKER_PROFILE_V36.combined_output_budget_bytes };
 			terminal.inspect.attempted = true;
-			const inspect = await runCli(this.dockerExecutable, ["--context", "desktop-linux", "container", "inspect", name, "--format", "{{json .}}"], 10_000);
+			const inspect = await this.cli(["--context", "desktop-linux", "container", "inspect", name, "--format", "{{json .}}"], 10_000);
 			if (inspect.code !== 0) throw new Error("docker_inspect_failed");
 			const inspected = JSON.parse(inspect.stdout.toString("utf8")) as {
 				State?: { ExitCode?: number; OOMKilled?: boolean };
@@ -219,12 +233,13 @@ export class DockerRegisteredCommandExecutorV36 {
 			terminal.error_code = error instanceof Error ? error.message : "docker_execution_failed";
 			if (terminal.start.attempted && terminal.status === "preflight_failed") terminal.status = "start_failed";
 		} finally {
-			if (created) {
+			if (terminal.create.attempted) {
 				terminal.remove.attempted = true;
-				const removed = await runCli(this.dockerExecutable, ["--context", "desktop-linux", "rm", "--force", name], 10_000);
-				terminal.remove.succeeded = removed.code === 0;
+				await this.cli(["--context", "desktop-linux", "rm", "--force", name], 10_000);
+				const reconciliation = await this.cli(["--context", "desktop-linux", "container", "ls", "--all", "--filter", `name=^/${name}$`, "--format", "{{.Names}}"], 10_000);
+				terminal.remove.succeeded = reconciliation.code === 0 && reconciliation.spawnError === false && reconciliation.timedOut === false && reconciliation.stdout.toString("utf8").trim() === "";
 			}
-			terminal.cleanup_complete = !created || terminal.remove.succeeded;
+			terminal.cleanup_complete = !terminal.create.attempted || terminal.remove.succeeded;
 			if (!terminal.cleanup_complete) terminal.status = "cleanup_failed";
 			terminal = { ...terminal, terminal_digest: digestObject(terminalBody(terminal)) };
 			writeOnceJson(options.evidenceRoot, "terminal.json", terminal);

@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { request } from "node:http";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall } from "@earendil-works/pi-ai";
-import { DockerRegisteredCommandExecutorV36 } from "../src/execution/docker-v36.ts";
+import { DockerRegisteredCommandExecutorV36, FROZEN_DOCKER_PROFILE_V36 } from "../src/execution/docker-v36.ts";
 import { sha256 } from "../src/hash.ts";
 import { ProjectProfileRegistryV36 } from "../src/project/registry-v36.ts";
+import { PersistentInteractiveSessionServiceV36 } from "../src/session/persistent-session-v36.ts";
 import { PersistentSessionServiceV35 } from "../src/session/persistent-session-v35.ts";
 import { InteractiveControlPlaneV36 } from "../src/v36/authority-v36.ts";
 import { Goal3WorkbenchApplicationV35 } from "../src/webui/application-v35g3.ts";
@@ -132,6 +133,9 @@ test("bounded-edit two-Turn Session uses Docker registered commands, exposes saf
 		assert.equal(applied.status, 200, applied.text);
 		assert.equal((applied.value as { status: string }).status, "applied");
 		assert.match(readFileSync(resolve(fixture.source, "src/parse-duration.js"), "utf8"), /Number\.isSafeInteger/);
+		const projected = await raw(address.port, `/api/v1/v36/sessions/${firstView.session_id}`);
+		assert.equal(projected.status, 200, projected.text);
+		assert.equal((projected.value as { goal2: { continuation: string } }).goal2.continuation, "new_session_required_after_apply");
 		const blocked = await raw(address.port, "/api/v1/v36/tasks", "POST", { project_id: "duration-parser", requested_mode: "bounded_edit", task_text: "Continue after apply.", session_id: firstView.session_id });
 		assert.equal(blocked.status, 400);
 		assert.match(blocked.text, /request rejected/);
@@ -141,4 +145,36 @@ test("bounded-edit two-Turn Session uses Docker registered commands, exposes saf
 		assert.match(js.text, /api\/v1\/v36\/handoff|Apply All \/ 全部应用|Changes and Diff/);
 		assert.doesNotMatch(first.text + second.text + applied.text, /[A-Za-z]:[\\/]|DockerDesktop|credential/i);
 	} finally { await loopback.stop(); }
+});
+
+test("a final assistant response exceeding token or cost caps fails before an accepted bounded-Turn Manifest", async () => {
+	for (const variant of ["tokens", "cost"] as const) {
+		const root = resolve(PROJECT_ROOT, ".runs/v3-6/g2/budget-tests", `${variant}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+		const workspace = resolve(root, "workspace");
+		const runtime = resolve(root, "runtime");
+		cpSync(resolve(PROJECT_ROOT, "workbench/fixtures/v36g2/duration-parser"), workspace, { recursive: true });
+		mkdirSync(runtime, { recursive: true });
+		const service = new PersistentInteractiveSessionServiceV36({ runtimeRoot: runtime, workspaceRoot: workspace, projectId: "budget-project", workspaceId: "budget-workspace", sessionId: `budget-${variant}`, title: "Budget", sessionPinDigest: sha256(`pin-${variant}`) });
+		await service.create();
+		const models = createModels();
+		const registration = fauxProvider({ provider: `v36g2-budget-${variant}` });
+		models.setProvider(registration.provider);
+		registration.setResponses([
+			fauxAssistantMessage(fauxToolCall("run_command", { command_id: "test" }, { id: `${variant}-test` }), { stopReason: "toolUse" }),
+			fauxAssistantMessage("final over-budget response"),
+		]);
+		const runId = `budget-run-${variant}`;
+		await assert.rejects(() => service.executeBoundedTurn({
+			sessionId: `budget-${variant}`,
+			runId,
+			prompt: "Run the registered test.",
+			taskPolicy: { writable_paths: ["src/parse-duration.js"], protected_paths: ["test/**", "package.json"], command_descriptors: [{ command_id: "test", executable: "current_node_executable", argv: ["--test"], cwd: "workspace", timeout_seconds: 30, max_combined_output_bytes: 65_536 }] },
+			commandExecutor: async ({ descriptor }) => ({ command_id: descriptor.command_id, executable: "docker_registered_node", argv: [...descriptor.argv], exit_code: 0, timed_out: false, truncated: false, output: "passed", backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest, authority_digest: sha256(`authority-${variant}`), terminal_digest: sha256(`terminal-${variant}`), cleanup_complete: true }),
+			models,
+			model: registration.getModel(),
+			systemPrompt: "Run only the registered command.",
+			testOnlyFinalAssistantUsageFloor: variant === "tokens" ? { combined_tokens: 131_073 } : { cost_usd: 0.200_001 },
+		}), /token\/cost budget exceeded/);
+		assert.equal(existsSync(resolve(runtime, "runs", runId, "manifest.json")), false);
+	}
 });

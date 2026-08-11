@@ -52,7 +52,7 @@ interface RuntimeManifestV36 {
 	manifest_digest: string;
 }
 
-interface RuntimeManifestG2V36 {
+export interface RuntimeManifestG2V36 {
 	schema_version: 2;
 	mode: "v36_interactive_bounded_edit";
 	run_id: string;
@@ -101,6 +101,10 @@ export interface InteractiveDispatchManifestV36 {
 export interface PersistentInteractiveTurnResultV36 {
 	manifest: InteractiveDispatchManifestV36;
 	view: SafeSessionViewV35;
+}
+
+export interface PersistentInteractiveBoundedTurnResultV36 extends PersistentInteractiveTurnResultV36 {
+	manifest: RuntimeManifestG2V36;
 }
 
 function identifier(value: string, label: string): void {
@@ -280,7 +284,8 @@ export class PersistentInteractiveSessionServiceV36 {
 		systemPrompt: string;
 		credentialReads?: number;
 		externalModel?: boolean;
-	}): Promise<PersistentInteractiveTurnResultV36> {
+		testOnlyFinalAssistantUsageFloor?: { combined_tokens?: number; cost_usd?: number };
+	}): Promise<PersistentInteractiveBoundedTurnResultV36> {
 		if (options.sessionId !== this.sessionId) throw new Error("V3.6 Session identity mismatch");
 		identifier(options.runId, "Run ID");
 		if (Buffer.byteLength(options.prompt, "utf8") < 1 || Buffer.byteLength(options.prompt, "utf8") > 16_384 || Buffer.byteLength(options.systemPrompt, "utf8") < 1 || Buffer.byteLength(options.systemPrompt, "utf8") > 16_384) throw new Error("V3.6 bounded Turn prompt is invalid");
@@ -296,6 +301,11 @@ export class PersistentInteractiveSessionServiceV36 {
 		let inputTokens = 0;
 		let outputTokens = 0;
 		let costUsd = 0;
+		let usageBudgetError: Error | null = null;
+		const assertTurnUsageBudget = (): void => {
+			if (inputTokens + outputTokens > 131_072 || costUsd > 0.2) usageBudgetError ??= new Error("V3.6 Goal 2 per-Turn token/cost budget exceeded");
+			if (usageBudgetError) throw usageBudgetError;
+		};
 		const profile = createBoundedToolProfile(this.workspaceRoot, options.taskPolicy, { allowed_tool_names: ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"], allow_repository_commands: false, expose_task_command_ids: true, command_executor: options.commandExecutor });
 		const expectedTools = ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"];
 		if (stableJson(profile.tools.map((tool) => tool.name)) !== stableJson(expectedTools)) throw new Error("V3.6 Goal 2 tool surface drifted");
@@ -304,11 +314,20 @@ export class PersistentInteractiveSessionServiceV36 {
 			if (event.type === "settled") settled += 1;
 			if (event.type === "message_end" && event.message.role === "assistant") {
 				const message = event.message as AssistantMessage;
-				const currentInput = message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
-				if (![currentInput, message.usage.output, message.usage.cost.total].every((entry) => Number.isFinite(entry) && entry >= 0)) throw new Error("V3.6 Goal 2 model usage is invalid");
+				const usage = message.usage;
+				const currentInput = usage.input + usage.cacheRead + usage.cacheWrite;
+				const floor = message.stopReason === "stop" ? options.testOnlyFinalAssistantUsageFloor : undefined;
+				const currentOutput = floor?.combined_tokens === undefined ? usage.output : Math.max(usage.output, floor.combined_tokens - currentInput);
+				const currentCost = floor?.cost_usd === undefined ? usage.cost.total : Math.max(usage.cost.total, floor.cost_usd);
+				if (![currentInput, currentOutput, currentCost, floor?.combined_tokens ?? 0, floor?.cost_usd ?? 0].every((entry) => Number.isFinite(entry) && entry >= 0)) {
+					usageBudgetError ??= new Error("V3.6 Goal 2 model usage is invalid");
+					void harness.abort();
+					return;
+				}
 				inputTokens += currentInput;
-				outputTokens += message.usage.output;
-				costUsd += message.usage.cost.total;
+				outputTokens += currentOutput;
+				costUsd += currentCost;
+				try { assertTurnUsageBudget(); } catch { void harness.abort(); }
 			}
 		});
 		const offContext = harness.on("context", (event) => {
@@ -318,7 +337,8 @@ export class PersistentInteractiveSessionServiceV36 {
 		});
 		const offRequest = harness.on("before_provider_request", () => {
 			providerRequests += 1;
-			if (providerRequests > 16 || inputTokens + outputTokens > 131_072 || costUsd > 0.2) throw new Error("V3.6 Goal 2 per-Turn budget exceeded");
+			if (providerRequests > 16) throw new Error("V3.6 Goal 2 per-Turn Provider-request budget exceeded");
+			assertTurnUsageBudget();
 			return undefined;
 		});
 		const offTool = harness.on("tool_call", () => {
@@ -327,12 +347,14 @@ export class PersistentInteractiveSessionServiceV36 {
 			return undefined;
 		});
 		try { await harness.prompt(options.prompt); await harness.waitForIdle(); } finally { unsubscribe(); offContext(); offRequest(); offTool(); await harness.abort(); }
+		assertTurnUsageBudget();
 		if (settled !== 1 || observedPrior !== priorDigest || profile.pendingSideEffects() !== 0 || profile.commandExecutions.length < 1 || profile.commandExecutions.some((entry) => entry.cleanup_complete !== true || !SHA256.test(entry.terminal_digest ?? "") || entry.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest)) throw new Error("V3.6 Goal 2 bounded Turn did not settle with exact frozen terminal Docker evidence");
 		const entries = await session.getEntries();
 		const toolCallIds = profile.auditEvents.filter((event) => event.type === "start").map((event) => event.tool_call_id);
 		const toolResultIds = entries.flatMap((entry) => entry.type === "message" && entry.message.role === "toolResult" ? [entry.message.toolCallId] : []).slice(-toolCallIds.length);
 		if (stableJson(toolCallIds) !== stableJson(toolResultIds)) throw new Error("V3.6 Goal 2 Tool lifecycle is incomplete");
 		const external = options.externalModel === true;
+		assertTurnUsageBudget();
 		const body: Omit<RuntimeManifestG2V36, "manifest_digest"> = {
 			schema_version: 2, mode: "v36_interactive_bounded_edit", run_id: options.runId, session_id: this.sessionId, project_id: this.projectId, workspace_id: this.workspaceId, session_pin_digest: this.pinDigest, created_at: new Date().toISOString(), settled: true,
 			prior_context_message_count: priorMessages.length, prior_context_sha256: priorDigest, provider_observed_prior_context_sha256: observedPrior, session_entry_count_after_turn: entries.length, session_entries_sha256_after_turn: digestObject(entries), prompt_sha256: sha256(options.prompt), provider_requests: providerRequests, active_tool_names: expectedTools, tool_call_ids: toolCallIds, tool_result_ids: toolResultIds, credential_reads: options.credentialReads ?? 0, network_calls: external ? providerRequests : 0, external_provider_calls: external ? providerRequests : 0, real_model_calls: external ? providerRequests : 0, project_command_executions: profile.commandExecutions.length, docker_project_command_executions: profile.commandExecutions.length, backend_terminal_digests: profile.commandExecutions.map((entry) => entry.terminal_digest!), workspace_identity_after: managedWorkspaceIdentityV36(this.workspaceRoot), input_tokens: inputTokens, output_tokens: outputTokens, cost_usd: costUsd,

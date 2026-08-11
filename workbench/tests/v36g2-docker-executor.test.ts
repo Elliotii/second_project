@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import { DockerRegisteredCommandExecutorV36, FROZEN_DOCKER_PROFILE_V36, validateDockerImageIdentityV36, validateDockerVersionV36, validateFrozenDockerProfileV36 } from "../src/execution/docker-v36.ts";
+import { DockerRegisteredCommandExecutorV36, FROZEN_DOCKER_PROFILE_V36, validateDockerImageIdentityV36, validateDockerVersionV36, validateFrozenDockerProfileV36, type DockerCliResultV36, type DockerCliRunnerV36 } from "../src/execution/docker-v36.ts";
 import { managedWorkspaceInventoryV36 } from "../src/workspace/managed-copy-v36.ts";
 import type { CommandDescriptor } from "../src/types.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
@@ -20,6 +20,12 @@ function descriptor(argv: string[], output = 65_536): CommandDescriptor {
 	return { command_id: "test", executable: "current_node_executable", argv, cwd: "workspace", timeout_seconds: 30, max_combined_output_bytes: output };
 }
 
+function cliResult(options: Partial<Omit<DockerCliResultV36, "stdout" | "stderr">> & { stdout?: string; stderr?: string } = {}): DockerCliResultV36 {
+	const stdout = Buffer.from(options.stdout ?? "");
+	const stderr = Buffer.from(options.stderr ?? "");
+	return { code: Object.hasOwn(options, "code") ? options.code! : 0, stdout, stderr, observedBytes: options.observedBytes ?? stdout.length + stderr.length, timedOut: options.timedOut ?? false, spawnError: options.spawnError ?? false };
+}
+
 test("frozen profile, runtime, image and managed-copy metadata drift fail closed without Docker dispatch", () => {
 	validateFrozenDockerProfileV36(FROZEN_DOCKER_PROFILE_V36);
 	const runtime = { Client: { Version: "29.6.2", Context: "desktop-linux" }, Server: { Version: "29.6.2", Os: "linux", Arch: "amd64", Platform: { Name: "Docker Desktop 4.85.0 (235549)" } } };
@@ -32,6 +38,42 @@ test("frozen profile, runtime, image and managed-copy metadata drift fail closed
 	const value = root("git-rejected");
 	mkdirSync(resolve(value.workspace, ".git"));
 	assert.throws(() => managedWorkspaceInventoryV36(value.workspace), /must not contain \.git/);
+});
+
+test("ambiguous create timeout reconciles and proves the exact generated container name absent", async () => {
+	const value = root("ambiguous-create");
+	let generatedName = "";
+	let containerPresent = false;
+	const calls: string[][] = [];
+	const runner: DockerCliRunnerV36 = async ({ args }) => {
+		const call = [...args];
+		calls.push(call);
+		if (call.includes("version")) return cliResult({ stdout: JSON.stringify({ Client: { Version: "29.6.2", Context: "desktop-linux" }, Server: { Version: "29.6.2", Os: "linux", Arch: "amd64", Platform: { Name: "Docker Desktop 4.85.0 (235549)" } } }) });
+		if (call.includes("image")) return cliResult({ stdout: "sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03|linux|amd64\n" });
+		if (call.includes("create")) {
+			generatedName = call[call.indexOf("--name") + 1]!;
+			containerPresent = true;
+			return cliResult({ code: null, timedOut: true });
+		}
+		if (call.includes("rm")) {
+			assert.equal(call.at(-1), generatedName);
+			containerPresent = false;
+			return cliResult();
+		}
+		if (call.includes("ls")) {
+			assert.equal(call[call.indexOf("--filter") + 1], `name=^/${generatedName}$`);
+			return cliResult({ stdout: containerPresent ? `${generatedName}\n` : "" });
+		}
+		throw new Error(`unexpected fake Docker CLI call: ${call.join(" ")}`);
+	};
+	await assert.rejects(() => new DockerRegisteredCommandExecutorV36({ dockerExecutable: "host-only-docker", testOnlyCliRunner: runner }).execute({ workspaceRoot: value.workspace, evidenceRoot: value.evidence, descriptor: descriptor(["--test"]) }), /docker_create_failed/);
+	const terminal = JSON.parse(readFileSync(resolve(value.evidence, "terminal.json"), "utf8")) as { create: { attempted: boolean; succeeded: boolean }; remove: { attempted: boolean; succeeded: boolean }; cleanup_complete: boolean; error_code: string };
+	assert.deepEqual(terminal.create, { attempted: true, succeeded: false, container_identity: null });
+	assert.deepEqual(terminal.remove, { attempted: true, succeeded: true });
+	assert.equal(terminal.cleanup_complete, true);
+	assert.equal(terminal.error_code, "docker_create_failed");
+	assert.equal(containerPresent, false);
+	assert.ok(calls.some((call) => call.includes("rm")) && calls.some((call) => call.includes("ls")));
 });
 
 test("frozen Docker executor persists pre-create Authority and exact terminal stdout/stderr/cleanup evidence", { timeout: 60_000 }, async () => {

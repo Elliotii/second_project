@@ -1,15 +1,18 @@
 # V3.6 Goal 2 Implementation Report
 
 ```yaml
-status: implementation_complete_pending_main_review
+status: corrected_implementation_complete_pending_main_review
 goal_id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
 control_baseline_commit: 992f721c4f05b7c78761966c7b8f79a6b4b3a2d3
 control_baseline_tree: be96881831af1355cabdf4ffb0a617ed2bc35159
+initial_implementation_commit: 20dbe4c11aa5b1a64d75dfa63b6893536adb021f
+initial_implementation_tree: dc3a062d97800d534ca2508edb09a48e1e5affd1
+correction_parent_commit: 20dbe4c11aa5b1a64d75dfa63b6893536adb021f
 pinned_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 implementation_owner: dedicated_top_level_goal_2_session
-recommended_disposition: PASS_V3_6_G2_DETERMINISTIC_IMPLEMENTATION_PENDING_MAIN_REVIEW
+recommended_disposition: PASS_V3_6_G2_CORRECTED_DETERMINISTIC_IMPLEMENTATION_PENDING_MAIN_REVIEW
 goal_acceptance_owner: Main_Session
-implementation_commit: resulting_single_commit_reported_in_session_handoff_and_ignored_commit_identity
+correction_commit: exact_commit_reported_in_session_handoff_and_ignored_commit_identity
 credential_reads: 0
 external_provider_calls: 0
 real_model_calls: 0
@@ -20,155 +23,142 @@ real_two_turn_journey_executed: false
 
 ## 1. Outcome
 
-**Fact:** The accepted deterministic Goal 2 scope is implemented from the exact Control Baseline. The Goal 1 control plane can now opt into one frozen Docker registered-command backend for `bounded_edit`, keep all writes inside the link-free managed Session copy, persist immutable backend terminal evidence, derive an immutable content-addressed ChangeSet, and expose only explicit Host-controlled Apply All, Discard or Export.
+**Fact:** Main's bounded review identified four Contract-local defects in the initial implementation commit. The correction implements all four without changing the frozen backend, image, Provider/model route, Pi Core, control files, or real-execution authority.
 
-**Fact:** Browser/model input still supplies only the exact safe task fields and a visible registered command ID. The Host owns executable, argv, image, mount, environment, backend profile and budget. Docker uses `spawn(..., { shell: false })`; there is no Host command fallback or second backend.
+**Fact:** The corrected implementation now binds Apply All and Discard to the freshly authenticated current managed-workspace head; rejects an over-budget final assistant response before a settled Manifest can be accepted; reconciles every attempted Docker create by exact container name before claiming cleanup; and supplies a tracked, zero-call-preflighted Goal 2 product composition entry for the later fresh no-source-edit Execution Session.
 
-**Fact:** The deterministic representative flow ran two settled Faux Turns through public Pi `AgentHarness` and one persistent public JSONL Session. Both registered commands ran in separate `--network none` containers, produced immutable Authority/terminal evidence, and were removed. The resulting non-empty ChangeSet was applied exactly once through the Host handoff. The flow remained `unverified`, had no formal Outcome, and made zero Credential, external Provider or real-model calls.
+**Fact:** The corrected deterministic suite passed 15/15 Goal 2 tests and 64/64 affected regressions. Docker tests used only the exact accepted local image with `--pull never` and runtime `--network none`. Credential reads, external Provider calls and real-model calls were exactly zero. The real two-Turn Journey was not run.
 
-**Recommendation:** Main may review the single Candidate commit and deterministic evidence for Goal 2 acceptance and, only after acceptance, create the separately governed Execution Baseline. This Session does not accept Goal 2/V3.6 and does not authorize or perform the real two-Turn Journey.
+**Recommendation:** Main should review the corrected two-commit Candidate and ignored correction evidence. This Session does not accept Goal 2/V3.6, create an Execution Baseline, or authorize the real Journey.
 
-## 2. Gate A and frozen identities
+## 2. Baselines and correction gate
 
-Gate A completed before editing. Its ignored record is `.runs/v3-6/g2/gate-a.json`, SHA-256 `c1820f42b2a6edf6dc7257606a7c8911b10be6cdca57c41d2034ab86069b9295`.
+The initial implementation was created from the exact Control Baseline and is preserved at `20dbe4c11aa5b1a64d75dfa63b6893536adb021f`. Before correction, this Session verified that exact HEAD/tree, a clean tracked status, and pinned Pi `027a5847901b5dde30270abaa1041046cd2b4b55` clean. The ignored correction gate is `.runs/v3-6/g2/correction/gate.json`, SHA-256 `111866bfe1a232004e9349e5a9f248f3376f5c9f113982462e4a6eea28d7152f`.
 
-| Check | Observed result |
-|---|---|
-| Git commit/tree | `992f721c4f05b7c78761966c7b8f79a6b4b3a2d3` / `be96881831af1355cabdf4ffb0a617ed2bc35159` |
-| tracked status | clean |
-| pinned Pi commit/status | `027a5847901b5dde30270abaa1041046cd2b4b55` / clean |
-| Docker Desktop | `4.85.0 (235549)` |
-| Docker client/server/context | `29.6.2` / `29.6.2` / `desktop-linux` |
-| exact local image | `node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
-| image pull policy | `never`; no pull performed |
-| credential/network-provider/real-model counts | `0/0/0` |
+The accepted Docker Desktop/client/server/context/image remained unchanged. No image pull or alternate backend selection occurred. The Docker executable remained Host-only configuration and is not projected into safe product or evidence views.
 
-The Docker executable path remained Host-only configuration. It is intentionally absent from browser/model input, safe Session views, Docker Authority/terminal evidence and the Evidence Index.
+## 3. Corrected implementation
 
-## 3. Implementation
+### Current-head handoff and safe integrity
 
-### Frozen Docker registered-command executor
+- Apply All and Discard recompute `managedWorkspaceInventoryV36(context.workspace_root)` and require its authenticated `inventory_digest` to equal the selected persisted ChangeSet's `final_inventory_digest`. A historical ChangeSet cannot mutate or terminalize Source after a later Turn.
+- Export remains non-mutating and may export a valid historical immutable ChangeSet; it does not bypass envelope/blob validation.
+- Handoff receipt projection validates exact shape, content digest, Session, ChangeSet, action, status, source identity, error semantics, and journal/recovery references before exposing status.
+- Diff projection authenticates each initial before blob against its declared SHA-256 before projecting text.
+- Continuation derives from the validated Session-wide successful-Apply marker, including its marker digest and referenced applied receipt, rather than only the selected ChangeSet receipt.
+- A two-ChangeSet test proves stale Apply All and Discard reject with zero Source mutation while historical Export succeeds. Additional tamper tests cover receipt and before-blob rejection.
 
-- `DockerRegisteredCommandExecutorV36` authenticates the canonical link-free managed copy before execution and writes content-digested Authority before Docker runtime preflight or container creation.
-- Runtime preflight requires the exact context, client/server versions, Docker Desktop build, local image digest, OS and architecture. Profile, version, context and image drift fail closed.
-- The executor creates one disposable Linux/amd64 container with `--pull never`, `--network none`, read-only root, bounded no-exec `/tmp`, user `65532:65532`, 0.5 CPU, 512 MiB memory/swap, 64 PIDs, nofile 1024, all capabilities dropped and no-new-privileges.
-- Exactly one read-write bind is allowed: the canonical managed Session copy at `/workspace`. Inspect evidence revalidates the runtime profile before accepting terminal status.
-- Stdout and stderr remain distinct, combined output is bounded at 65,536 bytes, nonzero exit and truncation are explicit, and the 30-second wall timeout kills the container (including its descendants) before exact forced removal.
-- Terminal evidence records create/start/output/inspect/timeout/kill/remove truthfully. Missing Docker fails after Authority with no command fallback.
+### Final-response budget enforcement
 
-### Public Pi Session and bounded tools
+- `executeBoundedTurn` enforces the frozen `131072` combined-token and USD `0.20` per-Turn caps immediately after every assistant usage update, after harness completion, and immediately before Manifest persistence.
+- An overrun aborts/fails closed and cannot leave an accepted `manifest.json`, including when the final assistant response is the first event to exceed the cap.
+- Deterministic Faux tests independently exceed the token and cost caps and prove no accepted Manifest. The 16 Provider-request and 24 Tool-invocation caps remain unchanged.
 
-- The optional executor seam in `createBoundedToolProfile` is additive and default-compatible. Goal 2 activates exactly `workspace_read`, `workspace_list`, `workspace_search`, `workspace_edit`, `workspace_write` and `run_command`; repository-command fallback remains disabled.
-- A bounded Turn must settle once, preserve prior Session context, close every Tool lifecycle, respect request/tool/token/cost limits, execute at least one registered command, and present terminal evidence bound to the exact frozen Docker profile digest.
-- **Fact (pinned Pi source):** public exports are re-exported by `D:/AI/AI_Projects/project2/.upstream/pi/packages/agent/src/index.ts` (`AgentHarness` at line 6 and `JsonlSessionRepo` at line 32); their implementations are `harness/agent-harness.ts:171` and `harness/session/jsonl-repo.ts:38`. The relevant product call is `PersistentInteractiveSessionServiceV36.executeBoundedTurn`; `v36g2-bounded-session-api.test.ts` proves the two-Turn persistent path.
-- Goal 1 remains the default when the Goal 2 extension is absent. The nine Goal 1 tests and affected V3/V3.5/Post-V3.5 regressions passed unchanged.
+### Ambiguous Docker create cleanup
 
-### Managed copy, immutable ChangeSet and Host handoff
+- Every path on which Docker create was attempted performs exact-name forced removal and then exact-name `container ls --all` reconciliation.
+- `cleanup_complete` may be true only when the named container is proven absent after reconciliation; `created === false` is never treated as absence proof.
+- A small Host-only/default-compatible Docker CLI seam supports a deterministic ambiguous-create test. The production default remains `spawn` with `shell: false`, the same argv authority, exact image, and no fallback/backend.
+- The seam test simulates a create timeout after daemon-side creation and proves exact-name removal plus absence reconciliation. Live success/nonzero/timeout tests and the final leftover query also passed.
 
-- Session creation persists the authenticated initial inventory and content-addressed initial blobs. Managed inventory rejects `.git`, links, hardlinks, unsupported files and frozen count/byte-limit overflow.
-- ChangeSet formation compares authenticated initial/final inventories, accepts only policy-writable non-protected paths, and writes immutable add/modify/delete entries plus content-addressed after blobs.
-- Safe Changes/Diff projections are bounded and omit Host paths and binary contents.
-- The handoff parser accepts exactly `session_id`, `change_set_digest` and `action`. Browser/agent/container cannot provide a path, patch, bytes, Source root or override.
-- Apply validates the complete envelope, lineage, scope, protected/traversal/reparse/hardlink boundaries, add absence, modify/delete preimages and every referenced blob before its first Source mutation.
-- Add/modify use same-directory temporary files and rename. Recovery blobs and an initial journal are persisted before mutation. Injected mid-apply failure returns `partial_apply_error` with exact applied/not-applied states and recovery refs; it is never called atomic.
-- Discard terminalizes only that ChangeSet and leaves Source unchanged. Export returns the immutable envelope and blobs without Source mutation. One successful Apply terminalizes the Session; second Apply and continuation reject with New Session guidance.
+### Tracked Goal 2 product composition entry
 
-### Safe API, bilingual WebUI and fixture
+The tracked entry reuses the Goal 2 control-plane adapter, frozen Docker executor, loopback API/WebUI and existing fixed DeepSeek provider/model factory. It freezes and validates:
 
-- The additive Goal 2 application wraps the accepted loopback-only Goal 1 surface. `POST /api/v1/v36/handoff` is available only when the Host supplies the Goal 2 extension and validates the exact handoff schema.
-- The WebUI explains managed-copy-only execution, frozen network-disabled Docker, unverified semantics and explicit Source handoff. It renders bounded backend, image, network, Files, Changes and Diff views plus bilingual Apply All/Discard/Export controls.
-- The dependency-free fixture is frozen at `workbench/fixtures/v36g2/duration-parser/`: 3 files, 1,210 bytes, inventory digest `f33080d10d63591317743b36da633662a9c6c6e7c063dfbdfe7a42aa221ea9eb`. Its only registered command is `node --test`; only `src/parse-duration.js` is writable.
+- fixture inventory digest `f33080d10d63591317743b36da633662a9c6c6e7c063dfbdfe7a42aa221ea9eb` for the three-file dependency-free duration-parser fixture;
+- registered command `test` as Host-owned `node --test`, with the frozen Docker profile;
+- the two accepted Contract prompts in order and the same persistent Session;
+- per-Turn limits of 16 Provider requests, 24 Tool calls, 131072 combined tokens, USD 0.20 and 900000 ms;
+- whole-Journey limits of 32 Provider requests, 48 Tool calls, 262144 combined tokens, USD 0.40, 1800000 ms and at most two lazy Credential resolutions;
+- zero retry, fallback, replacement or extra task;
+- Apply only after a valid non-empty current ChangeSet and frozen Docker verifier pass.
 
-## 4. Verification commands and results
+The entry fails before data/evidence/runtime identity creation, Credential resolution, Provider/model construction/call, Docker execution, Source mutation or network activity unless passed the exact explicit real-authority token and an explicit lazy Credential resolver. The tracked CLI exposes a read-only `preflight` mode and the separately governed `run` mode. The zero-call preflight projection is `.runs/v3-6/g2/correction/product-preflight.json`, SHA-256 `16033e50f38e65b6937359c6117e365f020bee0d90fa628026cf12081c18ce94`.
 
-All test commands ran from `workbench/` unless stated otherwise.
+### Apply recovery truthfulness
+
+**Fact:** Before Source mutation, Apply validates the full set and persists content-addressed recovery blobs for affected preimages. On a caught mutation failure it writes a truthful receipt/journal containing applied/not-applied states and recovery references.
+
+**Fact:** There is no write-once pre-mutation Apply plan/journal. A process crash between mutation and receipt persistence is not proven recoverable. The implementation and reports do not claim process-crash durability, automatic rollback, or atomic multi-file Apply.
+
+## 4. Verification
+
+All commands ran from `workbench/` except Git/Pi/status checks. The Docker environment variable was assigned the Contract-provided Host-only executable.
 
 | Command | Exit | Result |
 |---|---:|---|
 | `node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit` | 0 | strict TypeScript passed |
-| `$env:V36_DOCKER_EXECUTABLE='<Host-only exact path>'; npm.cmd run v36g2:test` | 0 | 10 passed, 0 failed/skipped |
-| `npm.cmd run v36g1:test` | 0 | Goal 1 regression 9/9 |
-| `node --experimental-loader ./scripts/v36g1-regression-loader.mjs --test --test-concurrency=1 tests/v35-persistent-session.test.ts` | 0 | V3.5 persistent Session regression 6/6 |
-| `npm.cmd run v35g3:test` | 0 | V3.5 Goal 3 regression 11/11 |
-| `npm.cmd run postv35:enablement:test` | 0 | Post-V3.5 enablement regression 11/11 |
-| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v3g1-evidence-to-candidate.test.ts tests/v3g2-validate-promote-reject-rollback.test.ts` | 0 | V3 Goal 1/2 regression 19/19 |
-| same loader with `tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts` | 0 | V3 Goal 3 regression 8/8 |
-| exact Docker CLI `container ls --all --filter name=v36g2- --format '{{.Names}}'` | 0 | empty output; zero leftover Goal containers |
+| `$env:V36_DOCKER_EXECUTABLE='<Contract Host-only executable>'; npm.cmd run v36g2:test` | 0 | corrected Goal 2: 15 passed, 0 failed/skipped |
+| `npm.cmd run v36g1:test` | 0 | Goal 1: 9/9 |
+| `node --experimental-loader ./scripts/v36g1-regression-loader.mjs --test --test-concurrency=1 tests/v35-persistent-session.test.ts` | 0 | V3.5 persistent Session: 6/6 |
+| `npm.cmd run v35g3:test` | 0 | V3.5 Goal 3: 11/11 |
+| `npm.cmd run postv35:enablement:test` | 0 | Post-V3.5: 11/11 |
+| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v3g1-evidence-to-candidate.test.ts tests/v3g2-validate-promote-reject-rollback.test.ts` | 0 | V3 Goal 1/2: 19/19 |
+| same loader with `tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts` | 0 | V3 Goal 3: 8/8 |
+| exact Docker `container ls --all --filter name=v36g2- --format '{{.Names}}'` | 0 | empty; zero leftover Goal containers |
 | `git diff --check` | 0 | no whitespace errors |
-| existing `v36g1-secret-scan.ts` over the complete final tracked delta | 0 | 24 files scanned; zero matches |
+| existing `v36g1-secret-scan.ts` over the complete correction delta | 0 | zero matches |
 
-Combined final test result: **74 passed, 0 failed, 0 skipped** (`10` Goal 2 + `64` affected regressions). The Goal 2 suite includes five Docker boundary/lifecycle tests, four ChangeSet/handoff tests and one integrated two-Turn Session/API test.
+Final result: **79 passed, 0 failed, 0 skipped** (`15` corrected Goal 2 + `64` affected regressions). The ignored verification summary is `.runs/v3-6/g2/correction/verification-summary.json`, SHA-256 `64c0e8642f9d53cbf41da542e88c71f1afd62551184d9619d75c3c7d929bcf01`.
 
-One earlier combined V3 regression invocation ran inside the restricted worktree sandbox: 21 assertions passed and two V3-G3 cases could not create their historical ignored fixture under the primary checkout (`EPERM`). The exact V3-G3 pair was rerun with the required filesystem permission and passed 8/8. One early npm Goal 2 wrapper also produced no output and remained alive beyond the bounded suite time; it was terminated, its files were then isolated successfully, the package script was made explicit rather than glob-based, and the final exact npm command passed 10/10. Neither intermediate event is used as acceptance evidence.
+## 5. Evidence Index and key digests
 
-## 5. Raw evidence and important digests
+Correction Evidence Index: `.runs/v3-6/g2/correction/evidence-index.json`, SHA-256 `cd15b0f442cdfa1c9c69666d8137828e091f0539c0bf068cbaafebd50f1db3fa`.
 
-Canonical ignored root: `.runs/v3-6/g2/`.
+- ambiguous-create Authority/terminal: `ac4b2882c3d2283b8b677cde755d47feea46b07d655aa39301bf3aae3feaee10` / `03c06ca4a30463e2985d1c9c41b540caa23919baa8737c370456d8ca05beb154`;
+- live timeout terminal: `350b22040c6ff2b88bc1b911c310940f69c2293fdacbb83ae644b9d0d3b78fc9`;
+- corrected integrated Turn terminals: `35bb26feede07b6965ee697fc624280ecfbe95594fcb50f13fcb777abca2ffa8` / `fc41d6ad11b32fb04513b6e593fcbac3988f267850c83794f2c3a014695665fb`;
+- validated successful-Apply marker: `ecbe7c0f1682ad31d0e51d883975fc25d361550ae8f83e68a0e004a59f72466c`;
+- caught partial-Apply receipt: `5ae555715f19b16269afc0bfc438e1a6601a8cb39fbefda2094beb5f047d5317`.
 
-- Evidence Index: `.runs/v3-6/g2/evidence-index.json`, SHA-256 `4ea92120ad58ba541959a6c7eb59f89ffa62e02b9d9a73bca098bf50bfb911bd`
-- Verification summary: `.runs/v3-6/g2/verification-summary.json`, SHA-256 `f299d08a687ab0d13c3747f00ea33d40431fd7d552a6d7d3c237580bd33ddd5d`
-- Gate A: `c1820f42b2a6edf6dc7257606a7c8911b10be6cdca57c41d2034ab86069b9295`
-- Representative fixture inventory: `f33080d10d63591317743b36da633662a9c6c6e7c063dfbdfe7a42aa221ea9eb`
-- Docker success terminal: `aef2bcc1d0b3e8d65a3e84c4bc766e5a3ae908633654d4551779afdbd1125be5`
-- Docker timeout/kill/remove terminal: `c6acc023a0f06c944302b99494582f67f21661e96145b5106b195415110b36f3`
-- Docker missing/no-fallback terminal: `9e8e9ebd31f232a0de0261311ca12254f09e36906250865c72be9b8175a182aa`
-- Integrated Turn 1/Turn 2 terminals: `0df0ce9785edc685333abb787ebf59b8fed9d92caeb9e4e985a4bfd85d086316` / `a02dcd022a036f4d176a5625f4ab395e4a9bb472e36d4432a9c0f892776a0516`
-- Single successful Apply marker: `98e704c780eb0dbaad9f740a6ef2de72edd0160a41491f8f571f9ca72a939722`
-- Injected partial-apply receipt: `5ae555715f19b16269afc0bfc438e1a6601a8cb39fbefda2094beb5f047d5317`
-
-The final commit SHA/tree are emitted in the Session handoff and written after commit to ignored `.runs/v3-6/g2/commit-identity.json`. A tracked report cannot contain the SHA/tree of its own commit without self-reference.
+The correction commit/tree are emitted in the Session handoff and written after commit to ignored `.runs/v3-6/g2/correction/commit-identity.json`. A tracked report cannot contain its own commit identity without self-reference.
 
 ## 6. Source Delta
 
-The final staged delta is **24 files, 1,738 insertions and 49 deletions** and is limited to the Contract allowlist:
+The correction delta atop `20dbe4c11aa5b1a64d75dfa63b6893536adb021f` is **14 files changed, 832 insertions and 174 deletions** and remains within the Contract allowlist:
 
-- new Goal 2 types, frozen Docker executor, ChangeSet/handoff module and Goal 2 application adapter;
-- bounded additive changes to the Goal 1 registry/control plane/persistent Session/API/static UI and the optional tool executor seam;
-- one dependency-free `duration-parser` fixture and three Goal 2 test files;
-- additive package/README documentation and these two Goal reports.
+- current-head, safe-integrity and successful-Apply validation;
+- final-response budget enforcement and Faux overrun tests;
+- ambiguous Docker-create cleanup reconciliation and seam test;
+- tracked product composition/CLI, zero-call preflight test and documentation;
+- corrected Implementation Report and Closeout Draft.
 
-No `CURRENT_STATE.md`, `AGENTS.md`, Charter, Contract, accepted Closeout, Credential, Pi, tracked reference, accepted State/Verifier/promotion authority or external registered Source was modified.
+No `CURRENT_STATE.md`, `AGENTS.md`, Charter, Contract, accepted Closeout, Credential, Pi, tracked reference, State/Verifier authority, or registered external Source was modified.
 
-## 7. Remaining limitations and decisions
+## 7. Remaining limitations
 
-**Fact:** Deterministic evidence proves the frozen local Docker backend and Faux public-Pi Session composition only. It does not prove the separately governed real-model two-Turn Journey, real-model coding quality, external Provider behavior, production multi-user isolation, crash recovery, exactly-once Tool effects, general container security, multi-backend portability or statistical effectiveness.
+**Unconfirmed:** The real two-Turn Journey, external Provider behavior and real-model coding quality remain unexecuted and unverified. They require Main acceptance, an exact Execution Baseline and the separately authorized fresh no-source-edit Execution Session.
 
-**Fact:** Apply is deliberately not multi-file atomic. It validates the whole set before mutation and preserves truthful recovery material after a partial failure, but automatic rollback is not implemented.
+**Fact:** Process-crash durability between Source mutation and caught-failure receipt persistence remains unproven. Apply is not multi-file atomic and has no automatic rollback.
 
-**Fact:** The Docker frontend is pinned to the accepted host versions/build/context and exact local image. Version/image/platform drift requires Main review; the executor does not pull or select a substitute.
-
-**Fact:** The safe Diff is intentionally bounded and omits binary content. Managed Sources exceeding the frozen file/byte limits, or containing links/hardlinks/unsupported kinds, fail closed.
-
-**Recommendation:** No concrete unresolved command-execution, safe-projection or Source-Apply risk remains that independently requires an audit under the Contract. Main retains the risk-driven audit decision and all acceptance authority.
-
-**Unconfirmed:** The real two-Turn product Journey remains unexecuted. Main must first review/accept deterministic Goal 2, create the exact Execution Baseline, and hand off to the separately authorized fresh no-source-edit Execution Session.
+**Fact:** The result does not prove general container security, multi-backend portability, exactly-once Tool effects, production multi-user isolation or statistical coding effectiveness. The executor remains tied to the accepted Docker host/profile/image and fails closed on drift.
 
 ## 8. CURRENT_STATE_UPDATE_PROPOSAL
 
 ```yaml
 CURRENT_STATE_UPDATE_PROPOSAL:
   active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
-  goal_2_status: deterministic_implementation_complete_pending_main_review
-  goal_2_implementation_owner: dedicated_top_level_goal_2_session
+  goal_2_status: corrected_deterministic_implementation_complete_pending_main_review
   goal_2_control_baseline_commit: 992f721c4f05b7c78761966c7b8f79a6b4b3a2d3
-  goal_2_control_baseline_tree: be96881831af1355cabdf4ffb0a617ed2bc35159
-  goal_2_implementation_commit: use_exact_commit_from_session_handoff
-  goal_2_implementation_tree: use_exact_tree_from_session_handoff
-  goal_2_recommended_disposition: PASS_V3_6_G2_DETERMINISTIC_IMPLEMENTATION_PENDING_MAIN_REVIEW
+  goal_2_initial_implementation_commit: 20dbe4c11aa5b1a64d75dfa63b6893536adb021f
+  goal_2_correction_commit: use_exact_commit_from_session_handoff
+  goal_2_correction_tree: use_exact_tree_from_session_handoff
+  goal_2_recommended_disposition: PASS_V3_6_G2_CORRECTED_DETERMINISTIC_IMPLEMENTATION_PENDING_MAIN_REVIEW
   goal_2_strict_typescript: passed
-  goal_2_focused_tests: 10_passed_0_failed_0_skipped
+  goal_2_focused_tests: 15_passed_0_failed_0_skipped
   goal_2_affected_regressions: 64_passed_0_failed_0_skipped
-  goal_2_total_tests: 74_passed_0_failed_0_skipped
+  goal_2_total_tests: 79_passed_0_failed_0_skipped
   goal_2_docker_cleanup: zero_v36g2_containers
-  goal_2_evidence_index_sha256: 4ea92120ad58ba541959a6c7eb59f89ffa62e02b9d9a73bca098bf50bfb911bd
+  goal_2_evidence_index_sha256: cd15b0f442cdfa1c9c69666d8137828e091f0539c0bf068cbaafebd50f1db3fa
   goal_2_fixture_inventory_digest: f33080d10d63591317743b36da633662a9c6c6e7c063dfbdfe7a42aa221ea9eb
+  goal_2_product_entry: tracked_zero_call_preflight_passed_ready_for_fresh_no_source_edit_execution_session
   goal_2_credential_reads: 0
   goal_2_external_provider_calls: 0
   goal_2_real_model_calls: 0
   goal_2_container_network_mode: none
   goal_2_pi_core_patches: 0
   goal_2_real_two_turn_journey: not_executed_requires_main_acceptance_and_execution_baseline
-  goal_2_audit_trigger: no_concrete_unresolved_high_risk_finding
+  goal_2_process_crash_recovery: unproven
   goal_2_acceptance_owner: Main_Session
   v3_6_status: active_goal_2_real_acceptance_not_yet_run
 ```

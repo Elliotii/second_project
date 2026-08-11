@@ -141,15 +141,61 @@ function boundedDiff(before: Buffer | null, after: Buffer | null): string {
 	return bytes.length <= 32_768 ? output : `${bytes.subarray(0, 32_700).toString("utf8")}\n[diff truncated]`;
 }
 
-function receiptStatus(sessionRoot: string, digest: string): SafeChangeSetV36["status"] {
-	const actionRoot = resolve(sessionRoot, "handoff", digest);
-	if (!existsSync(actionRoot)) return "proposed";
-	for (const name of ["apply-receipt.json", "discard-receipt.json"] as const) {
-		if (!existsSync(resolve(actionRoot, name))) continue;
-		const receipt = readJsonArtifact<ChangeHandoffReceiptV36>(actionRoot, name);
-		return receipt.status;
+function validateHandoffReceiptV36(actionRoot: string, name: "apply-receipt.json" | "discard-receipt.json", changeSet: ChangeSetV36): ChangeHandoffReceiptV36 {
+	const receipt = readJsonArtifact<ChangeHandoffReceiptV36>(actionRoot, name);
+	if (stableJson(Object.keys(receipt).sort()) !== stableJson(["schema_version", "session_id", "change_set_digest", "action", "status", "journal", "source_identity_after", "error_code", "receipt_digest"].sort())) throw new Error("handoff receipt envelope is invalid");
+	const expectedAction = name === "apply-receipt.json" ? "apply_all" : "discard";
+	const statusValid = expectedAction === "discard" ? receipt.status === "discarded" : receipt.status === "applied" || receipt.status === "partial_apply_error";
+	if (receipt.schema_version !== 1 || receipt.session_id !== changeSet.session_id || receipt.change_set_digest !== changeSet.change_set_digest || receipt.action !== expectedAction || !statusValid || !Array.isArray(receipt.journal) || !SHA256.test(receipt.source_identity_after) || !SHA256.test(receipt.receipt_digest) || digestObject(receiptBody(receipt)) !== receipt.receipt_digest) throw new Error("handoff receipt identity is invalid");
+	if ((receipt.status === "partial_apply_error") !== (typeof receipt.error_code === "string" && receipt.error_code.length > 0)) throw new Error("handoff receipt error status is invalid");
+	if (receipt.status !== "partial_apply_error" && receipt.error_code !== null) throw new Error("handoff receipt error field is invalid");
+	if (expectedAction === "discard") {
+		if (receipt.journal.length !== 0) throw new Error("discard receipt journal is invalid");
+		return receipt;
 	}
-	return "proposed";
+	if (receipt.journal.length !== changeSet.changes.length) throw new Error("apply receipt journal length is invalid");
+	for (const [index, entry] of receipt.journal.entries()) {
+		const change = changeSet.changes[index]!;
+		if (stableJson(Object.keys(entry).sort()) !== stableJson(["path", "operation", "state", "recovery_blob_ref", "recovery_requires_absence"].sort()) || entry.path !== change.path || entry.operation !== change.operation || !["applied", "not_applied"].includes(entry.state) || entry.recovery_requires_absence !== (change.operation === "add")) throw new Error("apply receipt journal entry is invalid");
+		if (change.operation === "add") {
+			if (entry.recovery_blob_ref !== null) throw new Error("add recovery entry is invalid");
+		} else if (!entry.recovery_blob_ref || entry.recovery_blob_ref.sha256 !== change.before_sha256 || validateArtifactRef(actionRoot, entry.recovery_blob_ref).length > 0) throw new Error("apply recovery blob is invalid");
+	}
+	if (receipt.status === "applied" && receipt.journal.some((entry) => entry.state !== "applied")) throw new Error("applied receipt journal is incomplete");
+	return receipt;
+}
+
+interface SuccessfulApplyMarkerV36 {
+	schema_version: 1;
+	session_id: string;
+	change_set_digest: string;
+	receipt_digest: string;
+	marker_digest: string;
+}
+
+function successfulApplyBody(value: SuccessfulApplyMarkerV36): Omit<SuccessfulApplyMarkerV36, "marker_digest"> {
+	const { marker_digest: _digest, ...body } = value;
+	return body;
+}
+
+export function validateSuccessfulApplyMarkerV36(sessionRoot: string, expectedSessionId?: string): SuccessfulApplyMarkerV36 | null {
+	const path = resolve(sessionRoot, "successful-apply.json");
+	if (!existsSync(path)) return null;
+	const marker = readJsonArtifact<SuccessfulApplyMarkerV36>(sessionRoot, "successful-apply.json");
+	if (stableJson(Object.keys(marker).sort()) !== stableJson(["schema_version", "session_id", "change_set_digest", "receipt_digest", "marker_digest"].sort()) || marker.schema_version !== 1 || !ID.test(marker.session_id) || (expectedSessionId !== undefined && marker.session_id !== expectedSessionId) || !SHA256.test(marker.change_set_digest) || !SHA256.test(marker.receipt_digest) || !SHA256.test(marker.marker_digest) || digestObject(successfulApplyBody(marker)) !== marker.marker_digest) throw new Error("successful Apply marker is invalid");
+	const changeSet = validateChangeSetV36(sessionRoot, marker.change_set_digest);
+	const actionRoot = resolve(sessionRoot, "handoff", marker.change_set_digest);
+	const receipt = validateHandoffReceiptV36(actionRoot, "apply-receipt.json", changeSet);
+	if (receipt.status !== "applied" || receipt.receipt_digest !== marker.receipt_digest) throw new Error("successful Apply marker receipt is invalid");
+	return marker;
+}
+
+function receiptStatus(context: ChangeSetHostContextV36, changeSet: ChangeSetV36): SafeChangeSetV36["status"] {
+	const actionRoot = resolve(context.session_root, "handoff", changeSet.change_set_digest);
+	if (!existsSync(actionRoot)) return "proposed";
+	const present = (["apply-receipt.json", "discard-receipt.json"] as const).filter((name) => existsSync(resolve(actionRoot, name)));
+	if (present.length !== 1) throw new Error("handoff terminal directory has ambiguous or missing receipt");
+	return validateHandoffReceiptV36(actionRoot, present[0]!, changeSet).status;
 }
 
 export function safeChangeSetV36(context: ChangeSetHostContextV36, digest: string): SafeChangeSetV36 {
@@ -161,9 +207,15 @@ export function safeChangeSetV36(context: ChangeSetHostContextV36, digest: strin
 		session_id: changeSet.session_id,
 		run_id: changeSet.run_id,
 		change_set_digest: digest,
-		status: receiptStatus(context.session_root, digest),
+		status: receiptStatus(context, changeSet),
 		changes: changeSet.changes.map((entry) => {
-			const before = entry.before_sha256 ? readFileSync(resolve(context.session_root, initialBlobPath(entry.before_sha256))) : null;
+			const beforePath = entry.before_sha256 ? resolve(context.session_root, initialBlobPath(entry.before_sha256)) : null;
+			if (beforePath) {
+				const stats = lstatSync(beforePath);
+				if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1) throw new Error("initial before blob identity is invalid");
+			}
+			const before = beforePath ? readFileSync(beforePath) : null;
+			if (before && sha256(before) !== entry.before_sha256) throw new Error("initial before blob is invalid");
 			const after = entry.after_blob_ref ? readFileSync(resolve(root, entry.after_blob_ref.path)) : null;
 			return { path: entry.path, operation: entry.operation, before_sha256: entry.before_sha256, after_sha256: entry.after_sha256, diff: boundedDiff(before, after) };
 		}),
@@ -205,9 +257,11 @@ export function performChangeHandoffV36(context: ChangeSetHostContextV36, inputV
 	const changeSet = validateChangeSetV36(context.session_root, input.change_set_digest);
 	if (changeSet.project_id !== context.project_id || changeSet.session_id !== context.session_id || changeSet.project_profile_digest !== context.project_profile_digest || changeSet.source_snapshot_identity !== context.source_snapshot_identity) throw new Error("ChangeSet authority lineage mismatch");
 	if (input.action === "export") return exportChangeSet(context.session_root, changeSet);
+	const currentWorkspace = managedWorkspaceInventoryV36(context.workspace_root);
+	if (changeSet.final_inventory_digest !== currentWorkspace.inventory_digest) throw new Error("selected ChangeSet is not the current managed Workspace head");
 	const actionRoot = resolve(context.session_root, "handoff", changeSet.change_set_digest);
 	if (existsSync(actionRoot)) throw new Error("ChangeSet handoff is already terminal");
-	if (existsSync(resolve(context.session_root, "successful-apply.json"))) throw new Error("Session already applied successfully; create a new Session");
+	if (validateSuccessfulApplyMarkerV36(context.session_root, context.session_id)) throw new Error("Session already applied successfully; create a new Session");
 	if (input.action === "discard") {
 		mkdirSync(actionRoot, { recursive: true });
 		const body: Omit<ChangeHandoffReceiptV36, "receipt_digest"> = { schema_version: 1, session_id: context.session_id, change_set_digest: changeSet.change_set_digest, action: "discard", status: "discarded", journal: [], source_identity_after: registeredSourceInventoryV36(context.source_root).inventory_digest, error_code: null };
@@ -271,12 +325,15 @@ export function performChangeHandoffV36(context: ChangeSetHostContextV36, inputV
 	const body: Omit<ChangeHandoffReceiptV36, "receipt_digest"> = { schema_version: 1, session_id: context.session_id, change_set_digest: changeSet.change_set_digest, action: "apply_all", status, journal, source_identity_after: registeredSourceInventoryV36(context.source_root).inventory_digest, error_code: errorCode };
 	const receipt: ChangeHandoffReceiptV36 = { ...body, receipt_digest: digestObject(body) };
 	writeOnceJson(actionRoot, "apply-receipt.json", receipt);
-	if (status === "applied") writeOnceJson(context.session_root, "successful-apply.json", { schema_version: 1, session_id: context.session_id, change_set_digest: changeSet.change_set_digest, receipt_digest: receipt.receipt_digest });
+	if (status === "applied") {
+		const markerBody: Omit<SuccessfulApplyMarkerV36, "marker_digest"> = { schema_version: 1, session_id: context.session_id, change_set_digest: changeSet.change_set_digest, receipt_digest: receipt.receipt_digest };
+		writeOnceJson(context.session_root, "successful-apply.json", { ...markerBody, marker_digest: digestObject(markerBody) } satisfies SuccessfulApplyMarkerV36);
+	}
 	return receipt;
 }
 
 export function assertSessionContinuationAllowedV36(sessionRoot: string): void {
-	if (existsSync(resolve(sessionRoot, "successful-apply.json"))) throw new Error("Session already applied successfully; create a new Session");
+	if (validateSuccessfulApplyMarkerV36(sessionRoot)) throw new Error("Session already applied successfully; create a new Session");
 }
 
 export function assertManagedWorkspaceHeadV36(sessionRoot: string, identity: string): void {

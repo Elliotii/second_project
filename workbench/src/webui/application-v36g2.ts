@@ -1,7 +1,7 @@
 import type { SafeInteractiveSessionV36 } from "../contracts/v36-types.ts";
 import type { ChangeHandoffReceiptV36, ChangeSetExportV36, SafeChangeSetV36 } from "../contracts/v36g2-types.ts";
 import { InteractiveControlPlaneV36, parseBrowserTaskRequestV36 } from "../v36/authority-v36.ts";
-import { createChangeSetV36, performChangeHandoffV36, safeChangeSetV36 } from "../workspace/change-set-v36.ts";
+import { createChangeSetV36, performChangeHandoffV36, safeChangeSetV36, validateSuccessfulApplyMarkerV36 } from "../workspace/change-set-v36.ts";
 
 export interface SafeInteractiveSessionV36G2 extends SafeInteractiveSessionV36 {
 	goal2: {
@@ -28,8 +28,10 @@ export class Goal2WorkbenchExtensionV36 {
 			const context = this.controlPlane.hostChangeSetContext(view.session_id, run.run_id);
 			const changeSet = createChangeSetV36(context);
 			changes = safeChangeSetV36(context, changeSet.change_set_digest);
+			const continuation = validateSuccessfulApplyMarkerV36(context.session_root, view.session_id) ? "new_session_required_after_apply" : "allowed";
+			return { ...view, goal2: { backend: "docker_engine_linux_container", changes, continuation } };
 		}
-		return { ...view, goal2: { backend: "docker_engine_linux_container", changes, continuation: changes?.status === "applied" ? "new_session_required_after_apply" : "allowed" } };
+		return { ...view, goal2: { backend: "docker_engine_linux_container", changes, continuation: "allowed" } };
 	}
 
 	project(view: SafeInteractiveSessionV36): SafeInteractiveSessionV36G2 {

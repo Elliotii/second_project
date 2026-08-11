@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import { digestObject, sha256 } from "../src/hash.ts";
@@ -85,6 +85,22 @@ test("stale preimage, add collision, hardlink and reparse substitution reject be
 	}
 });
 
+test("an older persisted ChangeSet cannot be applied or discarded after a later managed Workspace head", () => {
+	const context = fixture("stale-selection");
+	writeFileSync(resolve(context.workspace_root, "src/a.js"), "export const a = 2;\n");
+	const older = createChangeSetV36(context);
+	writeFileSync(resolve(context.workspace_root, "src/a.js"), "export const a = 3;\n");
+	const current = createChangeSetV36(context);
+	assert.notEqual(older.change_set_digest, current.change_set_digest);
+	const sourceBefore = readFileSync(resolve(context.source_root, "src/a.js"));
+	assert.throws(() => performChangeHandoffV36(context, { session_id: context.session_id, change_set_digest: older.change_set_digest, action: "apply_all" }), /current managed Workspace head/);
+	assert.throws(() => performChangeHandoffV36(context, { session_id: context.session_id, change_set_digest: older.change_set_digest, action: "discard" }), /current managed Workspace head/);
+	assert.equal(existsSync(resolve(context.session_root, "handoff", older.change_set_digest)), false);
+	assert.deepEqual(readFileSync(resolve(context.source_root, "src/a.js")), sourceBefore);
+	const historicalExport = performChangeHandoffV36(context, { session_id: context.session_id, change_set_digest: older.change_set_digest, action: "export" });
+	assert.equal("export_digest" in historicalExport, true);
+});
+
 test("protected/out-of-scope/traversal and tampered envelope or blob fail closed", () => {
 	const protectedContext = fixture("protected");
 	writeFileSync(resolve(protectedContext.workspace_root, "test/protected.js"), "changed\n");
@@ -134,4 +150,23 @@ test("Discard and Export do not mutate Source, while injected failure records tr
 	assert.ok(receipt.journal.every((entry) => entry.recovery_blob_ref !== null));
 	assert.equal(readFileSync(resolve(partial.source_root, "src/a.js"), "utf8"), "export const a = 2;\n");
 	assert.equal(readFileSync(resolve(partial.source_root, "src/b.js"), "utf8"), "export const b = 1;\n");
+});
+
+test("safe ChangeSet projection validates receipt integrity and initial before-blob content", () => {
+	const receiptContext = fixture("receipt-integrity");
+	writeFileSync(resolve(receiptContext.workspace_root, "src/a.js"), "export const a = 2;\n");
+	const receiptSet = createChangeSetV36(receiptContext);
+	performChangeHandoffV36(receiptContext, { session_id: receiptContext.session_id, change_set_digest: receiptSet.change_set_digest, action: "apply_all" });
+	const receiptPath = resolve(receiptContext.session_root, "handoff", receiptSet.change_set_digest, "apply-receipt.json");
+	const receipt = JSON.parse(readFileSync(receiptPath, "utf8")) as Record<string, unknown>;
+	receipt.status = "discarded";
+	writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`);
+	assert.throws(() => safeChangeSetV36(receiptContext, receiptSet.change_set_digest), /receipt/);
+
+	const blobContext = fixture("before-blob-integrity");
+	writeFileSync(resolve(blobContext.workspace_root, "src/a.js"), "export const a = 2;\n");
+	const blobSet = createChangeSetV36(blobContext);
+	const beforeDigest = blobSet.changes[0]!.before_sha256!;
+	writeFileSync(resolve(blobContext.session_root, "initial-blobs", `${beforeDigest}.bin`), "tampered\n");
+	assert.throws(() => safeChangeSetV36(blobContext, blobSet.change_set_digest), /before blob/);
 });

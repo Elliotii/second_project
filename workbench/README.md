@@ -388,10 +388,35 @@ and persists an immutable content-addressed ChangeSet. The WebUI exposes only bo
 Files, Changes, Diff and backend projections. `Apply All`, `Discard` and `Export` call the
 Host-only handoff surface with exactly `session_id`, `change_set_digest` and `action`.
 Apply revalidates lineage, scope, links, hardlinks, Source preimages and every blob before
-mutation; an interrupted apply preserves a truthful per-file journal and recovery blobs.
+mutation. Recovery blobs are staged before mutation; a caught I/O failure writes a truthful
+per-file `partial_apply_error` receipt. Process-crash recovery remains unproven because the
+receipt/journal is persisted only after the caught apply attempt.
 Only one successful Apply is allowed per Session, and further continuation directs the
 user to create a new Session. Export does not mutate Source; Discard terminalizes only
 the proposed ChangeSet.
+
+The tracked real-product entry is inert unless Main has accepted deterministic Goal 2,
+created an exact Execution Baseline, and supplied the explicit real-Journey authority.
+Its preflight is read-only and performs zero Credential, network, Provider/model or Docker
+calls and creates no runtime identity:
+
+```powershell
+npm run v36g2:product -- preflight --source-root <fresh-frozen-source> --execution-baseline-commit <sha>
+```
+
+The later authorized no-source-edit Execution Session may invoke the same entry with
+`run`, absent data/evidence roots and Host-only Docker configuration. Only after explicit
+authority does the entry lazily resolve `DEEPSEEK_API_KEY`, start the loopback API/WebUI,
+execute the two frozen prompts in one persistent Session through the fixed DeepSeek V4
+Flash route, run the frozen network-none Docker verifier, and Apply only a valid non-empty
+current ChangeSet after verifier pass. Retry, fallback and replacement remain zero. The
+entry writes immutable Journey Authority and a terminal review report under the supplied
+ignored evidence root; those Host roots and the Docker executable never enter browser or
+model input.
+
+```powershell
+npm run v36g2:product -- run --source-root <fresh-frozen-source> --execution-baseline-commit <sha> --data-root <absent-runtime-root> --evidence-root <absent-evidence-root> --docker-executable <host-docker-executable> --real-journey-authority V3_6_G2_REAL_TWO_TURN_EXECUTION_AUTHORIZED
+```
 
 All free-task Runs remain explicitly `unverified` and have no formal Outcome. This
 deterministic implementation does not perform or authorize the separately governed real
