@@ -432,3 +432,32 @@ retry, fallback or replacement. This does not authorize another real Journey, a 
 execution backend, Pi Core changes, or browser-supplied image/argv/mount/profile
 configuration. See `../docs/reports/V3_6_G2_REAL_PRODUCT_ACCEPTANCE_REPORT.md` and
 `../docs/reports/V3_6_CLOSEOUT.md` for the exact evidence and limits.
+
+## Daily V3.6 product path (post-Closeout polish)
+
+The daily entry assembles the already accepted persistent Session, real Direct Pi route,
+frozen Docker registered-command backend, managed copy, ChangeSet and Host handoff into
+one user-driven browser path. It does not run the two frozen acceptance prompts and it
+does not auto-apply. Every free task remains `unverified`; the user must inspect Changes
+and Diff, then choose **Apply All**, **Discard** or **Export**. A successful Apply locks
+the old Session and exposes **Start New Session from Updated Source**.
+
+Copy `config/v36-product.example.json` to the ignored
+`config/v36-product.local.json`, replace the absolute Source root and path/command policy,
+and use a 64-character Harness State digest that identifies the intended active binding
+(or a stable project-specific no-binding digest). The browser cannot supply or change
+Source paths, commands, Docker settings, Provider policy, Credential or Harness State.
+
+```powershell
+npm.cmd run v36:product -- `
+  --profile-file ./config/v36-product.local.json `
+  --credential-file ../.env `
+  --docker-executable "$env:LOCALAPPDATA/Programs/DockerDesktop/resources/bin/docker.exe"
+```
+
+Open `http://127.0.0.1:43136`, enter a free-text coding task, inspect the managed
+Workspace and settled Run, then review the immutable ChangeSet. `Apply All` updates the
+registered Source only after preimage/scope/tamper checks. A partial apply reports each
+file as applied or not applied and whether recovery material was saved; it does not claim
+transactional rollback or safe retry. Session data remains under the ignored
+`.runs/v3-6/daily-product` root unless `--data-root` is supplied.

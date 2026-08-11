@@ -30,8 +30,11 @@
           <label>Task / 任务<textarea name="task_text" required>Inspect the managed workspace and explain the relevant files.</textarea></label>
           <label>Optional title / 可选标题<input name="title"></label>
           <label>Existing Session ID (continue pinned) / 现有会话 ID（继续固定身份）<input name="session_id"></label>
-          <button>Start or continue / 新建或继续</button>
+          <button id="v36-task-submit">Start or continue / 新建或继续</button>
+          <p id="v36-task-status" class="muted" aria-live="polite">Ready / 就绪</p>
         </form>
+        <h2>V3.6 Sessions / V3.6 会话</h2>
+        <div id="v36-sessions" class="session-list" aria-live="polite"></div>
       </section>
       <h2 data-i18n="sidebar.sessions">Sessions</h2>
       <div id="sessions" class="session-list" aria-live="polite"></div>

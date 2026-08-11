@@ -21,6 +21,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+workbench/config/v36-product.local.json
 *.pem
 *.key
 

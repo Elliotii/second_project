@@ -91,3 +91,26 @@ npm.cmd run v36g2:test
 5. [Workbench README](./workbench/README.md)
 
 `.upstream/pi/`、`.runs/` 和 `reference/` 分别是固定上游、生成证据和用户控制参考资料，不进入项目实现提交。
+
+## V3.6 日常产品入口（Post-Closeout Polish）
+
+正式 V3.6 Closeout 事实保持不变。收尾产品化只把已经接受的 persistent Session、
+Direct Pi、Docker registered commands、managed copy、ChangeSet 和 Host handoff 薄装配为
+一个用户驱动入口；它不再自动运行冻结 Prompt，也不会自动 Apply。
+
+先复制 `workbench/config/v36-product.example.json` 为被 Git 忽略的
+`workbench/config/v36-product.local.json`，填写已登记项目的绝对 Source 路径、可写/保护路径、
+注册命令及 Harness State digest，然后从 `workbench/` 运行：
+
+```powershell
+npm.cmd run v36:product -- `
+  --profile-file ./config/v36-product.local.json `
+  --credential-file ../.env `
+  --docker-executable "$env:LOCALAPPDATA/Programs/DockerDesktop/resources/bin/docker.exe"
+```
+
+打开 `http://127.0.0.1:43136`。自由 Coding Task 仍为 `unverified`：Agent 只修改
+managed Workspace；用户在 Changes / Diff 中明确选择 Apply All、Discard 或 Export。
+Apply 成功后旧 Session 不得继续，页面提供“从更新后的 Source 新建 Session”。详细边界见
+[Workbench README](./workbench/README.md) 与
+[Post-Closeout Productization Polish Report](./docs/reports/POST_V3_6_PRODUCTIZATION_POLISH_REPORT.md)。

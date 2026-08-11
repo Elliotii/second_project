@@ -125,6 +125,21 @@ export interface SafeChangeSetV36 {
 	changes: Array<{ path: string; operation: ChangeOperationV36; before_sha256: string | null; after_sha256: string | null; diff: string }>;
 	backend: { kind: "docker_engine_linux_container"; image_digest: string; network: "none"; profile_digest: string };
 	handoff_actions: Array<"apply_all" | "discard" | "export">;
+	handoff_result: SafeHandoffResultV36 | null;
+}
+
+export interface SafeHandoffResultV36 {
+	schema_version: 1;
+	result_kind: "v36_safe_handoff_result";
+	action: "apply_all" | "discard";
+	status: "applied" | "discarded" | "partial_apply_error" | "conflict_stale_source" | "failed";
+	source_state: "updated" | "unchanged" | "partially_updated" | "unknown";
+	message_code: "source_updated" | "changes_discarded" | "source_conflict" | "partial_apply" | "handoff_failed";
+	receipt_digest: string | null;
+	error_code: "source_stale_or_conflict" | "source_apply_failed" | "handoff_failed" | null;
+	journal: Array<{ path: string; operation: ChangeOperationV36; state: "applied" | "not_applied"; recovery_material_saved: boolean }>;
+	recovery_material_saved: boolean;
+	retry_safe: false;
 }
 
 export interface ChangeHandoffRequestV36 {

@@ -31,6 +31,7 @@ const displayValue = (value) => {
 };
 let activeSession = null;
 let activeV36Session = null;
+let v36Projects = [];
 
 function applyStaticTranslations() {
   document.documentElement.lang = i18n.locale;
@@ -130,6 +131,24 @@ async function loadOverview() {
   $("#turn-submit").textContent = value.mode === "real_product_smoke" ? i18n.t("action.realTurn") : i18n.t("action.fauxTurn");
 }
 
+function handoffResultCard(result) {
+  const labels = {
+    source_updated: "Applied: registered Source updated / 已应用：源目录已更新",
+    changes_discarded: "Discarded: registered Source unchanged / 已丢弃：源目录未改变",
+    source_conflict: "Conflict or stale Source: nothing applied / 冲突或源目录过期：未应用",
+    partial_apply: "Partial Apply Error: review the per-file journal / 部分应用失败：请检查逐文件记录",
+    handoff_failed: "Apply failed; Source state is unknown / 应用失败：源目录状态未知",
+  };
+  const body = text("div");
+  body.append(metric("Result / 结果", labels[result.message_code] ?? result.status), metric("Source state / 源状态", result.source_state), metric("Receipt", result.receipt_digest ?? "none"), metric("Retry safe / 可安全重试", result.retry_safe));
+  if (result.journal?.length) {
+    const journal = text("div", "", "grid");
+    for (const entry of result.journal) journal.append(metric(`${entry.operation.toUpperCase()} · ${entry.path}`, `${entry.state}; recovery saved=${entry.recovery_material_saved}`));
+    body.append(card("Per-file Apply journal / 逐文件应用记录", journal));
+  }
+  return card("Change handoff result / 变更交接结果", body);
+}
+
 function renderV36Session(session) {
   activeV36Session = session.session_id;
   const form = $("#v36-task-form");
@@ -153,7 +172,7 @@ function renderV36Session(session) {
   );
   root.append(safety);
   const resources = text("div", "", "grid");
-  resources.append(card("Pi native Skills (read-only)", text("pre", JSON.stringify(session.pi_native_skills, null, 2))), card("Harness Adaptations / bindings (read-only)", text("pre", JSON.stringify(session.harness_adaptations, null, 2))));
+  resources.append(card("Configured / declared Pi Skills (read-only) / 已配置或声明的 Pi Skills（只读）", text("pre", JSON.stringify(session.pi_native_skills, null, 2))), card("Configured Harness Adaptations / bindings (read-only) / 已配置的 Harness 适配与绑定（只读）", text("pre", JSON.stringify(session.harness_adaptations, null, 2))));
   root.append(resources);
   const runs = text("div", "", "grid");
   for (const run of session.runs) {
@@ -171,6 +190,7 @@ function renderV36Session(session) {
       root.append(backend);
       const changesCard = card("Changes and Diff / 变更与差异", null);
       changesCard.append(metric("ChangeSet", changeSet.change_set_digest), metric("Status / 状态", changeSet.status));
+      if (changeSet.handoff_result) changesCard.append(handoffResultCard(changeSet.handoff_result));
       for (const change of changeSet.changes) changesCard.append(card(`${change.operation.toUpperCase()} · ${change.path}`, text("pre", change.diff)));
       const actions = text("div", "", "handoff-actions");
       for (const action of changeSet.handoff_actions) {
@@ -188,12 +208,34 @@ function renderV36Session(session) {
               link.download = `changeset-${changeSet.change_set_digest}.json`;
               link.click();
               URL.revokeObjectURL(link.href);
-            } else renderV36Session(await api(`/api/v1/v36/sessions/${session.session_id}`));
-          } catch (error) { failure(error); }
+            } else {
+              const refreshed = await api(`/api/v1/v36/sessions/${session.session_id}`);
+              if (result?.result_kind === "v36_safe_handoff_result" && refreshed.goal2?.changes && !refreshed.goal2.changes.handoff_result) {
+                refreshed.goal2.changes.handoff_result = result;
+                refreshed.goal2.changes.status = result.status;
+              }
+              renderV36Session(refreshed);
+            }
+          } catch (error) {
+            changesCard.append(handoffResultCard({ message_code: "handoff_failed", status: "failed", source_state: "unknown", receipt_digest: null, retry_safe: false, journal: [] }));
+            failure(error);
+          }
         });
         actions.append(button);
       }
       changesCard.append(actions);
+      if (session.goal2.continuation === "new_session_required_after_apply") {
+        const next = text("button", "Start New Session from Updated Source / 从更新后的源目录新建会话");
+        next.type = "button";
+        next.addEventListener("click", async () => {
+          try {
+            const created = await api("/api/v1/v36/sessions/from-updated-source", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ previous_session_id: session.session_id }) });
+            renderV36Session(created);
+            await loadV36Sessions();
+          } catch (error) { failure(error); }
+        });
+        changesCard.append(next);
+      }
       root.append(changesCard);
     } else root.append(backend, card("Changes / 变更", text("p", "Inspect-only Session: no ChangeSet is created. / 仅检查会话不创建 ChangeSet。")));
   }
@@ -223,17 +265,48 @@ async function loadV36() {
     const value = await api("/api/v1/v36/projects");
     const form = $("#v36-task-form");
     form.elements.project_id.replaceChildren();
-    for (const project of value.projects) {
+    v36Projects = value.projects;
+    const syncModes = () => {
+      const selected = v36Projects.find((project) => project.project_id === form.elements.project_id.value);
+      for (const option of form.elements.requested_mode.options) option.disabled = !selected?.supported_modes.includes(option.value);
+      if (selected && !selected.supported_modes.includes(form.elements.requested_mode.value)) form.elements.requested_mode.value = selected.supported_modes[0];
+    };
+    for (const project of v36Projects) {
       const option = document.createElement("option");
       option.value = project.project_id;
       option.textContent = `${project.display_name} · ${project.supported_modes.join(" / ")}`;
       form.elements.project_id.append(option);
     }
+    form.elements.project_id.addEventListener("change", syncModes);
+    syncModes();
+    if (v36Projects.some((project) => project.capability_summary.bounded_edit === "docker_bounded_edit_change_handoff")) {
+      $("#product-mode").textContent = "Local · real model only on submitted bounded task / 本地 · 仅提交有界任务时调用真实模型";
+      document.querySelectorAll("nav button,.view").forEach((node) => node.classList.remove("active"));
+      $(".v36-nav").classList.add("active");
+      $("#open-control").classList.add("active");
+    }
     $("#v36-open-task").hidden = false;
     $(".v36-nav").hidden = false;
+    await loadV36Sessions();
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
   }
+}
+
+async function loadV36Sessions(selectId) {
+  const value = await api("/api/v1/v36/sessions");
+  const list = $("#v36-sessions");
+  list.replaceChildren();
+  if (!value.sessions.length) list.append(text("p", "No V3.6 Sessions yet. / 尚无 V3.6 会话。", "muted"));
+  for (const session of value.sessions) {
+    const button = text("button", session.title);
+    button.append(text("small", `${session.session_id} · ${session.runs.length} Run(s)`));
+    button.addEventListener("click", async () => {
+      try { renderV36Session(await api(`/api/v1/v36/sessions/${session.session_id}`)); } catch (error) { failure(error); }
+    });
+    list.append(button);
+  }
+  if (selectId) renderV36Session(await api(`/api/v1/v36/sessions/${selectId}`));
 }
 
 async function loadComparisons() {
@@ -376,6 +449,10 @@ $("#continue-session").addEventListener("submit", async (event) => {
 });
 $("#v36-task-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const submit = $("#v36-task-submit");
+  const status = $("#v36-task-status");
+  submit.disabled = true;
+  status.textContent = "Running Agent task… / Agent 正在运行任务…";
   const data = new FormData(event.currentTarget);
   const title = String(data.get("title") ?? "").trim();
   const sessionId = String(data.get("session_id") ?? "").trim();
@@ -386,7 +463,12 @@ $("#v36-task-form").addEventListener("submit", async (event) => {
     $(".v36-nav").classList.add("active");
     $("#open-control").classList.add("active");
     renderV36Session(session);
-  } catch (error) { failure(error); }
+    await loadV36Sessions();
+    status.textContent = "Settled / 已结束";
+  } catch (error) {
+    status.textContent = "Failed / 失败";
+    failure(error);
+  } finally { submit.disabled = false; }
 });
 
 applyStaticTranslations();

@@ -21,4 +21,5 @@ export class WorkbenchApplicationV36G1 {
 	workspaceFile(sessionId: string, path: string) { return this.controlPlane.workspaceFile(sessionId, path); }
 	hasGoal2() { return this.goal2 !== undefined; }
 	handoff(input: unknown) { if (!this.goal2) throw new Error("Goal 2 handoff is unavailable"); return this.goal2.handoff(input); }
+	async startSessionFromUpdatedSource(input: unknown) { if (!this.goal2) throw new Error("Goal 2 new Session is unavailable"); return await this.goal2.startSessionFromUpdatedSource(input); }
 }

@@ -1,7 +1,7 @@
 import type { SafeInteractiveSessionV36 } from "../contracts/v36-types.ts";
-import type { ChangeHandoffReceiptV36, ChangeSetExportV36, SafeChangeSetV36 } from "../contracts/v36g2-types.ts";
+import type { ChangeSetExportV36, SafeChangeSetV36, SafeHandoffResultV36 } from "../contracts/v36g2-types.ts";
 import { InteractiveControlPlaneV36, parseBrowserTaskRequestV36 } from "../v36/authority-v36.ts";
-import { createChangeSetV36, performChangeHandoffV36, safeChangeSetV36, validateSuccessfulApplyMarkerV36 } from "../workspace/change-set-v36.ts";
+import { createChangeSetV36, performChangeHandoffV36, safeChangeSetV36, safeHandoffReceiptV36, validateSuccessfulApplyMarkerV36 } from "../workspace/change-set-v36.ts";
 
 export interface SafeInteractiveSessionV36G2 extends SafeInteractiveSessionV36 {
 	goal2: {
@@ -38,11 +38,26 @@ export class Goal2WorkbenchExtensionV36 {
 		return this.afterSubmit(view);
 	}
 
-	handoff(value: unknown, injectFailureAfterWrites?: number): ChangeHandoffReceiptV36 | ChangeSetExportV36 {
+	handoff(value: unknown, injectFailureAfterWrites?: number): SafeHandoffResultV36 | ChangeSetExportV36 {
 		if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("handoff request is invalid");
 		const record = value as { session_id?: unknown; change_set_digest?: unknown };
 		if (typeof record.session_id !== "string" || typeof record.change_set_digest !== "string") throw new Error("handoff request is invalid");
 		const context = this.controlPlane.hostChangeSetContext(record.session_id, "handoff");
-		return performChangeHandoffV36(context, value, { ...(injectFailureAfterWrites === undefined ? {} : { injectFailureAfterWrites }) });
+		try {
+			const result = performChangeHandoffV36(context, value, { ...(injectFailureAfterWrites === undefined ? {} : { injectFailureAfterWrites }) });
+			return "receipt_digest" in result ? safeHandoffReceiptV36(result) : result;
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "";
+			if (message !== "source_preimage_stale" && message !== "source_add_collision") throw error;
+			return {
+				schema_version: 1, result_kind: "v36_safe_handoff_result", action: "apply_all", status: "conflict_stale_source", source_state: "unchanged", message_code: "source_conflict", receipt_digest: null,
+				error_code: "source_stale_or_conflict", journal: [], recovery_material_saved: false, retry_safe: false,
+			};
+		}
+	}
+
+	async startSessionFromUpdatedSource(value: unknown): Promise<SafeInteractiveSessionV36G2> {
+		if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length !== 1 || typeof (value as { previous_session_id?: unknown }).previous_session_id !== "string") throw new Error("new Session request is invalid");
+		return this.afterSubmit(await this.controlPlane.startSessionFromUpdatedSource((value as { previous_session_id: string }).previous_session_id));
 	}
 }

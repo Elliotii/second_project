@@ -37,6 +37,7 @@
     "v36g1:demo": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/start-v36g1-demo.ts",
     "v36g2:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v36g2-change-handoff.test.ts tests/v36g2-docker-executor.test.ts tests/v36g2-bounded-session-api.test.ts tests/v36g2-product-entry.test.ts",
     "v36g2:product": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/run-v36g2-product-journey.ts",
+    "v36:product": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/start-v36-product.ts",
     "v35g2:calibrate": "node --experimental-loader scripts/v35g2-public-pi-loader.mjs scripts/v35g2-reference-calibration.ts --project-root .. --output-root ../.runs/v3-5-g2/reference-calibration"
   },
   "dependencies": {

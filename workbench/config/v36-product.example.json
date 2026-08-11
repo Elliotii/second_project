@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "project": {
+    "project_id": "my-project",
+    "display_name": "My registered project",
+    "source_root": "D:/absolute/path/to/my-project",
+    "writable_paths": ["src/**"],
+    "protected_paths": ["test/**", "package.json"],
+    "risk_notice": "Agent edits a managed copy. Registered commands run in network-none Docker. Source changes require explicit Apply All.",
+    "command_descriptors": [
+      {
+        "command_id": "test",
+        "executable": "current_node_executable",
+        "argv": ["--test"],
+        "cwd": "workspace",
+        "timeout_seconds": 30,
+        "max_combined_output_bytes": 65536
+      }
+    ],
+    "pi_native_skills": [],
+    "harness_adaptations": [],
+    "harness_state_digest": "b3c686a7b54e3470bb47abaab43bad976e848d4f026cfc9c8b19a9c527fe527d"
+  }
+}

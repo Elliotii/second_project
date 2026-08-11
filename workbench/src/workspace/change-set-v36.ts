@@ -17,6 +17,7 @@ import type {
 	ChangeSetExportV36,
 	ChangeSetV36,
 	SafeChangeSetV36,
+	SafeHandoffResultV36,
 	WorkspaceInventoryV36,
 } from "../contracts/v36g2-types.ts";
 import type { ArtifactRefV0B } from "../contracts/v0b-types.ts";
@@ -190,24 +191,41 @@ export function validateSuccessfulApplyMarkerV36(sessionRoot: string, expectedSe
 	return marker;
 }
 
-function receiptStatus(context: ChangeSetHostContextV36, changeSet: ChangeSetV36): SafeChangeSetV36["status"] {
+export function safeHandoffReceiptV36(receipt: ChangeHandoffReceiptV36): SafeHandoffResultV36 {
+	const recoveryMaterialSaved = receipt.journal.some((entry) => entry.recovery_blob_ref !== null || entry.recovery_requires_absence);
+	if (receipt.status === "applied") return {
+		schema_version: 1, result_kind: "v36_safe_handoff_result", action: receipt.action, status: "applied", source_state: "updated", message_code: "source_updated", receipt_digest: receipt.receipt_digest, error_code: null,
+		journal: receipt.journal.map((entry) => ({ path: entry.path, operation: entry.operation, state: entry.state, recovery_material_saved: entry.recovery_blob_ref !== null || entry.recovery_requires_absence })), recovery_material_saved: recoveryMaterialSaved, retry_safe: false,
+	};
+	if (receipt.status === "discarded") return {
+		schema_version: 1, result_kind: "v36_safe_handoff_result", action: receipt.action, status: "discarded", source_state: "unchanged", message_code: "changes_discarded", receipt_digest: receipt.receipt_digest, error_code: null, journal: [], recovery_material_saved: false, retry_safe: false,
+	};
+	const applied = receipt.journal.some((entry) => entry.state === "applied");
+	return {
+		schema_version: 1, result_kind: "v36_safe_handoff_result", action: receipt.action, status: "partial_apply_error", source_state: applied ? "partially_updated" : "unchanged", message_code: "partial_apply", receipt_digest: receipt.receipt_digest, error_code: "source_apply_failed",
+		journal: receipt.journal.map((entry) => ({ path: entry.path, operation: entry.operation, state: entry.state, recovery_material_saved: entry.recovery_blob_ref !== null || entry.recovery_requires_absence })), recovery_material_saved: recoveryMaterialSaved, retry_safe: false,
+	};
+}
+
+function persistedHandoffResult(context: ChangeSetHostContextV36, changeSet: ChangeSetV36): SafeHandoffResultV36 | null {
 	const actionRoot = resolve(context.session_root, "handoff", changeSet.change_set_digest);
-	if (!existsSync(actionRoot)) return "proposed";
+	if (!existsSync(actionRoot)) return null;
 	const present = (["apply-receipt.json", "discard-receipt.json"] as const).filter((name) => existsSync(resolve(actionRoot, name)));
 	if (present.length !== 1) throw new Error("handoff terminal directory has ambiguous or missing receipt");
-	return validateHandoffReceiptV36(actionRoot, present[0]!, changeSet).status;
+	return safeHandoffReceiptV36(validateHandoffReceiptV36(actionRoot, present[0]!, changeSet));
 }
 
 export function safeChangeSetV36(context: ChangeSetHostContextV36, digest: string): SafeChangeSetV36 {
 	const changeSet = validateChangeSetV36(context.session_root, digest);
 	const root = changeRoot(context.session_root, digest);
+	const handoffResult = persistedHandoffResult(context, changeSet);
 	return {
 		schema_version: 1,
 		project_id: changeSet.project_id,
 		session_id: changeSet.session_id,
 		run_id: changeSet.run_id,
 		change_set_digest: digest,
-		status: receiptStatus(context, changeSet),
+		status: handoffResult?.status === "applied" || handoffResult?.status === "discarded" || handoffResult?.status === "partial_apply_error" ? handoffResult.status : "proposed",
 		changes: changeSet.changes.map((entry) => {
 			const beforePath = entry.before_sha256 ? resolve(context.session_root, initialBlobPath(entry.before_sha256)) : null;
 			if (beforePath) {
@@ -221,6 +239,7 @@ export function safeChangeSetV36(context: ChangeSetHostContextV36, digest: strin
 		}),
 		backend: { kind: "docker_engine_linux_container", image_digest: FROZEN_DOCKER_PROFILE_V36.image_reference, network: "none", profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest },
 		handoff_actions: ["apply_all", "discard", "export"],
+		handoff_result: handoffResult,
 	};
 }
 

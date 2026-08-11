@@ -102,6 +102,11 @@ async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: 
 			const input = exactObject(await body(req), ["session_id", "change_set_digest", "action"], ["session_id", "change_set_digest", "action"]);
 			return send(res, 200, app.handoff(input));
 		}
+		if (path === "/api/v1/v36/sessions/from-updated-source" && app.hasGoal2()) {
+			const input = exactObject(await body(req), ["previous_session_id"], ["previous_session_id"]);
+			if (typeof input.previous_session_id !== "string") throw new HttpError(400, "JSON body fields are invalid");
+			return send(res, 201, await app.startSessionFromUpdatedSource(input));
+		}
 		if (path === "/api/v1/sessions") {
 			const input = exactObject(await body(req), ["session_id", "title", "parent_session_id"], ["session_id", "title"]);
 			if (typeof input.session_id !== "string" || typeof input.title !== "string" || (input.parent_session_id !== undefined && input.parent_session_id !== null && typeof input.parent_session_id !== "string")) throw new HttpError(400, "JSON body fields are invalid");

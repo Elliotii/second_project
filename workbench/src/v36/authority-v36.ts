@@ -17,7 +17,7 @@ import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 import { ProjectProfileRegistryV36, type ResolvedProjectProfileV36 } from "../project/registry-v36.ts";
 import { PersistentInteractiveSessionServiceV36, type PersistentInteractiveTurnResultV36 } from "../session/persistent-session-v36.ts";
 import { createManagedSessionCopyV36, managedWorkspaceIdentityV36, workspaceTextPreviewV36, workspaceTreePreviewV36 } from "../workspace/managed-copy-v36.ts";
-import { assertManagedWorkspaceHeadV36, assertSessionContinuationAllowedV36, persistInitialInventoryV36, type ChangeSetHostContextV36 } from "../workspace/change-set-v36.ts";
+import { assertManagedWorkspaceHeadV36, assertSessionContinuationAllowedV36, persistInitialInventoryV36, validateSuccessfulApplyMarkerV36, type ChangeSetHostContextV36 } from "../workspace/change-set-v36.ts";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -309,6 +309,22 @@ export class InteractiveControlPlaneV36 {
 			writeOnceJson(root, "result.json", { ...evidenceWithoutDigest, evidence_digest: digestObject(evidenceWithoutDigest) } satisfies InteractiveRunEvidenceV36G2);
 		}
 		return await this.session(stored.pin.session_id);
+	}
+
+	async startSessionFromUpdatedSource(previousSessionId: string): Promise<SafeInteractiveSessionV36> {
+		identifier(previousSessionId, "previous Session ID");
+		const previous = readStoredSession(this.dataRoot, previousSessionId);
+		const profile = this.registry.resolve(previous.pin.project_id);
+		assertProfilePin(profile, previous.pin, this.goal2Enabled);
+		if (!validateSuccessfulApplyMarkerV36(sessionRoot(this.dataRoot, previousSessionId), previousSessionId)) throw new Error("previous Session has no successful Apply");
+		const created = await this.createSession(profile, {
+			project_id: previous.pin.project_id,
+			requested_mode: previous.pin.requested_mode,
+			task_text: "Start a new Session from the updated registered Source.",
+			title: `Updated Source · ${previous.title}`.slice(0, 500),
+		});
+		if (created.pin.session_id === previousSessionId || created.pin.source_snapshot_identity === previous.pin.source_snapshot_identity) throw new Error("new Session did not pin the updated Source identity");
+		return await this.session(created.pin.session_id);
 	}
 
 	async session(sessionId: string): Promise<SafeInteractiveSessionV36> {
