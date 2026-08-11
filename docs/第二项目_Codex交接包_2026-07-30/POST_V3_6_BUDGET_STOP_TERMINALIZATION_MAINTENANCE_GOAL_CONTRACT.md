@@ -1,7 +1,7 @@
 # Post-V3.6 Budget-stop Terminalization Maintenance Goal Contract
 
 ```yaml
-status: accepted_activated
+status: closed_accepted
 accepted_by_user: 2026-08-12
 goal_id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
 goal_kind: bounded_post_closeout_product_correctness_maintenance
@@ -19,6 +19,11 @@ sdk_extension_rpc_switch_authorized: false
 retry_fallback_replacement_authorized: false
 same_failed_session_continuation_authorized: false
 apply_unverified_budget_stopped_changes_authorized: false
+disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+initial_candidate_commit: d082f1a09dc0756afca5dc7dc39d433d0e73dd53
+corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
+focused_audit_final: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_FOCUSED_AUDIT_AFTER_HIT_RECHECK
+closeout: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
 ```
 
 ## 1. Goal
@@ -193,3 +198,12 @@ Allowed claim:
 Not allowed: the original task completed; the 16-request cap is optimal; arbitrary failures
 are recoverable; same-Session resume is supported; or a real UX retry passed. Any real UX
 retry requires separate later user authority from a clean baseline.
+
+## 10. Accepted result
+
+Main accepted this Goal after one Contract-local implementation correction, one fresh
+focused audit, one bounded audit-finding correction in the original Implementation
+Session, and a hit-specific recheck in the original audit Session. The exact stop is now
+typed, persistent, inspectable, evidence-reconciled and Apply-denied. All deterministic
+Exit Criteria passed with zero real access. The binding disposition and limits are in
+`docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md`.

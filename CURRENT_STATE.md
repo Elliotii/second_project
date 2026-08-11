@@ -8,31 +8,31 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+active_goal: null
 
 last_executed_goal:
-  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+  id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
-  disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
-  execution_baseline_commit: 781e95211e7cc6beb572c50ec18e36e0a952b1f9
-  closeout: docs/reports/V3_6_G2_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
+  closeout: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+  id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
-  disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
-  closeout: docs/reports/V3_6_G2_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  closeout: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+  id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
-  disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
-  implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
 
-current_goal: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+current_goal: null
 
 next_goal:
   id: null
@@ -41,7 +41,7 @@ next_goal:
 
 post_v3_6_budget_stop_maintenance:
   goal_id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
-  status: accepted_activated_pre_implementation
+  status: closed_accepted
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   accepted_by_user: 2026-08-12
@@ -50,7 +50,7 @@ post_v3_6_budget_stop_maintenance:
   implementation_owner: top_level_session_019ff1c5-a8db-7642-971c-dfa31520521e
   implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/bcef/project2
   implementation_started: true
-  implementation_completed: true_pending_focused_audit
+  implementation_completed: true
   implementation_prompt: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_IMPLEMENTATION_SESSION_START_PROMPT.md
   candidate_commit: d082f1a09dc0756afca5dc7dc39d433d0e73dd53
   candidate_tree: 62baa170db984228a372fdcef321e7b5836b025c
@@ -58,7 +58,18 @@ post_v3_6_budget_stop_maintenance:
   focused_audit_owner: top_level_session_019ff1ec-9a7c-7922-83c4-9e8f646cc055
   focused_audit_worktree: C:/Users/HUAWEI/.codex/worktrees/0dc7/project2
   focused_audit_started: true
+  focused_audit_completed: true
   focused_audit_prompt: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_FOCUSED_AUDIT_SESSION_START_PROMPT.md
+  focused_audit_initial_disposition: REVISE_POST_V3_6_BUDGET_STOP_TERMINALIZATION_FOCUSED_AUDIT
+  focused_audit_finding: POST-V3.6-AUDIT-P1-001
+  corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
+  corrected_candidate_tree: 3d11fadf53a9a79345b55c3cbfed904b42dcdefc
+  focused_audit_final_disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_FOCUSED_AUDIT_AFTER_HIT_RECHECK
+  final_strict_typescript: passed
+  final_zero_access_regressions: 32_passed_0_failed_0_skipped
+  final_disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  closeout: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
+  closeout_commit: resulting_HEAD_of_this_revision
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -2030,6 +2041,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
+  - docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   - docs/reports/V3_6_CLOSEOUT.md
   - docs/V3_6_ARCHITECTURE_AND_INTERVIEW_GUIDE.md
   - docs/reports/V3_6_G2_CLOSEOUT.md
