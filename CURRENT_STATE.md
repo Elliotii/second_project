@@ -1,47 +1,47 @@
 # Current State
 
-> Updated: 2026-08-10
+> Updated: 2026-08-11
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_6_active
-  status: V3_6_FULL_OWNERSHIP_ACTIVATED
+  status: V3_6_GOAL_1_CLOSED_DOCKER_READINESS_PAUSED
 
-active_goal: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+active_goal: V3_6_DOCKER_READINESS_GATE
 
 last_executed_goal:
-  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
-  control_baseline_commit: 23592060f8fafd87d40180daef1a2350473978ae
-  implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
+  disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  control_baseline_commit: 9a7c61f0c8d7b4febd0aacbf4b5a74c4d6a164ef
+  implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
 
 last_closed_goal:
-  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
-  closeout: docs/reports/V3_5_G3_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
+  disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  closeout: docs/reports/V3_6_G1_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_5_G3_ADAPTIVE_HARNESS_WEBUI_DEMO
+  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_5_G3_GOAL_CONTRACT.md
-  disposition: PASS_V3_5_G3_LOCAL_INSPECTABLE_WORKBENCH
-  implementation_commit: b5c34033a4ff64d2bacd01279823611193834920
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
+  disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
 
 current_goal:
-  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
-  status: activated_pending_dedicated_implementation_start
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
+  id: V3_6_DOCKER_READINESS_GATE
+  status: paused_user_owned_docker_desktop_installation_and_license_acceptance_required
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
   execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
 
 next_goal:
   id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
-  status: authorized_after_goal_1_acceptance_and_docker_readiness
-  note: no_parallel_implementation_before_goal_1_acceptance
+  status: authorized_but_blocked_pending_docker_readiness
+  note: do_not_start_until_selected_docker_backend_passes_readiness_gate
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -303,21 +303,30 @@ v3_6_planning_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
   charter_status: accepted_activated
   goal_1_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
-  goal_1_status: activated_pending_dedicated_implementation_start
-  goal_1_control_baseline: git_commit_containing_this_state
-  goal_1_implementation_owner: new_top_level_goal_1_implementation_session
-  goal_1_implementation_started: false
-  active_goal: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  goal_1_status: closed_accepted
+  goal_1_disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  goal_1_control_baseline: 9a7c61f0c8d7b4febd0aacbf4b5a74c4d6a164ef
+  goal_1_control_baseline_tree: 716fa06558f273b557fb58f930dd00b557a7769c
+  goal_1_implementation_owner: completed_top_level_session_019feb69-6ead-7093-85ad-b8e508c26d6f
+  goal_1_implementation_started: true
+  goal_1_implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
+  goal_1_implementation_tree: 4630f6c5b42ed46ad2ed0f3ec644197c16519a8a
+  goal_1_tests: 37_passed_0_failed_0_skipped
+  goal_1_strict_typescript: passed
+  goal_1_real_access: credentials_0_network_0_provider_0_model_0_docker_project_commands_0
+  goal_1_closeout: docs/reports/V3_6_G1_CLOSEOUT.md
+  active_goal: V3_6_DOCKER_READINESS_GATE
   version_owner: current_main_session
   charter_created: true
   implementation_authorized: true_within_accepted_v3_6_scope
-  docker_cli_observed: absent_before_goal_2_readiness
+  docker_readiness_status: paused_user_owned_prerequisite_required
+  docker_cli_observed: absent_on_2026-08-11
   docker_desktop_install_and_license_acceptance: requires_user_action
   credential_reads_authorized: bounded_real_product_acceptance_after_execution_baseline
   real_model_calls_authorized: bounded_real_product_acceptance_after_execution_baseline
   pi_core_patch_authorized: false
   second_backend_or_host_fallback_authorized: false
-  next_action: freeze_charter_and_activate_goal_1
+  next_action: user_install_and_accept_docker_desktop_then_main_reruns_readiness_gate
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -1953,6 +1962,11 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
+  - docs/reports/V3_6_G1_CLOSEOUT.md
+  - docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
+  - docs/reports/V3_6_EXECUTION_BACKEND_SELECTION_REPORT.md
+  - docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
   - docs/reports/V3_5_CLOSEOUT.md
   - docs/reports/V3_5_G3_CLOSEOUT.md
   - docs/V3_5_ARCHITECTURE_AND_INTERVIEW_GUIDE.md

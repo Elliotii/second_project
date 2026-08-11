@@ -1,30 +1,32 @@
-# V3.6 Goal 1 Closeout Draft
+# V3.6 Goal 1 Closeout
 
 ```yaml
-status: draft_pending_main_review_and_acceptance
+status: closed_accepted
 goal_id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 control_baseline_commit: 9a7c61f0c8d7b4febd0aacbf4b5a74c4d6a164ef
 control_baseline_tree: 716fa06558f273b557fb58f930dd00b557a7769c
-implementation_commit: exact_resulting_commit_in_session_handoff
-implementation_tree: exact_resulting_tree_in_session_handoff
-recommended_disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
+implementation_tree: 4630f6c5b42ed46ad2ed0f3ec644197c16519a8a
+disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 acceptance_owner: Main_Session
-goal_2_authorized_by_this_draft: false
+accepted_on: 2026-08-11
+acceptance_control_commit: resulting_HEAD_of_this_revision
+goal_2_started_by_this_closeout: false
 ```
 
-## 1. Draft result
+## 1. Accepted result
 
 The dedicated Implementation Session completed the zero-access V3.6 Goal 1 control plane. A browser can submit only an opaque registered project ID, `inspect_only` or planned `bounded_edit`, free task text, an optional title and an optional existing Session ID. The Host generates identities, snapshots current registered Source into a managed copy, pins Session authority, persists immutable Run Authority before dispatch, continues a public Pi JSONL Session across fresh processes and exposes safe read-only projections.
 
-This draft recommends, but does not grant, `PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE`.
+Main accepts `PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE` after the bounded correction and integrated verification described below.
 
 ## Main bounded correction
 
 Main returned two concrete findings before acceptance. The amended Candidate now pins `file_write: false` and an explicit mode-dependent `planned_file_write` in the canonical capability identity, matching the safe Session view. It also exposes only the fixed `request rejected` message for unexpected HTTP failures while retaining vetted `HttpError` messages. Focused regressions independently recompute both mode digests and force a filesystem error containing an absolute Host path plus authority/secret-bearing material to prove it is absent from the response.
 
-## 2. Exit Criteria draft mapping
+## 2. Exit Criteria mapping
 
-| Exit Criterion | Draft evidence |
+| Exit Criterion | Accepted evidence |
 |---|---|
 | Host-only Authority and client-input separation | exact request schema plus ten injection-field HTTP/application cases |
 | capability identity truthfulness | independently recomputed stored pin for both modes matches actual `file_write: false` and explicit planned-write semantics |
@@ -53,13 +55,12 @@ Main returned two concrete findings before acceptance. The amended Candidate now
 
 ## 4. Claims boundary
 
-If Main accepts this draft, Goal 1 may claim a Host-owned registered Project/Profile surface, server-minted immutable interactive Authority, pinned managed-copy Sessions, truthful unverified interactive Evidence, exact inspect-only tools, safe Workspace/Skill/Adaptation projections and deterministic/Faux two-Turn public-Pi continuation.
+Goal 1 may claim a Host-owned registered Project/Profile surface, server-minted immutable interactive Authority, pinned managed-copy Sessions, truthful unverified interactive Evidence, exact inspect-only tools, safe Workspace/Skill/Adaptation projections and deterministic/Faux two-Turn public-Pi continuation.
 
 It may not claim Docker containment, project-command execution, actual bounded-edit enablement, ChangeSet or Source Apply/Discard, real open-agent behavior, Provider/model access, real-model continuation, statistical task improvement, crash recovery, exactly-once effects or production security.
 
-## 5. Remaining Main actions
+## 5. Main acceptance and next boundary
 
-1. Review the bounded Candidate, Source Delta, secret scan and raw Evidence Index.
-2. Decide whether a concrete unresolved high-risk finding exists. The Implementation Session found none and does not automatically request an audit.
-3. Accept, return a bounded correction package, or reject the Goal 1 recommendation.
-4. Only after acceptance, update `CURRENT_STATE.md` and evaluate the separate Docker Readiness Gate. This draft does not start Goal 2.
+Main reviewed the bounded Candidate, Source Delta, 22-file secret scan and raw Evidence Index, then reran strict TypeScript, Goal 1 9/9, V3.5 persistent 6/6, V3.5 Goal 3 11/11, Post-V3.5 11/11 and the loopback smoke from the integrated commit. No unresolved high-risk finding remains, so no independent audit is required.
+
+Goal 1 is closed. The separate Docker Readiness Gate observed no Docker CLI on 2026-08-11 and therefore pauses for the user-owned Docker Desktop installation/license action. Goal 2 has not started, and this Closeout does not weaken that prerequisite.

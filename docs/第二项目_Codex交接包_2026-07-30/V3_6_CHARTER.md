@@ -8,6 +8,10 @@ activation_control_commit: 06a94d4ce8c0034487da83a421191d152585aea9
 historical_functional_control_baseline: 00d0524a80b9c30f5ec141b733fb757e7a5f59d4
 selected_execution_backend: docker_engine_linux_container_via_docker_desktop_wsl2
 implementation_goals: 2
+goal_1_status: closed_accepted
+goal_1_disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+goal_1_implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
+docker_readiness_status: paused_user_owned_prerequisite_required
 pi_core_patch_authorized: false
 second_backend_authorized: false
 host_command_fallback_authorized: false
@@ -203,4 +207,3 @@ Compile, TypeScript, fixture, path, serialization, HTTP, UI, Docker argv and foc
 ## 13. Claims boundary
 
 On successful closeout the project may claim a Pi-based local Workbench with Host-minted open-task authority, pinned persistent Sessions, bounded Docker command execution, inspectable Evidence and user-reviewed immutable Change Handoff. It may not claim arbitrary untrusted-code security, statistical task improvement, autonomous self-evolution, arbitrary-project compatibility, multi-tenant isolation or immunity to Docker/Host kernel vulnerabilities.
-

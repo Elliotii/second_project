@@ -1,12 +1,14 @@
 # V3.6 Goal 1 Contract — Open Authority and Pinned Session Control Plane
 
 ```yaml
-status: accepted_activated
+status: closed_accepted
 goal_id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 accepted_by_user: 2026-08-10
 execution_owner: new_top_level_goal_1_implementation_session
 version_owner: Main_Session
-control_baseline: git_commit_containing_this_contract
+control_baseline: 9a7c61f0c8d7b4febd0aacbf4b5a74c4d6a164ef
+implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
+disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 implementation_commit_authorized: one_bounded_goal_branch_commit
 credential_reads_authorized: 0
 external_network_authorized: false
@@ -174,4 +176,3 @@ Normal TypeScript, fixture, path, serialization, HTTP, CSS/i18n and focused-test
 - Source Delta and secret scan;
 - one bounded implementation commit SHA;
 - a structured `CURRENT_STATE_UPDATE_PROPOSAL` in the Implementation Report, without modifying `CURRENT_STATE.md`.
-

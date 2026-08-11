@@ -12,13 +12,17 @@ WebUI maintenance are also closed and accepted. V3.6 preimplementation planning 
 Docker Engine Linux container via Docker Desktop WSL2 backend selection are accepted.
 The user has activated V3.6 under the accepted Full-Ownership Mandate. Main owns the
 Version Question, Charter, Goal acceptance, integration and final claim; Goal 1 and Goal 2
-implementation must be delegated to separate new top-level Implementation Sessions.
-Docker Desktop installation and license acceptance still require the user. Pi Core changes,
-a second backend, Host command fallback, SDK/Extension/RPC switching and V4 remain unauthorized.
-V3.6 Goal 1 is active under `V3_6_G1_GOAL_CONTRACT.md`; it is a zero-Credential,
-zero-network, zero-Provider/model, no-Docker implementation owned by a new top-level
-Implementation Session. Main may review, return ordinary defects to that Session and integrate,
-but must not silently implement Goal 1 source.
+implementation use separate new top-level Implementation Sessions. V3.6 Goal 1 is closed
+and accepted as `PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE` at exact
+implementation commit `81bc7c8b5667efaa0c10df507a7a0d2a59827e1e`. It proves only the
+zero-access Host authority, pinned persistent Session, safe managed-copy inspection and
+deterministic/Faux continuation substrate stated in its Closeout.
+
+V3.6 is currently paused at the Charter-defined Docker Readiness Gate because the Docker
+CLI is absent. Docker Desktop installation and license acceptance are user-owned actions.
+Do not start Goal 2, select another backend or add Host fallback until the selected Docker
+Engine Linux-container backend passes readiness. Pi Core changes, a second backend,
+SDK/Extension/RPC switching and V4 remain unauthorized.
 
 Preserve these binding facts:
 
