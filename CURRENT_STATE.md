@@ -45,9 +45,12 @@ post_v3_6_budget_stop_maintenance:
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   accepted_by_user: 2026-08-12
-  control_baseline_commit: resulting_HEAD_of_this_activation_revision
-  implementation_owner: future_new_top_level_zero_call_session
-  implementation_started: false
+  control_baseline_commit: 1564361a1fd952d38fc58f08202b4fb89950ed07
+  control_baseline_tree: 210ed728c795fa4d18e85e3cee48af4ee475bced
+  implementation_owner: top_level_session_019ff1c5-a8db-7642-971c-dfa31520521e
+  implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/bcef/project2
+  implementation_started: true
+  implementation_prompt: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_IMPLEMENTATION_SESSION_START_PROMPT.md
   focused_audit_owner: future_fresh_top_level_read_only_session_after_candidate_freeze
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
