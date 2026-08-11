@@ -1,6 +1,6 @@
 # Current State
 
-> Updated: 2026-08-11
+> Updated: 2026-08-12
 
 ```yaml
 project:
@@ -8,7 +8,7 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: null
+active_goal: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
 
 last_executed_goal:
   id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
@@ -32,12 +32,32 @@ last_completed_goal:
   disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
   implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
 
-current_goal: null
+current_goal: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
 
 next_goal:
   id: null
   status: not_authorized
   note: V4_or_any_new_version_requires_new_user_authorized_design_review
+
+post_v3_6_budget_stop_maintenance:
+  goal_id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  status: accepted_activated_pre_implementation
+  version_status: V3_6_remains_closed_accepted
+  contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  accepted_by_user: 2026-08-12
+  control_baseline_commit: resulting_HEAD_of_this_activation_revision
+  implementation_owner: future_new_top_level_zero_call_session
+  implementation_started: false
+  focused_audit_owner: future_fresh_top_level_read_only_session_after_candidate_freeze
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  provider_request_limit_change_authorized: false
+  same_failed_session_continuation_authorized: false
+  apply_unverified_budget_stopped_changes_authorized: false
+  pi_core_patch_authorized: false
+  sdk_extension_rpc_switch_authorized: false
+  v4_authorized: false
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md

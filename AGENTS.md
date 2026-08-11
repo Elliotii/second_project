@@ -32,6 +32,17 @@ the Host applied one authenticated ChangeSet. V3.6 is closed and accepted as
 Pi Core changes, a second backend, Host fallback, SDK/Extension/RPC switching, further
 Credential/model/network access, extra tasks and V4 remain unauthorized.
 
+The user accepted and activated the single post-closeout maintenance Goal
+`POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE` on 2026-08-12. V3.6 remains closed
+and accepted. This Goal only makes the exact local pre-dispatch Provider-request budget
+stop typed, persistent, inspectable and safe for Diff/Export/Discard while denying Apply
+and same-failed-Session continuation. It does not change the 16-request cap, authorize any
+real access, retry the failed UX task, modify Pi or enter V4. Main owns control, Candidate
+and acceptance; one new top-level zero-call Implementation Session owns source/tests and
+one later fresh top-level read-only Session owns the narrowly scoped audit. The binding
+Contract is
+`docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md`.
+
 Preserve these binding facts:
 
 - V2 is closed with limited mechanism evidence; its sole real Negative produced no
