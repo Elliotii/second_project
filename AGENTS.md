@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository contains the accepted V0–V3.5 implementation of a reliability-first
+This repository contains the accepted V0–V3.6 implementation of a reliability-first
 Adaptive Coding Agent Harness built on public Direct Pi `AgentHarness`.
 
 V3.5 is closed and accepted as
@@ -20,15 +20,17 @@ deterministic/Faux continuation substrate stated in its Closeout.
 
 V3.6 Docker Readiness is closed and passed on Docker Desktop 4.85.0 / Engine 29.6.2
 with exact image `node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03`.
-Goal 2 is active under `V3_6_G2_GOAL_CONTRACT.md`. Its corrected zero-access
+Goal 2 is closed and accepted under `V3_6_G2_GOAL_CONTRACT.md`. Its corrected zero-access
 implementation is frozen at `5ec7d2b0e81e54e2c8a73200e39f45ba631b244f`; Main review,
 79/79 deterministic regressions, 15/15 Docker-focused tests with zero leftovers, and
 the focused audit disposition `PASS_V3_6_G2_FOCUSED_AUDIT` support deterministic
-acceptance. The remaining Goal 2 work is exactly one fresh no-source-edit real product
-Session running the frozen two-Turn Journey from the exact Execution Baseline, followed
-by Main review and V3.6 Closeout. Pi Core changes, a second backend, Host fallback,
-SDK/Extension/RPC switching, retry/fallback/replacement, extra tasks and V4 remain
-unauthorized.
+acceptance. One fresh no-source-edit real product Session then completed the frozen
+two-Turn Journey from Execution Baseline `781e95211e7cc6beb572c50ec18e36e0a952b1f9`:
+both Runs settled in one persistent Session, the frozen Docker Verifier passed 3/3, and
+the Host applied one authenticated ChangeSet. V3.6 is closed and accepted as
+`PASS_V3_6_OPEN_INTERACTIVE_AGENT_MODE_WITH_BOUNDED_DOCKER_EXECUTION_AND_REAL_CHANGE_HANDOFF`.
+Pi Core changes, a second backend, Host fallback, SDK/Extension/RPC switching, further
+Credential/model/network access, extra tasks and V4 remain unauthorized.
 
 Preserve these binding facts:
 
@@ -47,9 +49,9 @@ Preserve these binding facts:
   `b5c34033a4ff64d2bacd01279823611193834920`. Its HTTP surface is loopback-only,
   evidence projections are non-authoritative, and browser State mutation is deferred.
 - Fixed Pi remains `027a5847901b5dde30270abaa1041046cd2b4b55` with zero Pi Core patches.
-- All V3.5 Credential, external-network, Provider/model and real-execution authority is
-  consumed. Do not create a new Goal, reopen an accepted version or enter V4 without
-  explicit user authorization.
+- All V3.5 and V3.6 Credential, external-network, Provider/model and real-execution
+  authority is consumed. Do not create a new Goal, reopen an accepted version or enter
+  V4 without explicit user authorization.
 
 ## Required Read Order
 
@@ -113,6 +115,7 @@ When working inside `.upstream/pi`, read every applicable Pi `AGENTS.md` complet
 - Bundle compatible Main and audit findings into the smallest correction package and return it to the original implementation Session. Re-review only affected findings and necessary regressions. If further material work is needed, reassess the route and Contract rather than multiplying documents or Sessions; continue when the objective remains safely achievable and authorized.
 - Independent audit is risk-driven, not automatic for every Goal or correction. Use a separate audit Session when a frozen candidate changes or depends on high-risk control-flow, lineage, budget/stop, secret/evidence, terminalization, permission, or external-side-effect boundaries, or when the user explicitly requests independent review.
 - An independent audit Session may inspect source, run authorized regressions, and create audit-local ignored evidence plus an audit report. It must not repair source, modify control state, create the candidate commit, accept the Goal, or broaden a focused audit into a general platform review.
+- If an existing audit Session is paused only for a user approval prompt, preserve that Session and wait for the user's decision (or pause the enclosing Goal). Do not create a replacement audit merely to bypass or repeat the pending approval.
 - When main review or audit finds a correctable implementation defect, return a bounded correction prompt to the original implementation Session. Main Session and audit Session do not silently repair it. Re-audit only the affected findings and required regressions unless new concrete evidence justifies broader scope.
 - For V1-B, keep the accepted temporary roles distinct when separately authorized: a dedicated zero-call Stage 1 Preparation Session with only Contract-listed source-edit authority; a fresh focused independent Audit Session for the frozen Candidate; the original Preparation Session for any bounded correction; and a fresh Stage 2 Execution Session with no source, fixture, test, Manifest, control-state, staging, or commit authority. The Main Session alone creates Candidate and Execution Baseline commits and accepts results.
 - V1-B Stage 1 and the accepted pause-path correction/audit must use zero credentials, network, external-provider calls, and real-model calls. Stage 2 authority is separate and does not flow backward. The Session that observes real arm outcomes must not edit source. V1-B uses the accepted 24-cell bounded descriptive Pilot, one-cell-at-a-time Manifest-enforced execution, no fallback/same-Run retry/automatic replacement, and the accepted cost cap only after separate user authorization. For the accepted replacement sequence, preserve the original evidence, debit USD 0.10 conservatively, cap replacement actual cost at USD 1.90 and allow at most 25 started initial Runs across original plus replacement Pilots.

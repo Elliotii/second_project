@@ -1,7 +1,7 @@
 # V3.6 Version Charter — Open Interactive Agent Mode
 
 ```yaml
-status: accepted_activated_goal_2_deterministic_accepted_real_execution_pending
+status: closed_accepted
 accepted_by_user: 2026-08-10
 version_owner: Main_Session
 activation_control_commit: 06a94d4ce8c0034487da83a421191d152585aea9
@@ -13,12 +13,17 @@ goal_1_disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 goal_1_implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
 docker_readiness_status: closed_passed
 docker_readiness_report: docs/reports/V3_6_DOCKER_READINESS_REPORT.md
-goal_2_status: deterministic_accepted_pending_fresh_no_source_edit_real_execution
+goal_2_status: closed_accepted
 goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
 goal_2_corrected_implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
 goal_2_focused_audit_disposition: PASS_V3_6_G2_FOCUSED_AUDIT
 goal_2_execution_baseline: 781e95211e7cc6beb572c50ec18e36e0a952b1f9
 goal_2_execution_baseline_tree: 6a54c220d7286560d6e4e0ea52f34c39fb5718ae
+goal_2_real_execution_report: docs/reports/V3_6_G2_REAL_PRODUCT_ACCEPTANCE_REPORT.md
+goal_2_disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
+goal_2_closeout: docs/reports/V3_6_G2_CLOSEOUT.md
+version_disposition: PASS_V3_6_OPEN_INTERACTIVE_AGENT_MODE_WITH_BOUNDED_DOCKER_EXECUTION_AND_REAL_CHANGE_HANDOFF
+version_closeout: docs/reports/V3_6_CLOSEOUT.md
 pi_core_patch_authorized: false
 second_backend_authorized: false
 host_command_fallback_authorized: false
@@ -214,3 +219,13 @@ Compile, TypeScript, fixture, path, serialization, HTTP, UI, Docker argv and foc
 ## 13. Claims boundary
 
 On successful closeout the project may claim a Pi-based local Workbench with Host-minted open-task authority, pinned persistent Sessions, bounded Docker command execution, inspectable Evidence and user-reviewed immutable Change Handoff. It may not claim arbitrary untrusted-code security, statistical task improvement, autonomous self-evolution, arbitrary-project compatibility, multi-tenant isolation or immunity to Docker/Host kernel vulnerabilities.
+
+## 14. Accepted result
+
+V3.6 is closed and accepted under Main's user-authorized Full-Ownership Mandate. Goal 1
+passed its zero-access control-plane contract. Goal 2 passed deterministic review and a
+focused audit, then completed the single frozen real Journey from Execution Baseline
+`781e95211e7cc6beb572c50ec18e36e0a952b1f9`: two settled Turns in one persistent Session,
+the fixed Docker Verifier passed 3/3, one immutable ChangeSet was applied through the Host
+handoff, and no retry, fallback or replacement occurred. The precise limitations remain
+those in this Charter and `docs/reports/V3_6_CLOSEOUT.md`.

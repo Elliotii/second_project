@@ -1,11 +1,11 @@
 # V3.6 Goal 2 Contract — Bounded Execution, Change Handoff and Product Acceptance
 
 ```yaml
-status: accepted_activated_deterministic_accepted_real_execution_pending
+status: closed_accepted
 goal_id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
 version_owner: Main_Session
 implementation_owner: completed_top_level_session_019ff037-fe8d-7242-bbf4-0cf71a95929d
-real_execution_owner: pending_fresh_top_level_no_source_edit_session
+real_execution_owner: completed_top_level_session_019ff0d2-d6f4-7701-a525-603f974435ed
 control_baseline: resulting_HEAD_of_this_revision
 readiness_report: docs/reports/V3_6_DOCKER_READINESS_REPORT.md
 implementation_real_model_calls_authorized: 0
@@ -17,6 +17,9 @@ corrected_implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
 focused_audit_disposition: PASS_V3_6_G2_FOCUSED_AUDIT
 execution_baseline: 781e95211e7cc6beb572c50ec18e36e0a952b1f9
 execution_baseline_tree: 6a54c220d7286560d6e4e0ea52f34c39fb5718ae
+real_execution_report: docs/reports/V3_6_G2_REAL_PRODUCT_ACCEPTANCE_REPORT.md
+disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
+closeout: docs/reports/V3_6_G2_CLOSEOUT.md
 pi_core_patch_authorized: false
 second_backend_authorized: false
 host_command_fallback_authorized: false
@@ -237,3 +240,14 @@ Ordinary TypeScript, Docker argv, fixture, path, serialization, HTTP, UI, CSS/i1
 - structured `CURRENT_STATE_UPDATE_PROPOSAL` without changing control files.
 
 After returning those materials, the Implementation Session stops for Main review. It does not execute the real Journey or accept Goal 2/V3.6.
+
+## 13. Accepted result
+
+The dedicated implementation stopped at its required boundary. Main froze Execution
+Baseline `781e95211e7cc6beb572c50ec18e36e0a952b1f9`, and a separate no-source-edit Session
+completed the only authorized real Journey. Both Turns settled in one persistent Session;
+the frozen Docker Verifier passed 3/3; the Host applied exactly one authenticated modified
+file; all budgets held; and retry, fallback and replacement stayed zero. Main therefore
+accepts the Goal as
+`PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE` under the
+previously authorized Full-Ownership Mandate.

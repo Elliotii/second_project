@@ -1,7 +1,7 @@
-# V3.6 Goal 2 Closeout Draft
+# V3.6 Goal 2 Closeout Draft (Superseded)
 
 ```yaml
-status: DRAFT_CORRECTED_PENDING_MAIN_REVIEW
+status: superseded_by_V3_6_G2_CLOSEOUT
 goal_id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
 control_baseline_commit: 992f721c4f05b7c78761966c7b8f79a6b4b3a2d3
 initial_implementation_commit: 20dbe4c11aa5b1a64d75dfa63b6893536adb021f

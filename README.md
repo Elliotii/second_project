@@ -1,95 +1,93 @@
 # Adaptive Coding Agent Harness Workbench
 
-这是一个基于公共 Pi `AgentHarness` 的可靠性优先 Coding Agent Workbench。它不重新
-实现 Agent Loop，而是在 Pi 外部增加受控 Workspace、Run/Attempt、环境 Verifier、
-Trace/Evidence、有限恢复、Harness State 生命周期、持久 Session 和安全可检查界面。
-
-## 当前状态
+这是一个基于公共 Pi `AgentHarness` 的可靠性优先 Coding Agent Workbench。项目不重新实现 Agent Loop，而是在 Pi 外部负责 Workspace、Session/Run、环境 Verifier、Trace/Evidence、有界恢复、可版本化 Harness State、持久化检查界面，以及 V3.6 的受控 Docker 执行与 Change Handoff。
 
 ```yaml
-latest_version: V3.5
+latest_version: V3.6
 status: closed_accepted
 active_goal: null
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_core_patches: 0
 ```
 
-V3.5 的正式定位是：
-
-> **Persistent & Inspectable Adaptive Harness Workbench**
-
-当前系统能够保存并重开 settled Session、关联 Session 与 Run/evidence、展示 recovery
-与 Base/Candidate comparison、持久化 Harness State 的 Promote/Reject/Rollback 和
-selective binding，并通过本地 WebUI 解释完整的适配证据链。
-
-## 架构
+## 当前能力
 
 ```text
-Browser
-  -> 127.0.0.1-only API/static UI
-  -> Workbench application + safe Read Model
-  -> Session / Run / Verifier / State controllers
+Browser / local product entry
+  -> loopback-only Workbench API and safe projections
+  -> Host-minted Run Authority and pinned persistent Session
   -> public Direct Pi AgentHarness
-  -> bounded Workspace + external environment Verifier
+  -> managed_session_copy
+  -> registered commands in one bounded Docker backend
+  -> immutable Trace / Verifier / ChangeSet
+  -> user-reviewed Host Apply All / Discard / Export
 ```
 
-Pi 负责公共 Agent/Tool/Session Runtime。Workbench 负责环境结果、实验身份、证据、
-恢复预算、State publication 和可检查投影。浏览器和模型都不拥有 Verifier、Promotion、
-hard budget/security 或 active-State authority。
+Pi 负责公共 Agent、消息、Tool 和 Session Runtime。Workbench 负责模型不能拥有的权威：Project/Workspace、预算、Verifier、Outcome、Evidence、Harness State、Docker profile、ChangeSet 和 registered Source Apply。
 
-## 本地演示
+V3.6 已完成：
 
-从 `workbench/` 运行：
-
-```powershell
-npm run v35g3:demo
-```
-
-然后打开 `http://127.0.0.1:43135`。
-
-演示使用 dependency-free 静态 UI 和 Node 内置 HTTP，只绑定 IPv4 loopback。默认数据是
-sanitized、derived、non-authoritative 的 deterministic/Faux projection。浏览器不存在
-任意文件路径、Credential、Provider、shell、artifact download 或 State mutation 接口。
+- 开放任务入口只接受窄的浏览器 schema；Host 生成并持久化不可变 Authority；
+- Session 固定 Project、Source snapshot、Harness State、capability、provider policy 和 execution backend identity；
+- 只允许注册命令 ID，Host 将其解析为固定 argv；
+- 项目命令只在固定 Docker Desktop WSL2/Linux backend 中运行，容器网络为 `none`，无 Host fallback；
+- Agent 只修改 `managed_session_copy`，不能直接修改 registered Source；
+- settled Workspace 形成不可变 ChangeSet，Host 在完整 preflight 后执行 Apply All、Discard 或 Export；
+- 一个真实 DeepSeek V4 Flash 两 Turn Journey 在同一持久 Session 中完成，Verifier 通过并由 Host Apply 一个文件；
+- 中英文 WebUI 继续只展示安全派生信息，不拥有 Credential、Docker、Verifier、State 或 Source mutation authority。
 
 ## 版本路线结果
 
-| Version | 结果 |
-|---|---|
-| V0 | 最小真实 Coding Task、Workspace、Session、Trace、Verifier 和 Outcome 闭环 |
-| V1 | Baseline、Skill-only、Skill + Runtime Control 的有界描述性比较 |
-| V2 | 有界多路径恢复和环境选择机制；真实 Negative evidence 不完整 |
-| V3 | Evidence → Candidate → Validate → Promote/Reject/Rollback → selective binding |
-| V3.5 | persistent Session/Run、一个有效真实 Skill Pair、local inspectable WebUI |
+| Version | 核心问题 | 已接受结果 |
+|---|---|---|
+| V0 | 能否运行、控制、追踪并从环境验证 Coding Task？ | 最小可用 Workbench 闭环 |
+| V1 | Baseline、Skill-only、Skill + Runtime Control 如何比较？ | 有界描述性证据，无通用赢家 |
+| V2 | 失败轨迹能否形成少量替代路径并由环境选择？ | 机制成立；真实 Negative 证据不完整 |
+| V3 | Evidence 能否转化为可验证、晋级、拒绝、回滚和选择性绑定的 Harness State？ | Prompt/Skill State 生命周期与一条真实 Prompt 路径 |
+| V3.5 | 系统能否持久化、检查和演示？ | settled Session reopen/continue、Read Model、WebUI 和一个有效 Skill Pair |
+| V3.6 | 开放交互如何获得受控执行和用户审阅的 Source handoff？ | Host Authority、固定 Docker backend、不可变 ChangeSet 和一个真实两 Turn产品闭环 |
 
-V3.5 Goal 2.5 的真实 Pair 中 Base 与 Candidate 都通过，Candidate 使用更多 tokens；项目
-不声称 Skill 获胜、普遍提升或统计显著性。
+## 本地体验
 
-## 必读文件
+从 `workbench/` 运行零真实调用的 V3.6 控制平面：
+
+```powershell
+npm.cmd run v36g1:demo
+```
+
+打开 `http://127.0.0.1:43136`。该界面可创建/继续 Session、查看固定上下文、Workspace、Changes、Diff 和 handoff 状态。普通自由任务仍默认为 `unverified`，Agent 自称完成不等于正式 PASS。
+
+确定性 Goal 2 回归：
+
+```powershell
+$env:V36_DOCKER_EXECUTABLE = 'C:/Users/HUAWEI/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe'
+npm.cmd run v36g2:test
+```
+
+真实 `v36g2:product` 是受治理的固定验收入口，不是随意消耗 Credential 的日常命令。精确用法、预算和证据边界见 [Workbench README](./workbench/README.md) 与 [V3.6 Closeout](./docs/reports/V3_6_CLOSEOUT.md)。
+
+## 关键证据
+
+- Pi：`027a5847901b5dde30270abaa1041046cd2b4b55`，clean，零 Core patch；
+- V3.6 Goal 1 implementation：`81bc7c8b5667efaa0c10df507a7a0d2a59827e1e`；
+- V3.6 Goal 2 corrected implementation：`5ec7d2b0e81e54e2c8a73200e39f45ba631b244f`；
+- Goal 2 Execution Baseline：`781e95211e7cc6beb572c50ec18e36e0a952b1f9`；
+- 真实 Journey：1 Session、2 Runs、11 Provider requests、10 Tool calls、53,597 tokens、USD `0.0025941608`；
+- Verifier：3/3 passed；Host Apply：成功；Docker leftovers：0；
+- 最终零真实调用回归：strict TypeScript + 79/79 tests。
+
+## Claims 与边界
+
+项目可以声称：公共 Pi 上的 Host-minted open-task authority、固定持久 Session、环境 Verifier、受控 Docker registered-command execution、不可变 Evidence/ChangeSet、用户审阅的 Host Apply，以及可解释的 Prompt/Skill Harness State 生命周期。
+
+项目不声称：任意不可信代码的完备安全、生产级 sandbox、多租户隔离、in-flight crash recovery、exactly-once Tool effects、多文件事务、自动 rollback、任意项目兼容、统计显著的模型/Skill 提升、自动持续自进化、完整 IDE 或 Pi feature parity。
+
+## 阅读路径
 
 1. [Current State](./CURRENT_STATE.md)
-2. [V3.5 Closeout](./docs/reports/V3_5_CLOSEOUT.md)
-3. [Architecture, Demo and Interview Guide](./docs/V3_5_ARCHITECTURE_AND_INTERVIEW_GUIDE.md)
-4. [Goal 3 Demo Guide](./docs/reports/V3_5_G3_DEMO_GUIDE.md)
-5. [Workbench implementation guide](./workbench/README.md)
-6. [Current project plan](./SECOND_PROJECT_CURRENT_PLAN第二项目当前规划.md)
+2. [V3.6 Closeout](./docs/reports/V3_6_CLOSEOUT.md)
+3. [V3.6 Architecture and Interview Guide](./docs/V3_6_ARCHITECTURE_AND_INTERVIEW_GUIDE.md)
+4. [V3.6 Goal 2 Closeout](./docs/reports/V3_6_G2_CLOSEOUT.md)
+5. [Workbench README](./workbench/README.md)
 
-## 目录边界
-
-- `.upstream/pi/`：固定只读 Pi checkout，不计入项目实现；
-- `workbench/`：正式 Workbench 源码和测试；
-- `fixtures/`：冻结任务、Verifier 和 portable demo projection；
-- `docs/reports/`：Goal/Version evidence、审查和 Closeout；
-- `docs/decisions/`：已接受 ADR；
-- `.runs/`：生成的 Workspace、Session、Trace 和 evidence，不进入 Git；
-- `reference/`：用户控制的只读研究资料，不进入项目提交。
-
-## 准确的能力边界
-
-本项目可以声称 persistent settled Session、environment-grounded verification、bounded
-recovery、typed Harness State 和 local inspectability。
-
-本项目不声称 in-flight crash recovery、exactly-once Tool effects、production multi-user
-durability、general Skill superiority、semantic Memory、Router/Curator、自动 continual
-self-evolution、完整 IDE 或 Pi feature parity。
-
-V4 或后续版本尚未授权。
+`.upstream/pi/`、`.runs/` 和 `reference/` 分别是固定上游、生成证据和用户控制参考资料，不进入项目实现提交。

@@ -1,4 +1,8 @@
-# Agent Harness Reliability Workbench — V0
+# Agent Harness Reliability Workbench — V3.6
+
+V3.6 is closed and accepted. The Workbench retains the accepted V0–V3.5 reliability,
+adaptation, persistence and inspectability layers, and adds Host-minted open-task
+authority, one bounded Docker execution backend and immutable Change Handoff.
 
 V0-A, V0-B, and V0-C are closed and accepted. Together they form a minimum
 Workbench that can run a bounded Coding Task through the public Pi
@@ -418,8 +422,13 @@ model input.
 npm run v36g2:product -- run --source-root <fresh-frozen-source> --execution-baseline-commit <sha> --data-root <absent-runtime-root> --evidence-root <absent-evidence-root> --docker-executable <host-docker-executable> --real-journey-authority V3_6_G2_REAL_TWO_TURN_EXECUTION_AUTHORIZED
 ```
 
-All free-task Runs remain explicitly `unverified` and have no formal Outcome. This
-deterministic implementation does not perform or authorize the separately governed real
-two-Turn product Journey, Credential access, external network/provider/model calls, a
-second execution backend, Pi Core changes, or browser-supplied image/argv/mount/profile
-configuration.
+All ordinary free-task Runs remain explicitly `unverified` and have no formal Outcome.
+The separately governed real acceptance completed exactly one frozen two-Turn Journey
+from Execution Baseline `781e95211e7cc6beb572c50ec18e36e0a952b1f9`. Both Runs settled
+in one persistent Session; the fixed network-none Docker Verifier passed 3/3; one
+authenticated `src/parse-duration.js` ChangeSet was applied by the Host; and the Journey
+used 11 Provider requests, 10 Tool calls, 53,597 tokens and USD `0.0025941608`, with zero
+retry, fallback or replacement. This does not authorize another real Journey, a second
+execution backend, Pi Core changes, or browser-supplied image/argv/mount/profile
+configuration. See `../docs/reports/V3_6_G2_REAL_PRODUCT_ACCEPTANCE_REPORT.md` and
+`../docs/reports/V3_6_CLOSEOUT.md` for the exact evidence and limits.

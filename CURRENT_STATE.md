@@ -5,43 +5,39 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_6_active
-  status: V3_6_GOAL_2_DETERMINISTIC_ACCEPTED_REAL_EXECUTION_PENDING
+  phase: v3_6_completed
+  status: V3_6_CLOSED_ACCEPTED
 
-active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+active_goal: null
 
 last_executed_goal:
-  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
-  disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
-  control_baseline_commit: 9a7c61f0c8d7b4febd0aacbf4b5a74c4d6a164ef
-  implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
+  disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
+  execution_baseline_commit: 781e95211e7cc6beb572c50ec18e36e0a952b1f9
+  closeout: docs/reports/V3_6_G2_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
+  id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
-  disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
-  closeout: docs/reports/V3_6_G1_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
+  disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
+  closeout: docs/reports/V3_6_G2_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G1_GOAL_CONTRACT.md
-  disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
-  implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
-
-current_goal:
   id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
-  status: deterministic_accepted_pending_fresh_no_source_edit_real_execution
+  status: closed_accepted
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
-  execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
+  disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
+  implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
+
+current_goal: null
 
 next_goal:
-  id: V3_6_FINAL_CLOSEOUT
-  status: authorized_after_goal_2_deterministic_and_bounded_real_acceptance
-  note: no_V4_or_scope_expansion
+  id: null
+  status: not_authorized
+  note: V4_or_any_new_version_requires_new_user_authorized_design_review
 
 v3_control:
   charter: docs/第二项目_Codex交接包_2026-07-30/V3_VERSION_CHARTER.md
@@ -324,7 +320,7 @@ v3_6_planning_control:
   docker_platform: linux_amd64
   docker_image: node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
-  goal_2_status: deterministic_accepted_pending_fresh_no_source_edit_real_execution
+  goal_2_status: closed_accepted
   goal_2_implementation_owner: completed_top_level_session_019ff037-fe8d-7242-bbf4-0cf71a95929d
   goal_2_control_baseline: 992f721c4f05b7c78761966c7b8f79a6b4b3a2d3
   goal_2_initial_implementation_commit: 20dbe4c11aa5b1a64d75dfa63b6893536adb021f
@@ -339,20 +335,36 @@ v3_6_planning_control:
   goal_2_main_host_docker_focused_tests: 15_passed_0_failed_0_skipped_zero_leftovers
   goal_2_execution_baseline_commit: 781e95211e7cc6beb572c50ec18e36e0a952b1f9
   goal_2_execution_baseline_tree: 6a54c220d7286560d6e4e0ea52f34c39fb5718ae
-  goal_2_real_execution_owner: pending_fresh_top_level_no_source_edit_session
-  goal_2_real_execution_status: authorized_not_started
+  goal_2_real_execution_owner: completed_top_level_session_019ff0d2-d6f4-7701-a525-603f974435ed
+  goal_2_real_execution_status: completed_once_accepted
+  goal_2_real_execution_report: docs/reports/V3_6_G2_REAL_PRODUCT_ACCEPTANCE_REPORT.md
+  goal_2_real_session_id: v36-session-0e495322-26c4-47f5-aebb-8fcfce20090d
+  goal_2_real_run_ids: v36-run-36f129e7-82dd-43cf-b357-e8a74645ab0b_and_v36-run-bc42cccf-fa1e-42b2-ab46-427f6e6fe81c
+  goal_2_real_verifier: passed_3_of_3
+  goal_2_real_apply: applied_one_modify_src_parse_duration_js
+  goal_2_real_usage: provider_11_tool_10_tokens_53597_cost_usd_0_0025941608
+  goal_2_real_access: credential_reads_2_network_11_provider_11_model_11
+  goal_2_real_retry_fallback_replacement: 0_0_0
+  goal_2_real_docker_leftovers: 0
+  goal_2_disposition: PASS_V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_REAL_PRODUCT_ACCEPTANCE
+  goal_2_closeout: docs/reports/V3_6_G2_CLOSEOUT.md
   goal_2_implementation_real_access: credentials_0_provider_0_model_0
-  active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
+  active_goal: null
   version_owner: current_main_session
   charter_created: true
   implementation_authorized: true_within_accepted_v3_6_scope
   docker_cli_observed: present_and_engine_ready_on_2026-08-11
   docker_desktop_install_and_license_acceptance: user_authorized_completed
-  credential_reads_authorized: bounded_real_product_acceptance_after_execution_baseline
-  real_model_calls_authorized: bounded_real_product_acceptance_after_execution_baseline
+  credential_reads_authorized: consumed_no_further_reads_authorized
+  real_model_calls_authorized: consumed_no_further_calls_authorized
   pi_core_patch_authorized: false
   second_backend_or_host_fallback_authorized: false
-  next_action: confirm_execution_baseline_and_start_fresh_no_source_edit_real_product_session
+  final_regression: strict_typescript_plus_79_passed_0_failed_0_skipped
+  v3_6_status: closed_accepted
+  v3_6_disposition: PASS_V3_6_OPEN_INTERACTIVE_AGENT_MODE_WITH_BOUNDED_DOCKER_EXECUTION_AND_REAL_CHANGE_HANDOFF
+  v3_6_closeout: docs/reports/V3_6_CLOSEOUT.md
+  v3_6_closeout_commit: resulting_HEAD_of_this_revision
+  next_action: user_project_review_no_new_version_authorized
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS
@@ -1988,6 +2000,10 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/V3_6_CLOSEOUT.md
+  - docs/V3_6_ARCHITECTURE_AND_INTERVIEW_GUIDE.md
+  - docs/reports/V3_6_G2_CLOSEOUT.md
+  - docs/reports/V3_6_G2_REAL_PRODUCT_ACCEPTANCE_REPORT.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_6_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
   - docs/reports/V3_6_DOCKER_READINESS_REPORT.md
@@ -2169,23 +2185,26 @@ historical_checkpoints:
   - next_step_create_and_verify_Goal_2_5_control_baseline_then_start_new_top_level_zero_access_session
 
 next_checkpoint:
-  - V3_5_closed_accepted
+  - V3_6_closed_accepted
   - active_goal_null
-  - preserve_Goal_2_inconclusive_and_Goal_2_5_no_skill_advantage_facts
-  - no_later_version_or_real_access_authorized
+  - preserve_V2_real_negative_incomplete_and_V3_5_no_skill_advantage_facts
+  - preserve_V3_6_single_real_fixed_case_and_non_general_security_limits
+  - no_V4_or_further_real_access_authorized
 
 open_user_decisions:
-  - none_for_V3_5
+  - none_for_V3_6_closeout
   - any_V4_or_later_work_requires_new_user_authorized_design_review
 ```
 
 ## Current Constraints
 
-- V3.5 is closed and accepted; no Goal is active.
-- Do not reopen V2, V3 or V3.5, start V4, call a model, read a Credential, use external
-  network or modify Pi without new explicit user authority.
+- V3.6 is closed and accepted; no Goal is active.
+- Do not reopen V2, V3, V3.5 or V3.6, start V4, call a model, read a Credential, use
+  external network or modify Pi without new explicit user authority.
 - Preserve Goal 2 as inconclusive and Goal 2.5 as one valid Pair with no observed Skill
   task-success advantage.
+- Preserve V3.6 as one fixed real two-Turn product Journey, not proof of arbitrary-project
+  compatibility, general model quality or production sandbox security.
 
 - Keep `.upstream/pi` immutable as the reference checkout.
 - Preserve `.runs/g002` and `.runs/g003` as ignored generated evidence; do not
