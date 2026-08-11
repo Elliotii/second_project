@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { cpSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall } from "@earendil-works/pi-ai";
 import { FROZEN_DOCKER_PROFILE_V36 } from "../src/execution/docker-v36.ts";
@@ -34,6 +34,51 @@ function raw(port: number, path: string, method = "GET", body?: unknown): Promis
 		if (bytes) req.write(bytes);
 		req.end();
 	});
+}
+
+function writeFauxDockerCommandEvidence(input: InteractiveDispatchInputV36, commandId: string) {
+	const commandRoot = resolve(dirname(input.authority_path), "docker-commands", "command-1");
+	mkdirSync(commandRoot, { recursive: true });
+	const authorityBody = {
+		schema_version: 1 as const,
+		authority_kind: "v36_docker_registered_command" as const,
+		execution_id: `v36-docker-${input.run_id}`,
+		command_id: commandId,
+		executable: "node" as const,
+		argv: ["--test"],
+		workspace_identity: sha256(`${input.run_id}-workspace`),
+		backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest,
+		created_at: "2026-08-12T00:00:00.000Z",
+	};
+	const authority = { ...authorityBody, authority_digest: digestObject(authorityBody) };
+	const terminalBody = {
+		schema_version: 1 as const,
+		execution_id: authority.execution_id,
+		command_id: commandId,
+		authority_digest: authority.authority_digest,
+		backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest,
+		status: "nonzero_exit" as const,
+		create: { attempted: true, succeeded: true, container_identity: sha256(`${input.run_id}-container`) },
+		start: { attempted: true, succeeded: true },
+		output: { stdout: "", stderr: "faux registered command failed", combined_bytes_observed: 30, truncated: false },
+		inspect: { attempted: true, succeeded: true, exit_code: 1, oom_killed: false, mount_count: 1, profile_match: true },
+		timeout: { triggered: false, wall_timeout_ms: 30_000 as const },
+		kill: { attempted: false, succeeded: false },
+		remove: { attempted: true, succeeded: true },
+		exit_code: 1,
+		timed_out: false,
+		cleanup_complete: true,
+		error_code: null,
+	};
+	const terminal = { ...terminalBody, terminal_digest: digestObject(terminalBody) };
+	writeFileSync(resolve(commandRoot, "authority.json"), `${JSON.stringify(authority)}\n`);
+	writeFileSync(resolve(commandRoot, "terminal.json"), `${JSON.stringify(terminal)}\n`);
+	return { authority, terminal };
+}
+
+function rehashTerminal(record: Record<string, unknown>): Record<string, unknown> {
+	const { terminal_digest: _digest, ...body } = record;
+	return { ...body, terminal_digest: digestObject(body) };
 }
 
 function setup(options: { terminalized?: boolean } = {}) {
@@ -74,7 +119,10 @@ function setup(options: { terminalized?: boolean } = {}) {
 			runId: input.run_id,
 			prompt: input.task_text,
 			taskPolicy: { writable_paths: ["src/parse-duration.js"], protected_paths: ["test/**", "package.json"], command_descriptors: [{ command_id: "test", executable: "current_node_executable", argv: ["--test"], cwd: "workspace", timeout_seconds: 30, max_combined_output_bytes: 65_536 }] },
-			commandExecutor: async ({ descriptor }) => ({ command_id: descriptor.command_id, executable: "faux_registered_command", argv: [...descriptor.argv], exit_code: 1, timed_out: false, truncated: false, output: "faux registered command failed", backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest, authority_digest: sha256(`${input.run_id}-command-authority`), terminal_digest: sha256(`${input.run_id}-command-terminal`), cleanup_complete: true }),
+			commandExecutor: async ({ descriptor }) => {
+				const evidence = writeFauxDockerCommandEvidence(input, descriptor.command_id);
+				return { command_id: descriptor.command_id, executable: "faux_registered_command", argv: [...descriptor.argv], exit_code: 1, timed_out: false, truncated: false, output: "faux registered command failed", backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest, authority_digest: evidence.authority.authority_digest, terminal_digest: evidence.terminal.terminal_digest, cleanup_complete: true };
+			},
 			models,
 			model: registration.getModel(),
 			systemPrompt: "Use only the bounded Workspace tools and the registered command.",
@@ -172,6 +220,36 @@ test("the exact local seventeenth Provider request persists one authenticated no
 		assert.match(freshView.title, /^Clean Registered Source/);
 		assert.equal(freshView.runs.length, 0);
 		assert.equal(freshView.pins.source_snapshot_identity, view.pins.source_snapshot_identity);
+
+		const dockerCommandRoot = resolve(evidenceRun, "docker-commands", "command-1");
+		const dockerAuthorityPath = resolve(dockerCommandRoot, "authority.json");
+		const dockerTerminalPath = resolve(dockerCommandRoot, "terminal.json");
+		const originalDockerAuthority = readFileSync(dockerAuthorityPath, "utf8");
+		const originalDockerTerminal = readFileSync(dockerTerminalPath, "utf8");
+		const forgedUsage = JSON.parse(originalTerminal) as Record<string, unknown>;
+		forgedUsage.input_tokens = (forgedUsage.input_tokens as number) + 1;
+		writeFileSync(terminalPath, `${JSON.stringify(rehashTerminal(forgedUsage))}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /Session-derived accounting does not match/);
+		const forgedToolCount = JSON.parse(originalTerminal) as Record<string, unknown>;
+		forgedToolCount.tool_calls = 15;
+		writeFileSync(terminalPath, `${JSON.stringify(rehashTerminal(forgedToolCount))}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /Session-derived accounting does not match/);
+		const forgedLastCommand = JSON.parse(originalTerminal) as Record<string, unknown>;
+		forgedLastCommand.last_registered_command = { ...(forgedLastCommand.last_registered_command as Record<string, unknown>), exit_code: 0 };
+		writeFileSync(terminalPath, `${JSON.stringify(rehashTerminal(forgedLastCommand))}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /Docker command evidence does not match/);
+		writeFileSync(terminalPath, originalTerminal);
+		unlinkSync(dockerAuthorityPath);
+		await assert.rejects(() => reopened.session(view.session_id), /Docker command evidence is missing or ambiguous/);
+		writeFileSync(dockerAuthorityPath, originalDockerAuthority);
+		const tamperedDockerTerminal = JSON.parse(originalDockerTerminal) as Record<string, unknown>;
+		tamperedDockerTerminal.exit_code = 0;
+		writeFileSync(dockerTerminalPath, `${JSON.stringify(rehashTerminal(tamperedDockerTerminal))}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /Docker command evidence does not match/);
+		writeFileSync(dockerTerminalPath, originalDockerTerminal);
+		writeFileSync(resolve(dockerCommandRoot, "unexpected.json"), "{}\n");
+		await assert.rejects(() => reopened.session(view.session_id), /Docker command evidence is missing or ambiguous/);
+		unlinkSync(resolve(dockerCommandRoot, "unexpected.json"));
 
 		unlinkSync(terminalPath);
 		await assert.rejects(() => reopened.session(view.session_id), /exactly one settled Manifest or budget terminal/);

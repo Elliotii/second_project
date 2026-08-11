@@ -90,6 +90,10 @@ export interface RegisteredCommandTerminalV36 {
 	exit_code: number | null;
 	timed_out: boolean;
 	truncated: boolean;
+	command_ordinal: number;
+	authority_digest: string;
+	authority_ref: string;
+	terminal_ref: string;
 	terminal_digest: string;
 }
 
@@ -125,6 +129,8 @@ export interface ProviderRequestBudgetTerminalV36 {
 	tool_calls: number;
 	last_registered_command: RegisteredCommandTerminalV36;
 	workspace_identity_at_terminal: string;
+	session_entry_count_before_turn: number;
+	session_entries_sha256_before_turn: string;
 	session_entry_count_at_terminal: number;
 	session_entries_sha256_at_terminal: string;
 	verification_mode: "unverified";

@@ -5,7 +5,7 @@ import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall, type AssistantMessage } from "@earendil-works/pi-ai";
 import type { SafeSessionMessageV35 } from "../contracts/v35-types.ts";
 import type { SafePersistentSessionV36 } from "../contracts/v36-types.ts";
-import type { ProviderRequestBudgetTerminalV36, RegisteredCommandTerminalV36, SafeProviderRequestBudgetTerminalV36 } from "../contracts/v36g2-types.ts";
+import type { DockerCommandAuthorityV36, DockerTerminalEvidenceV36, ProviderRequestBudgetTerminalV36, RegisteredCommandTerminalV36, SafeProviderRequestBudgetTerminalV36 } from "../contracts/v36g2-types.ts";
 import { readJsonArtifact, writeOnceJson } from "../evidence/artifacts.ts";
 import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 import { digestObject, sha256, stableJson } from "../hash.ts";
@@ -210,7 +210,7 @@ function parseManifestG2(value: unknown): RuntimeManifestG2V36 {
 const BUDGET_STOP_KEYS = [
 	"schema_version", "terminal_kind", "trajectory_outcome", "terminal_reason", "run_id", "session_id", "project_id", "workspace_id", "session_pin_digest", "authority_digest", "created_at", "settled",
 	"request_attempts", "provider_dispatches", "provider_responses", "provider_requests_max", "pending_provider_reservations", "pending_tool_calls", "pending_side_effects",
-	"usage_known", "input_tokens", "output_tokens", "cost_usd", "tool_calls", "last_registered_command", "workspace_identity_at_terminal", "session_entry_count_at_terminal", "session_entries_sha256_at_terminal",
+	"usage_known", "input_tokens", "output_tokens", "cost_usd", "tool_calls", "last_registered_command", "workspace_identity_at_terminal", "session_entry_count_before_turn", "session_entries_sha256_before_turn", "session_entry_count_at_terminal", "session_entries_sha256_at_terminal",
 	"verification_mode", "formal_outcome", "comparison_eligible", "adaptation_eligible", "promotion_eligible", "terminal_digest",
 ] as const;
 
@@ -219,10 +219,14 @@ function terminalBody(value: ProviderRequestBudgetTerminalV36): Omit<ProviderReq
 	return body;
 }
 
+function commandEvidenceRef(ordinal: number, file: "authority.json" | "terminal.json"): string {
+	return `docker-commands/command-${ordinal}/${file}`;
+}
+
 function parseRegisteredCommandTerminal(value: unknown): RegisteredCommandTerminalV36 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 budget terminal registered command is invalid");
 	const command = value as RegisteredCommandTerminalV36;
-	if (stableJson(Object.keys(command).sort()) !== stableJson(["command_id", "exit_code", "timed_out", "truncated", "terminal_digest"].sort()) || !ID.test(command.command_id) || (command.exit_code !== null && (!Number.isSafeInteger(command.exit_code))) || typeof command.timed_out !== "boolean" || typeof command.truncated !== "boolean" || !SHA256.test(command.terminal_digest)) throw new Error("V3.6 budget terminal registered command is invalid");
+	if (stableJson(Object.keys(command).sort()) !== stableJson(["command_id", "exit_code", "timed_out", "truncated", "command_ordinal", "authority_digest", "authority_ref", "terminal_ref", "terminal_digest"].sort()) || !ID.test(command.command_id) || (command.exit_code !== null && (!Number.isSafeInteger(command.exit_code))) || typeof command.timed_out !== "boolean" || typeof command.truncated !== "boolean" || !Number.isSafeInteger(command.command_ordinal) || command.command_ordinal < 1 || !SHA256.test(command.authority_digest) || command.authority_ref !== commandEvidenceRef(command.command_ordinal, "authority.json") || command.terminal_ref !== commandEvidenceRef(command.command_ordinal, "terminal.json") || !SHA256.test(command.terminal_digest)) throw new Error("V3.6 budget terminal registered command is invalid");
 	return command;
 }
 
@@ -232,9 +236,9 @@ function parseBudgetStopTerminal(value: unknown): ProviderRequestBudgetTerminalV
 	if (stableJson(Object.keys(terminal).sort()) !== stableJson([...BUDGET_STOP_KEYS].sort())) throw new Error("V3.6 budget terminal fields are invalid");
 	if (
 		terminal.schema_version !== 1 || terminal.terminal_kind !== "v36_pre_dispatch_provider_request_budget_terminal" || terminal.trajectory_outcome !== "pre_dispatch_budget_terminal" || terminal.terminal_reason !== "provider_request_budget_exhausted" ||
-		!ID.test(terminal.run_id) || !ID.test(terminal.session_id) || !ID.test(terminal.project_id) || !ID.test(terminal.workspace_id) || ![terminal.session_pin_digest, terminal.authority_digest, terminal.workspace_identity_at_terminal, terminal.session_entries_sha256_at_terminal, terminal.terminal_digest].every((entry) => SHA256.test(entry)) ||
+		!ID.test(terminal.run_id) || !ID.test(terminal.session_id) || !ID.test(terminal.project_id) || !ID.test(terminal.workspace_id) || ![terminal.session_pin_digest, terminal.authority_digest, terminal.workspace_identity_at_terminal, terminal.session_entries_sha256_before_turn, terminal.session_entries_sha256_at_terminal, terminal.terminal_digest].every((entry) => SHA256.test(entry)) ||
 		terminal.settled !== false || terminal.request_attempts !== 17 || terminal.provider_dispatches !== 16 || terminal.provider_responses !== 16 || terminal.provider_requests_max !== 16 || terminal.pending_provider_reservations !== 0 || terminal.pending_tool_calls !== 0 || terminal.pending_side_effects !== 0 || terminal.usage_known !== true ||
-		!Number.isSafeInteger(terminal.input_tokens) || terminal.input_tokens < 0 || !Number.isSafeInteger(terminal.output_tokens) || terminal.output_tokens < 0 || !Number.isFinite(terminal.cost_usd) || terminal.cost_usd < 0 || !Number.isSafeInteger(terminal.tool_calls) || terminal.tool_calls < 1 || !Number.isSafeInteger(terminal.session_entry_count_at_terminal) || terminal.session_entry_count_at_terminal < 1 ||
+		!Number.isSafeInteger(terminal.input_tokens) || terminal.input_tokens < 0 || !Number.isSafeInteger(terminal.output_tokens) || terminal.output_tokens < 0 || !Number.isFinite(terminal.cost_usd) || terminal.cost_usd < 0 || !Number.isSafeInteger(terminal.tool_calls) || terminal.tool_calls < 1 || !Number.isSafeInteger(terminal.session_entry_count_before_turn) || terminal.session_entry_count_before_turn < 0 || !Number.isSafeInteger(terminal.session_entry_count_at_terminal) || terminal.session_entry_count_at_terminal < 1 || terminal.session_entry_count_before_turn >= terminal.session_entry_count_at_terminal ||
 		terminal.verification_mode !== "unverified" || terminal.formal_outcome !== null || terminal.comparison_eligible !== false || terminal.adaptation_eligible !== false || terminal.promotion_eligible !== false || digestObject(terminalBody(terminal)) !== terminal.terminal_digest
 	) throw new Error("V3.6 budget terminal is invalid");
 	parseRegisteredCommandTerminal(terminal.last_registered_command);
@@ -252,6 +256,135 @@ function safeBudgetStopTerminal(terminal: ProviderRequestBudgetTerminalV36): Saf
 		unverified_changes: true,
 		terminal_digest: terminal.terminal_digest,
 	};
+}
+
+function plainRecord(value: unknown, label: string): Record<string, unknown> {
+	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} is invalid`);
+	return value as Record<string, unknown>;
+}
+
+function exactRecord(value: unknown, keys: readonly string[], label: string): Record<string, unknown> {
+	const record = plainRecord(value, label);
+	if (stableJson(Object.keys(record).sort()) !== stableJson([...keys].sort())) throw new Error(`${label} fields are invalid`);
+	return record;
+}
+
+function dockerAuthorityBody(value: DockerCommandAuthorityV36): Omit<DockerCommandAuthorityV36, "authority_digest"> {
+	const { authority_digest: _digest, ...body } = value;
+	return body;
+}
+
+function dockerTerminalBody(value: DockerTerminalEvidenceV36): Omit<DockerTerminalEvidenceV36, "terminal_digest"> {
+	const { terminal_digest: _digest, ...body } = value;
+	return body;
+}
+
+function parseDockerCommandAuthority(value: unknown): DockerCommandAuthorityV36 {
+	const record = exactRecord(value, ["schema_version", "authority_kind", "execution_id", "command_id", "executable", "argv", "workspace_identity", "backend_profile_digest", "created_at", "authority_digest"], "V3.6 Docker command authority");
+	const authority = record as unknown as DockerCommandAuthorityV36;
+	if (authority.schema_version !== 1 || authority.authority_kind !== "v36_docker_registered_command" || !ID.test(authority.execution_id) || !ID.test(authority.command_id) || authority.executable !== "node" || !Array.isArray(authority.argv) || authority.argv.some((entry) => typeof entry !== "string") || !SHA256.test(authority.workspace_identity) || authority.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest || typeof authority.created_at !== "string" || authority.created_at.length === 0 || !SHA256.test(authority.authority_digest) || digestObject(dockerAuthorityBody(authority)) !== authority.authority_digest) throw new Error("V3.6 Docker command authority is invalid");
+	return authority;
+}
+
+function booleanRecord(value: unknown, keys: readonly string[], label: string): Record<string, boolean> {
+	const record = exactRecord(value, keys, label);
+	if (Object.values(record).some((entry) => typeof entry !== "boolean")) throw new Error(`${label} is invalid`);
+	return record as Record<string, boolean>;
+}
+
+function parseDockerTerminalEvidence(value: unknown): DockerTerminalEvidenceV36 {
+	const record = exactRecord(value, ["schema_version", "execution_id", "command_id", "authority_digest", "backend_profile_digest", "status", "create", "start", "output", "inspect", "timeout", "kill", "remove", "exit_code", "timed_out", "cleanup_complete", "error_code", "terminal_digest"], "V3.6 Docker terminal evidence");
+	const terminal = record as unknown as DockerTerminalEvidenceV36;
+	const create = exactRecord(terminal.create, ["attempted", "succeeded", "container_identity"], "V3.6 Docker create evidence");
+	const start = booleanRecord(terminal.start, ["attempted", "succeeded"], "V3.6 Docker start evidence");
+	const output = exactRecord(terminal.output, ["stdout", "stderr", "combined_bytes_observed", "truncated"], "V3.6 Docker output evidence");
+	const inspect = exactRecord(terminal.inspect, ["attempted", "succeeded", "exit_code", "oom_killed", "mount_count", "profile_match"], "V3.6 Docker inspect evidence");
+	const timeout = exactRecord(terminal.timeout, ["triggered", "wall_timeout_ms"], "V3.6 Docker timeout evidence");
+	const kill = booleanRecord(terminal.kill, ["attempted", "succeeded"], "V3.6 Docker kill evidence");
+	const remove = booleanRecord(terminal.remove, ["attempted", "succeeded"], "V3.6 Docker remove evidence");
+	const combinedBytesObserved = output.combined_bytes_observed;
+	const mountCount = inspect.mount_count;
+	if (
+		terminal.schema_version !== 1 || !ID.test(terminal.execution_id) || !ID.test(terminal.command_id) || !SHA256.test(terminal.authority_digest) || terminal.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest || !["succeeded", "nonzero_exit", "timed_out", "preflight_failed", "start_failed", "cleanup_failed"].includes(terminal.status) ||
+		typeof create.attempted !== "boolean" || typeof create.succeeded !== "boolean" || (create.container_identity !== null && !SHA256.test(String(create.container_identity))) || !start.attempted && start.succeeded || typeof output.stdout !== "string" || typeof output.stderr !== "string" || typeof combinedBytesObserved !== "number" || !Number.isSafeInteger(combinedBytesObserved) || combinedBytesObserved < 0 || typeof output.truncated !== "boolean" ||
+		typeof inspect.attempted !== "boolean" || typeof inspect.succeeded !== "boolean" || (inspect.exit_code !== null && !Number.isSafeInteger(inspect.exit_code)) || (inspect.oom_killed !== null && typeof inspect.oom_killed !== "boolean") || (mountCount !== null && (typeof mountCount !== "number" || !Number.isSafeInteger(mountCount) || mountCount < 0)) || typeof inspect.profile_match !== "boolean" ||
+		typeof timeout.triggered !== "boolean" || timeout.wall_timeout_ms !== 30_000 || (terminal.exit_code !== null && !Number.isSafeInteger(terminal.exit_code)) || typeof terminal.timed_out !== "boolean" || terminal.timed_out !== timeout.triggered || typeof terminal.cleanup_complete !== "boolean" || (terminal.error_code !== null && typeof terminal.error_code !== "string") || !SHA256.test(terminal.terminal_digest) || digestObject(dockerTerminalBody(terminal)) !== terminal.terminal_digest
+	) throw new Error("V3.6 Docker terminal evidence is invalid");
+	return terminal;
+}
+
+function interactiveEvidenceRunRoot(runtimeRoot: string, runId: string): string {
+	const dataRoot = ordinaryDirectory(resolve(runtimeRoot, "..", "..", ".."), "V3.6 data root");
+	const runsRoot = ordinaryDirectory(resolve(dataRoot, "interactive-evidence", "runs"), "V3.6 interactive Evidence runs root");
+	const target = resolve(runsRoot, runId);
+	if (!contained(dataRoot, target)) throw new Error("V3.6 interactive Evidence Run path escaped");
+	return ordinaryDirectory(target, "V3.6 interactive Evidence Run root");
+}
+
+function validateBudgetTerminalCommandEvidence(runtimeRoot: string, terminal: ProviderRequestBudgetTerminalV36): void {
+	const command = terminal.last_registered_command;
+	const evidenceRun = interactiveEvidenceRunRoot(runtimeRoot, terminal.run_id);
+	const commandsRoot = ordinaryDirectory(resolve(evidenceRun, "docker-commands"), "V3.6 Docker command evidence root");
+	const expectedRoots = Array.from({ length: command.command_ordinal }, (_, index) => `command-${index + 1}`);
+	const actualRoots = readdirSync(commandsRoot, { withFileTypes: true }).map((entry) => entry.name).sort((left, right) => left.localeCompare(right));
+	if (stableJson(actualRoots) !== stableJson(expectedRoots)) throw new Error("V3.6 Docker command evidence is ambiguous");
+	for (const name of expectedRoots) ordinaryDirectory(resolve(commandsRoot, name), "V3.6 Docker command evidence directory");
+	const commandRoot = ordinaryDirectory(resolve(commandsRoot, expectedRoots.at(-1)!), "V3.6 final Docker command evidence directory");
+	const files = readdirSync(commandRoot, { withFileTypes: true }).map((entry) => entry.name).sort((left, right) => left.localeCompare(right));
+	if (stableJson(files) !== stableJson(["authority.json", "terminal.json"])) throw new Error("V3.6 final Docker command evidence is missing or ambiguous");
+	const authority = parseDockerCommandAuthority(readJsonArtifact(evidenceRun, command.authority_ref));
+	const dockerTerminal = parseDockerTerminalEvidence(readJsonArtifact(evidenceRun, command.terminal_ref));
+	if (authority.command_id !== command.command_id || authority.authority_digest !== command.authority_digest || dockerTerminal.execution_id !== authority.execution_id || dockerTerminal.command_id !== authority.command_id || dockerTerminal.authority_digest !== authority.authority_digest || dockerTerminal.backend_profile_digest !== authority.backend_profile_digest || dockerTerminal.terminal_digest !== command.terminal_digest || dockerTerminal.exit_code !== command.exit_code || dockerTerminal.timed_out !== command.timed_out || dockerTerminal.output.truncated !== command.truncated || dockerTerminal.cleanup_complete !== true || dockerTerminal.inspect.profile_match !== true || dockerTerminal.inspect.exit_code !== dockerTerminal.exit_code || !["succeeded", "nonzero_exit", "timed_out"].includes(dockerTerminal.status)) throw new Error("V3.6 budget terminal Docker command evidence does not match");
+}
+
+function reconcileBudgetTerminalSession(entries: readonly SessionTreeEntry[], terminal: ProviderRequestBudgetTerminalV36): void {
+	if (terminal.session_entry_count_before_turn > entries.length || entries.length !== terminal.session_entry_count_at_terminal || digestObject(entries.slice(0, terminal.session_entry_count_before_turn)) !== terminal.session_entries_sha256_before_turn || digestObject(entries) !== terminal.session_entries_sha256_at_terminal) throw new Error("V3.6 budget terminal Session prefix identity mismatch");
+	const turnEntries = entries.slice(terminal.session_entry_count_before_turn);
+	const userMessages = turnEntries.filter((entry) => entry.type === "message" && entry.message.role === "user");
+	if (userMessages.length !== 1) throw new Error("V3.6 budget terminal Session turn boundary is invalid");
+	const toolCallIds: string[] = [];
+	const toolResultIds: string[] = [];
+	const commandIds: string[] = [];
+	let providerResponses = 0;
+	let inputTokens = 0;
+	let outputTokens = 0;
+	let costUsd = 0;
+	for (const entry of turnEntries) {
+		if (entry.type !== "message") continue;
+		if (entry.message.role === "toolResult") {
+			if (!ID.test(entry.message.toolCallId)) throw new Error("V3.6 budget terminal Tool Result identity is invalid");
+			toolResultIds.push(entry.message.toolCallId);
+			continue;
+		}
+		if (entry.message.role !== "assistant") continue;
+		const message = entry.message as AssistantMessage;
+		if (message.stopReason === "error") {
+			if (message.errorMessage?.includes(V36_PROVIDER_REQUEST_BUDGET_TERMINAL_CODE) !== true) throw new Error("V3.6 budget terminal has an unrelated Assistant error");
+			continue;
+		}
+		if (message.stopReason !== "toolUse" || !Array.isArray(message.content)) throw new Error("V3.6 budget terminal Provider response is invalid");
+		const usage = message.usage;
+		const currentInput = usage.input + usage.cacheRead + usage.cacheWrite;
+		const currentOutput = usage.output;
+		const currentCost = usage.cost.total;
+		if (![currentInput, currentOutput, currentCost].every((entry) => Number.isFinite(entry) && entry >= 0)) throw new Error("V3.6 budget terminal Provider usage is invalid");
+		providerResponses += 1;
+		inputTokens += currentInput;
+		outputTokens += currentOutput;
+		costUsd += currentCost;
+		for (const part of message.content) {
+			if (!part || typeof part !== "object" || (part as { type?: unknown }).type !== "toolCall") continue;
+			const call = part as { id?: unknown; name?: unknown; arguments?: unknown };
+			if (typeof call.id !== "string" || !ID.test(call.id) || typeof call.name !== "string") throw new Error("V3.6 budget terminal Tool call is invalid");
+			toolCallIds.push(call.id);
+			if (call.name === "run_command") {
+				const argumentsRecord = plainRecord(call.arguments, "V3.6 budget terminal registered command arguments");
+				if (stableJson(Object.keys(argumentsRecord).sort()) !== stableJson(["command_id"]) || typeof argumentsRecord.command_id !== "string" || !ID.test(argumentsRecord.command_id)) throw new Error("V3.6 budget terminal registered command arguments are invalid");
+				commandIds.push(argumentsRecord.command_id);
+			}
+		}
+	}
+	if (providerResponses !== terminal.provider_responses || inputTokens !== terminal.input_tokens || outputTokens !== terminal.output_tokens || costUsd !== terminal.cost_usd || toolCallIds.length !== terminal.tool_calls || stableJson(toolCallIds) !== stableJson(toolResultIds) || commandIds.length !== terminal.last_registered_command.command_ordinal || commandIds.at(-1) !== terminal.last_registered_command.command_id) throw new Error("V3.6 budget terminal Session-derived accounting does not match");
 }
 
 export class PersistentInteractiveSessionServiceV36 {
@@ -354,6 +487,7 @@ export class PersistentInteractiveSessionServiceV36 {
 		if (Buffer.byteLength(options.prompt, "utf8") < 1 || Buffer.byteLength(options.prompt, "utf8") > 16_384 || Buffer.byteLength(options.systemPrompt, "utf8") < 1 || Buffer.byteLength(options.systemPrompt, "utf8") > 16_384) throw new Error("V3.6 bounded Turn prompt is invalid");
 		const root = runRoot(this.runtimeRoot, options.runId, true);
 		const session = await this.open();
+		const entriesBeforeTurn = await session.getEntries();
 		const priorContext = await session.buildContext();
 		const priorMessages = structuredClone(priorContext.messages) as AgentMessage[];
 		const priorDigest = digestObject(priorMessages);
@@ -450,13 +584,17 @@ export class PersistentInteractiveSessionServiceV36 {
 			if (!SHA256.test(options.authorityDigest ?? "")) throw new Error("V3.6 budget terminal authority digest is required");
 			if (terminalError.requestAttempt !== 17 || providerRequests !== 17 || providerResponses !== 16 || pendingProviderReservation || pendingToolCalls !== 0 || profile.pendingSideEffects() !== 0 || usageKnown !== true || toolCalls < 1 || profile.commandExecutions.length < 1) throw new Error("V3.6 pre-dispatch Provider-request budget terminal is not quiescent or reconciled");
 			const lastCommand = profile.commandExecutions.at(-1);
-			if (!lastCommand || !ID.test(lastCommand.command_id) || !SHA256.test(lastCommand.terminal_digest ?? "") || !Number.isSafeInteger(lastCommand.exit_code ?? 0)) throw new Error("V3.6 budget terminal has no valid registered command result");
+			if (!lastCommand || !ID.test(lastCommand.command_id) || !SHA256.test(lastCommand.authority_digest ?? "") || !SHA256.test(lastCommand.terminal_digest ?? "") || !Number.isSafeInteger(lastCommand.exit_code ?? 0)) throw new Error("V3.6 budget terminal has no valid registered command result");
 			const entries = await session.getEntries();
 			const terminalCommand: RegisteredCommandTerminalV36 = {
 				command_id: lastCommand.command_id,
 				exit_code: lastCommand.exit_code,
 				timed_out: lastCommand.timed_out,
 				truncated: lastCommand.truncated,
+				command_ordinal: profile.commandExecutions.length,
+				authority_digest: lastCommand.authority_digest!,
+				authority_ref: commandEvidenceRef(profile.commandExecutions.length, "authority.json"),
+				terminal_ref: commandEvidenceRef(profile.commandExecutions.length, "terminal.json"),
 				terminal_digest: lastCommand.terminal_digest!,
 			};
 			const terminalBody: Omit<ProviderRequestBudgetTerminalV36, "terminal_digest"> = {
@@ -486,6 +624,8 @@ export class PersistentInteractiveSessionServiceV36 {
 				tool_calls: toolCalls,
 				last_registered_command: terminalCommand,
 				workspace_identity_at_terminal: managedWorkspaceIdentityV36(this.workspaceRoot),
+				session_entry_count_before_turn: entriesBeforeTurn.length,
+				session_entries_sha256_before_turn: digestObject(entriesBeforeTurn),
 				session_entry_count_at_terminal: entries.length,
 				session_entries_sha256_at_terminal: digestObject(entries),
 				verification_mode: "unverified",
@@ -495,6 +635,8 @@ export class PersistentInteractiveSessionServiceV36 {
 				promotion_eligible: false,
 			};
 			const terminal: ProviderRequestBudgetTerminalV36 = { ...terminalBody, terminal_digest: digestObject(terminalBody) };
+			reconcileBudgetTerminalSession(entries, terminal);
+			validateBudgetTerminalCommandEvidence(this.runtimeRoot, terminal);
 			writeOnceJson(root, "budget-stop.json", terminal);
 			return { manifest: terminal, view: await this.inspect() };
 		}
@@ -533,6 +675,8 @@ export class PersistentInteractiveSessionServiceV36 {
 			} else {
 				const terminal = parseBudgetStopTerminal(readJsonArtifact(root, "budget-stop.json"));
 				if (terminal.run_id !== entry.name || terminal.session_id !== this.sessionId || terminal.project_id !== this.projectId || terminal.workspace_id !== this.workspaceId || terminal.session_pin_digest !== this.pinDigest || entries.length !== terminal.session_entry_count_at_terminal || digestObject(entries) !== terminal.session_entries_sha256_at_terminal || managedWorkspaceIdentityV36(this.workspaceRoot) !== terminal.workspace_identity_at_terminal) throw new Error("V3.6 budget terminal Runtime/Session/Workspace identity mismatch");
+				reconcileBudgetTerminalSession(entries, terminal);
+				validateBudgetTerminalCommandEvidence(this.runtimeRoot, terminal);
 				manifests.push(terminal);
 			}
 		}
