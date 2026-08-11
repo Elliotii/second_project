@@ -50,8 +50,15 @@ post_v3_6_budget_stop_maintenance:
   implementation_owner: top_level_session_019ff1c5-a8db-7642-971c-dfa31520521e
   implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/bcef/project2
   implementation_started: true
+  implementation_completed: true_pending_focused_audit
   implementation_prompt: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_IMPLEMENTATION_SESSION_START_PROMPT.md
-  focused_audit_owner: future_fresh_top_level_read_only_session_after_candidate_freeze
+  candidate_commit: d082f1a09dc0756afca5dc7dc39d433d0e73dd53
+  candidate_tree: 62baa170db984228a372fdcef321e7b5836b025c
+  candidate_main_light_review: passed_after_one_bounded_contract_local_correction
+  focused_audit_owner: top_level_session_019ff1ec-9a7c-7922-83c4-9e8f646cc055
+  focused_audit_worktree: C:/Users/HUAWEI/.codex/worktrees/0dc7/project2
+  focused_audit_started: true
+  focused_audit_prompt: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_FOCUSED_AUDIT_SESSION_START_PROMPT.md
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
