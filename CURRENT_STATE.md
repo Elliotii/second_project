@@ -8,7 +8,7 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: null
+active_goal: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
 
 last_executed_goal:
   id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
@@ -32,12 +32,28 @@ last_completed_goal:
   disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
   corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
 
-current_goal: null
+current_goal: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
 
 next_goal:
   id: null
   status: not_authorized
   note: V4_or_any_new_version_requires_new_user_authorized_design_review
+
+post_v3_6_budget_adequacy_maintenance:
+  goal_id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  status: accepted_activated
+  version_status: V3_6_remains_closed_accepted
+  contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
+  implementation_owner: current_main_session
+  decision: daily_provider_request_observation_16_hard_24_other_hard_caps_unchanged
+  frozen_goal_2_provider_request_hard_max: 16
+  daily_provider_request_observation_threshold: 16
+  daily_provider_request_hard_max: 24
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  real_task_retry_authorized: false
+  pi_core_patch_authorized: false
 
 post_v3_6_budget_stop_maintenance:
   goal_id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
