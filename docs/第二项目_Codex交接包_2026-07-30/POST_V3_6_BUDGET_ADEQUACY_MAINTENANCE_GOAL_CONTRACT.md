@@ -1,7 +1,7 @@
 # Post-V3.6 Budget Adequacy Maintenance Goal Contract
 
 ```yaml
-status: accepted_activated
+status: closed_accepted
 accepted_by_user: 2026-08-12
 goal_id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
 goal_kind: bounded_post_closeout_product_profile_maintenance
@@ -12,6 +12,9 @@ credential_reads_authorized: 0
 external_network_authorized: false
 real_task_retry_authorized: false
 pi_core_patch_authorized: false
+disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+implementation_commit: 1150e61630b578095da681b6506deff2a291063a
+closeout: docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
 ```
 
 ## 1. Goal
@@ -89,7 +92,8 @@ request, retry, replace, continue automatically or weaken the finite hard stop.
 6. Browser input cannot select or raise a budget profile.
 7. Token/cost/Tool/wall-time caps remain unchanged for daily execution.
 8. Strict TypeScript and focused/affected V3.6 regressions pass.
-9. Credential/network/Provider/model/Docker/Source-Apply counts remain zero.
+9. Credential/network/Provider/model and registered-user-Source Apply counts remain zero;
+   deterministic Docker/fixture-only handoff regressions may execute.
 10. Pi remains pinned and clean.
 
 ## 6. Hard stops
@@ -98,3 +102,10 @@ Stop only if completion requires removing a finite hard cap; changing terminal, 
 Verifier, ChangeSet or Source authority semantics; real access or task retry; Pi changes;
 model/browser-controlled budgets; or material architecture expansion.
 
+## 7. Accepted result
+
+Main completed the bounded implementation and light review without an independent audit:
+the change selects one of two exact Host-owned profiles, preserves the accepted frozen
+profile and terminal semantics, and does not create a new authority or side-effect path.
+Strict TypeScript and 43 focused/affected tests passed. The binding result and limits are
+recorded in `docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md`.

@@ -32,7 +32,7 @@ the Host applied one authenticated ChangeSet. V3.6 is closed and accepted as
 Pi Core changes, a second backend, Host fallback, SDK/Extension/RPC switching, further
 Credential/model/network access, extra tasks and V4 remain unauthorized.
 
-The single post-closeout Goal
+The first post-closeout Goal
 `POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE` is closed and accepted as
 `PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE`. V3.6 remains closed and
 accepted. The exact local pre-dispatch Provider-request budget stop is now typed,
@@ -42,6 +42,15 @@ lifecycle and the persisted Docker command evidence. The 16-request cap did not 
 no real access, UX retry, Pi change or V4 work occurred. The binding Contract and Closeout
 are `docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md`
 and `docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md`.
+
+The later `POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE` is closed and accepted as
+`PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE`. It preserves the frozen Goal 2
+16-request profile and changes only daily `bounded_edit`: request 16 is an observation
+threshold and 24 is the finite hard cap. Tool 24, cumulative tokens 131,072, USD 0.20,
+wall time 900,000 ms, no-retry semantics and the accepted safe terminalization remain.
+The Contract and Closeout are
+`docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md`
+and `docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md`.
 
 Preserve these binding facts:
 

@@ -8,31 +8,31 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+active_goal: null
 
 last_executed_goal:
-  id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
-  corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
-  closeout: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  implementation_commit: 1150e61630b578095da681b6506deff2a291063a
+  closeout: docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
 
 last_closed_goal:
-  id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
-  closeout: docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  closeout: docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
 
 last_completed_goal:
-  id: POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
+  id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE
-  corrected_candidate_commit: fe0908cefe979e12c2faa403d9e881194d91aa96
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  implementation_commit: 1150e61630b578095da681b6506deff2a291063a
 
-current_goal: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+current_goal: null
 
 next_goal:
   id: null
@@ -41,7 +41,7 @@ next_goal:
 
 post_v3_6_budget_adequacy_maintenance:
   goal_id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
-  status: accepted_activated
+  status: closed_accepted
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
   implementation_owner: current_main_session
@@ -49,6 +49,17 @@ post_v3_6_budget_adequacy_maintenance:
   frozen_goal_2_provider_request_hard_max: 16
   daily_provider_request_observation_threshold: 16
   daily_provider_request_hard_max: 24
+  unchanged_tool_call_hard_max: 24
+  unchanged_combined_token_hard_max: 131072
+  unchanged_cost_usd_hard_max: 0.20
+  unchanged_wall_time_ms_hard_max: 900000
+  implementation_commit: 1150e61630b578095da681b6506deff2a291063a
+  implementation_tree: e9ea4fcaa522bf7cccfb5fdf319aa1618e9c22b2
+  deterministic_regressions: 43_passed_0_failed_0_skipped
+  independent_audit: not_required_bounded_profile_selection_no_new_authority
+  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  closeout: docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
+  closeout_commit: resulting_HEAD_of_this_revision
   real_model_calls_authorized: 0
   credential_reads_authorized: 0
   external_network_authorized: false
@@ -2057,6 +2068,8 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
+  - docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
   - docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_STOP_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   - docs/reports/V3_6_CLOSEOUT.md
