@@ -1,7 +1,7 @@
 # V3.6 Version Charter — Open Interactive Agent Mode
 
 ```yaml
-status: accepted_activated
+status: accepted_activated_goal_2_deterministic_accepted_real_execution_pending
 accepted_by_user: 2026-08-10
 version_owner: Main_Session
 activation_control_commit: 06a94d4ce8c0034487da83a421191d152585aea9
@@ -13,8 +13,11 @@ goal_1_disposition: PASS_V3_6_G1_OPEN_AUTHORITY_AND_PINNED_SESSION_CONTROL_PLANE
 goal_1_implementation_commit: 81bc7c8b5667efaa0c10df507a7a0d2a59827e1e
 docker_readiness_status: closed_passed
 docker_readiness_report: docs/reports/V3_6_DOCKER_READINESS_REPORT.md
-goal_2_status: accepted_activated
+goal_2_status: deterministic_accepted_pending_fresh_no_source_edit_real_execution
 goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
+goal_2_corrected_implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
+goal_2_focused_audit_disposition: PASS_V3_6_G2_FOCUSED_AUDIT
+goal_2_execution_baseline: resulting_HEAD_of_this_revision
 pi_core_patch_authorized: false
 second_backend_authorized: false
 host_command_fallback_authorized: false

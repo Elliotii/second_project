@@ -1,11 +1,11 @@
 # V3.6 Goal 2 Contract — Bounded Execution, Change Handoff and Product Acceptance
 
 ```yaml
-status: accepted_activated
+status: accepted_activated_deterministic_accepted_real_execution_pending
 goal_id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
 version_owner: Main_Session
-implementation_owner: new_top_level_goal_2_implementation_session
-real_execution_owner: later_fresh_top_level_no_source_edit_session
+implementation_owner: completed_top_level_session_019ff037-fe8d-7242-bbf4-0cf71a95929d
+real_execution_owner: pending_fresh_top_level_no_source_edit_session
 control_baseline: resulting_HEAD_of_this_revision
 readiness_report: docs/reports/V3_6_DOCKER_READINESS_REPORT.md
 implementation_real_model_calls_authorized: 0
@@ -13,6 +13,9 @@ implementation_credential_reads_authorized: 0
 implementation_external_network_authorized: false
 docker_project_commands_authorized: deterministic_goal_tests_only
 implementation_commit_authorized: one_bounded_goal_branch_commit
+corrected_implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
+focused_audit_disposition: PASS_V3_6_G2_FOCUSED_AUDIT
+execution_baseline: resulting_HEAD_of_this_revision
 pi_core_patch_authorized: false
 second_backend_authorized: false
 host_command_fallback_authorized: false

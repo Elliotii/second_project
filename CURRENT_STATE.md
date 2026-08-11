@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_6_active
-  status: V3_6_GOAL_2_ACTIVATED
+  status: V3_6_GOAL_2_DETERMINISTIC_ACCEPTED_REAL_EXECUTION_PENDING
 
 active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
 
@@ -34,7 +34,7 @@ last_completed_goal:
 
 current_goal:
   id: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
-  status: accepted_activated_pending_new_top_level_implementation_session
+  status: deterministic_accepted_pending_fresh_no_source_edit_real_execution
   authority: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
   execution_plan: docs/reports/V3_6_LONG_RUNNING_EXECUTION_PLAN.md
 
@@ -324,8 +324,22 @@ v3_6_planning_control:
   docker_platform: linux_amd64
   docker_image: node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/V3_6_G2_GOAL_CONTRACT.md
-  goal_2_status: accepted_activated_pending_new_top_level_implementation_session
-  goal_2_implementation_owner: new_top_level_goal_2_implementation_session
+  goal_2_status: deterministic_accepted_pending_fresh_no_source_edit_real_execution
+  goal_2_implementation_owner: completed_top_level_session_019ff037-fe8d-7242-bbf4-0cf71a95929d
+  goal_2_control_baseline: 992f721c4f05b7c78761966c7b8f79a6b4b3a2d3
+  goal_2_initial_implementation_commit: 20dbe4c11aa5b1a64d75dfa63b6893536adb021f
+  goal_2_corrected_implementation_commit: 5ec7d2b0e81e54e2c8a73200e39f45ba631b244f
+  goal_2_corrected_implementation_tree: 830fa2e28b6052c106f29252fdc6a1af5f1c9980
+  goal_2_focused_audit_baseline: dfb63ee6d1b1c6a7cd79944d2318c60eab821e21
+  goal_2_focused_audit_report_commit: f93e9d55ff4cdafd32d794c5bee9a1dc0892f942
+  goal_2_focused_audit_disposition: PASS_V3_6_G2_FOCUSED_AUDIT
+  goal_2_focused_audit_execution_note: source_and_evidence_independent_Docker_runtime_Main_assisted
+  goal_2_deterministic_acceptance: PASS_V3_6_G2_DETERMINISTIC_SUBSTRATE
+  goal_2_deterministic_tests: 79_passed_0_failed_0_skipped
+  goal_2_main_host_docker_focused_tests: 15_passed_0_failed_0_skipped_zero_leftovers
+  goal_2_execution_baseline_commit: resulting_HEAD_of_this_revision
+  goal_2_real_execution_owner: pending_fresh_top_level_no_source_edit_session
+  goal_2_real_execution_status: authorized_not_started
   goal_2_implementation_real_access: credentials_0_provider_0_model_0
   active_goal: V3_6_G2_BOUNDED_EXECUTION_CHANGE_HANDOFF_AND_PRODUCT_ACCEPTANCE
   version_owner: current_main_session
@@ -337,7 +351,7 @@ v3_6_planning_control:
   real_model_calls_authorized: bounded_real_product_acceptance_after_execution_baseline
   pi_core_patch_authorized: false
   second_backend_or_host_fallback_authorized: false
-  next_action: commit_goal_2_control_baseline_and_start_new_top_level_implementation_session
+  next_action: confirm_execution_baseline_and_start_fresh_no_source_edit_real_product_session
 
 retired_goal_candidate:
   id: G004_DIRECT_HARNESS_ROBUSTNESS

@@ -20,11 +20,15 @@ deterministic/Faux continuation substrate stated in its Closeout.
 
 V3.6 Docker Readiness is closed and passed on Docker Desktop 4.85.0 / Engine 29.6.2
 with exact image `node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03`.
-Goal 2 is active under `V3_6_G2_GOAL_CONTRACT.md` and must be implemented by a new
-top-level Implementation Session from its exact Control Baseline. The implementation
-Session has Docker/deterministic-test authority but zero Credential, Provider/model and
-real-model authority. Pi Core changes, a second backend, Host fallback,
-SDK/Extension/RPC switching and V4 remain unauthorized.
+Goal 2 is active under `V3_6_G2_GOAL_CONTRACT.md`. Its corrected zero-access
+implementation is frozen at `5ec7d2b0e81e54e2c8a73200e39f45ba631b244f`; Main review,
+79/79 deterministic regressions, 15/15 Docker-focused tests with zero leftovers, and
+the focused audit disposition `PASS_V3_6_G2_FOCUSED_AUDIT` support deterministic
+acceptance. The remaining Goal 2 work is exactly one fresh no-source-edit real product
+Session running the frozen two-Turn Journey from the exact Execution Baseline, followed
+by Main review and V3.6 Closeout. Pi Core changes, a second backend, Host fallback,
+SDK/Extension/RPC switching, retry/fallback/replacement, extra tasks and V4 remain
+unauthorized.
 
 Preserve these binding facts:
 
