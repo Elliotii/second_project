@@ -8,7 +8,23 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: null
+active_goal: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+
+current_goal:
+  id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+  status: accepted_activated_control_baseline_pending
+  version_status: V3_6_remains_closed_accepted
+  contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  analysis: docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md
+  implementation_owner: one_new_top_level_zero_real_access_implementation_session
+  implementation_started: false
+  focused_audit_required: true
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  budget_value_change_authorized: false
+  ux_attempt_3_authorized: false
+  pi_core_patch_authorized: false
 
 last_executed_goal:
   id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
@@ -32,12 +48,35 @@ last_completed_goal:
   disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
   implementation_commit: 1150e61630b578095da681b6506deff2a291063a
 
-current_goal: null
-
 next_goal:
   id: null
-  status: not_authorized
-  note: V4_or_any_new_version_requires_new_user_authorized_design_review
+  status: blocked_while_active_maintenance
+  note: no_Attempt_3_Engineering_Stabilization_V4_or_new_version_authorized
+
+post_v3_6_finite_budget_terminalization_maintenance:
+  goal_id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+  status: accepted_activated_control_baseline_pending
+  version_status: V3_6_remains_closed_accepted
+  contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  analysis: docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md
+  implementation_owner: one_new_top_level_zero_real_access_implementation_session
+  focused_audit_owner: one_new_top_level_read_only_session_after_candidate_freeze
+  supported_target_variants:
+    - provider_request
+    - combined_token
+    - cost
+    - tool_call
+    - clean_boundary_wall_time
+  attempt_1_evidence: immutable
+  attempt_2_evidence: immutable
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  budget_value_change_authorized: false
+  ux_attempt_3_authorized: false
+  agent_loop_change_authorized: false
+  pi_core_patch_authorized: false
+  v4_authorized: false
 
 post_v3_6_budget_adequacy_maintenance:
   goal_id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE

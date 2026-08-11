@@ -52,6 +52,20 @@ The Contract and Closeout are
 `docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md`
 and `docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md`.
 
+The active bounded post-closeout Goal is
+`POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE`. It may add only typed,
+persistent and inspectable non-settled terminals for known, reconciled Provider-request,
+combined-Token, cost, Tool-call and clean-boundary wall-time stops. Existing finite
+budget values, schema-1/schema-2 Provider terminals, Attempt 1/2 evidence, Direct Pi
+AgentHarness, Agent Loop, Session/Verifier/ChangeSet/Source/Apply authority and V3.6
+accepted claims are frozen. Implementation and verification use one new top-level
+zero-real-access Implementation Session; Main owns baselines and acceptance; one later
+top-level read-only focused audit is required. Credential, network, Provider/model,
+UX Attempt 3, retry/resume/replacement, Pi change, V4 and broader stabilization are not
+authorized. The binding Contract and analysis are
+`docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md`
+and `docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md`.
+
 Preserve these binding facts:
 
 - V2 is closed with limited mechanism evidence; its sole real Negative produced no
