@@ -423,12 +423,12 @@ npm run v36g2:product -- run --source-root <fresh-frozen-source> --execution-bas
 ```
 
 All ordinary free-task Runs remain explicitly `unverified` and have no formal Outcome.
-If the exact local per-Turn Provider-request cap refuses the seventeenth request before
-dispatch, the Workbench writes one immutable non-settled budget-stop terminal instead of
-a settled Run Manifest. The Session and Run views show the `16 / 16` dispatched count,
-the seventeenth refused attempt, reconciled known usage, the last registered-command
-result, and the managed Workspace as **unverified changes**. Diff, Export and Discard
-remain available, but Apply All and same-Session continuation fail closed. A replacement
+The accepted frozen Goal 2 Journey retains its original 16-request hard cap. If its exact
+seventeenth request is refused before dispatch, the Workbench writes the accepted schema-1
+`17 / 16 / 16` immutable non-settled budget terminal instead of a settled Run Manifest.
+The Session and Run views show reconciled known usage, the last registered-command result,
+and the managed Workspace as **unverified changes**. Diff, Export and Discard remain
+available, but Apply All and same-Session continuation fail closed. A replacement
 interaction must mint a clean new Session from the authenticated registered Source; the
 managed copy is never registered as Source.
 The separately governed real acceptance completed exactly one frozen two-Turn Journey
@@ -449,6 +449,15 @@ one user-driven browser path. It does not run the two frozen acceptance prompts 
 does not auto-apply. Every free task remains `unverified`; the user must inspect Changes
 and Diff, then choose **Apply All**, **Discard** or **Export**. A successful Apply locks
 the old Session and exposes **Start New Session from Updated Source**.
+
+Daily `bounded_edit` uses the Host-owned `v36_daily_bounded_edit_v2` profile. Sixteen
+Provider requests is an observation threshold rather than a stop; the finite hard cap is
+24 and attempt 25 is refused before dispatch. The Tool (24), cumulative token (131,072),
+cost (USD 0.20) and wall-time (900,000 ms) hard caps are unchanged, so the higher request
+ceiling does not create an unlimited loop. There is still no retry, fallback, replacement
+or browser/model-selected budget. A daily hard stop writes the schema-2 `25 / 24 / 24`
+terminal and retains the same non-settled/unverified, Diff/Export/Discard, Apply-denied
+and clean-new-Session-only behavior.
 
 Copy `config/v36-product.example.json` to the ignored
 `config/v36-product.local.json`, replace the absolute Source root and path/command policy,

@@ -99,11 +99,14 @@ export interface RegisteredCommandTerminalV36 {
 
 /**
  * The only non-settled V3.6 runtime terminal form. It records a local refusal
- * before the seventeenth Provider dispatch; it is not an AgentHarness settle
- * result, task success, verifier outcome, or Source-apply authorization.
+ * before the configured finite Provider-request hard boundary; it is not an
+ * AgentHarness settle result, task success, verifier outcome, or Source-apply
+ * authorization. Schema 1 preserves the accepted legacy 17/16 terminal;
+ * schema 2 identifies the daily 25/24 profile explicitly.
  */
 export interface ProviderRequestBudgetTerminalV36 {
-	schema_version: 1;
+	schema_version: 1 | 2;
+	budget_profile_id?: "v36_daily_bounded_edit_v2";
 	terminal_kind: "v36_pre_dispatch_provider_request_budget_terminal";
 	trajectory_outcome: "pre_dispatch_budget_terminal";
 	terminal_reason: "provider_request_budget_exhausted";
@@ -115,10 +118,10 @@ export interface ProviderRequestBudgetTerminalV36 {
 	authority_digest: string;
 	created_at: string;
 	settled: false;
-	request_attempts: 17;
-	provider_dispatches: 16;
-	provider_responses: 16;
-	provider_requests_max: 16;
+	request_attempts: number;
+	provider_dispatches: number;
+	provider_responses: number;
+	provider_requests_max: number;
 	pending_provider_reservations: 0;
 	pending_tool_calls: 0;
 	pending_side_effects: 0;
@@ -145,7 +148,7 @@ export interface SafeProviderRequestBudgetTerminalV36 {
 	trajectory_outcome: "pre_dispatch_budget_terminal";
 	terminal_reason: "provider_request_budget_exhausted";
 	authority_digest: string;
-	request_usage: { attempts: 17; used: 16; max: 16 };
+	request_usage: { attempts: number; used: number; max: number };
 	usage: { input_tokens: number; output_tokens: number; cost_usd: number; known: true };
 	last_registered_command: RegisteredCommandTerminalV36;
 	unverified_changes: true;

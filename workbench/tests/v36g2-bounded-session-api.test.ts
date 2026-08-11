@@ -10,6 +10,7 @@ import { ProjectProfileRegistryV36 } from "../src/project/registry-v36.ts";
 import { PersistentInteractiveSessionServiceV36 } from "../src/session/persistent-session-v36.ts";
 import { PersistentSessionServiceV35 } from "../src/session/persistent-session-v35.ts";
 import { InteractiveControlPlaneV36 } from "../src/v36/authority-v36.ts";
+import { V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE } from "../src/v36/budget-profile-v36.ts";
 import { Goal3WorkbenchApplicationV35 } from "../src/webui/application-v35g3.ts";
 import { WorkbenchApplicationV36G1 } from "../src/webui/application-v36g1.ts";
 import { Goal2WorkbenchExtensionV36 } from "../src/webui/application-v36g2.ts";
@@ -95,6 +96,7 @@ function setup() {
 				prompt: input.task_text,
 				taskPolicy: (() => { const registration = registry.resolve("duration-parser").registration; return { writable_paths: [...registration.writable_paths], protected_paths: [...registration.protected_paths], command_descriptors: [...(registration.command_descriptors ?? [])] }; })(),
 				commandExecutor: async ({ descriptor, workspace_root }) => await executor.execute({ workspaceRoot: workspace_root, evidenceRoot: resolve(commandParent, `command-${++commandOrdinal}`), descriptor }),
+				budgetProfile: V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE,
 				models,
 				model: registration.getModel(),
 				systemPrompt: "Modify only the registered managed Workspace scope and run only the registered test command in Docker.",
@@ -180,6 +182,7 @@ test("a final assistant response exceeding token or cost caps fails before an ac
 			prompt: "Run the registered test.",
 			taskPolicy: { writable_paths: ["src/parse-duration.js"], protected_paths: ["test/**", "package.json"], command_descriptors: [{ command_id: "test", executable: "current_node_executable", argv: ["--test"], cwd: "workspace", timeout_seconds: 30, max_combined_output_bytes: 65_536 }] },
 			commandExecutor: async ({ descriptor }) => ({ command_id: descriptor.command_id, executable: "docker_registered_node", argv: [...descriptor.argv], exit_code: 0, timed_out: false, truncated: false, output: "passed", backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest, authority_digest: sha256(`authority-${variant}`), terminal_digest: sha256(`terminal-${variant}`), cleanup_complete: true }),
+			budgetProfile: V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE,
 			models,
 			model: registration.getModel(),
 			systemPrompt: "Run only the registered command.",

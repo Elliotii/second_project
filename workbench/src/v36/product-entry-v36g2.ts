@@ -18,6 +18,7 @@ import { loadGoal3DemoProjectionV35 } from "../webui/projection-v35g3.ts";
 import { createWorkbenchLoopbackServerV36G1 } from "../webui/server-v36g1.ts";
 import { registeredSourceInventoryV36 } from "../workspace/managed-copy-v36.ts";
 import { InteractiveControlPlaneV36 } from "./authority-v36.ts";
+import { V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE } from "./budget-profile-v36.ts";
 
 const SHA40 = /^[a-f0-9]{40}$/;
 
@@ -250,6 +251,7 @@ export async function executeGoal2ProductJourneyV36(options: {
 					prompt: input.task_text,
 					taskPolicy: { writable_paths: ["src/parse-duration.js"], protected_paths: ["test/**", "package.json"], command_descriptors: [structuredClone(V36G2_REGISTERED_TEST_COMMAND)] },
 					commandExecutor: async ({ descriptor, workspace_root }) => await executor.execute({ workspaceRoot: workspace_root, evidenceRoot: resolve(commandParent, `command-${++commandOrdinal}`), descriptor }),
+					budgetProfile: V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE,
 					models: runtime.models,
 					model: runtime.model,
 					systemPrompt: "Work only in the managed Workspace. Modify only src/parse-duration.js and run only the registered test command. Do not request Host paths, credentials, network, image, mount, argv or policy changes.",

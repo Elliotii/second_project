@@ -9,6 +9,7 @@ import { digestObject, sha256 } from "../src/hash.ts";
 import { ProjectProfileRegistryV36 } from "../src/project/registry-v36.ts";
 import { PersistentSessionServiceV35 } from "../src/session/persistent-session-v35.ts";
 import { InteractiveControlPlaneV36, type InteractiveDispatchInputV36 } from "../src/v36/authority-v36.ts";
+import { assertBoundedEditBudgetProfileV36, type BoundedEditBudgetProfileV36, V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE, V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE } from "../src/v36/budget-profile-v36.ts";
 import { Goal3WorkbenchApplicationV35 } from "../src/webui/application-v35g3.ts";
 import { WorkbenchApplicationV36G1 } from "../src/webui/application-v36g1.ts";
 import { Goal2WorkbenchExtensionV36 } from "../src/webui/application-v36g2.ts";
@@ -81,7 +82,7 @@ function rehashTerminal(record: Record<string, unknown>): Record<string, unknown
 	return { ...body, terminal_digest: digestObject(body) };
 }
 
-function setup(options: { terminalized?: boolean } = {}) {
+function setup(options: { terminalized?: boolean; budgetProfile?: BoundedEditBudgetProfileV36; dailyTerminal?: boolean; crossObservationAndSettle?: boolean } = {}) {
 	const root = resolve(PROJECT_ROOT, ".runs/post-v3-6-budget-stop-maintenance", `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 	const source = resolve(root, "registered-source");
 	const data = resolve(root, "data");
@@ -108,12 +109,13 @@ function setup(options: { terminalized?: boolean } = {}) {
 		const models = createModels();
 		const registration = fauxProvider({ provider: `v36-budget-stop-faux-${input.run_id}` });
 		models.setProvider(registration.provider);
+		const readCount = options.dailyTerminal ? 22 : 14;
 		const toolResponses = [
 			fauxAssistantMessage(fauxToolCall("workspace_write", { path: "src/parse-duration.js", content: implementation }, { id: `${input.run_id}-write` }), { stopReason: "toolUse" }),
 			fauxAssistantMessage(fauxToolCall("run_command", { command_id: "test" }, { id: `${input.run_id}-test` }), { stopReason: "toolUse" }),
-			...Array.from({ length: 14 }, (_, index) => fauxAssistantMessage(fauxToolCall("workspace_read", { path: "src/parse-duration.js" }, { id: `${input.run_id}-read-${index + 1}` }), { stopReason: "toolUse" })),
+			...Array.from({ length: readCount }, (_, index) => fauxAssistantMessage(fauxToolCall("workspace_read", { path: "src/parse-duration.js" }, { id: `${input.run_id}-read-${index + 1}` }), { stopReason: "toolUse" })),
 		];
-		registration.setResponses(options.terminalized === false ? [toolResponses[0]!, toolResponses[1]!, fauxAssistantMessage("Faux settled bounded Turn.")] : toolResponses);
+		registration.setResponses(options.crossObservationAndSettle ? [...toolResponses.slice(0, 16), fauxAssistantMessage("Faux settled after crossing the observation threshold.")] : options.terminalized === false ? [toolResponses[0]!, toolResponses[1]!, fauxAssistantMessage("Faux settled bounded Turn.")] : toolResponses);
 		return await input.service.executeBoundedTurn({
 			sessionId: input.session_id,
 			runId: input.run_id,
@@ -123,6 +125,7 @@ function setup(options: { terminalized?: boolean } = {}) {
 				const evidence = writeFauxDockerCommandEvidence(input, descriptor.command_id);
 				return { command_id: descriptor.command_id, executable: "faux_registered_command", argv: [...descriptor.argv], exit_code: 1, timed_out: false, truncated: false, output: "faux registered command failed", backend_profile_digest: FROZEN_DOCKER_PROFILE_V36.profile_digest, authority_digest: evidence.authority.authority_digest, terminal_digest: evidence.terminal.terminal_digest, cleanup_complete: true };
 			},
+			budgetProfile: options.budgetProfile ?? V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE,
 			models,
 			model: registration.getModel(),
 			systemPrompt: "Use only the bounded Workspace tools and the registered command.",
@@ -137,6 +140,13 @@ function setup(options: { terminalized?: boolean } = {}) {
 	return { data, source, registry, plane, app };
 }
 
+test("Host-owned frozen and daily budget profiles are exact and reject drift", () => {
+	assert.deepEqual(V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE, { profile_id: "v36g2_frozen_acceptance_v1", provider_requests_observation_threshold: 16, provider_requests_hard_max: 16, tool_calls_hard_max: 24, combined_tokens_hard_max: 131_072, cost_usd_hard_max: 0.2, wall_time_ms_hard_max: 900_000 });
+	assert.deepEqual(V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE, { profile_id: "v36_daily_bounded_edit_v2", provider_requests_observation_threshold: 16, provider_requests_hard_max: 24, tool_calls_hard_max: 24, combined_tokens_hard_max: 131_072, cost_usd_hard_max: 0.2, wall_time_ms_hard_max: 900_000 });
+	assert.doesNotThrow(() => assertBoundedEditBudgetProfileV36(V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE));
+	assert.throws(() => assertBoundedEditBudgetProfileV36({ ...V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE, provider_requests_hard_max: 25 }), /budget profile is invalid/);
+});
+
 test("a normal bounded faux Turn remains a settled V3.6 result", async () => {
 	const fixture = setup({ terminalized: false });
 	const sourceBefore = readFileSync(resolve(fixture.source, "src/parse-duration.js"), "utf8");
@@ -148,6 +158,27 @@ test("a normal bounded faux Turn remains a settled V3.6 result", async () => {
 	assert.equal(existsSync(resolve(fixture.data, "sessions", view.session_id, "runtime", "runs", run.run_id, "budget-stop.json")), false);
 	assert.equal(existsSync(resolve(fixture.data, "interactive-evidence", "runs", run.run_id, "result.json")), true);
 	assert.equal(readFileSync(resolve(fixture.source, "src/parse-duration.js"), "utf8"), sourceBefore);
+});
+
+test("the daily profile observes 16 requests without stopping and can settle on request 17", async () => {
+	const fixture = setup({ budgetProfile: V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE, crossObservationAndSettle: true });
+	const view = await fixture.plane.submit({ project_id: "duration-parser", requested_mode: "bounded_edit", task_text: "Complete a medium bounded edit and run the registered command.", title: "Daily observation threshold" });
+	const run = view.runs[0]!;
+	assert.equal(run.settled, true);
+	assert.equal(run.terminal, null);
+	const manifest = JSON.parse(readFileSync(resolve(fixture.data, "sessions", view.session_id, "runtime", "runs", run.run_id, "manifest.json"), "utf8")) as { provider_requests: number };
+	assert.equal(manifest.provider_requests, 17);
+});
+
+test("the daily profile terminalizes exactly at request attempt 25 while preserving safe review", async () => {
+	const fixture = setup({ budgetProfile: V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE, dailyTerminal: true });
+	const view = await fixture.plane.submit({ project_id: "duration-parser", requested_mode: "bounded_edit", task_text: "Reach the daily hard boundary deterministically.", title: "Daily hard stop" });
+	const run = view.runs[0]!;
+	assert.equal(run.settled, false);
+	assert.deepEqual(run.terminal!.request_usage, { attempts: 25, used: 24, max: 24 });
+	assert.equal(view.persistent_session.runs[0]!.terminal!.trajectory_outcome, "pre_dispatch_budget_terminal");
+	const reopened = new InteractiveControlPlaneV36({ dataRoot: fixture.data, registry: fixture.registry, goal2Enabled: true });
+	assert.deepEqual((await reopened.session(view.session_id)).runs[0]!.terminal!.request_usage, { attempts: 25, used: 24, max: 24 });
 });
 
 test("the exact local seventeenth Provider request persists one authenticated non-settled terminal and remains safely inspectable", { timeout: 30_000 }, async () => {

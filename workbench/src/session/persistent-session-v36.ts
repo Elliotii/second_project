@@ -12,6 +12,7 @@ import { digestObject, sha256, stableJson } from "../hash.ts";
 import { createBoundedToolProfile, type BoundedCommandExecutor } from "../pi/tool-profile.ts";
 import type { BoundedTaskPolicy } from "../types.ts";
 import { managedWorkspaceIdentityV36 } from "../workspace/managed-copy-v36.ts";
+import { assertBoundedEditBudgetProfileV36, type BoundedEditBudgetProfileV36, V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE } from "../v36/budget-profile-v36.ts";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -203,16 +204,18 @@ function parseManifestG2(value: unknown): RuntimeManifestG2V36 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
 	const manifest = value as RuntimeManifestG2V36;
 	const { manifest_digest: _digest, ...body } = manifest;
-	if (manifest.schema_version !== 2 || manifest.mode !== "v36_interactive_bounded_edit" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || !Number.isSafeInteger(manifest.provider_requests) || manifest.provider_requests < 1 || manifest.provider_requests > 16 || !Array.isArray(manifest.active_tool_names) || stableJson(manifest.active_tool_names) !== stableJson(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || ![manifest.credential_reads, manifest.network_calls, manifest.external_provider_calls, manifest.real_model_calls, manifest.project_command_executions, manifest.docker_project_command_executions, manifest.input_tokens, manifest.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || manifest.project_command_executions < 1 || manifest.project_command_executions !== manifest.docker_project_command_executions || !Array.isArray(manifest.backend_terminal_digests) || manifest.backend_terminal_digests.length !== manifest.project_command_executions || manifest.backend_terminal_digests.some((entry) => !SHA256.test(entry)) || !SHA256.test(manifest.workspace_identity_after) || !Number.isFinite(manifest.cost_usd) || manifest.cost_usd < 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
+	if (manifest.schema_version !== 2 || manifest.mode !== "v36_interactive_bounded_edit" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || !Number.isSafeInteger(manifest.provider_requests) || manifest.provider_requests < 1 || manifest.provider_requests > V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max || !Array.isArray(manifest.active_tool_names) || stableJson(manifest.active_tool_names) !== stableJson(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || ![manifest.credential_reads, manifest.network_calls, manifest.external_provider_calls, manifest.real_model_calls, manifest.project_command_executions, manifest.docker_project_command_executions, manifest.input_tokens, manifest.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || manifest.project_command_executions < 1 || manifest.project_command_executions !== manifest.docker_project_command_executions || !Array.isArray(manifest.backend_terminal_digests) || manifest.backend_terminal_digests.length !== manifest.project_command_executions || manifest.backend_terminal_digests.some((entry) => !SHA256.test(entry)) || !SHA256.test(manifest.workspace_identity_after) || !Number.isFinite(manifest.cost_usd) || manifest.cost_usd < 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
 	return manifest;
 }
 
-const BUDGET_STOP_KEYS = [
+const BUDGET_STOP_KEYS_V1 = [
 	"schema_version", "terminal_kind", "trajectory_outcome", "terminal_reason", "run_id", "session_id", "project_id", "workspace_id", "session_pin_digest", "authority_digest", "created_at", "settled",
 	"request_attempts", "provider_dispatches", "provider_responses", "provider_requests_max", "pending_provider_reservations", "pending_tool_calls", "pending_side_effects",
 	"usage_known", "input_tokens", "output_tokens", "cost_usd", "tool_calls", "last_registered_command", "workspace_identity_at_terminal", "session_entry_count_before_turn", "session_entries_sha256_before_turn", "session_entry_count_at_terminal", "session_entries_sha256_at_terminal",
 	"verification_mode", "formal_outcome", "comparison_eligible", "adaptation_eligible", "promotion_eligible", "terminal_digest",
 ] as const;
+
+const BUDGET_STOP_KEYS_V2 = [...BUDGET_STOP_KEYS_V1, "budget_profile_id"] as const;
 
 function terminalBody(value: ProviderRequestBudgetTerminalV36): Omit<ProviderRequestBudgetTerminalV36, "terminal_digest"> {
 	const { terminal_digest: _digest, ...body } = value;
@@ -233,11 +236,14 @@ function parseRegisteredCommandTerminal(value: unknown): RegisteredCommandTermin
 function parseBudgetStopTerminal(value: unknown): ProviderRequestBudgetTerminalV36 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 budget terminal is invalid");
 	const terminal = value as ProviderRequestBudgetTerminalV36;
-	if (stableJson(Object.keys(terminal).sort()) !== stableJson([...BUDGET_STOP_KEYS].sort())) throw new Error("V3.6 budget terminal fields are invalid");
+	const versionKeys = terminal.schema_version === 1 ? BUDGET_STOP_KEYS_V1 : terminal.schema_version === 2 ? BUDGET_STOP_KEYS_V2 : [];
+	if (stableJson(Object.keys(terminal).sort()) !== stableJson([...versionKeys].sort())) throw new Error("V3.6 budget terminal fields are invalid");
+	const legacyBudget = terminal.schema_version === 1 && terminal.budget_profile_id === undefined && terminal.request_attempts === 17 && terminal.provider_dispatches === 16 && terminal.provider_responses === 16 && terminal.provider_requests_max === 16;
+	const dailyBudget = terminal.schema_version === 2 && terminal.budget_profile_id === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.profile_id && terminal.request_attempts === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max + 1 && terminal.provider_dispatches === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max && terminal.provider_responses === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max && terminal.provider_requests_max === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max;
 	if (
-		terminal.schema_version !== 1 || terminal.terminal_kind !== "v36_pre_dispatch_provider_request_budget_terminal" || terminal.trajectory_outcome !== "pre_dispatch_budget_terminal" || terminal.terminal_reason !== "provider_request_budget_exhausted" ||
+		(!legacyBudget && !dailyBudget) || terminal.terminal_kind !== "v36_pre_dispatch_provider_request_budget_terminal" || terminal.trajectory_outcome !== "pre_dispatch_budget_terminal" || terminal.terminal_reason !== "provider_request_budget_exhausted" ||
 		!ID.test(terminal.run_id) || !ID.test(terminal.session_id) || !ID.test(terminal.project_id) || !ID.test(terminal.workspace_id) || ![terminal.session_pin_digest, terminal.authority_digest, terminal.workspace_identity_at_terminal, terminal.session_entries_sha256_before_turn, terminal.session_entries_sha256_at_terminal, terminal.terminal_digest].every((entry) => SHA256.test(entry)) ||
-		terminal.settled !== false || terminal.request_attempts !== 17 || terminal.provider_dispatches !== 16 || terminal.provider_responses !== 16 || terminal.provider_requests_max !== 16 || terminal.pending_provider_reservations !== 0 || terminal.pending_tool_calls !== 0 || terminal.pending_side_effects !== 0 || terminal.usage_known !== true ||
+		terminal.settled !== false || terminal.pending_provider_reservations !== 0 || terminal.pending_tool_calls !== 0 || terminal.pending_side_effects !== 0 || terminal.usage_known !== true ||
 		!Number.isSafeInteger(terminal.input_tokens) || terminal.input_tokens < 0 || !Number.isSafeInteger(terminal.output_tokens) || terminal.output_tokens < 0 || !Number.isFinite(terminal.cost_usd) || terminal.cost_usd < 0 || !Number.isSafeInteger(terminal.tool_calls) || terminal.tool_calls < 1 || !Number.isSafeInteger(terminal.session_entry_count_before_turn) || terminal.session_entry_count_before_turn < 0 || !Number.isSafeInteger(terminal.session_entry_count_at_terminal) || terminal.session_entry_count_at_terminal < 1 || terminal.session_entry_count_before_turn >= terminal.session_entry_count_at_terminal ||
 		terminal.verification_mode !== "unverified" || terminal.formal_outcome !== null || terminal.comparison_eligible !== false || terminal.adaptation_eligible !== false || terminal.promotion_eligible !== false || digestObject(terminalBody(terminal)) !== terminal.terminal_digest
 	) throw new Error("V3.6 budget terminal is invalid");
@@ -474,6 +480,7 @@ export class PersistentInteractiveSessionServiceV36 {
 		prompt: string;
 		taskPolicy: BoundedTaskPolicy;
 		commandExecutor: BoundedCommandExecutor;
+		budgetProfile: BoundedEditBudgetProfileV36;
 		models: ReturnType<typeof createModels>;
 		model: NonNullable<ReturnType<ReturnType<typeof createModels>["getModel"]>>;
 		systemPrompt: string;
@@ -483,6 +490,7 @@ export class PersistentInteractiveSessionServiceV36 {
 		testOnlyFinalAssistantUsageFloor?: { combined_tokens?: number; cost_usd?: number };
 	}): Promise<PersistentInteractiveBoundedTurnResultV36> {
 		if (options.sessionId !== this.sessionId) throw new Error("V3.6 Session identity mismatch");
+		assertBoundedEditBudgetProfileV36(options.budgetProfile);
 		identifier(options.runId, "Run ID");
 		if (Buffer.byteLength(options.prompt, "utf8") < 1 || Buffer.byteLength(options.prompt, "utf8") > 16_384 || Buffer.byteLength(options.systemPrompt, "utf8") < 1 || Buffer.byteLength(options.systemPrompt, "utf8") > 16_384) throw new Error("V3.6 bounded Turn prompt is invalid");
 		const root = runRoot(this.runtimeRoot, options.runId, true);
@@ -504,14 +512,18 @@ export class PersistentInteractiveSessionServiceV36 {
 		let providerResponses = 0;
 		let pendingToolCalls = 0;
 		let usageKnown = true;
+		const turnStartedAt = Date.now();
+		const assertTurnWallTimeBudget = (): void => {
+			if (Date.now() - turnStartedAt > options.budgetProfile.wall_time_ms_hard_max) throw new Error("V3.6 per-Turn wall-time budget exceeded");
+		};
 		const assertTurnUsageBudget = (): void => {
-			if (inputTokens + outputTokens > 131_072 || costUsd > 0.2) usageBudgetError ??= new Error("V3.6 Goal 2 per-Turn token/cost budget exceeded");
+			if (inputTokens + outputTokens > options.budgetProfile.combined_tokens_hard_max || costUsd > options.budgetProfile.cost_usd_hard_max) usageBudgetError ??= new Error("V3.6 per-Turn token/cost budget exceeded");
 			if (usageBudgetError) throw usageBudgetError;
 		};
 		const profile = createBoundedToolProfile(this.workspaceRoot, options.taskPolicy, { allowed_tool_names: ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"], allow_repository_commands: false, expose_task_command_ids: true, command_executor: options.commandExecutor });
 		const expectedTools = ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"];
 		if (stableJson(profile.tools.map((tool) => tool.name)) !== stableJson(expectedTools)) throw new Error("V3.6 Goal 2 tool surface drifted");
-		const harness = new AgentHarness({ models: options.models, session, model: options.model, tools: profile.tools, toolContext: profile.context, systemPrompt: options.systemPrompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: 900_000 } });
+		const harness = new AgentHarness({ models: options.models, session, model: options.model, tools: profile.tools, toolContext: profile.context, systemPrompt: options.systemPrompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: options.budgetProfile.wall_time_ms_hard_max } });
 		const unsubscribe = harness.subscribe((event) => {
 			if (event.type === "settled") settled += 1;
 			if (event.type === "tool_execution_start") pendingToolCalls += 1;
@@ -552,9 +564,10 @@ export class PersistentInteractiveSessionServiceV36 {
 			return { messages: event.messages };
 		});
 		const offRequest = harness.on("before_provider_request", () => {
+			assertTurnWallTimeBudget();
 			providerRequests += 1;
 			if (pendingProviderReservation) throw new Error("V3.6 Goal 2 Provider reservation is already pending");
-			if (providerRequests > 16) {
+			if (providerRequests > options.budgetProfile.provider_requests_hard_max) {
 				budgetTerminal = new ProviderRequestBudgetTerminalV36Error(providerRequests);
 				throw budgetTerminal;
 			}
@@ -563,8 +576,9 @@ export class PersistentInteractiveSessionServiceV36 {
 			return undefined;
 		});
 		const offTool = harness.on("tool_call", () => {
+			assertTurnWallTimeBudget();
 			toolCalls += 1;
-			if (toolCalls > 24) throw new Error("V3.6 Goal 2 Tool budget exceeded");
+			if (toolCalls > options.budgetProfile.tool_calls_hard_max) throw new Error("V3.6 Tool budget exceeded");
 			return undefined;
 		});
 		try {
@@ -582,7 +596,8 @@ export class PersistentInteractiveSessionServiceV36 {
 		const terminalError = budgetTerminal as ProviderRequestBudgetTerminalV36Error | null;
 		if (terminalError !== null) {
 			if (!SHA256.test(options.authorityDigest ?? "")) throw new Error("V3.6 budget terminal authority digest is required");
-			if (terminalError.requestAttempt !== 17 || providerRequests !== 17 || providerResponses !== 16 || pendingProviderReservation || pendingToolCalls !== 0 || profile.pendingSideEffects() !== 0 || usageKnown !== true || toolCalls < 1 || profile.commandExecutions.length < 1) throw new Error("V3.6 pre-dispatch Provider-request budget terminal is not quiescent or reconciled");
+			const requestMax = options.budgetProfile.provider_requests_hard_max;
+			if (terminalError.requestAttempt !== requestMax + 1 || providerRequests !== requestMax + 1 || providerResponses !== requestMax || pendingProviderReservation || pendingToolCalls !== 0 || profile.pendingSideEffects() !== 0 || usageKnown !== true || toolCalls < 1 || profile.commandExecutions.length < 1) throw new Error("V3.6 pre-dispatch Provider-request budget terminal is not quiescent or reconciled");
 			const lastCommand = profile.commandExecutions.at(-1);
 			if (!lastCommand || !ID.test(lastCommand.command_id) || !SHA256.test(lastCommand.authority_digest ?? "") || !SHA256.test(lastCommand.terminal_digest ?? "") || !Number.isSafeInteger(lastCommand.exit_code ?? 0)) throw new Error("V3.6 budget terminal has no valid registered command result");
 			const entries = await session.getEntries();
@@ -598,7 +613,8 @@ export class PersistentInteractiveSessionServiceV36 {
 				terminal_digest: lastCommand.terminal_digest!,
 			};
 			const terminalBody: Omit<ProviderRequestBudgetTerminalV36, "terminal_digest"> = {
-				schema_version: 1,
+				schema_version: options.budgetProfile.profile_id === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.profile_id ? 2 : 1,
+				...(options.budgetProfile.profile_id === V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.profile_id ? { budget_profile_id: V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.profile_id } : {}),
 				terminal_kind: "v36_pre_dispatch_provider_request_budget_terminal",
 				trajectory_outcome: "pre_dispatch_budget_terminal",
 				terminal_reason: "provider_request_budget_exhausted",
@@ -610,10 +626,10 @@ export class PersistentInteractiveSessionServiceV36 {
 				authority_digest: options.authorityDigest!,
 				created_at: new Date().toISOString(),
 				settled: false,
-				request_attempts: 17,
-				provider_dispatches: 16,
-				provider_responses: 16,
-				provider_requests_max: 16,
+				request_attempts: requestMax + 1,
+				provider_dispatches: requestMax,
+				provider_responses: requestMax,
+				provider_requests_max: requestMax,
 				pending_provider_reservations: 0,
 				pending_tool_calls: 0,
 				pending_side_effects: 0,
@@ -640,6 +656,7 @@ export class PersistentInteractiveSessionServiceV36 {
 			writeOnceJson(root, "budget-stop.json", terminal);
 			return { manifest: terminal, view: await this.inspect() };
 		}
+		assertTurnWallTimeBudget();
 		assertTurnUsageBudget();
 		if (settled !== 1 || observedPrior !== priorDigest || profile.pendingSideEffects() !== 0 || profile.commandExecutions.length < 1 || profile.commandExecutions.some((entry) => entry.cleanup_complete !== true || !SHA256.test(entry.terminal_digest ?? "") || entry.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest)) throw new Error("V3.6 Goal 2 bounded Turn did not settle with exact frozen terminal Docker evidence");
 		const entries = await session.getEntries();

@@ -14,6 +14,7 @@ import { WorkbenchApplicationV36G1 } from "../webui/application-v36g1.ts";
 import { Goal2WorkbenchExtensionV36 } from "../webui/application-v36g2.ts";
 import { loadGoal3DemoProjectionV35 } from "../webui/projection-v35g3.ts";
 import { InteractiveControlPlaneV36 } from "./authority-v36.ts";
+import { V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE } from "./budget-profile-v36.ts";
 
 export interface DailyProjectProfileFileV36 {
 	schema_version: 1;
@@ -100,6 +101,7 @@ export function createDailyProductApplicationV36(options: {
 					prompt: input.task_text,
 					taskPolicy: { writable_paths: [...registration.writable_paths], protected_paths: [...registration.protected_paths], command_descriptors: structuredClone(registration.command_descriptors ?? []) },
 					commandExecutor: async ({ descriptor, workspace_root }) => await executor.execute({ workspaceRoot: workspace_root, evidenceRoot: resolve(commandRoot, `command-${++ordinal}`), descriptor }),
+					budgetProfile: V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE,
 					models: runtime.models,
 					model: runtime.model,
 					systemPrompt: `Work only inside the managed Workspace. Writable paths: ${JSON.stringify(registration.writable_paths)}. Protected paths: ${JSON.stringify(registration.protected_paths)}. Use only registered command IDs: ${JSON.stringify((registration.command_descriptors ?? []).map((entry) => entry.command_id))}. Run at least one relevant registered command before finishing. Never request Host paths, credentials, network, image, mount, argv, policy or direct Source changes.`,
