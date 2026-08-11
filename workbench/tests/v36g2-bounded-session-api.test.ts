@@ -186,5 +186,6 @@ test("a final assistant response exceeding token or cost caps fails before an ac
 			testOnlyFinalAssistantUsageFloor: variant === "tokens" ? { combined_tokens: 131_073 } : { cost_usd: 0.200_001 },
 		}), /token\/cost budget exceeded/);
 		assert.equal(existsSync(resolve(runtime, "runs", runId, "manifest.json")), false);
+		assert.equal(existsSync(resolve(runtime, "runs", runId, "budget-stop.json")), false);
 	}
 });

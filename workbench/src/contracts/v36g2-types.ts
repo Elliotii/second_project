@@ -85,6 +85,67 @@ export interface InteractiveRunEvidenceV36G2 {
 	evidence_digest: string;
 }
 
+export interface RegisteredCommandTerminalV36 {
+	command_id: string;
+	exit_code: number | null;
+	timed_out: boolean;
+	truncated: boolean;
+	terminal_digest: string;
+}
+
+/**
+ * The only non-settled V3.6 runtime terminal form. It records a local refusal
+ * before the seventeenth Provider dispatch; it is not an AgentHarness settle
+ * result, task success, verifier outcome, or Source-apply authorization.
+ */
+export interface ProviderRequestBudgetTerminalV36 {
+	schema_version: 1;
+	terminal_kind: "v36_pre_dispatch_provider_request_budget_terminal";
+	trajectory_outcome: "pre_dispatch_budget_terminal";
+	terminal_reason: "provider_request_budget_exhausted";
+	run_id: string;
+	session_id: string;
+	project_id: string;
+	workspace_id: string;
+	session_pin_digest: string;
+	authority_digest: string;
+	created_at: string;
+	settled: false;
+	request_attempts: 17;
+	provider_dispatches: 16;
+	provider_responses: 16;
+	provider_requests_max: 16;
+	pending_provider_reservations: 0;
+	pending_tool_calls: 0;
+	pending_side_effects: 0;
+	usage_known: true;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: number;
+	tool_calls: number;
+	last_registered_command: RegisteredCommandTerminalV36;
+	workspace_identity_at_terminal: string;
+	session_entry_count_at_terminal: number;
+	session_entries_sha256_at_terminal: string;
+	verification_mode: "unverified";
+	formal_outcome: null;
+	comparison_eligible: false;
+	adaptation_eligible: false;
+	promotion_eligible: false;
+	terminal_digest: string;
+}
+
+export interface SafeProviderRequestBudgetTerminalV36 {
+	trajectory_outcome: "pre_dispatch_budget_terminal";
+	terminal_reason: "provider_request_budget_exhausted";
+	authority_digest: string;
+	request_usage: { attempts: 17; used: 16; max: 16 };
+	usage: { input_tokens: number; output_tokens: number; cost_usd: number; known: true };
+	last_registered_command: RegisteredCommandTerminalV36;
+	unverified_changes: true;
+	terminal_digest: string;
+}
+
 export interface WorkspaceInventoryV36 {
 	schema_version: 1;
 	files: Array<{ path: string; bytes: number; sha256: string }>;

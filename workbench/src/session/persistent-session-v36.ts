@@ -3,7 +3,9 @@ import { isAbsolute, relative, resolve, sep } from "node:path";
 import { AgentHarness, JsonlSessionRepo, type AgentMessage, type JsonlSessionMetadata, type SessionTreeEntry } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall, type AssistantMessage } from "@earendil-works/pi-ai";
-import type { SafeRunViewV35, SafeSessionMessageV35, SafeSessionViewV35 } from "../contracts/v35-types.ts";
+import type { SafeSessionMessageV35 } from "../contracts/v35-types.ts";
+import type { SafePersistentSessionV36 } from "../contracts/v36-types.ts";
+import type { ProviderRequestBudgetTerminalV36, RegisteredCommandTerminalV36, SafeProviderRequestBudgetTerminalV36 } from "../contracts/v36g2-types.ts";
 import { readJsonArtifact, writeOnceJson } from "../evidence/artifacts.ts";
 import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 import { digestObject, sha256, stableJson } from "../hash.ts";
@@ -15,6 +17,19 @@ const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 const READ_ONLY_TOOLS = ["workspace_read", "workspace_list"] as const;
 const SYSTEM_PROMPT = "You are a deterministic V3.6 Goal 1 persistence agent. Inspect only the managed Workspace using the available read-only tools. Project commands and writes are unavailable.";
+
+export const V36_PROVIDER_REQUEST_BUDGET_TERMINAL_CODE = "V36_PROVIDER_REQUEST_BUDGET_EXHAUSTED";
+
+export class ProviderRequestBudgetTerminalV36Error extends Error {
+	readonly code = V36_PROVIDER_REQUEST_BUDGET_TERMINAL_CODE;
+	readonly requestAttempt: number;
+
+	constructor(requestAttempt: number) {
+		super(`${V36_PROVIDER_REQUEST_BUDGET_TERMINAL_CODE}: request attempt ${requestAttempt} refused before dispatch`);
+		this.name = "ProviderRequestBudgetTerminalV36Error";
+		this.requestAttempt = requestAttempt;
+	}
+}
 
 interface RuntimeMetadataV36 extends Record<string, unknown> {
 	schema_version: 1;
@@ -99,12 +114,12 @@ export interface InteractiveDispatchManifestV36 {
 }
 
 export interface PersistentInteractiveTurnResultV36 {
-	manifest: InteractiveDispatchManifestV36;
-	view: SafeSessionViewV35;
+	manifest: InteractiveDispatchManifestV36 | ProviderRequestBudgetTerminalV36;
+	view: SafePersistentSessionV36;
 }
 
 export interface PersistentInteractiveBoundedTurnResultV36 extends PersistentInteractiveTurnResultV36 {
-	manifest: RuntimeManifestG2V36;
+	manifest: RuntimeManifestG2V36 | ProviderRequestBudgetTerminalV36;
 }
 
 function identifier(value: string, label: string): void {
@@ -190,6 +205,53 @@ function parseManifestG2(value: unknown): RuntimeManifestG2V36 {
 	const { manifest_digest: _digest, ...body } = manifest;
 	if (manifest.schema_version !== 2 || manifest.mode !== "v36_interactive_bounded_edit" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || !Number.isSafeInteger(manifest.provider_requests) || manifest.provider_requests < 1 || manifest.provider_requests > 16 || !Array.isArray(manifest.active_tool_names) || stableJson(manifest.active_tool_names) !== stableJson(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || ![manifest.credential_reads, manifest.network_calls, manifest.external_provider_calls, manifest.real_model_calls, manifest.project_command_executions, manifest.docker_project_command_executions, manifest.input_tokens, manifest.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || manifest.project_command_executions < 1 || manifest.project_command_executions !== manifest.docker_project_command_executions || !Array.isArray(manifest.backend_terminal_digests) || manifest.backend_terminal_digests.length !== manifest.project_command_executions || manifest.backend_terminal_digests.some((entry) => !SHA256.test(entry)) || !SHA256.test(manifest.workspace_identity_after) || !Number.isFinite(manifest.cost_usd) || manifest.cost_usd < 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
 	return manifest;
+}
+
+const BUDGET_STOP_KEYS = [
+	"schema_version", "terminal_kind", "trajectory_outcome", "terminal_reason", "run_id", "session_id", "project_id", "workspace_id", "session_pin_digest", "authority_digest", "created_at", "settled",
+	"request_attempts", "provider_dispatches", "provider_responses", "provider_requests_max", "pending_provider_reservations", "pending_tool_calls", "pending_side_effects",
+	"usage_known", "input_tokens", "output_tokens", "cost_usd", "tool_calls", "last_registered_command", "workspace_identity_at_terminal", "session_entry_count_at_terminal", "session_entries_sha256_at_terminal",
+	"verification_mode", "formal_outcome", "comparison_eligible", "adaptation_eligible", "promotion_eligible", "terminal_digest",
+] as const;
+
+function terminalBody(value: ProviderRequestBudgetTerminalV36): Omit<ProviderRequestBudgetTerminalV36, "terminal_digest"> {
+	const { terminal_digest: _digest, ...body } = value;
+	return body;
+}
+
+function parseRegisteredCommandTerminal(value: unknown): RegisteredCommandTerminalV36 {
+	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 budget terminal registered command is invalid");
+	const command = value as RegisteredCommandTerminalV36;
+	if (stableJson(Object.keys(command).sort()) !== stableJson(["command_id", "exit_code", "timed_out", "truncated", "terminal_digest"].sort()) || !ID.test(command.command_id) || (command.exit_code !== null && (!Number.isSafeInteger(command.exit_code))) || typeof command.timed_out !== "boolean" || typeof command.truncated !== "boolean" || !SHA256.test(command.terminal_digest)) throw new Error("V3.6 budget terminal registered command is invalid");
+	return command;
+}
+
+function parseBudgetStopTerminal(value: unknown): ProviderRequestBudgetTerminalV36 {
+	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 budget terminal is invalid");
+	const terminal = value as ProviderRequestBudgetTerminalV36;
+	if (stableJson(Object.keys(terminal).sort()) !== stableJson([...BUDGET_STOP_KEYS].sort())) throw new Error("V3.6 budget terminal fields are invalid");
+	if (
+		terminal.schema_version !== 1 || terminal.terminal_kind !== "v36_pre_dispatch_provider_request_budget_terminal" || terminal.trajectory_outcome !== "pre_dispatch_budget_terminal" || terminal.terminal_reason !== "provider_request_budget_exhausted" ||
+		!ID.test(terminal.run_id) || !ID.test(terminal.session_id) || !ID.test(terminal.project_id) || !ID.test(terminal.workspace_id) || ![terminal.session_pin_digest, terminal.authority_digest, terminal.workspace_identity_at_terminal, terminal.session_entries_sha256_at_terminal, terminal.terminal_digest].every((entry) => SHA256.test(entry)) ||
+		terminal.settled !== false || terminal.request_attempts !== 17 || terminal.provider_dispatches !== 16 || terminal.provider_responses !== 16 || terminal.provider_requests_max !== 16 || terminal.pending_provider_reservations !== 0 || terminal.pending_tool_calls !== 0 || terminal.pending_side_effects !== 0 || terminal.usage_known !== true ||
+		!Number.isSafeInteger(terminal.input_tokens) || terminal.input_tokens < 0 || !Number.isSafeInteger(terminal.output_tokens) || terminal.output_tokens < 0 || !Number.isFinite(terminal.cost_usd) || terminal.cost_usd < 0 || !Number.isSafeInteger(terminal.tool_calls) || terminal.tool_calls < 1 || !Number.isSafeInteger(terminal.session_entry_count_at_terminal) || terminal.session_entry_count_at_terminal < 1 ||
+		terminal.verification_mode !== "unverified" || terminal.formal_outcome !== null || terminal.comparison_eligible !== false || terminal.adaptation_eligible !== false || terminal.promotion_eligible !== false || digestObject(terminalBody(terminal)) !== terminal.terminal_digest
+	) throw new Error("V3.6 budget terminal is invalid");
+	parseRegisteredCommandTerminal(terminal.last_registered_command);
+	return terminal;
+}
+
+function safeBudgetStopTerminal(terminal: ProviderRequestBudgetTerminalV36): SafeProviderRequestBudgetTerminalV36 {
+	return {
+		trajectory_outcome: terminal.trajectory_outcome,
+		terminal_reason: terminal.terminal_reason,
+		authority_digest: terminal.authority_digest,
+		request_usage: { attempts: terminal.request_attempts, used: terminal.provider_dispatches, max: terminal.provider_requests_max },
+		usage: { input_tokens: terminal.input_tokens, output_tokens: terminal.output_tokens, cost_usd: terminal.cost_usd, known: terminal.usage_known },
+		last_registered_command: structuredClone(terminal.last_registered_command),
+		unverified_changes: true,
+		terminal_digest: terminal.terminal_digest,
+	};
 }
 
 export class PersistentInteractiveSessionServiceV36 {
@@ -284,6 +346,7 @@ export class PersistentInteractiveSessionServiceV36 {
 		systemPrompt: string;
 		credentialReads?: number;
 		externalModel?: boolean;
+		authorityDigest?: string;
 		testOnlyFinalAssistantUsageFloor?: { combined_tokens?: number; cost_usd?: number };
 	}): Promise<PersistentInteractiveBoundedTurnResultV36> {
 		if (options.sessionId !== this.sessionId) throw new Error("V3.6 Session identity mismatch");
@@ -302,6 +365,11 @@ export class PersistentInteractiveSessionServiceV36 {
 		let outputTokens = 0;
 		let costUsd = 0;
 		let usageBudgetError: Error | null = null;
+		let budgetTerminal: ProviderRequestBudgetTerminalV36Error | null = null;
+		let pendingProviderReservation = false;
+		let providerResponses = 0;
+		let pendingToolCalls = 0;
+		let usageKnown = true;
 		const assertTurnUsageBudget = (): void => {
 			if (inputTokens + outputTokens > 131_072 || costUsd > 0.2) usageBudgetError ??= new Error("V3.6 Goal 2 per-Turn token/cost budget exceeded");
 			if (usageBudgetError) throw usageBudgetError;
@@ -312,14 +380,26 @@ export class PersistentInteractiveSessionServiceV36 {
 		const harness = new AgentHarness({ models: options.models, session, model: options.model, tools: profile.tools, toolContext: profile.context, systemPrompt: options.systemPrompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: 900_000 } });
 		const unsubscribe = harness.subscribe((event) => {
 			if (event.type === "settled") settled += 1;
+			if (event.type === "tool_execution_start") pendingToolCalls += 1;
+			if (event.type === "tool_execution_end") {
+				pendingToolCalls -= 1;
+				if (pendingToolCalls < 0) usageKnown = false;
+			}
 			if (event.type === "message_end" && event.message.role === "assistant") {
 				const message = event.message as AssistantMessage;
+				if (budgetTerminal !== null && message.stopReason === "error" && message.errorMessage?.includes(V36_PROVIDER_REQUEST_BUDGET_TERMINAL_CODE) === true) return;
+				if (!pendingProviderReservation) {
+					usageKnown = false;
+					return;
+				}
 				const usage = message.usage;
 				const currentInput = usage.input + usage.cacheRead + usage.cacheWrite;
 				const floor = message.stopReason === "stop" ? options.testOnlyFinalAssistantUsageFloor : undefined;
 				const currentOutput = floor?.combined_tokens === undefined ? usage.output : Math.max(usage.output, floor.combined_tokens - currentInput);
 				const currentCost = floor?.cost_usd === undefined ? usage.cost.total : Math.max(usage.cost.total, floor.cost_usd);
 				if (![currentInput, currentOutput, currentCost, floor?.combined_tokens ?? 0, floor?.cost_usd ?? 0].every((entry) => Number.isFinite(entry) && entry >= 0)) {
+					usageKnown = false;
+					pendingProviderReservation = false;
 					usageBudgetError ??= new Error("V3.6 Goal 2 model usage is invalid");
 					void harness.abort();
 					return;
@@ -327,6 +407,8 @@ export class PersistentInteractiveSessionServiceV36 {
 				inputTokens += currentInput;
 				outputTokens += currentOutput;
 				costUsd += currentCost;
+				providerResponses += 1;
+				pendingProviderReservation = false;
 				try { assertTurnUsageBudget(); } catch { void harness.abort(); }
 			}
 		});
@@ -337,8 +419,13 @@ export class PersistentInteractiveSessionServiceV36 {
 		});
 		const offRequest = harness.on("before_provider_request", () => {
 			providerRequests += 1;
-			if (providerRequests > 16) throw new Error("V3.6 Goal 2 per-Turn Provider-request budget exceeded");
+			if (pendingProviderReservation) throw new Error("V3.6 Goal 2 Provider reservation is already pending");
+			if (providerRequests > 16) {
+				budgetTerminal = new ProviderRequestBudgetTerminalV36Error(providerRequests);
+				throw budgetTerminal;
+			}
 			assertTurnUsageBudget();
+			pendingProviderReservation = true;
 			return undefined;
 		});
 		const offTool = harness.on("tool_call", () => {
@@ -346,7 +433,71 @@ export class PersistentInteractiveSessionServiceV36 {
 			if (toolCalls > 24) throw new Error("V3.6 Goal 2 Tool budget exceeded");
 			return undefined;
 		});
-		try { await harness.prompt(options.prompt); await harness.waitForIdle(); } finally { unsubscribe(); offContext(); offRequest(); offTool(); await harness.abort(); }
+		try {
+			await harness.prompt(options.prompt);
+			await harness.waitForIdle();
+		} catch (error) {
+			if (budgetTerminal === null || !(error instanceof ProviderRequestBudgetTerminalV36Error || error instanceof Error && error.message.includes(V36_PROVIDER_REQUEST_BUDGET_TERMINAL_CODE))) throw error;
+		} finally {
+			unsubscribe();
+			offContext();
+			offRequest();
+			offTool();
+			await harness.abort();
+		}
+		const terminalError = budgetTerminal as ProviderRequestBudgetTerminalV36Error | null;
+		if (terminalError !== null) {
+			if (!SHA256.test(options.authorityDigest ?? "")) throw new Error("V3.6 budget terminal authority digest is required");
+			if (terminalError.requestAttempt !== 17 || providerRequests !== 17 || providerResponses !== 16 || pendingProviderReservation || pendingToolCalls !== 0 || profile.pendingSideEffects() !== 0 || usageKnown !== true || toolCalls < 1 || profile.commandExecutions.length < 1) throw new Error("V3.6 pre-dispatch Provider-request budget terminal is not quiescent or reconciled");
+			const lastCommand = profile.commandExecutions.at(-1);
+			if (!lastCommand || !ID.test(lastCommand.command_id) || !SHA256.test(lastCommand.terminal_digest ?? "") || !Number.isSafeInteger(lastCommand.exit_code ?? 0)) throw new Error("V3.6 budget terminal has no valid registered command result");
+			const entries = await session.getEntries();
+			const terminalCommand: RegisteredCommandTerminalV36 = {
+				command_id: lastCommand.command_id,
+				exit_code: lastCommand.exit_code,
+				timed_out: lastCommand.timed_out,
+				truncated: lastCommand.truncated,
+				terminal_digest: lastCommand.terminal_digest!,
+			};
+			const terminalBody: Omit<ProviderRequestBudgetTerminalV36, "terminal_digest"> = {
+				schema_version: 1,
+				terminal_kind: "v36_pre_dispatch_provider_request_budget_terminal",
+				trajectory_outcome: "pre_dispatch_budget_terminal",
+				terminal_reason: "provider_request_budget_exhausted",
+				run_id: options.runId,
+				session_id: this.sessionId,
+				project_id: this.projectId,
+				workspace_id: this.workspaceId,
+				session_pin_digest: this.pinDigest,
+				authority_digest: options.authorityDigest!,
+				created_at: new Date().toISOString(),
+				settled: false,
+				request_attempts: 17,
+				provider_dispatches: 16,
+				provider_responses: 16,
+				provider_requests_max: 16,
+				pending_provider_reservations: 0,
+				pending_tool_calls: 0,
+				pending_side_effects: 0,
+				usage_known: true,
+				input_tokens: inputTokens,
+				output_tokens: outputTokens,
+				cost_usd: costUsd,
+				tool_calls: toolCalls,
+				last_registered_command: terminalCommand,
+				workspace_identity_at_terminal: managedWorkspaceIdentityV36(this.workspaceRoot),
+				session_entry_count_at_terminal: entries.length,
+				session_entries_sha256_at_terminal: digestObject(entries),
+				verification_mode: "unverified",
+				formal_outcome: null,
+				comparison_eligible: false,
+				adaptation_eligible: false,
+				promotion_eligible: false,
+			};
+			const terminal: ProviderRequestBudgetTerminalV36 = { ...terminalBody, terminal_digest: digestObject(terminalBody) };
+			writeOnceJson(root, "budget-stop.json", terminal);
+			return { manifest: terminal, view: await this.inspect() };
+		}
 		assertTurnUsageBudget();
 		if (settled !== 1 || observedPrior !== priorDigest || profile.pendingSideEffects() !== 0 || profile.commandExecutions.length < 1 || profile.commandExecutions.some((entry) => entry.cleanup_complete !== true || !SHA256.test(entry.terminal_digest ?? "") || entry.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest)) throw new Error("V3.6 Goal 2 bounded Turn did not settle with exact frozen terminal Docker evidence");
 		const entries = await session.getEntries();
@@ -364,21 +515,68 @@ export class PersistentInteractiveSessionServiceV36 {
 		return { manifest, view: await this.inspect() };
 	}
 
-	async inspect(): Promise<SafeSessionViewV35> {
+	async inspect(): Promise<SafePersistentSessionV36> {
 		const session = await this.open();
 		const entries = await session.getEntries();
-		const manifests: Array<RuntimeManifestV36 | RuntimeManifestG2V36> = [];
+		const manifests: Array<RuntimeManifestV36 | RuntimeManifestG2V36 | ProviderRequestBudgetTerminalV36> = [];
 		for (const entry of readdirSync(resolve(this.runtimeRoot, "runs"), { withFileTypes: true })) {
 			if (!entry.isDirectory() || !ID.test(entry.name)) throw new Error("V3.6 Runtime Run directory is invalid");
 			const root = runRoot(this.runtimeRoot, entry.name);
-			if (!existsSync(resolve(root, "manifest.json"))) throw new Error("V3.6 Runtime Manifest is missing");
-			const rawManifest = readJsonArtifact<{ schema_version?: unknown }>(root, "manifest.json");
-			const manifest = rawManifest.schema_version === 2 ? parseManifestG2(rawManifest) : parseManifest(rawManifest);
-			if (manifest.run_id !== entry.name || manifest.session_id !== this.sessionId || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.session_pin_digest !== this.pinDigest || entries.length < manifest.session_entry_count_after_turn || digestObject(entries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("V3.6 Runtime/Session historical identity mismatch");
-			manifests.push(manifest);
+			const manifestPath = resolve(root, "manifest.json");
+			const terminalPath = resolve(root, "budget-stop.json");
+			if (existsSync(manifestPath) === existsSync(terminalPath)) throw new Error("V3.6 Runtime must have exactly one settled Manifest or budget terminal");
+			if (existsSync(manifestPath)) {
+				const rawManifest = readJsonArtifact<{ schema_version?: unknown }>(root, "manifest.json");
+				const manifest = rawManifest.schema_version === 2 ? parseManifestG2(rawManifest) : parseManifest(rawManifest);
+				if (manifest.run_id !== entry.name || manifest.session_id !== this.sessionId || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.session_pin_digest !== this.pinDigest || entries.length < manifest.session_entry_count_after_turn || digestObject(entries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("V3.6 Runtime/Session historical identity mismatch");
+				manifests.push(manifest);
+			} else {
+				const terminal = parseBudgetStopTerminal(readJsonArtifact(root, "budget-stop.json"));
+				if (terminal.run_id !== entry.name || terminal.session_id !== this.sessionId || terminal.project_id !== this.projectId || terminal.workspace_id !== this.workspaceId || terminal.session_pin_digest !== this.pinDigest || entries.length !== terminal.session_entry_count_at_terminal || digestObject(entries) !== terminal.session_entries_sha256_at_terminal || managedWorkspaceIdentityV36(this.workspaceRoot) !== terminal.workspace_identity_at_terminal) throw new Error("V3.6 budget terminal Runtime/Session/Workspace identity mismatch");
+				manifests.push(terminal);
+			}
 		}
 		manifests.sort((left, right) => left.created_at.localeCompare(right.created_at));
-		const runs: SafeRunViewV35[] = manifests.map((manifest) => ({ run_id: manifest.run_id, created_at: manifest.created_at, settled: true, provider_requests: manifest.provider_requests, tool_call_count: manifest.tool_call_ids.length, context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256, mode: manifest.schema_version === 2 && manifest.real_model_calls > 0 ? "real_product_smoke" : "deterministic_faux", prior_run_id: null, input_tokens: manifest.schema_version === 2 ? manifest.input_tokens : "not_recorded", output_tokens: manifest.schema_version === 2 ? manifest.output_tokens : "not_recorded", cost_usd: manifest.schema_version === 2 ? manifest.cost_usd : "not_recorded", verifier_id: "not_recorded", verifier_status: "not_recorded", outcome: "not_recorded", binding_status: "not_recorded", source_ref: `runtime/runs/${manifest.run_id}/manifest.json` }));
+		const runs = manifests.map((manifest) => {
+			if ("terminal_kind" in manifest) return {
+				run_id: manifest.run_id,
+				created_at: manifest.created_at,
+				settled: false,
+				provider_requests: manifest.provider_dispatches,
+				tool_call_count: manifest.tool_calls,
+				context_reconstructed: true,
+				mode: "pre_dispatch_budget_terminal" as const,
+				prior_run_id: null,
+				input_tokens: manifest.input_tokens,
+				output_tokens: manifest.output_tokens,
+				cost_usd: manifest.cost_usd,
+				verifier_id: "not_recorded" as const,
+				verifier_status: "not_recorded" as const,
+				outcome: "not_recorded" as const,
+				binding_status: "not_recorded" as const,
+				source_ref: `runtime/runs/${manifest.run_id}/budget-stop.json`,
+				terminal: safeBudgetStopTerminal(manifest),
+			};
+			return {
+				run_id: manifest.run_id,
+				created_at: manifest.created_at,
+				settled: true,
+				provider_requests: manifest.provider_requests,
+				tool_call_count: manifest.tool_call_ids.length,
+				context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256,
+				mode: manifest.schema_version === 2 && manifest.real_model_calls > 0 ? "real_product_smoke" as const : "deterministic_faux" as const,
+				prior_run_id: null,
+				input_tokens: manifest.schema_version === 2 ? manifest.input_tokens : "not_recorded" as const,
+				output_tokens: manifest.schema_version === 2 ? manifest.output_tokens : "not_recorded" as const,
+				cost_usd: manifest.schema_version === 2 ? manifest.cost_usd : "not_recorded" as const,
+				verifier_id: "not_recorded" as const,
+				verifier_status: "not_recorded" as const,
+				outcome: "not_recorded" as const,
+				binding_status: "not_recorded" as const,
+				source_ref: `runtime/runs/${manifest.run_id}/manifest.json`,
+				terminal: null,
+			};
+		});
 		const createdAt = manifests[0]?.created_at ?? (await session.getMetadata()).createdAt;
 		return { schema_version: 1, session_id: this.sessionId, project_id: this.projectId, workspace_id: this.workspaceId, title: this.title, created_at: createdAt, updated_at: manifests.at(-1)?.created_at ?? createdAt, parent_session_id: null, messages: projectMessages(entries), runs, source_status: "available" };
 	}

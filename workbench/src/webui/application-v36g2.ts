@@ -7,7 +7,7 @@ export interface SafeInteractiveSessionV36G2 extends SafeInteractiveSessionV36 {
 	goal2: {
 		backend: "docker_engine_linux_container";
 		changes: SafeChangeSetV36 | null;
-		continuation: "allowed" | "new_session_required_after_apply";
+		continuation: "allowed" | "new_session_required_after_apply" | "new_session_required_after_budget_terminal";
 	};
 }
 
@@ -28,8 +28,9 @@ export class Goal2WorkbenchExtensionV36 {
 			const context = this.controlPlane.hostChangeSetContext(view.session_id, run.run_id);
 			const changeSet = createChangeSetV36(context);
 			changes = safeChangeSetV36(context, changeSet.change_set_digest);
+			if (run.terminal?.terminal_reason === "provider_request_budget_exhausted") changes = { ...changes, handoff_actions: ["discard", "export"] };
 			const continuation = validateSuccessfulApplyMarkerV36(context.session_root, view.session_id) ? "new_session_required_after_apply" : "allowed";
-			return { ...view, goal2: { backend: "docker_engine_linux_container", changes, continuation } };
+			return { ...view, goal2: { backend: "docker_engine_linux_container", changes, continuation: run.terminal?.terminal_reason === "provider_request_budget_exhausted" ? "new_session_required_after_budget_terminal" : continuation } };
 		}
 		return { ...view, goal2: { backend: "docker_engine_linux_container", changes, continuation: "allowed" } };
 	}
@@ -38,10 +39,12 @@ export class Goal2WorkbenchExtensionV36 {
 		return this.afterSubmit(view);
 	}
 
-	handoff(value: unknown, injectFailureAfterWrites?: number): SafeHandoffResultV36 | ChangeSetExportV36 {
+	async handoff(value: unknown, injectFailureAfterWrites?: number): Promise<SafeHandoffResultV36 | ChangeSetExportV36> {
 		if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("handoff request is invalid");
-		const record = value as { session_id?: unknown; change_set_digest?: unknown };
-		if (typeof record.session_id !== "string" || typeof record.change_set_digest !== "string") throw new Error("handoff request is invalid");
+		const record = value as { session_id?: unknown; change_set_digest?: unknown; action?: unknown };
+		if (typeof record.session_id !== "string" || typeof record.change_set_digest !== "string" || typeof record.action !== "string") throw new Error("handoff request is invalid");
+		const session = await this.controlPlane.session(record.session_id);
+		if (record.action === "apply_all" && session.runs.some((run) => run.terminal?.terminal_reason === "provider_request_budget_exhausted")) throw new Error("Apply All is denied for incomplete unverified Provider-request budget terminal changes");
 		const context = this.controlPlane.hostChangeSetContext(record.session_id, "handoff");
 		try {
 			const result = performChangeHandoffV36(context, value, { ...(injectFailureAfterWrites === undefined ? {} : { injectFailureAfterWrites }) });

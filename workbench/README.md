@@ -423,6 +423,14 @@ npm run v36g2:product -- run --source-root <fresh-frozen-source> --execution-bas
 ```
 
 All ordinary free-task Runs remain explicitly `unverified` and have no formal Outcome.
+If the exact local per-Turn Provider-request cap refuses the seventeenth request before
+dispatch, the Workbench writes one immutable non-settled budget-stop terminal instead of
+a settled Run Manifest. The Session and Run views show the `16 / 16` dispatched count,
+the seventeenth refused attempt, reconciled known usage, the last registered-command
+result, and the managed Workspace as **unverified changes**. Diff, Export and Discard
+remain available, but Apply All and same-Session continuation fail closed. A replacement
+interaction must mint a clean new Session from the authenticated registered Source; the
+managed copy is never registered as Source.
 The separately governed real acceptance completed exactly one frozen two-Turn Journey
 from Execution Baseline `781e95211e7cc6beb572c50ec18e36e0a952b1f9`. Both Runs settled
 in one persistent Session; the fixed network-none Docker Verifier passed 3/3; one

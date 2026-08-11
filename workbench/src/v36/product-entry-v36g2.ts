@@ -255,7 +255,9 @@ export async function executeGoal2ProductJourneyV36(options: {
 					systemPrompt: "Work only in the managed Workspace. Modify only src/parse-duration.js and run only the registered test command. Do not request Host paths, credentials, network, image, mount, argv or policy changes.",
 					credentialReads: 1,
 					externalModel: true,
+					authorityDigest: input.authority.authority_digest,
 				});
+				if ("terminal_kind" in result.manifest) throw new Error("Goal 2 frozen real Journey stopped at the local Provider-request budget");
 				const elapsed = Date.now() - turnStarted;
 				if (elapsed > V36G2_PER_TURN_BUDGET.wall_time_ms_max) throw new Error("Goal 2 per-Turn wall-time budget exceeded");
 				usage.provider_requests += result.manifest.provider_requests;

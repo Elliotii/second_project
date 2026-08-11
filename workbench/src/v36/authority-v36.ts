@@ -16,7 +16,7 @@ import { digestObject, sha256 } from "../hash.ts";
 import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 import { ProjectProfileRegistryV36, type ResolvedProjectProfileV36 } from "../project/registry-v36.ts";
 import { PersistentInteractiveSessionServiceV36, type PersistentInteractiveTurnResultV36 } from "../session/persistent-session-v36.ts";
-import { createManagedSessionCopyV36, managedWorkspaceIdentityV36, workspaceTextPreviewV36, workspaceTreePreviewV36 } from "../workspace/managed-copy-v36.ts";
+import { createManagedSessionCopyV36, managedWorkspaceIdentityV36, registeredSourceInventoryV36, workspaceTextPreviewV36, workspaceTreePreviewV36 } from "../workspace/managed-copy-v36.ts";
 import { assertManagedWorkspaceHeadV36, assertSessionContinuationAllowedV36, persistInitialInventoryV36, validateSuccessfulApplyMarkerV36, type ChangeSetHostContextV36 } from "../workspace/change-set-v36.ts";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -255,6 +255,8 @@ export class InteractiveControlPlaneV36 {
 			assertSessionContinuationAllowedV36(sessionRoot(this.dataRoot, input.session_id));
 			if (stored.pin.project_id !== input.project_id || stored.pin.requested_mode !== input.requested_mode) throw new Error("continued Session browser identity drift rejected");
 			assertProfilePin(profile, stored.pin, this.goal2Enabled);
+			const existing = await makeService(this.dataRoot, stored).inspect();
+			if (existing.runs.some((run) => run.terminal !== null)) throw new Error("Session ended at the local Provider-request budget; create a clean new Session from registered Source");
 		}
 		const service = makeService(this.dataRoot, stored);
 		const workspaceRoot = resolve(sessionRoot(this.dataRoot, stored.pin.session_id), "workspace");
@@ -298,6 +300,10 @@ export class InteractiveControlPlaneV36 {
 		const result = await this.dispatch({ service, session_id: stored.pin.session_id, run_id: runId, task_text: input.task_text, authority: validated, authority_path: resolve(root, authorityRef.path) });
 		if (result.manifest.run_id !== runId || result.manifest.session_id !== stored.pin.session_id) throw new Error("interactive dispatch evidence identity is invalid");
 		const afterIdentity = managedWorkspaceIdentityV36(workspaceRoot);
+		if ("terminal_kind" in result.manifest) {
+			if (!this.goal2Enabled || stored.pin.requested_mode !== "bounded_edit" || result.manifest.authority_digest !== authority.authority_digest || result.manifest.workspace_identity_at_terminal !== afterIdentity) throw new Error("interactive budget terminal authority or Workspace identity is invalid");
+			return await this.session(stored.pin.session_id);
+		}
 		const goal2Run = this.goal2Enabled && stored.pin.requested_mode === "bounded_edit" && result.manifest.mode === "v36_interactive_bounded_edit";
 		if (!goal2Run) {
 			if (result.manifest.credential_reads !== 0 || result.manifest.network_calls !== 0 || result.manifest.external_provider_calls !== 0 || result.manifest.real_model_calls !== 0 || afterIdentity !== stored.pin.code_identity) throw new Error("Goal 1 deterministic dispatch evidence is invalid");
@@ -316,14 +322,22 @@ export class InteractiveControlPlaneV36 {
 		const previous = readStoredSession(this.dataRoot, previousSessionId);
 		const profile = this.registry.resolve(previous.pin.project_id);
 		assertProfilePin(profile, previous.pin, this.goal2Enabled);
-		if (!validateSuccessfulApplyMarkerV36(sessionRoot(this.dataRoot, previousSessionId), previousSessionId)) throw new Error("previous Session has no successful Apply");
+		const successfulApply = validateSuccessfulApplyMarkerV36(sessionRoot(this.dataRoot, previousSessionId), previousSessionId);
+		const inspected = await this.session(previousSessionId);
+		const budgetTerminal = inspected.runs.find((run) => run.terminal !== null)?.terminal ?? null;
+		if (!successfulApply && budgetTerminal === null) throw new Error("previous Session has no successful Apply or authenticated budget terminal");
+		if (budgetTerminal !== null && registeredSourceInventoryV36(profile.canonical_source_root).inventory_digest !== previous.pin.source_snapshot_identity) throw new Error("registered Source changed after the budget terminal; a new Session is not authenticated");
+		const cleanRegisteredSource = budgetTerminal !== null;
 		const created = await this.createSession(profile, {
 			project_id: previous.pin.project_id,
 			requested_mode: previous.pin.requested_mode,
-			task_text: "Start a new Session from the updated registered Source.",
-			title: `Updated Source · ${previous.title}`.slice(0, 500),
+			task_text: cleanRegisteredSource ? "Start a clean new Session from the current registered Source." : "Start a new Session from the updated registered Source.",
+			title: cleanRegisteredSource ? `Clean Registered Source · ${previous.title}`.slice(0, 500) : `Updated Source · ${previous.title}`.slice(0, 500),
 		});
-		if (created.pin.session_id === previousSessionId || created.pin.source_snapshot_identity === previous.pin.source_snapshot_identity) throw new Error("new Session did not pin the updated Source identity");
+		const reusedSession = created.pin.session_id === previousSessionId;
+		const unchangedAfterApply = successfulApply !== null && created.pin.source_snapshot_identity === previous.pin.source_snapshot_identity;
+		const changedAfterBudgetTerminal = budgetTerminal !== null && created.pin.source_snapshot_identity !== previous.pin.source_snapshot_identity;
+		if (reusedSession || unchangedAfterApply || changedAfterBudgetTerminal) throw new Error("new Session did not pin the authenticated registered Source identity");
 		return await this.session(created.pin.session_id);
 	}
 
@@ -335,12 +349,18 @@ export class InteractiveControlPlaneV36 {
 		const runs: SafeInteractiveRunV36[] = [];
 		for (const persistentRun of persistent.runs) {
 			const root = runRoot(this.dataRoot, persistentRun.run_id);
-			if (!existsSync(resolve(root, "authority.json")) || !existsSync(resolve(root, "result.json"))) throw new Error("Interactive Run Authority or Evidence artifact is missing");
+			if (!existsSync(resolve(root, "authority.json"))) throw new Error("Interactive Run Authority artifact is missing");
 			const authority = validateInteractiveAuthorityV36(root, readJsonArtifact(root, "authority.json"));
 			if (authority.session_id !== sessionId) throw new Error("Interactive Run Authority Session identity is invalid");
+			if (persistentRun.terminal !== null) {
+				if (persistentRun.settled !== false || persistentRun.terminal.authority_digest !== authority.authority_digest) throw new Error("Interactive budget terminal authority identity is invalid");
+				runs.push({ run_id: authority.run_id, authority_digest: authority.authority_digest, settled: false, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, command_execution: authority.command_execution_authority === "docker_registered_only" ? "docker_registered_only" : "disabled_goal1", terminal: structuredClone(persistentRun.terminal) });
+				continue;
+			}
+			if (!existsSync(resolve(root, "result.json"))) throw new Error("Interactive settled Run Evidence artifact is missing");
 			const evidenceValue = readJsonArtifact<Record<string, unknown>>(root, "result.json");
 			if (evidenceValue.schema_version === 2) validateInteractiveEvidenceG2V36(root, evidenceValue, authority); else validateInteractiveEvidenceV36(root, evidenceValue, authority);
-			runs.push({ run_id: authority.run_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, command_execution: authority.command_execution_authority === "docker_registered_only" ? "docker_registered_only" : "disabled_goal1" });
+			runs.push({ run_id: authority.run_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, command_execution: authority.command_execution_authority === "docker_registered_only" ? "docker_registered_only" : "disabled_goal1", terminal: null });
 		}
 		return {
 			schema_version: 1,

@@ -105,6 +105,7 @@ export function createDailyProductApplicationV36(options: {
 					systemPrompt: `Work only inside the managed Workspace. Writable paths: ${JSON.stringify(registration.writable_paths)}. Protected paths: ${JSON.stringify(registration.protected_paths)}. Use only registered command IDs: ${JSON.stringify((registration.command_descriptors ?? []).map((entry) => entry.command_id))}. Run at least one relevant registered command before finishing. Never request Host paths, credentials, network, image, mount, argv, policy or direct Source changes.`,
 					credentialReads: 1,
 					externalModel: true,
+					authorityDigest: input.authority.authority_digest,
 				});
 			} finally { await runtime.close(); }
 		},

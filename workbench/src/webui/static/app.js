@@ -151,6 +151,7 @@ function handoffResultCard(result) {
 
 function renderV36Session(session) {
   activeV36Session = session.session_id;
+  const terminalRun = session.runs.at(-1);
   const form = $("#v36-task-form");
   form.elements.session_id.value = session.session_id;
   form.elements.project_id.value = session.project_id;
@@ -178,6 +179,15 @@ function renderV36Session(session) {
   for (const run of session.runs) {
     const item = card(run.run_id, null);
     item.append(metric("Authority", run.authority_digest), metric("Settled", run.settled), metric("Verification", run.verification_mode), metric("Command execution", run.command_execution));
+    if (run.terminal?.terminal_reason === "provider_request_budget_exhausted") {
+      item.append(
+        metric("Stop reason / 停止原因", "Provider request budget exhausted before dispatch / Provider 请求预算在派发前耗尽"),
+        metric("Request use / 请求用量", `${run.terminal.request_usage.used} / ${run.terminal.request_usage.max} dispatched; attempt ${run.terminal.request_usage.attempts}`),
+        metric("Known usage / 已知用量", `${run.terminal.usage.input_tokens} input, ${run.terminal.usage.output_tokens} output, $${run.terminal.usage.cost_usd}`),
+        metric("Last registered command / 最后登记命令", `${run.terminal.last_registered_command.command_id}; exit ${run.terminal.last_registered_command.exit_code ?? "not recorded"}`),
+        metric("Managed changes / 托管变更", "Unverified: inspect, export, or discard only; Apply All denied / 未验证：仅可检查、导出或丢弃；禁止全部应用")
+      );
+    }
     runs.append(item);
   }
   root.append(card("Interactive evidence", runs));
@@ -190,6 +200,7 @@ function renderV36Session(session) {
       root.append(backend);
       const changesCard = card("Changes and Diff / 变更与差异", null);
       changesCard.append(metric("ChangeSet", changeSet.change_set_digest), metric("Status / 状态", changeSet.status));
+      if (terminalRun?.terminal?.terminal_reason === "provider_request_budget_exhausted") changesCard.append(metric("Safety / 安全", "Incomplete unverified budget-stop changes: Apply All is denied; Export and Discard remain available. / 未完成且未验证的预算停止变更：禁止全部应用；仍可导出或丢弃。"));
       if (changeSet.handoff_result) changesCard.append(handoffResultCard(changeSet.handoff_result));
       for (const change of changeSet.changes) changesCard.append(card(`${change.operation.toUpperCase()} · ${change.path}`, text("pre", change.diff)));
       const actions = text("div", "", "handoff-actions");
@@ -224,8 +235,8 @@ function renderV36Session(session) {
         actions.append(button);
       }
       changesCard.append(actions);
-      if (session.goal2.continuation === "new_session_required_after_apply") {
-        const next = text("button", "Start New Session from Updated Source / 从更新后的源目录新建会话");
+      if (session.goal2.continuation === "new_session_required_after_apply" || session.goal2.continuation === "new_session_required_after_budget_terminal") {
+        const next = text("button", session.goal2.continuation === "new_session_required_after_budget_terminal" ? "Start Clean New Session from Registered Source / 从已登记源目录新建干净会话" : "Start New Session from Updated Source / 从更新后的源目录新建会话");
         next.type = "button";
         next.addEventListener("click", async () => {
           try {
@@ -464,7 +475,7 @@ $("#v36-task-form").addEventListener("submit", async (event) => {
     $("#open-control").classList.add("active");
     renderV36Session(session);
     await loadV36Sessions();
-    status.textContent = "Settled / 已结束";
+    status.textContent = session.runs.at(-1)?.terminal?.terminal_reason === "provider_request_budget_exhausted" ? "Stopped at local request budget: incomplete and unverified / 已在本地请求预算处停止：未完成且未验证" : "Settled / 已结束";
   } catch (error) {
     status.textContent = "Failed / 失败";
     failure(error);

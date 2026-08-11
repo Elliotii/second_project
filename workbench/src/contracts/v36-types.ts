@@ -1,4 +1,5 @@
-import type { SafeSessionViewV35 } from "./v35-types.ts";
+import type { SafeRunViewV35, SafeSessionViewV35 } from "./v35-types.ts";
+import type { SafeProviderRequestBudgetTerminalV36 } from "./v36g2-types.ts";
 
 export type InteractiveRequestedModeV36 = "inspect_only" | "bounded_edit";
 
@@ -115,13 +116,24 @@ export interface InteractiveRunEvidenceV36 {
 export interface SafeInteractiveRunV36 {
 	run_id: string;
 	authority_digest: string;
-	settled: true;
+	settled: boolean;
 	verification_mode: "unverified";
 	formal_outcome: null;
 	comparison_eligible: false;
 	adaptation_eligible: false;
 	promotion_eligible: false;
 	command_execution: "disabled_goal1" | "docker_registered_only";
+	terminal: SafeProviderRequestBudgetTerminalV36 | null;
+}
+
+export interface SafePersistentRunV36 extends Omit<SafeRunViewV35, "settled" | "mode"> {
+	settled: boolean;
+	mode: "deterministic_faux" | "real_product_smoke" | "pre_dispatch_budget_terminal";
+	terminal: SafeProviderRequestBudgetTerminalV36 | null;
+}
+
+export interface SafePersistentSessionV36 extends Omit<SafeSessionViewV35, "runs"> {
+	runs: SafePersistentRunV36[];
 }
 
 export interface SafeInteractiveSessionV36 {
@@ -151,7 +163,7 @@ export interface SafeInteractiveSessionV36 {
 	pi_native_skills: ProjectSkillDescriptorV36[];
 	harness_adaptations: HarnessAdaptationDescriptorV36[];
 	runs: SafeInteractiveRunV36[];
-	persistent_session: SafeSessionViewV35;
+	persistent_session: SafePersistentSessionV36;
 	read_only: true;
 }
 

@@ -100,7 +100,7 @@ async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: 
 		}
 		if (path === "/api/v1/v36/handoff" && app.hasGoal2()) {
 			const input = exactObject(await body(req), ["session_id", "change_set_digest", "action"], ["session_id", "change_set_digest", "action"]);
-			return send(res, 200, app.handoff(input));
+			return send(res, 200, await app.handoff(input));
 		}
 		if (path === "/api/v1/v36/sessions/from-updated-source" && app.hasGoal2()) {
 			const input = exactObject(await body(req), ["previous_session_id"], ["previous_session_id"]);
