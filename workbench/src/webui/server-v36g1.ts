@@ -98,6 +98,10 @@ async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: 
 			const input = exactObject(await body(req), ["project_id", "requested_mode", "task_text", "title", "session_id"], ["project_id", "requested_mode", "task_text"]);
 			return send(res, 201, await app.submitTask(input));
 		}
+		if (path === "/api/v1/v36/handoff" && app.hasGoal2()) {
+			const input = exactObject(await body(req), ["session_id", "change_set_digest", "action"], ["session_id", "change_set_digest", "action"]);
+			return send(res, 200, app.handoff(input));
+		}
 		if (path === "/api/v1/sessions") {
 			const input = exactObject(await body(req), ["session_id", "title", "parent_session_id"], ["session_id", "title"]);
 			if (typeof input.session_id !== "string" || typeof input.title !== "string" || (input.parent_session_id !== undefined && input.parent_session_id !== null && typeof input.parent_session_id !== "string")) throw new HttpError(400, "JSON body fields are invalid");
@@ -132,6 +136,10 @@ export function createWorkbenchLoopbackServerV36G1(app: WorkbenchApplicationV36G
 				accept({ host: "127.0.0.1", port: address.port, url: `http://127.0.0.1:${address.port}` });
 			});
 		}),
-		stop: async () => await new Promise((accept, reject) => server.close((error) => error ? reject(error) : accept())),
+		stop: async () => await new Promise((accept, reject) => {
+			server.closeIdleConnections();
+			server.closeAllConnections();
+			server.close((error) => error ? reject(error) : accept());
+		}),
 	};
 }

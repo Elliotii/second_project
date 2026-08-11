@@ -7,6 +7,8 @@ import type {
 	SafeProjectProfileV36,
 } from "../contracts/v36-types.ts";
 import { digestObject, sha256 } from "../hash.ts";
+import type { CommandDescriptor } from "../types.ts";
+import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -24,6 +26,7 @@ export interface ProjectProfileRegistrationV36 {
 	provider_model_policy_id: string;
 	pi_native_skills: ProjectSkillDescriptorV36[];
 	harness_adaptations: HarnessAdaptationDescriptorV36[];
+	command_descriptors?: CommandDescriptor[];
 	current_state(): { state_digest: string };
 }
 
@@ -71,7 +74,8 @@ export class ProjectProfileRegistryV36 {
 	constructor(registrations: readonly ProjectProfileRegistrationV36[]) {
 		if (registrations.length === 0) throw new Error("at least one registered Project Profile is required");
 		for (const registration of registrations) {
-			exactKeys(registration, ["project_id", "display_name", "source_root", "writable_paths", "protected_paths", "supported_modes", "risk_notice", "execution_backend_profile_id", "provider_model_policy_id", "pi_native_skills", "harness_adaptations", "current_state"], "Project Profile");
+			const keys = Object.keys(registration);
+			if (keys.some((key) => !["project_id", "display_name", "source_root", "writable_paths", "protected_paths", "supported_modes", "risk_notice", "execution_backend_profile_id", "provider_model_policy_id", "pi_native_skills", "harness_adaptations", "command_descriptors", "current_state"].includes(key)) || ["project_id", "display_name", "source_root", "writable_paths", "protected_paths", "supported_modes", "risk_notice", "execution_backend_profile_id", "provider_model_policy_id", "pi_native_skills", "harness_adaptations", "current_state"].some((key) => !keys.includes(key))) throw new Error("Project Profile fields are invalid");
 			identifier(registration.project_id, "project ID");
 			if (this.profiles.has(registration.project_id)) throw new Error("duplicate Project Profile ID");
 			safeText(registration.display_name, "project display name", 256);
@@ -80,6 +84,11 @@ export class ProjectProfileRegistryV36 {
 			identifier(registration.provider_model_policy_id, "provider/model policy ID");
 			if (!Array.isArray(registration.supported_modes) || registration.supported_modes.length === 0 || new Set(registration.supported_modes).size !== registration.supported_modes.length || registration.supported_modes.some((mode) => mode !== "inspect_only" && mode !== "bounded_edit")) throw new Error("supported modes are invalid");
 			if (!Array.isArray(registration.writable_paths) || !Array.isArray(registration.protected_paths)) throw new Error("Project Profile path policy is invalid");
+			const commands = registration.command_descriptors ?? [];
+			if (!Array.isArray(commands) || commands.some((command) => command.executable !== "current_node_executable" || command.cwd !== "workspace" || !Array.isArray(command.argv) || command.argv.some((entry) => typeof entry !== "string") || !Number.isSafeInteger(command.timeout_seconds) || command.timeout_seconds < 1 || !Number.isSafeInteger(command.max_combined_output_bytes) || command.max_combined_output_bytes < 1)) throw new Error("Project Profile command descriptors are invalid");
+			if (registration.execution_backend_profile_id === "docker-v36g2-frozen") {
+				if (commands.length === 0 || new Set(commands.map((command) => command.command_id)).size !== commands.length || commands.some((command) => !ID.test(command.command_id) || command.timeout_seconds > FROZEN_DOCKER_PROFILE_V36.wall_timeout_ms / 1_000 || command.max_combined_output_bytes > FROZEN_DOCKER_PROFILE_V36.combined_output_budget_bytes || command.argv.length === 0 || command.argv.some((entry) => entry.length === 0 || entry.includes("\0")))) throw new Error("frozen Docker command registry is invalid");
+			}
 			registration.pi_native_skills.forEach(validateSkill);
 			registration.harness_adaptations.forEach(validateAdaptation);
 			const source = resolve(registration.source_root);
@@ -95,6 +104,7 @@ export class ProjectProfileRegistryV36 {
 				writable_paths: registration.writable_paths,
 				protected_paths: registration.protected_paths,
 				supported_modes: registration.supported_modes,
+				command_descriptors: commands,
 				execution_backend_profile_id: registration.execution_backend_profile_id,
 				provider_model_policy_id: registration.provider_model_policy_id,
 			};
@@ -108,7 +118,7 @@ export class ProjectProfileRegistryV36 {
 				supported_modes: [...registration.supported_modes],
 				capability_summary: {
 					inspect_only: "read_only_files_no_commands",
-					bounded_edit: registration.supported_modes.includes("bounded_edit") ? "planned_file_edits_commands_disabled_until_goal2" : "unavailable",
+					bounded_edit: registration.supported_modes.includes("bounded_edit") ? (commands.length > 0 ? "docker_bounded_edit_change_handoff" : "planned_file_edits_commands_disabled_until_goal2") : "unavailable",
 				},
 				risk_notice: registration.risk_notice,
 				pi_native_skills: structuredClone(registration.pi_native_skills),
@@ -119,7 +129,7 @@ export class ProjectProfileRegistryV36 {
 				registration,
 				canonical_source_root: canonicalSource,
 				profile_digest: profileDigest,
-				execution_backend_profile_digest: digestObject({ profile_id: registration.execution_backend_profile_id }),
+				execution_backend_profile_digest: registration.execution_backend_profile_id === "docker-v36g2-frozen" ? FROZEN_DOCKER_PROFILE_V36.profile_digest : digestObject({ profile_id: registration.execution_backend_profile_id }),
 				provider_model_policy_digest: digestObject({ policy_id: registration.provider_model_policy_id }),
 				projected,
 			});

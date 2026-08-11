@@ -2,11 +2,14 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSy
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { AgentHarness, JsonlSessionRepo, type AgentMessage, type JsonlSessionMetadata, type SessionTreeEntry } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
-import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall } from "@earendil-works/pi-ai";
+import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall, type AssistantMessage } from "@earendil-works/pi-ai";
 import type { SafeRunViewV35, SafeSessionMessageV35, SafeSessionViewV35 } from "../contracts/v35-types.ts";
 import { readJsonArtifact, writeOnceJson } from "../evidence/artifacts.ts";
+import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 import { digestObject, sha256, stableJson } from "../hash.ts";
-import { createBoundedToolProfile } from "../pi/tool-profile.ts";
+import { createBoundedToolProfile, type BoundedCommandExecutor } from "../pi/tool-profile.ts";
+import type { BoundedTaskPolicy } from "../types.ts";
+import { managedWorkspaceIdentityV36 } from "../workspace/managed-copy-v36.ts";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -49,8 +52,54 @@ interface RuntimeManifestV36 {
 	manifest_digest: string;
 }
 
+interface RuntimeManifestG2V36 {
+	schema_version: 2;
+	mode: "v36_interactive_bounded_edit";
+	run_id: string;
+	session_id: string;
+	project_id: string;
+	workspace_id: string;
+	session_pin_digest: string;
+	created_at: string;
+	settled: true;
+	prior_context_message_count: number;
+	prior_context_sha256: string;
+	provider_observed_prior_context_sha256: string;
+	session_entry_count_after_turn: number;
+	session_entries_sha256_after_turn: string;
+	prompt_sha256: string;
+	provider_requests: number;
+	active_tool_names: string[];
+	tool_call_ids: string[];
+	tool_result_ids: string[];
+	credential_reads: number;
+	network_calls: number;
+	external_provider_calls: number;
+	real_model_calls: number;
+	project_command_executions: number;
+	docker_project_command_executions: number;
+	backend_terminal_digests: string[];
+	workspace_identity_after: string;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: number;
+	manifest_digest: string;
+}
+
+export interface InteractiveDispatchManifestV36 {
+	mode: "v36_interactive_deterministic_faux" | "v36_interactive_bounded_edit";
+	run_id: string;
+	session_id: string;
+	credential_reads: number;
+	network_calls: number;
+	external_provider_calls: number;
+	real_model_calls: number;
+	project_command_executions: number;
+	docker_project_command_executions: number;
+}
+
 export interface PersistentInteractiveTurnResultV36 {
-	manifest: RuntimeManifestV36;
+	manifest: InteractiveDispatchManifestV36;
 	view: SafeSessionViewV35;
 }
 
@@ -128,6 +177,14 @@ function parseManifest(value: unknown): RuntimeManifestV36 {
 	const manifest = value as RuntimeManifestV36;
 	const { manifest_digest: _digest, ...body } = manifest;
 	if (manifest.schema_version !== 1 || manifest.mode !== "v36_interactive_deterministic_faux" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || manifest.provider_requests !== 2 || stableJson(manifest.active_tool_names) !== stableJson(READ_ONLY_TOOLS) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || manifest.credential_reads !== 0 || manifest.network_calls !== 0 || manifest.external_provider_calls !== 0 || manifest.real_model_calls !== 0 || manifest.project_command_executions !== 0 || manifest.docker_project_command_executions !== 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Runtime Manifest is invalid");
+	return manifest;
+}
+
+function parseManifestG2(value: unknown): RuntimeManifestG2V36 {
+	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
+	const manifest = value as RuntimeManifestG2V36;
+	const { manifest_digest: _digest, ...body } = manifest;
+	if (manifest.schema_version !== 2 || manifest.mode !== "v36_interactive_bounded_edit" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || !Number.isSafeInteger(manifest.provider_requests) || manifest.provider_requests < 1 || manifest.provider_requests > 16 || !Array.isArray(manifest.active_tool_names) || stableJson(manifest.active_tool_names) !== stableJson(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || ![manifest.credential_reads, manifest.network_calls, manifest.external_provider_calls, manifest.real_model_calls, manifest.project_command_executions, manifest.docker_project_command_executions, manifest.input_tokens, manifest.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || manifest.project_command_executions < 1 || manifest.project_command_executions !== manifest.docker_project_command_executions || !Array.isArray(manifest.backend_terminal_digests) || manifest.backend_terminal_digests.length !== manifest.project_command_executions || manifest.backend_terminal_digests.some((entry) => !SHA256.test(entry)) || !SHA256.test(manifest.workspace_identity_after) || !Number.isFinite(manifest.cost_usd) || manifest.cost_usd < 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
 	return manifest;
 }
 
@@ -212,20 +269,94 @@ export class PersistentInteractiveSessionServiceV36 {
 		return { manifest, view: await this.inspect() };
 	}
 
+	async executeBoundedTurn(options: {
+		sessionId: string;
+		runId: string;
+		prompt: string;
+		taskPolicy: BoundedTaskPolicy;
+		commandExecutor: BoundedCommandExecutor;
+		models: ReturnType<typeof createModels>;
+		model: NonNullable<ReturnType<ReturnType<typeof createModels>["getModel"]>>;
+		systemPrompt: string;
+		credentialReads?: number;
+		externalModel?: boolean;
+	}): Promise<PersistentInteractiveTurnResultV36> {
+		if (options.sessionId !== this.sessionId) throw new Error("V3.6 Session identity mismatch");
+		identifier(options.runId, "Run ID");
+		if (Buffer.byteLength(options.prompt, "utf8") < 1 || Buffer.byteLength(options.prompt, "utf8") > 16_384 || Buffer.byteLength(options.systemPrompt, "utf8") < 1 || Buffer.byteLength(options.systemPrompt, "utf8") > 16_384) throw new Error("V3.6 bounded Turn prompt is invalid");
+		const root = runRoot(this.runtimeRoot, options.runId, true);
+		const session = await this.open();
+		const priorContext = await session.buildContext();
+		const priorMessages = structuredClone(priorContext.messages) as AgentMessage[];
+		const priorDigest = digestObject(priorMessages);
+		let observedPrior = "";
+		let settled = 0;
+		let providerRequests = 0;
+		let toolCalls = 0;
+		let inputTokens = 0;
+		let outputTokens = 0;
+		let costUsd = 0;
+		const profile = createBoundedToolProfile(this.workspaceRoot, options.taskPolicy, { allowed_tool_names: ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"], allow_repository_commands: false, expose_task_command_ids: true, command_executor: options.commandExecutor });
+		const expectedTools = ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"];
+		if (stableJson(profile.tools.map((tool) => tool.name)) !== stableJson(expectedTools)) throw new Error("V3.6 Goal 2 tool surface drifted");
+		const harness = new AgentHarness({ models: options.models, session, model: options.model, tools: profile.tools, toolContext: profile.context, systemPrompt: options.systemPrompt, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: 900_000 } });
+		const unsubscribe = harness.subscribe((event) => {
+			if (event.type === "settled") settled += 1;
+			if (event.type === "message_end" && event.message.role === "assistant") {
+				const message = event.message as AssistantMessage;
+				const currentInput = message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
+				if (![currentInput, message.usage.output, message.usage.cost.total].every((entry) => Number.isFinite(entry) && entry >= 0)) throw new Error("V3.6 Goal 2 model usage is invalid");
+				inputTokens += currentInput;
+				outputTokens += message.usage.output;
+				costUsd += message.usage.cost.total;
+			}
+		});
+		const offContext = harness.on("context", (event) => {
+			observedPrior = digestObject(event.messages.slice(0, priorMessages.length));
+			if (observedPrior !== priorDigest) throw new Error("V3.6 Goal 2 prior Session context mismatch");
+			return { messages: event.messages };
+		});
+		const offRequest = harness.on("before_provider_request", () => {
+			providerRequests += 1;
+			if (providerRequests > 16 || inputTokens + outputTokens > 131_072 || costUsd > 0.2) throw new Error("V3.6 Goal 2 per-Turn budget exceeded");
+			return undefined;
+		});
+		const offTool = harness.on("tool_call", () => {
+			toolCalls += 1;
+			if (toolCalls > 24) throw new Error("V3.6 Goal 2 Tool budget exceeded");
+			return undefined;
+		});
+		try { await harness.prompt(options.prompt); await harness.waitForIdle(); } finally { unsubscribe(); offContext(); offRequest(); offTool(); await harness.abort(); }
+		if (settled !== 1 || observedPrior !== priorDigest || profile.pendingSideEffects() !== 0 || profile.commandExecutions.length < 1 || profile.commandExecutions.some((entry) => entry.cleanup_complete !== true || !SHA256.test(entry.terminal_digest ?? "") || entry.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest)) throw new Error("V3.6 Goal 2 bounded Turn did not settle with exact frozen terminal Docker evidence");
+		const entries = await session.getEntries();
+		const toolCallIds = profile.auditEvents.filter((event) => event.type === "start").map((event) => event.tool_call_id);
+		const toolResultIds = entries.flatMap((entry) => entry.type === "message" && entry.message.role === "toolResult" ? [entry.message.toolCallId] : []).slice(-toolCallIds.length);
+		if (stableJson(toolCallIds) !== stableJson(toolResultIds)) throw new Error("V3.6 Goal 2 Tool lifecycle is incomplete");
+		const external = options.externalModel === true;
+		const body: Omit<RuntimeManifestG2V36, "manifest_digest"> = {
+			schema_version: 2, mode: "v36_interactive_bounded_edit", run_id: options.runId, session_id: this.sessionId, project_id: this.projectId, workspace_id: this.workspaceId, session_pin_digest: this.pinDigest, created_at: new Date().toISOString(), settled: true,
+			prior_context_message_count: priorMessages.length, prior_context_sha256: priorDigest, provider_observed_prior_context_sha256: observedPrior, session_entry_count_after_turn: entries.length, session_entries_sha256_after_turn: digestObject(entries), prompt_sha256: sha256(options.prompt), provider_requests: providerRequests, active_tool_names: expectedTools, tool_call_ids: toolCallIds, tool_result_ids: toolResultIds, credential_reads: options.credentialReads ?? 0, network_calls: external ? providerRequests : 0, external_provider_calls: external ? providerRequests : 0, real_model_calls: external ? providerRequests : 0, project_command_executions: profile.commandExecutions.length, docker_project_command_executions: profile.commandExecutions.length, backend_terminal_digests: profile.commandExecutions.map((entry) => entry.terminal_digest!), workspace_identity_after: managedWorkspaceIdentityV36(this.workspaceRoot), input_tokens: inputTokens, output_tokens: outputTokens, cost_usd: costUsd,
+		};
+		const manifest: RuntimeManifestG2V36 = { ...body, manifest_digest: digestObject(body) };
+		writeOnceJson(root, "manifest.json", manifest);
+		return { manifest, view: await this.inspect() };
+	}
+
 	async inspect(): Promise<SafeSessionViewV35> {
 		const session = await this.open();
 		const entries = await session.getEntries();
-		const manifests: RuntimeManifestV36[] = [];
+		const manifests: Array<RuntimeManifestV36 | RuntimeManifestG2V36> = [];
 		for (const entry of readdirSync(resolve(this.runtimeRoot, "runs"), { withFileTypes: true })) {
 			if (!entry.isDirectory() || !ID.test(entry.name)) throw new Error("V3.6 Runtime Run directory is invalid");
 			const root = runRoot(this.runtimeRoot, entry.name);
 			if (!existsSync(resolve(root, "manifest.json"))) throw new Error("V3.6 Runtime Manifest is missing");
-			const manifest = parseManifest(readJsonArtifact(root, "manifest.json"));
+			const rawManifest = readJsonArtifact<{ schema_version?: unknown }>(root, "manifest.json");
+			const manifest = rawManifest.schema_version === 2 ? parseManifestG2(rawManifest) : parseManifest(rawManifest);
 			if (manifest.run_id !== entry.name || manifest.session_id !== this.sessionId || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.session_pin_digest !== this.pinDigest || entries.length < manifest.session_entry_count_after_turn || digestObject(entries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("V3.6 Runtime/Session historical identity mismatch");
 			manifests.push(manifest);
 		}
 		manifests.sort((left, right) => left.created_at.localeCompare(right.created_at));
-		const runs: SafeRunViewV35[] = manifests.map((manifest) => ({ run_id: manifest.run_id, created_at: manifest.created_at, settled: true, provider_requests: manifest.provider_requests, tool_call_count: manifest.tool_call_ids.length, context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256, mode: "deterministic_faux", prior_run_id: null, input_tokens: "not_recorded", output_tokens: "not_recorded", cost_usd: "not_recorded", verifier_id: "not_recorded", verifier_status: "not_recorded", outcome: "not_recorded", binding_status: "not_recorded", source_ref: `runtime/runs/${manifest.run_id}/manifest.json` }));
+		const runs: SafeRunViewV35[] = manifests.map((manifest) => ({ run_id: manifest.run_id, created_at: manifest.created_at, settled: true, provider_requests: manifest.provider_requests, tool_call_count: manifest.tool_call_ids.length, context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256, mode: manifest.schema_version === 2 && manifest.real_model_calls > 0 ? "real_product_smoke" : "deterministic_faux", prior_run_id: null, input_tokens: manifest.schema_version === 2 ? manifest.input_tokens : "not_recorded", output_tokens: manifest.schema_version === 2 ? manifest.output_tokens : "not_recorded", cost_usd: manifest.schema_version === 2 ? manifest.cost_usd : "not_recorded", verifier_id: "not_recorded", verifier_status: "not_recorded", outcome: "not_recorded", binding_status: "not_recorded", source_ref: `runtime/runs/${manifest.run_id}/manifest.json` }));
 		const createdAt = manifests[0]?.created_at ?? (await session.getMetadata()).createdAt;
 		return { schema_version: 1, session_id: this.sessionId, project_id: this.projectId, workspace_id: this.workspaceId, title: this.title, created_at: createdAt, updated_at: manifests.at(-1)?.created_at ?? createdAt, parent_session_id: null, messages: projectMessages(entries), runs, source_status: "available" };
 	}

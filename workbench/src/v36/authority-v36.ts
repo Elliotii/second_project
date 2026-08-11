@@ -10,11 +10,14 @@ import type {
 	SafeInteractiveSessionV36,
 	SessionPinV36,
 } from "../contracts/v36-types.ts";
+import type { InteractiveRunEvidenceV36G2 } from "../contracts/v36g2-types.ts";
 import { readJsonArtifact, validateArtifactRef, writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, sha256 } from "../hash.ts";
+import { FROZEN_DOCKER_PROFILE_V36 } from "../execution/docker-v36.ts";
 import { ProjectProfileRegistryV36, type ResolvedProjectProfileV36 } from "../project/registry-v36.ts";
 import { PersistentInteractiveSessionServiceV36, type PersistentInteractiveTurnResultV36 } from "../session/persistent-session-v36.ts";
 import { createManagedSessionCopyV36, managedWorkspaceIdentityV36, workspaceTextPreviewV36, workspaceTreePreviewV36 } from "../workspace/managed-copy-v36.ts";
+import { assertManagedWorkspaceHeadV36, assertSessionContinuationAllowedV36, persistInitialInventoryV36, type ChangeSetHostContextV36 } from "../workspace/change-set-v36.ts";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -22,6 +25,7 @@ const BROWSER_KEYS = ["project_id", "requested_mode", "task_text", "title", "ses
 const AUTHORITY_KEYS = ["schema_version", "authority_kind", "mode", "run_id", "session_id", "project_id", "project_profile_digest", "requested_mode", "task_prompt_sha256", "workspace_id", "workspace_strategy", "workspace_identity_before", "code_identity", "source_snapshot_identity", "harness_state_digest", "execution_backend_profile_digest", "provider_model_policy_digest", "capability_digest", "verification_mode", "formal_outcome", "comparison_eligible", "adaptation_eligible", "promotion_eligible", "command_execution_authority", "source_mutation_authority", "created_at", "authority_digest"] as const;
 const PIN_KEYS = ["schema_version", "session_id", "project_id", "project_profile_digest", "workspace_id", "workspace_strategy", "source_snapshot_identity", "code_identity", "harness_state_digest", "execution_backend_profile_digest", "provider_model_policy_digest", "capability_digest", "requested_mode", "created_at", "session_pin_digest"] as const;
 const EVIDENCE_KEYS = ["schema_version", "run_id", "session_id", "authority_digest", "settled", "verification_mode", "formal_outcome", "comparison_eligible", "adaptation_eligible", "promotion_eligible", "credential_reads", "network_calls", "external_provider_calls", "real_model_calls", "docker_project_command_executions", "project_command_executions", "underlying_run_ref", "evidence_digest"] as const;
+const EVIDENCE_G2_KEYS = [...EVIDENCE_KEYS.filter((key) => key !== "schema_version"), "schema_version", "workspace_identity_after"] as const;
 
 interface StoredSessionV36 { schema_version: 1; title: string; pin: SessionPinV36 }
 
@@ -104,15 +108,15 @@ function runRoot(dataRoot: string, runId: string): string {
 	return target;
 }
 
-function capabilityDigest(mode: InteractiveRequestedModeV36): string {
+function capabilityDigest(mode: InteractiveRequestedModeV36, goal2Enabled = false): string {
 	return digestObject({
 		mode,
 		file_read: true,
-		file_write: false,
+		file_write: goal2Enabled && mode === "bounded_edit",
 		planned_file_write: mode === "bounded_edit",
-		project_commands: false,
-		docker_commands: false,
-		source_apply: false,
+		project_commands: goal2Enabled && mode === "bounded_edit",
+		docker_commands: goal2Enabled && mode === "bounded_edit",
+		source_apply: goal2Enabled && mode === "bounded_edit",
 	});
 }
 
@@ -144,7 +148,8 @@ export function validateInteractiveAuthorityV36(root: string, value: unknown): I
 	const record = plainObject(value, "Interactive Run Authority");
 	exactKeys(record, AUTHORITY_KEYS, "Interactive Run Authority");
 	const authority = record as unknown as InteractiveRunAuthorityV36;
-	if (authority.schema_version !== 1 || authority.authority_kind !== "v36_interactive_run" || authority.mode !== "interactive_agent" || !ID.test(authority.run_id) || !ID.test(authority.session_id) || !ID.test(authority.project_id) || !ID.test(authority.workspace_id) || (authority.requested_mode !== "inspect_only" && authority.requested_mode !== "bounded_edit") || authority.workspace_strategy !== "managed_session_copy" || ![authority.project_profile_digest, authority.task_prompt_sha256, authority.workspace_identity_before, authority.code_identity, authority.source_snapshot_identity, authority.harness_state_digest, authority.execution_backend_profile_digest, authority.provider_model_policy_digest, authority.capability_digest, authority.authority_digest].every((entry) => SHA256.test(entry)) || authority.verification_mode !== "unverified" || authority.formal_outcome !== null || authority.comparison_eligible !== false || authority.adaptation_eligible !== false || authority.promotion_eligible !== false || authority.command_execution_authority !== "disabled_goal1" || authority.source_mutation_authority !== "not_granted_goal1" || digestObject(authorityBody(authority)) !== authority.authority_digest) throw new Error("Interactive Run Authority is invalid");
+	const authorityPairValid = (authority.command_execution_authority === "disabled_goal1" && authority.source_mutation_authority === "not_granted_goal1") || (authority.requested_mode === "bounded_edit" && authority.command_execution_authority === "docker_registered_only" && authority.source_mutation_authority === "host_handoff_only");
+	if (authority.schema_version !== 1 || authority.authority_kind !== "v36_interactive_run" || authority.mode !== "interactive_agent" || !ID.test(authority.run_id) || !ID.test(authority.session_id) || !ID.test(authority.project_id) || !ID.test(authority.workspace_id) || (authority.requested_mode !== "inspect_only" && authority.requested_mode !== "bounded_edit") || authority.workspace_strategy !== "managed_session_copy" || ![authority.project_profile_digest, authority.task_prompt_sha256, authority.workspace_identity_before, authority.code_identity, authority.source_snapshot_identity, authority.harness_state_digest, authority.execution_backend_profile_digest, authority.provider_model_policy_digest, authority.capability_digest, authority.authority_digest].every((entry) => SHA256.test(entry)) || authority.verification_mode !== "unverified" || authority.formal_outcome !== null || authority.comparison_eligible !== false || authority.adaptation_eligible !== false || authority.promotion_eligible !== false || !authorityPairValid || digestObject(authorityBody(authority)) !== authority.authority_digest) throw new Error("Interactive Run Authority is invalid");
 	const ref = writeReference(root, "authority.json");
 	if (validateArtifactRef(root, ref).length > 0) throw new Error("Interactive Run Authority artifact is missing or invalid");
 	return authority;
@@ -161,6 +166,16 @@ function validateInteractiveEvidenceV36(root: string, value: unknown, authority:
 	return evidence;
 }
 
+function validateInteractiveEvidenceG2V36(root: string, value: unknown, authority: InteractiveRunAuthorityV36): InteractiveRunEvidenceV36G2 {
+	const record = plainObject(value, "Interactive Run Evidence");
+	exactKeys(record, EVIDENCE_G2_KEYS, "Interactive Run Evidence");
+	const evidence = record as unknown as InteractiveRunEvidenceV36G2;
+	const { evidence_digest: _digest, ...body } = evidence;
+	if (evidence.schema_version !== 2 || evidence.run_id !== authority.run_id || evidence.session_id !== authority.session_id || evidence.authority_digest !== authority.authority_digest || evidence.settled !== true || evidence.verification_mode !== "unverified" || evidence.formal_outcome !== null || evidence.comparison_eligible !== false || evidence.adaptation_eligible !== false || evidence.promotion_eligible !== false || ![evidence.credential_reads, evidence.network_calls, evidence.external_provider_calls, evidence.real_model_calls, evidence.docker_project_command_executions, evidence.project_command_executions].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || evidence.docker_project_command_executions !== evidence.project_command_executions || !SHA256.test(evidence.workspace_identity_after) || evidence.underlying_run_ref !== `sessions/${authority.session_id}/runtime/runs/${authority.run_id}/manifest.json` || !SHA256.test(evidence.evidence_digest) || digestObject(body) !== evidence.evidence_digest) throw new Error("Interactive Goal 2 Run Evidence is invalid");
+	if (validateArtifactRef(root, writeReference(root, "result.json")).length > 0) throw new Error("Interactive Run Evidence artifact is missing or invalid");
+	return evidence;
+}
+
 function writeReference(root: string, path: string) {
 	const target = resolve(root, path);
 	const stats = lstatSync(target);
@@ -172,19 +187,22 @@ function makeService(dataRoot: string, stored: StoredSessionV36): PersistentInte
 	return new PersistentInteractiveSessionServiceV36({ runtimeRoot: resolve(root, "runtime"), projectId: stored.pin.project_id, workspaceRoot: resolve(root, "workspace"), workspaceId: stored.pin.workspace_id, sessionId: stored.pin.session_id, title: stored.title, sessionPinDigest: stored.pin.session_pin_digest });
 }
 
-function assertProfilePin(profile: ResolvedProjectProfileV36, pin: SessionPinV36): void {
-	if (profile.profile_digest !== pin.project_profile_digest || profile.execution_backend_profile_digest !== pin.execution_backend_profile_digest || profile.provider_model_policy_digest !== pin.provider_model_policy_digest || capabilityDigest(pin.requested_mode) !== pin.capability_digest) throw new Error("continued Session Project/Profile/Backend/Provider/Capability drift rejected");
+function assertProfilePin(profile: ResolvedProjectProfileV36, pin: SessionPinV36, goal2Enabled = false): void {
+	if (profile.profile_digest !== pin.project_profile_digest || profile.execution_backend_profile_digest !== pin.execution_backend_profile_digest || profile.provider_model_policy_digest !== pin.provider_model_policy_digest || capabilityDigest(pin.requested_mode, goal2Enabled) !== pin.capability_digest) throw new Error("continued Session Project/Profile/Backend/Provider/Capability drift rejected");
+	if (goal2Enabled && pin.requested_mode === "bounded_edit" && (profile.registration.execution_backend_profile_id !== "docker-v36g2-frozen" || pin.execution_backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest || (profile.registration.command_descriptors?.length ?? 0) === 0)) throw new Error("bounded-edit Session requires the exact frozen Docker command profile");
 }
 
 export class InteractiveControlPlaneV36 {
 	private readonly dataRoot: string;
 	private readonly registry: ProjectProfileRegistryV36;
 	private readonly dispatch: InteractiveDispatchV36;
+	private readonly goal2Enabled: boolean;
 
-	constructor(options: { dataRoot: string; registry: ProjectProfileRegistryV36; dispatch?: InteractiveDispatchV36 }) {
+	constructor(options: { dataRoot: string; registry: ProjectProfileRegistryV36; dispatch?: InteractiveDispatchV36; goal2Enabled?: boolean }) {
 		this.dataRoot = ordinaryDirectory(options.dataRoot, "V3.6 data root", true);
 		this.registry = options.registry;
 		this.dispatch = options.dispatch ?? (async (input) => await input.service.executeTurn({ sessionId: input.session_id, runId: input.run_id, prompt: input.task_text }));
+		this.goal2Enabled = options.goal2Enabled === true;
 		mkdirSync(resolve(this.dataRoot, "sessions"), { recursive: true });
 		mkdirSync(resolve(this.dataRoot, "interactive-evidence", "runs"), { recursive: true });
 	}
@@ -193,11 +211,13 @@ export class InteractiveControlPlaneV36 {
 
 	private async createSession(profile: ResolvedProjectProfileV36, input: BrowserTaskRequestV36): Promise<StoredSessionV36> {
 		if (!profile.registration.supported_modes.includes(input.requested_mode)) throw new Error("requested mode is not supported by the registered Project Profile");
+		if (this.goal2Enabled && input.requested_mode === "bounded_edit" && (profile.registration.execution_backend_profile_id !== "docker-v36g2-frozen" || profile.execution_backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest || (profile.registration.command_descriptors?.length ?? 0) === 0)) throw new Error("bounded-edit Session requires the exact frozen Docker command profile");
 		const sessionId = generatedId("session");
 		const workspaceId = generatedId("workspace");
 		const root = sessionRoot(this.dataRoot, sessionId);
 		mkdirSync(root, { recursive: false });
 		const copied = createManagedSessionCopyV36({ sourceRoot: profile.canonical_source_root, targetRoot: resolve(root, "workspace") });
+		persistInitialInventoryV36(root, resolve(root, "workspace"));
 		const state = profile.registration.current_state();
 		const pinBody: Omit<SessionPinV36, "session_pin_digest"> = {
 			schema_version: 1,
@@ -211,7 +231,7 @@ export class InteractiveControlPlaneV36 {
 			harness_state_digest: state.state_digest,
 			execution_backend_profile_digest: profile.execution_backend_profile_digest,
 			provider_model_policy_digest: profile.provider_model_policy_digest,
-			capability_digest: capabilityDigest(input.requested_mode),
+			capability_digest: capabilityDigest(input.requested_mode, this.goal2Enabled),
 			requested_mode: input.requested_mode,
 			created_at: new Date().toISOString(),
 		};
@@ -232,13 +252,15 @@ export class InteractiveControlPlaneV36 {
 			stored = await this.createSession(profile, input);
 		} else {
 			stored = readStoredSession(this.dataRoot, input.session_id);
+			assertSessionContinuationAllowedV36(sessionRoot(this.dataRoot, input.session_id));
 			if (stored.pin.project_id !== input.project_id || stored.pin.requested_mode !== input.requested_mode) throw new Error("continued Session browser identity drift rejected");
-			assertProfilePin(profile, stored.pin);
+			assertProfilePin(profile, stored.pin, this.goal2Enabled);
 		}
 		const service = makeService(this.dataRoot, stored);
 		const workspaceRoot = resolve(sessionRoot(this.dataRoot, stored.pin.session_id), "workspace");
 		const beforeIdentity = managedWorkspaceIdentityV36(workspaceRoot);
-		if (beforeIdentity !== stored.pin.code_identity) throw new Error("continued Session managed Workspace/code drift rejected");
+		if (this.goal2Enabled && stored.pin.requested_mode === "bounded_edit") assertManagedWorkspaceHeadV36(sessionRoot(this.dataRoot, stored.pin.session_id), beforeIdentity);
+		else if (beforeIdentity !== stored.pin.code_identity) throw new Error("continued Session managed Workspace/code drift rejected");
 		const runId = generatedId("run");
 		const root = runRoot(this.dataRoot, runId);
 		mkdirSync(root, { recursive: false });
@@ -266,25 +288,33 @@ export class InteractiveControlPlaneV36 {
 			comparison_eligible: false,
 			adaptation_eligible: false,
 			promotion_eligible: false,
-			command_execution_authority: "disabled_goal1",
-			source_mutation_authority: "not_granted_goal1",
+			command_execution_authority: this.goal2Enabled && stored.pin.requested_mode === "bounded_edit" ? "docker_registered_only" : "disabled_goal1",
+			source_mutation_authority: this.goal2Enabled && stored.pin.requested_mode === "bounded_edit" ? "host_handoff_only" : "not_granted_goal1",
 			created_at: new Date().toISOString(),
 		};
 		const authority: InteractiveRunAuthorityV36 = { ...authorityWithoutDigest, authority_digest: digestObject(authorityWithoutDigest) };
 		const authorityRef = writeOnceJson(root, "authority.json", authority);
 		const validated = validateInteractiveAuthorityV36(root, readJsonArtifact(root, authorityRef.path));
 		const result = await this.dispatch({ service, session_id: stored.pin.session_id, run_id: runId, task_text: input.task_text, authority: validated, authority_path: resolve(root, authorityRef.path) });
-		if (result.manifest.run_id !== runId || result.manifest.session_id !== stored.pin.session_id || result.manifest.credential_reads !== 0 || result.manifest.network_calls !== 0 || result.manifest.external_provider_calls !== 0 || result.manifest.real_model_calls !== 0) throw new Error("Goal 1 deterministic dispatch evidence is invalid");
-		if (managedWorkspaceIdentityV36(workspaceRoot) !== stored.pin.code_identity) throw new Error("Goal 1 dispatch changed the pinned managed Workspace");
-		const evidenceWithoutDigest: Omit<InteractiveRunEvidenceV36, "evidence_digest"> = { schema_version: 1, run_id: runId, session_id: stored.pin.session_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0, docker_project_command_executions: 0, project_command_executions: 0, underlying_run_ref: `sessions/${stored.pin.session_id}/runtime/runs/${runId}/manifest.json` };
-		writeOnceJson(root, "result.json", { ...evidenceWithoutDigest, evidence_digest: digestObject(evidenceWithoutDigest) } satisfies InteractiveRunEvidenceV36);
+		if (result.manifest.run_id !== runId || result.manifest.session_id !== stored.pin.session_id) throw new Error("interactive dispatch evidence identity is invalid");
+		const afterIdentity = managedWorkspaceIdentityV36(workspaceRoot);
+		const goal2Run = this.goal2Enabled && stored.pin.requested_mode === "bounded_edit" && result.manifest.mode === "v36_interactive_bounded_edit";
+		if (!goal2Run) {
+			if (result.manifest.credential_reads !== 0 || result.manifest.network_calls !== 0 || result.manifest.external_provider_calls !== 0 || result.manifest.real_model_calls !== 0 || afterIdentity !== stored.pin.code_identity) throw new Error("Goal 1 deterministic dispatch evidence is invalid");
+			const evidenceWithoutDigest: Omit<InteractiveRunEvidenceV36, "evidence_digest"> = { schema_version: 1, run_id: runId, session_id: stored.pin.session_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0, docker_project_command_executions: 0, project_command_executions: 0, underlying_run_ref: `sessions/${stored.pin.session_id}/runtime/runs/${runId}/manifest.json` };
+			writeOnceJson(root, "result.json", { ...evidenceWithoutDigest, evidence_digest: digestObject(evidenceWithoutDigest) } satisfies InteractiveRunEvidenceV36);
+		} else {
+			if (result.manifest.docker_project_command_executions < 1 || result.manifest.project_command_executions !== result.manifest.docker_project_command_executions) throw new Error("Goal 2 Docker command evidence is invalid");
+			const evidenceWithoutDigest: Omit<InteractiveRunEvidenceV36G2, "evidence_digest"> = { schema_version: 2, run_id: runId, session_id: stored.pin.session_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, credential_reads: result.manifest.credential_reads, network_calls: result.manifest.network_calls, external_provider_calls: result.manifest.external_provider_calls, real_model_calls: result.manifest.real_model_calls, docker_project_command_executions: result.manifest.docker_project_command_executions, project_command_executions: result.manifest.project_command_executions, workspace_identity_after: afterIdentity, underlying_run_ref: `sessions/${stored.pin.session_id}/runtime/runs/${runId}/manifest.json` };
+			writeOnceJson(root, "result.json", { ...evidenceWithoutDigest, evidence_digest: digestObject(evidenceWithoutDigest) } satisfies InteractiveRunEvidenceV36G2);
+		}
 		return await this.session(stored.pin.session_id);
 	}
 
 	async session(sessionId: string): Promise<SafeInteractiveSessionV36> {
 		const stored = readStoredSession(this.dataRoot, sessionId);
 		const profile = this.registry.resolve(stored.pin.project_id);
-		assertProfilePin(profile, stored.pin);
+		assertProfilePin(profile, stored.pin, this.goal2Enabled);
 		const persistent = await makeService(this.dataRoot, stored).inspect();
 		const runs: SafeInteractiveRunV36[] = [];
 		for (const persistentRun of persistent.runs) {
@@ -292,8 +322,9 @@ export class InteractiveControlPlaneV36 {
 			if (!existsSync(resolve(root, "authority.json")) || !existsSync(resolve(root, "result.json"))) throw new Error("Interactive Run Authority or Evidence artifact is missing");
 			const authority = validateInteractiveAuthorityV36(root, readJsonArtifact(root, "authority.json"));
 			if (authority.session_id !== sessionId) throw new Error("Interactive Run Authority Session identity is invalid");
-			validateInteractiveEvidenceV36(root, readJsonArtifact(root, "result.json"), authority);
-			runs.push({ run_id: authority.run_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, command_execution: "disabled_goal1" });
+			const evidenceValue = readJsonArtifact<Record<string, unknown>>(root, "result.json");
+			if (evidenceValue.schema_version === 2) validateInteractiveEvidenceG2V36(root, evidenceValue, authority); else validateInteractiveEvidenceV36(root, evidenceValue, authority);
+			runs.push({ run_id: authority.run_id, authority_digest: authority.authority_digest, settled: true, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false, command_execution: authority.command_execution_authority === "docker_registered_only" ? "docker_registered_only" : "disabled_goal1" });
 		}
 		return {
 			schema_version: 1,
@@ -313,7 +344,7 @@ export class InteractiveControlPlaneV36 {
 				capability_digest: stored.pin.capability_digest,
 				session_pin_digest: stored.pin.session_pin_digest,
 			},
-			capabilities: { file_read: true, file_write: false, planned_file_write: stored.pin.requested_mode === "bounded_edit", project_commands: false, docker_commands: false, source_apply: false },
+			capabilities: { file_read: true, file_write: this.goal2Enabled && stored.pin.requested_mode === "bounded_edit", planned_file_write: stored.pin.requested_mode === "bounded_edit", project_commands: this.goal2Enabled && stored.pin.requested_mode === "bounded_edit", docker_commands: this.goal2Enabled && stored.pin.requested_mode === "bounded_edit", source_apply: this.goal2Enabled && stored.pin.requested_mode === "bounded_edit" },
 			verification: { mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false },
 			pi_native_skills: structuredClone(profile.registration.pi_native_skills),
 			harness_adaptations: structuredClone(profile.registration.harness_adaptations),
@@ -338,5 +369,24 @@ export class InteractiveControlPlaneV36 {
 	workspaceFile(sessionId: string, path: string) {
 		const stored = readStoredSession(this.dataRoot, sessionId);
 		return workspaceTextPreviewV36({ workspaceRoot: resolve(sessionRoot(this.dataRoot, sessionId), "workspace"), sessionId, workspaceId: stored.pin.workspace_id, path });
+	}
+
+	hostChangeSetContext(sessionId: string, runId: string): ChangeSetHostContextV36 {
+		const stored = readStoredSession(this.dataRoot, sessionId);
+		const profile = this.registry.resolve(stored.pin.project_id);
+		assertProfilePin(profile, stored.pin, this.goal2Enabled);
+		if (!ID.test(runId)) throw new Error("Run ID is invalid");
+		return {
+			project_id: stored.pin.project_id,
+			session_id: stored.pin.session_id,
+			run_id: runId,
+			project_profile_digest: stored.pin.project_profile_digest,
+			source_snapshot_identity: stored.pin.source_snapshot_identity,
+			session_root: sessionRoot(this.dataRoot, sessionId),
+			workspace_root: resolve(sessionRoot(this.dataRoot, sessionId), "workspace"),
+			source_root: profile.canonical_source_root,
+			writable_paths: profile.registration.writable_paths,
+			protected_paths: profile.registration.protected_paths,
+		};
 	}
 }

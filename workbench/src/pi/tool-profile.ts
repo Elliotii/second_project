@@ -41,6 +41,10 @@ export interface CommandExecutionProjection {
 	timed_out: boolean;
 	truncated: boolean;
 	output: string;
+	backend_profile_digest?: string;
+	authority_digest?: string;
+	terminal_digest?: string;
+	cleanup_complete?: boolean;
 }
 
 export interface BoundedToolProfile {
@@ -57,7 +61,10 @@ export interface BoundedToolRestrictions {
 	allow_repository_commands?: boolean;
 	expose_task_command_ids?: boolean;
 	terminate_on_successful_command_ids?: readonly string[];
+	command_executor?: BoundedCommandExecutor;
 }
+
+export type BoundedCommandExecutor = (input: { command_id: string; descriptor: BoundedTaskPolicy["command_descriptors"][number]; workspace_root: string }) => Promise<CommandExecutionProjection>;
 
 const readSchema = Type.Object(
 	{
@@ -372,6 +379,15 @@ export function createBoundedToolProfile(workspaceRoot: string, task: BoundedTas
 				const taskDescriptor = task.command_descriptors.find((entry) => entry.command_id === args.command_id);
 				const repository = restrictions.allow_repository_commands === false ? undefined : repositoryDescriptor(args.command_id);
 				if (!taskDescriptor && !repository) throw new Error(`command ID is not allowed: ${args.command_id}`);
+				if (taskDescriptor && restrictions.command_executor) {
+					const projection = await restrictions.command_executor({ command_id: args.command_id, descriptor: taskDescriptor, workspace_root: canonicalRoot });
+					commandExecutions.push(projection);
+					return {
+						content: [{ type: "text", text: JSON.stringify(projection) }],
+						details: undefined,
+						...(terminatingCommandIds.has(args.command_id) && projection.exit_code === 0 && !projection.timed_out ? { terminate: true as const } : {}),
+					};
+				}
 				const executable = taskDescriptor ? process.execPath : repository!.executable;
 				const argv = taskDescriptor ? [...taskDescriptor.argv] : [...repository!.argv];
 				const result = await executeProcess({

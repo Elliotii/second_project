@@ -1,0 +1,161 @@
+import type { ArtifactRefV0B } from "./v0b-types.ts";
+
+export interface DockerBackendProfileV36 {
+	schema_version: 1;
+	backend_kind: "docker_engine_linux_container";
+	host_frontend: "docker_desktop_wsl2";
+	docker_context: "desktop-linux";
+	docker_client_version: "29.6.2";
+	docker_server_version: "29.6.2";
+	platform: "linux/amd64";
+	image_reference: "node@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03";
+	network_mode: "none";
+	root_filesystem: "read_only";
+	tmpfs: "/tmp:rw,noexec,nosuid,nodev,size=67108864";
+	user: "65532:65532";
+	cpus: 0.5;
+	memory_bytes: 536870912;
+	memory_swap_bytes: 536870912;
+	pids_limit: 64;
+	nofile: "1024:1024";
+	cap_drop: "ALL";
+	no_new_privileges: true;
+	pull_policy: "never";
+	wall_timeout_ms: 30000;
+	combined_output_budget_bytes: 65536;
+	workspace_mount_destination: "/workspace";
+	workspace_mount_count: 1;
+	container_lifecycle: "one_disposable_container_per_registered_command";
+	profile_digest: string;
+}
+
+export interface DockerCommandAuthorityV36 {
+	schema_version: 1;
+	authority_kind: "v36_docker_registered_command";
+	execution_id: string;
+	command_id: string;
+	executable: "node";
+	argv: string[];
+	workspace_identity: string;
+	backend_profile_digest: string;
+	created_at: string;
+	authority_digest: string;
+}
+
+export interface DockerTerminalEvidenceV36 {
+	schema_version: 1;
+	execution_id: string;
+	command_id: string;
+	authority_digest: string;
+	backend_profile_digest: string;
+	status: "succeeded" | "nonzero_exit" | "timed_out" | "preflight_failed" | "start_failed" | "cleanup_failed";
+	create: { attempted: boolean; succeeded: boolean; container_identity: string | null };
+	start: { attempted: boolean; succeeded: boolean };
+	output: { stdout: string; stderr: string; combined_bytes_observed: number; truncated: boolean };
+	inspect: { attempted: boolean; succeeded: boolean; exit_code: number | null; oom_killed: boolean | null; mount_count: number | null; profile_match: boolean };
+	timeout: { triggered: boolean; wall_timeout_ms: 30000 };
+	kill: { attempted: boolean; succeeded: boolean };
+	remove: { attempted: boolean; succeeded: boolean };
+	exit_code: number | null;
+	timed_out: boolean;
+	cleanup_complete: boolean;
+	error_code: string | null;
+	terminal_digest: string;
+}
+
+export interface InteractiveRunEvidenceV36G2 {
+	schema_version: 2;
+	run_id: string;
+	session_id: string;
+	authority_digest: string;
+	settled: true;
+	verification_mode: "unverified";
+	formal_outcome: null;
+	comparison_eligible: false;
+	adaptation_eligible: false;
+	promotion_eligible: false;
+	credential_reads: number;
+	network_calls: number;
+	external_provider_calls: number;
+	real_model_calls: number;
+	docker_project_command_executions: number;
+	project_command_executions: number;
+	workspace_identity_after: string;
+	underlying_run_ref: string;
+	evidence_digest: string;
+}
+
+export interface WorkspaceInventoryV36 {
+	schema_version: 1;
+	files: Array<{ path: string; bytes: number; sha256: string }>;
+	inventory_digest: string;
+}
+
+export type ChangeOperationV36 = "add" | "modify" | "delete";
+
+export interface ChangeEntryV36 {
+	path: string;
+	operation: ChangeOperationV36;
+	before_sha256: string | null;
+	after_sha256: string | null;
+	after_blob_ref: ArtifactRefV0B | null;
+}
+
+export interface ChangeSetV36 {
+	schema_version: 1;
+	project_id: string;
+	session_id: string;
+	run_id: string;
+	project_profile_digest: string;
+	source_snapshot_identity: string;
+	initial_inventory_digest: string;
+	final_inventory_digest: string;
+	changes: ChangeEntryV36[];
+	status: "proposed";
+	change_set_digest: string;
+}
+
+export interface SafeChangeSetV36 {
+	schema_version: 1;
+	project_id: string;
+	session_id: string;
+	run_id: string;
+	change_set_digest: string;
+	status: "proposed" | "applied" | "discarded" | "partial_apply_error";
+	changes: Array<{ path: string; operation: ChangeOperationV36; before_sha256: string | null; after_sha256: string | null; diff: string }>;
+	backend: { kind: "docker_engine_linux_container"; image_digest: string; network: "none"; profile_digest: string };
+	handoff_actions: Array<"apply_all" | "discard" | "export">;
+}
+
+export interface ChangeHandoffRequestV36 {
+	session_id: string;
+	change_set_digest: string;
+	action: "apply_all" | "discard" | "export";
+}
+
+export interface ApplyJournalEntryV36 {
+	path: string;
+	operation: ChangeOperationV36;
+	state: "applied" | "not_applied";
+	recovery_blob_ref: ArtifactRefV0B | null;
+	recovery_requires_absence: boolean;
+}
+
+export interface ChangeHandoffReceiptV36 {
+	schema_version: 1;
+	session_id: string;
+	change_set_digest: string;
+	action: "apply_all" | "discard";
+	status: "applied" | "discarded" | "partial_apply_error";
+	journal: ApplyJournalEntryV36[];
+	source_identity_after: string;
+	error_code: string | null;
+	receipt_digest: string;
+}
+
+export interface ChangeSetExportV36 {
+	schema_version: 1;
+	change_set: ChangeSetV36;
+	blobs: Array<{ sha256: string; bytes_base64: string }>;
+	export_digest: string;
+}

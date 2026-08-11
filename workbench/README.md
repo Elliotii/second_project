@@ -360,3 +360,41 @@ separates Pi native Skill metadata from Harness Adaptation/binding metadata. It 
 no project command, Docker command, external Provider/model call, Source apply, or State
 mutation. `bounded_edit` is planned capability metadata only in Goal 1; file writes and
 the registered Docker command path are not enabled until a separately accepted Goal 2.
+
+## V3.6 Goal 2 bounded execution and change handoff
+
+Goal 2 extends the Goal 1 control plane only when the Host explicitly enables its
+extension. A `bounded_edit` Session receives the six bounded Workspace tools and may run
+only a registered command ID. The Host resolves that ID to fixed `node` argv and executes
+one disposable Docker container with the frozen digest-pinned image, `--pull never`,
+`--network none`, a read-only container root, a bounded `/tmp`, reduced identity and
+resources, and exactly one read-write bind: the canonical link-free managed Session copy
+at `/workspace`. There is no shell invocation, Host command fallback, second backend, or
+Source mount.
+
+The executor writes immutable Authority before container creation and terminal evidence
+for create, start, bounded output, inspected profile, timeout/kill and removal. The exact
+Docker executable is Host-only configuration and is never projected to the browser,
+model, safe Session view, ChangeSet or evidence. Run the complete deterministic suite
+from `workbench/` with the Host executable supplied only through the process environment:
+
+```powershell
+$env:V36_DOCKER_EXECUTABLE = 'C:/Users/HUAWEI/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe'
+npm run v36g2:test
+```
+
+After each settled Turn, the Host compares authenticated initial and final inventories
+and persists an immutable content-addressed ChangeSet. The WebUI exposes only bounded
+Files, Changes, Diff and backend projections. `Apply All`, `Discard` and `Export` call the
+Host-only handoff surface with exactly `session_id`, `change_set_digest` and `action`.
+Apply revalidates lineage, scope, links, hardlinks, Source preimages and every blob before
+mutation; an interrupted apply preserves a truthful per-file journal and recovery blobs.
+Only one successful Apply is allowed per Session, and further continuation directs the
+user to create a new Session. Export does not mutate Source; Discard terminalizes only
+the proposed ChangeSet.
+
+All free-task Runs remain explicitly `unverified` and have no formal Outcome. This
+deterministic implementation does not perform or authorize the separately governed real
+two-Turn product Journey, Credential access, external network/provider/model calls, a
+second execution backend, Pi Core changes, or browser-supplied image/argv/mount/profile
+configuration.

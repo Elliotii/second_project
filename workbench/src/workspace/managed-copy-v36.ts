@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { SafeWorkspaceTextPreviewV36, SafeWorkspaceTreeV36, WorkspaceTreeEntryV36 } from "../contracts/v36-types.ts";
+import type { WorkspaceInventoryV36 } from "../contracts/v36g2-types.ts";
 import { digestObject, sha256 } from "../hash.ts";
 import { resolveWorkspacePath } from "./path-policy.ts";
 
@@ -17,12 +18,15 @@ function ordinaryRoot(pathValue: string, label: string): string {
 	return realpathSync.native(path);
 }
 
-function visitFiles(root: string): InventoryFileV36[] {
+function visitFiles(root: string, allowRootGitOmission: boolean): InventoryFileV36[] {
 	const files: InventoryFileV36[] = [];
 	let total = 0;
 	const visit = (directory: string, topLevel: boolean): void => {
 		for (const entry of readdirSync(directory, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
-			if (topLevel && entry.name === ".git") continue;
+			if (topLevel && entry.name === ".git") {
+				if (allowRootGitOmission) continue;
+				throw new Error("managed Workspace must not contain .git");
+			}
 			const path = resolve(directory, entry.name);
 			const stats = lstatSync(path);
 			const rel = portable(relative(root, path));
@@ -41,14 +45,24 @@ function visitFiles(root: string): InventoryFileV36[] {
 }
 
 export function managedWorkspaceIdentityV36(rootValue: string): string {
-	return digestObject(visitFiles(ordinaryRoot(rootValue, "managed Workspace root")));
+	return digestObject(visitFiles(ordinaryRoot(rootValue, "managed Workspace root"), false));
+}
+
+export function managedWorkspaceInventoryV36(rootValue: string): WorkspaceInventoryV36 {
+	const files = visitFiles(ordinaryRoot(rootValue, "managed Workspace root"), false);
+	return { schema_version: 1, files, inventory_digest: digestObject(files) };
+}
+
+export function registeredSourceInventoryV36(rootValue: string): WorkspaceInventoryV36 {
+	const files = visitFiles(ordinaryRoot(rootValue, "registered Source root"), true);
+	return { schema_version: 1, files, inventory_digest: digestObject(files) };
 }
 
 export function createManagedSessionCopyV36(options: { sourceRoot: string; targetRoot: string }): { source_snapshot_identity: string; code_identity: string; file_count: number; total_bytes: number } {
 	const source = ordinaryRoot(options.sourceRoot, "registered Source root");
 	const target = resolve(options.targetRoot);
 	if (existsSync(target)) throw new Error("managed Workspace target already exists");
-	const inventory = visitFiles(source);
+	const inventory = visitFiles(source, true);
 	const sourceDigest = digestObject(inventory);
 	mkdirSync(target, { recursive: false });
 	for (const file of inventory) {
@@ -78,6 +92,7 @@ export function workspaceTreePreviewV36(options: { workspaceRoot: string; sessio
 			const path = resolve(directory, entry.name);
 			const stats = lstatSync(path);
 			const rel = portable(relative(root, path));
+			if (directory === root && entry.name === ".git") throw new Error("Workspace preview rejects .git in the managed copy");
 			if (stats.isSymbolicLink()) throw new Error("Workspace preview encountered a symlink or junction");
 			if (stats.isDirectory()) { entries.push({ path: rel, kind: "directory", bytes: null }); visit(path); continue; }
 			if (!stats.isFile() || stats.nlink !== 1) throw new Error("Workspace preview encountered an unsupported file");

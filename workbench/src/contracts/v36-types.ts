@@ -35,7 +35,7 @@ export interface SafeProjectProfileV36 {
 	supported_modes: InteractiveRequestedModeV36[];
 	capability_summary: {
 		inspect_only: "read_only_files_no_commands";
-		bounded_edit: "planned_file_edits_commands_disabled_until_goal2" | "unavailable";
+		bounded_edit: "planned_file_edits_commands_disabled_until_goal2" | "docker_bounded_edit_change_handoff" | "unavailable";
 	};
 	risk_notice: string;
 	pi_native_skills: ProjectSkillDescriptorV36[];
@@ -85,8 +85,8 @@ export interface InteractiveRunAuthorityV36 {
 	comparison_eligible: false;
 	adaptation_eligible: false;
 	promotion_eligible: false;
-	command_execution_authority: "disabled_goal1";
-	source_mutation_authority: "not_granted_goal1";
+	command_execution_authority: "disabled_goal1" | "docker_registered_only";
+	source_mutation_authority: "not_granted_goal1" | "host_handoff_only";
 	created_at: string;
 	authority_digest: string;
 }
@@ -121,7 +121,7 @@ export interface SafeInteractiveRunV36 {
 	comparison_eligible: false;
 	adaptation_eligible: false;
 	promotion_eligible: false;
-	command_execution: "disabled_goal1";
+	command_execution: "disabled_goal1" | "docker_registered_only";
 }
 
 export interface SafeInteractiveSessionV36 {
@@ -135,11 +135,11 @@ export interface SafeInteractiveSessionV36 {
 	pins: Omit<SessionPinV36, "session_pin_digest" | "created_at" | "schema_version" | "session_id" | "project_id" | "workspace_id" | "workspace_strategy" | "requested_mode"> & { session_pin_digest: string };
 	capabilities: {
 		file_read: true;
-		file_write: false;
+		file_write: boolean;
 		planned_file_write: boolean;
-		project_commands: false;
-		docker_commands: false;
-		source_apply: false;
+		project_commands: boolean;
+		docker_commands: boolean;
+		source_apply: boolean;
 	};
 	verification: {
 		mode: "unverified";

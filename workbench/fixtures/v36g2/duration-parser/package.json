@@ -1,0 +1,8 @@
+{
+  "name": "v36g2-duration-parser-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

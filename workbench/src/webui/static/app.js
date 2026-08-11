@@ -162,6 +162,41 @@ function renderV36Session(session) {
     runs.append(item);
   }
   root.append(card("Interactive evidence", runs));
+  if (session.goal2) {
+    const backend = card("Bounded backend / 有界执行后端", null);
+    backend.append(metric("Backend / 后端", session.goal2.backend), metric("Continuation / 继续规则", session.goal2.continuation));
+    if (session.goal2.changes) {
+      const changeSet = session.goal2.changes;
+      backend.append(metric("Image / 镜像", changeSet.backend.image_digest), metric("Network / 网络", changeSet.backend.network), metric("Profile digest / 配置摘要", changeSet.backend.profile_digest));
+      root.append(backend);
+      const changesCard = card("Changes and Diff / 变更与差异", null);
+      changesCard.append(metric("ChangeSet", changeSet.change_set_digest), metric("Status / 状态", changeSet.status));
+      for (const change of changeSet.changes) changesCard.append(card(`${change.operation.toUpperCase()} · ${change.path}`, text("pre", change.diff)));
+      const actions = text("div", "", "handoff-actions");
+      for (const action of changeSet.handoff_actions) {
+        const labels = { apply_all: "Apply All / 全部应用", discard: "Discard / 丢弃", export: "Export / 导出" };
+        const button = text("button", labels[action] ?? action);
+        button.type = "button";
+        button.disabled = changeSet.status !== "proposed" || (action === "apply_all" && changeSet.changes.length === 0);
+        button.addEventListener("click", async () => {
+          try {
+            const result = await api("/api/v1/v36/handoff", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ session_id: session.session_id, change_set_digest: changeSet.change_set_digest, action }) });
+            if (action === "export") {
+              const blob = new Blob([`${JSON.stringify(result, null, 2)}\n`], { type: "application/json" });
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = `changeset-${changeSet.change_set_digest}.json`;
+              link.click();
+              URL.revokeObjectURL(link.href);
+            } else renderV36Session(await api(`/api/v1/v36/sessions/${session.session_id}`));
+          } catch (error) { failure(error); }
+        });
+        actions.append(button);
+      }
+      changesCard.append(actions);
+      root.append(changesCard);
+    } else root.append(backend, card("Changes / 变更", text("p", "Inspect-only Session: no ChangeSet is created. / 仅检查会话不创建 ChangeSet。")));
+  }
   loadV36Workspace(session.session_id).catch(failure);
 }
 
