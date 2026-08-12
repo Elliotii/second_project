@@ -179,12 +179,16 @@ function renderV36Session(session) {
   for (const run of session.runs) {
     const item = card(run.run_id, null);
     item.append(metric("Authority", run.authority_digest), metric("Settled", run.settled), metric("Verification", run.verification_mode), metric("Command execution", run.command_execution));
-    if (run.terminal?.terminal_reason === "provider_request_budget_exhausted") {
+    if (run.terminal) {
+      const dimensions = run.terminal.stop_dimensions.map((entry) => `${entry.dimension}: ${entry.observed} / ${entry.allowed} (${entry.capture_phase})`).join("; ");
+      const command = run.terminal.last_registered_command;
       item.append(
-        metric("Stop reason / 停止原因", "Provider request budget exhausted before dispatch / Provider 请求预算在派发前耗尽"),
+        metric("Stop reason / 停止原因", run.terminal.terminal_reason),
+        metric("Crossed finite budget / 超出的有界预算", dimensions),
         metric("Request use / 请求用量", `${run.terminal.request_usage.used} / ${run.terminal.request_usage.max} dispatched; attempt ${run.terminal.request_usage.attempts}`),
-        metric("Known usage / 已知用量", `${run.terminal.usage.input_tokens} input, ${run.terminal.usage.output_tokens} output, $${run.terminal.usage.cost_usd}`),
-        metric("Last registered command / 最后登记命令", `${run.terminal.last_registered_command.command_id}; exit ${run.terminal.last_registered_command.exit_code ?? "not recorded"}`),
+        metric("Tool use / 工具用量", `${run.terminal.tool_usage.completed} completed / ${run.terminal.tool_usage.attempts} attempted`),
+        metric("Known usage / 已知用量", `${run.terminal.usage.combined_tokens} combined tokens, $${run.terminal.usage.cost_usd}, ${run.terminal.usage.wall_time_ms} ms`),
+        metric("Last registered command / 最后登记命令", command ? `${command.command_id}; ${command.observation}; exit ${command.exit_code ?? "not recorded"}` : "No registered command executed / 未执行登记命令"),
         metric("Managed changes / 托管变更", "Unverified: inspect, export, or discard only; Apply All denied / 未验证：仅可检查、导出或丢弃；禁止全部应用")
       );
     }
@@ -200,7 +204,7 @@ function renderV36Session(session) {
       root.append(backend);
       const changesCard = card("Changes and Diff / 变更与差异", null);
       changesCard.append(metric("ChangeSet", changeSet.change_set_digest), metric("Status / 状态", changeSet.status));
-      if (terminalRun?.terminal?.terminal_reason === "provider_request_budget_exhausted") changesCard.append(metric("Safety / 安全", "Incomplete unverified budget-stop changes: Apply All is denied; Export and Discard remain available. / 未完成且未验证的预算停止变更：禁止全部应用；仍可导出或丢弃。"));
+      if (terminalRun?.terminal) changesCard.append(metric("Safety / 安全", "Incomplete unverified finite-budget changes: Apply All is denied; Export and Discard remain available. / 未完成且未验证的有界预算变更：禁止全部应用；仍可导出或丢弃。"));
       if (changeSet.handoff_result) changesCard.append(handoffResultCard(changeSet.handoff_result));
       for (const change of changeSet.changes) changesCard.append(card(`${change.operation.toUpperCase()} · ${change.path}`, text("pre", change.diff)));
       const actions = text("div", "", "handoff-actions");
@@ -475,7 +479,7 @@ $("#v36-task-form").addEventListener("submit", async (event) => {
     $("#open-control").classList.add("active");
     renderV36Session(session);
     await loadV36Sessions();
-    status.textContent = session.runs.at(-1)?.terminal?.terminal_reason === "provider_request_budget_exhausted" ? "Stopped at local request budget: incomplete and unverified / 已在本地请求预算处停止：未完成且未验证" : "Settled / 已结束";
+    status.textContent = session.runs.at(-1)?.terminal ? "Stopped at a known finite budget: incomplete and unverified / 已在已知有界预算处停止：未完成且未验证" : "Settled / 已结束";
   } catch (error) {
     status.textContent = "Failed / 失败";
     failure(error);

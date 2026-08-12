@@ -179,6 +179,11 @@ test("the daily profile terminalizes exactly at request attempt 25 while preserv
 	assert.equal(view.persistent_session.runs[0]!.terminal!.trajectory_outcome, "pre_dispatch_budget_terminal");
 	const reopened = new InteractiveControlPlaneV36({ dataRoot: fixture.data, registry: fixture.registry, goal2Enabled: true });
 	assert.deepEqual((await reopened.session(view.session_id)).runs[0]!.terminal!.request_usage, { attempts: 25, used: 24, max: 24 });
+	const terminalPath = resolve(fixture.data, "sessions", view.session_id, "runtime", "runs", run.run_id, "budget-stop.json");
+	const forged = JSON.parse(readFileSync(terminalPath, "utf8")) as Record<string, unknown>;
+	forged.provider_responses = 23;
+	writeFileSync(terminalPath, `${JSON.stringify(rehashTerminal(forged))}\n`);
+	await assert.rejects(() => reopened.session(view.session_id), /budget terminal is invalid/);
 });
 
 test("the exact local seventeenth Provider request persists one authenticated non-settled terminal and remains safely inspectable", { timeout: 30_000 }, async () => {

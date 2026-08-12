@@ -161,6 +161,7 @@ test("bounded-edit two-Turn Session uses Docker registered commands, exposes saf
 
 test("a final assistant response exceeding token or cost caps fails before an accepted bounded-Turn Manifest", async () => {
 	for (const variant of ["tokens", "cost"] as const) {
+		const syntheticUsage = (input: number, output: number, cost: number) => ({ input, output, cacheRead: 0, cacheWrite: 0, totalTokens: input + output, cost: { input: cost, output: 0, cacheRead: 0, cacheWrite: 0, total: cost } });
 		const root = resolve(PROJECT_ROOT, ".runs/v3-6/g2/budget-tests", `${variant}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 		const workspace = resolve(root, "workspace");
 		const runtime = resolve(root, "runtime");
@@ -186,8 +187,8 @@ test("a final assistant response exceeding token or cost caps fails before an ac
 			models,
 			model: registration.getModel(),
 			systemPrompt: "Run only the registered command.",
-			testOnlyFinalAssistantUsageFloor: variant === "tokens" ? { combined_tokens: 131_073 } : { cost_usd: 0.200_001 },
-		}), /token\/cost budget exceeded/);
+			testOnlyAssistantUsageByResponse: variant === "tokens" ? [syntheticUsage(1, 1, 0), syntheticUsage(1, 131_071, 0)] : [syntheticUsage(1, 1, 0.1), syntheticUsage(1, 1, 0.100_001)],
+		}), /finite-budget terminal authority digest is required/);
 		assert.equal(existsSync(resolve(runtime, "runs", runId, "manifest.json")), false);
 		assert.equal(existsSync(resolve(runtime, "runs", runId, "budget-stop.json")), false);
 	}

@@ -97,8 +97,21 @@ export interface RegisteredCommandTerminalV36 {
 	terminal_digest: string;
 }
 
+export type FiniteBudgetDimensionKindV36 = "provider_request" | "combined_token" | "cost" | "tool_call" | "wall_time";
+
+export interface FiniteBudgetDimensionV36 {
+	dimension: FiniteBudgetDimensionKindV36;
+	observed: number;
+	allowed: number;
+	capture_phase: "before_provider_dispatch" | "after_provider_response_accounted" | "before_tool_execution" | "clean_boundary_before_provider_request" | "clean_boundary_before_tool_execution";
+}
+
+export interface ReconciledRegisteredCommandTerminalV36 extends RegisteredCommandTerminalV36 {
+	observation: "PASS" | "FAIL";
+}
+
 /**
- * The only non-settled V3.6 runtime terminal form. It records a local refusal
+ * The accepted legacy Provider-request non-settled terminal form. It records a local refusal
  * before the configured finite Provider-request hard boundary; it is not an
  * AgentHarness settle result, task success, verifier outcome, or Source-apply
  * authorization. Schema 1 preserves the accepted legacy 17/16 terminal;
@@ -144,6 +157,67 @@ export interface ProviderRequestBudgetTerminalV36 {
 	terminal_digest: string;
 }
 
+/**
+ * Schema 3 is additive. It covers only known, quiescent finite-budget stops
+ * other than the accepted schema-1/schema-2 Provider-request artifacts above.
+ * Each counter retains its capture-phase meaning; no field implies settle,
+ * verification, Outcome, comparison, adaptation, promotion, or Apply authority.
+ */
+export interface ReconciledFiniteBudgetTerminalV36 {
+	schema_version: 3;
+	budget_profile_id: "v36g2_frozen_acceptance_v1" | "v36_daily_bounded_edit_v2";
+	terminal_kind: "v36_reconciled_finite_budget_terminal";
+	trajectory_outcome: "finite_budget_terminal";
+	terminal_reason: "accounted_usage_budget_exhausted" | "tool_call_budget_exhausted" | "wall_time_budget_exhausted";
+	stop_dimensions: FiniteBudgetDimensionV36[];
+	run_id: string;
+	session_id: string;
+	project_id: string;
+	workspace_id: string;
+	session_pin_digest: string;
+	authority_digest: string;
+	created_at: string;
+	settled: false;
+	request_attempts: number;
+	provider_dispatches: number;
+	provider_responses: number;
+	pending_provider_reservations: 0;
+	provider_accounting_reconciled: true;
+	pending_tool_calls: 0;
+	pending_side_effects: 0;
+	tool_call_attempts: number;
+	tool_calls_executed: number;
+	tool_calls_completed: number;
+	tool_calls_blocked: number;
+	tool_results_recorded: number;
+	executed_tool_call_ids: string[];
+	tool_lifecycle_reconciled: true;
+	usage_known: true;
+	harness_diagnostic_error_sha256: string;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: number;
+	wall_time_ms: number;
+	last_registered_command: ReconciledRegisteredCommandTerminalV36 | null;
+	command_evidence_reconciled: true;
+	workspace_identity_at_terminal: string;
+	workspace_identity_reconciled: true;
+	session_entry_count_before_turn: number;
+	session_entries_sha256_before_turn: string;
+	session_entry_count_at_terminal: number;
+	session_entries_sha256_at_terminal: string;
+	session_identity_reconciled: true;
+	authority_identity_reconciled: true;
+	verification_mode: "unverified";
+	formal_outcome: null;
+	comparison_eligible: false;
+	adaptation_eligible: false;
+	promotion_eligible: false;
+	terminal_digest: string;
+}
+
+export type FiniteBudgetTerminalV36 = ProviderRequestBudgetTerminalV36 | ReconciledFiniteBudgetTerminalV36;
+
 export interface SafeProviderRequestBudgetTerminalV36 {
 	trajectory_outcome: "pre_dispatch_budget_terminal";
 	terminal_reason: "provider_request_budget_exhausted";
@@ -151,6 +225,25 @@ export interface SafeProviderRequestBudgetTerminalV36 {
 	request_usage: { attempts: number; used: number; max: number };
 	usage: { input_tokens: number; output_tokens: number; cost_usd: number; known: true };
 	last_registered_command: RegisteredCommandTerminalV36;
+	unverified_changes: true;
+	terminal_digest: string;
+}
+
+export interface SafeFiniteBudgetTerminalV36 {
+	trajectory_outcome: "pre_dispatch_budget_terminal" | "finite_budget_terminal";
+	terminal_reason: "provider_request_budget_exhausted" | "accounted_usage_budget_exhausted" | "tool_call_budget_exhausted" | "wall_time_budget_exhausted";
+	authority_digest: string;
+	stop_dimensions: FiniteBudgetDimensionV36[];
+	request_usage: { attempts: number; used: number; max: number };
+	tool_usage: { attempts: number; executed: number; completed: number; blocked: number; results: number; max: number };
+	usage: { input_tokens: number; output_tokens: number; combined_tokens: number; cost_usd: number; wall_time_ms: number | "not_recorded"; known: true };
+	last_registered_command: ReconciledRegisteredCommandTerminalV36 | null;
+	settled: false;
+	verification_mode: "unverified";
+	formal_outcome: null;
+	comparison_eligible: false;
+	adaptation_eligible: false;
+	promotion_eligible: false;
 	unverified_changes: true;
 	terminal_digest: string;
 }

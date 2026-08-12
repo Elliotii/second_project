@@ -1,5 +1,5 @@
 import type { SafeRunViewV35, SafeSessionViewV35 } from "./v35-types.ts";
-import type { SafeProviderRequestBudgetTerminalV36 } from "./v36g2-types.ts";
+import type { SafeFiniteBudgetTerminalV36 } from "./v36g2-types.ts";
 
 export type InteractiveRequestedModeV36 = "inspect_only" | "bounded_edit";
 
@@ -123,13 +123,13 @@ export interface SafeInteractiveRunV36 {
 	adaptation_eligible: false;
 	promotion_eligible: false;
 	command_execution: "disabled_goal1" | "docker_registered_only";
-	terminal: SafeProviderRequestBudgetTerminalV36 | null;
+	terminal: SafeFiniteBudgetTerminalV36 | null;
 }
 
 export interface SafePersistentRunV36 extends Omit<SafeRunViewV35, "settled" | "mode"> {
 	settled: boolean;
-	mode: "deterministic_faux" | "real_product_smoke" | "pre_dispatch_budget_terminal";
-	terminal: SafeProviderRequestBudgetTerminalV36 | null;
+	mode: "deterministic_faux" | "real_product_smoke" | "pre_dispatch_budget_terminal" | "finite_budget_terminal";
+	terminal: SafeFiniteBudgetTerminalV36 | null;
 }
 
 export interface SafePersistentSessionV36 extends Omit<SafeSessionViewV35, "runs"> {
