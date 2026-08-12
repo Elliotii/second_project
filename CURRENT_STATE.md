@@ -52,15 +52,19 @@ final_capstone:
   goal_1_tests: 49_passed_0_failed_plus_strict_typescript
   goal_1_real_access: credentials_0_network_0_provider_0_model_0
   goal_1_fresh_post_correction_reaudit: not_run_main_acceptance_from_preserved_hit_regression_under_replacement_handoff
+  goal_1_post_acceptance_correction_authorization: docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_NEGATIVE_ADMISSION_CORRECTION_AUTHORIZATION.md
+  goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_missing_fixed_negative_bound_state_admission_for_goal_2
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
-  goal_2_status: accepted_activated_pending_control_baseline
+  goal_2_status: initial_implementation_paused_pending_goal_1_negative_admission_correction
   goal_2_implementation_owner: fresh_top_level_goal_2_working_session
+  goal_2_initial_session: 019ff7cb-123b-7a22-8757-0516932aff59
+  goal_2_initial_session_stop: DECISION_REQUIRED_FINAL_CAPSTONE_G2_NEGATIVE_BOUND_STATE_ADMISSION_AUTHORITY_returned_to_Main
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_status: blocked_until_goal_2_closeout
   stop_core_feature_development: false_pending_goals_2_and_3
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
-    goal_1: 0_of_1_post_acceptance
+    goal_1: 1_of_1_post_acceptance_in_progress
     goal_2: 0_of_2_after_initial_review
     goal_3: 0_of_2_implementation_integration
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
@@ -2465,7 +2469,7 @@ next_checkpoint:
   - no_real_access_or_Goal_3_authority_yet
 
 open_user_decisions:
-  - none_at_Goal_1_closeout
+  - none_currently_Main_authorized_the_single_Goal_1_post_acceptance_correction
 ```
 
 ## Current Constraints
