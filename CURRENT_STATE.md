@@ -12,7 +12,7 @@ active_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
 
 current_goal:
   id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: active_natural_case_1_authorized_pending_dispatch
+  status: active_natural_case_1_running
   kind: bounded_post_closeout_engineering_stabilization
   version_status: V3_6_remains_closed_accepted
   plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
@@ -53,7 +53,7 @@ next_goal:
   note: no_V4_new_version_human_UI_UX_polish_or_unrelated_goal_authorized
 
 v3_6_engineering_stabilization_campaign:
-  status: active_natural_case_1_authorized_pending_dispatch
+  status: active_natural_case_1_running
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   functional_baseline_tree: df8edd611b1fe819098dbd643222e5535ba53ddb
@@ -62,9 +62,9 @@ v3_6_engineering_stabilization_campaign:
   baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
   status_file: docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
   test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
-  current_case: ES_N01_healing_potion_feature_authorized_pending_dispatch
+  current_case: ES_N01_healing_potion_feature_running_in_test_session
   current_task_sha256: 0f5b7b47866f5a666bda0a2de418a033a22bbc5e5804871a7e8370f8eb17b52a
-  natural_cases_started: 0
+  natural_cases_started: 1
   natural_cases_completed: 0
   natural_cases_failed: 0
   findings_total: 0
