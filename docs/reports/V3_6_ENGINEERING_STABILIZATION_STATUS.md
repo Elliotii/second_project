@@ -3,19 +3,19 @@
 ```yaml
 campaign_status:
   campaign_id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: active_natural_case_3_authorized_pending_dispatch
+  status: paused_decision_required_after_es_n03
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   campaign_control_baseline_commit: e6451c273c1186728a6b6a8f98b02bf1f88b1cc4
   plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
   baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
   test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
-  natural_cases_started: 2
-  natural_cases_completed: 2
-  natural_cases_failed: 0
-  findings_total: 0
+  natural_cases_started: 3
+  natural_cases_completed: 3
+  natural_cases_failed: 1
+  findings_total: 1
   bounded_maintenance_count: 0
-  decision_required_count: 0
+  decision_required_count: 1
   post_maintenance_retests: 0
   fault_injection_cases: 0
   candidate_failure_cases: 2_historical_unselected
@@ -25,11 +25,11 @@ campaign_status:
     - uncertain_tool_side_effect
     - same_session_durable_crash_recovery
     - generalized_transactional_multi_file_apply
-  current_case: ES_N03_validation_refactor_authorized_pending_dispatch
+  current_case: ES_N03_frozen_failure_decision_required
   current_task_sha256: 4852cfd2f9623c4e9a37d0880e4764c5d1c9bd117f10dcb7e36bb04da3812484
-  current_blocker: null
-  stop_condition_status: not_yet_met
-  decision_required: false
+  current_blocker: tool_budget_terminalization_count_domain_mismatch_after_prior_maintenance
+  stop_condition_status: paused_on_decision_required
+  decision_required: true
   active_maintenance: null
   v4_authorized: false
 ```
@@ -51,10 +51,18 @@ continuation. Raw Evidence remains immutable under the ES-N02 data root; the ext
 handoff SHA-256 is
 `eaae5de0271243cf1b5e23accafb6adfa3e1fcccf7ce3ba2ed46735c981a5314`.
 
-Main has authorized one differentiated behavior-preserving refactor Case, ES-N03. The
-same existing Test Session must run it from a new clean Session/data root and then stop
-with a normal-completion record or Finding handoff. No ES-N04, Retest or Fault Injection
-is yet authorized.
+Main authorized ES-N03 as one differentiated behavior-preserving refactor Case. The
+existing Test Session ran it once from a new clean Session/data root and stopped with the
+Failure handoff; no ES-N04, Retest or Fault Injection was performed.
+
+ES-N03 is now frozen as a natural Failure. Its Tool-budget stop was correctly detected
+internally, but an unavailable Tool call made persisted Session Tool counts diverge from
+the registered-hook counter. No typed terminal, Manifest, command evidence or ChangeSet
+was written, and normal Session list/detail degraded to generic `request_rejected`.
+Main accepts the Evidence as F1 + F2 with F4 trajectory inefficiency and pauses the
+Campaign under the repeated-terminalization-class Decision Required rule. See
+`V3_6_ENGINEERING_STABILIZATION_ES_N03_DECISION_REQUIRED.md`. No next Case, maintenance,
+Retest or budget change is authorized.
 
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
