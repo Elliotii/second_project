@@ -3,7 +3,7 @@
 ```yaml
 campaign_status:
   campaign_id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: paused_decision_required_after_es_n03
+  status: active_es_n03_terminalization_compatibility_maintenance
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   campaign_control_baseline_commit: e6451c273c1186728a6b6a8f98b02bf1f88b1cc4
@@ -27,10 +27,10 @@ campaign_status:
     - generalized_transactional_multi_file_apply
   current_case: ES_N03_frozen_failure_decision_required
   current_task_sha256: 4852cfd2f9623c4e9a37d0880e4764c5d1c9bd117f10dcb7e36bb04da3812484
-  current_blocker: tool_budget_terminalization_count_domain_mismatch_after_prior_maintenance
-  stop_condition_status: paused_on_decision_required
-  decision_required: true
-  active_maintenance: null
+  current_blocker: null
+  stop_condition_status: maintenance_in_progress_before_retest
+  decision_required: false
+  active_maintenance: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
   v4_authorized: false
 ```
 
@@ -61,8 +61,14 @@ the registered-hook counter. No typed terminal, Manifest, command evidence or Ch
 was written, and normal Session list/detail degraded to generic `request_rejected`.
 Main accepts the Evidence as F1 + F2 with F4 trajectory inefficiency and pauses the
 Campaign under the repeated-terminalization-class Decision Required rule. See
-`V3_6_ENGINEERING_STABILIZATION_ES_N03_DECISION_REQUIRED.md`. No next Case, maintenance,
-Retest or budget change is authorized.
+`V3_6_ENGINEERING_STABILIZATION_ES_N03_DECISION_REQUIRED.md`. At that Decision Required
+checkpoint, no next Case, maintenance, Retest or budget change was authorized.
+
+The user accepted recommended Option A on 2026-08-12. Main activated one bounded,
+zero-real-call Tool-accounting terminalization compatibility maintenance under the formal
+Contract. It preserves all budget values and Agent Loop/Pi/Source/Apply authority. ES-N03
+Retest remains gated until implementation, deterministic acceptance and the single focused
+audit pass. ES-N04 remains unauthorized.
 
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.

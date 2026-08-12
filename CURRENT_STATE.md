@@ -12,7 +12,7 @@ active_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
 
 current_goal:
   id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: paused_decision_required_after_es_n03
+  status: active_es_n03_terminalization_compatibility_maintenance
   kind: bounded_post_closeout_engineering_stabilization
   version_status: V3_6_remains_closed_accepted
   plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
@@ -53,7 +53,7 @@ next_goal:
   note: no_V4_new_version_human_UI_UX_polish_or_unrelated_goal_authorized
 
 v3_6_engineering_stabilization_campaign:
-  status: paused_decision_required_after_es_n03
+  status: active_es_n03_terminalization_compatibility_maintenance
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   functional_baseline_tree: df8edd611b1fe819098dbd643222e5535ba53ddb
@@ -72,14 +72,34 @@ v3_6_engineering_stabilization_campaign:
   decision_required_count: 1
   post_maintenance_retests: 0
   fault_injection_cases: 0
-  current_blocker: tool_budget_terminalization_count_domain_mismatch_after_prior_maintenance
-  stop_condition_status: paused_on_decision_required
+  current_blocker: null
+  stop_condition_status: maintenance_in_progress_before_retest
   product_source_edit_authorized_for_test_session: false
   source_apply_authorized_for_test_session: false
   budget_adjustment_authorized: false
   retry_fallback_replacement_authorized: false
   fault_injection_authorized_at_activation: false
   pi_core_patch_authorized: false
+  v4_authorized: false
+
+post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
+  goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
+  status: accepted_activated_pending_control_baseline
+  parent_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
+  version_status: V3_6_remains_closed_accepted
+  contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  trigger_case: ES_N03
+  trigger_finding: ES_N03_F1_001
+  implementation_owner: future_top_level_implementation_session
+  focused_audit: required_once_after_main_candidate_freeze
+  retest: exactly_one_after_accepted_maintenance
+  real_model_calls_authorized: 0
+  credential_reads_authorized: 0
+  external_network_authorized: false
+  budget_value_change_authorized: false
+  agent_loop_change_authorized: false
+  pi_core_patch_authorized: false
+  source_apply_authorized: false
   v4_authorized: false
 
 post_v3_6_finite_budget_terminalization_maintenance:
