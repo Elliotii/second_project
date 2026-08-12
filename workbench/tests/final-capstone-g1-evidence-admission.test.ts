@@ -37,10 +37,12 @@ let passRegistration = "";
 let failRegistration = "";
 let v2Registration = "";
 let v3Registration = "";
+let v3NegativeRegistration = "";
 let passAdmissionId = "";
 let failAdmissionId = "";
 let v2AdmissionId = "";
 let v3AdmissionId = "";
+let v3NegativeAdmissionId = "";
 let v3UnboundSource: TrustedEvidenceSourceG1 | null = null;
 
 function rel(path: string): string {
@@ -118,7 +120,7 @@ function activeIdentity(value: { binding_revision: number; state_version: number
 	return { binding_revision: value.binding_revision, state_version: value.state_version, state_digest: value.state_digest };
 }
 
-async function generateV3Bundle(name: "v3-bound" | "v3-unbound", promoted: boolean): Promise<TrustedEvidenceSourceG1> {
+async function generateV3Bundle(name: "v3-bound" | "v3-bound-negative" | "v3-unbound", promoted: boolean, followupVerifierStatus: "passed" | "failed" = "passed"): Promise<TrustedEvidenceSourceG1> {
 	const bundle = resolve(G1_ROOT, `sources/${name}`);
 	const stateRoot = resolve(bundle, "state");
 	const registryRoot = resolve(bundle, "candidate-admission-registry");
@@ -150,8 +152,9 @@ async function generateV3Bundle(name: "v3-bound" | "v3-unbound", promoted: boole
 		assert.equal(applied.decision.result, "promoted"); assert.ok(applied.version); assert.equal(applied.active.state_version > 0, true);
 	}
 	const workspace = resolve(bundle, "followup-workspace"); mkdirSync(workspace);
-	writeFileSync(resolve(workspace, "subject.txt"), "fixed\n"); writeFileSync(resolve(workspace, "protected.txt"), "protected-stable\n");
-	const label = promoted ? "g1-v3-bound-followup" : "g1-v3-unbound-followup";
+	writeFileSync(resolve(workspace, "subject.txt"), "fixed\n");
+	writeFileSync(resolve(workspace, "protected.txt"), followupVerifierStatus === "passed" ? "protected-stable\n" : "legitimate-verifier-failure\n");
+	const label = promoted ? followupVerifierStatus === "failed" ? "g1-v3-bound-negative-followup" : "g1-v3-bound-followup" : "g1-v3-unbound-followup";
 	const verifierId = `${label}-verifier`;
 	const verifierPath = verifierSource(bundle, verifierId, "protected");
 	const task = taskSpec(workspace, verifierId, verifierPath);
@@ -204,6 +207,9 @@ test.before(async () => {
 	const v3Source = await generateV3Bundle("v3-bound", true);
 	const v3 = hostRegistration("g1-host-v3", V3_PROJECT_ID, v3Source, "typescript-maintenance", "verifier-failure");
 	v3Registration = writeRegistration(v3);
+	const v3NegativeSource = await generateV3Bundle("v3-bound-negative", true, "failed");
+	const v3Negative = hostRegistration("g1-host-v3-negative", V3_PROJECT_ID, v3NegativeSource, "typescript-maintenance", "verifier-failure");
+	v3NegativeRegistration = writeRegistration(v3Negative);
 	v3UnboundSource = await generateV3Bundle("v3-unbound", false);
 });
 
@@ -275,6 +281,48 @@ test("V3 Goal 3 follow-up freezes exact promoted State, applicable binding, prom
 	assert.match(String(result.record.provenance.case_authority_digest), /^[a-f0-9]{64}$/);
 });
 
+test("negative V3 bound-State follow-up admits only its legitimate failed Verifier and preserves exact State, binding, Decision, and Case identity", async () => {
+	const registration = JSON.parse(readFileSync(resolve(PROJECT_ROOT, v3NegativeRegistration), "utf8")) as TrustedEvidenceHostRegistrationG1;
+	const source = registration.source as Extract<TrustedEvidenceSourceG1, { family: "v3g3_bound_state_followup" }>;
+	const sourceRunRoot = resolve(PROJECT_ROOT, source.bundle_root, source.run_root);
+	const sourceBinding = JSON.parse(readFileSync(resolve(sourceRunRoot, "binding.json"), "utf8")) as {
+		active_binding_revision: number;
+		active_state_version: number;
+		active_state_digest: string;
+		active_decision_id: string;
+		binding_digest: string;
+		case_authority_digest: string;
+		bound_entries: Array<{ kind: string }>;
+		lineage: { decision_id: string; decision_digest: string; version_digest: string; admission_digest: string | null } | null;
+	};
+	const sourceManifest = JSON.parse(readFileSync(resolve(sourceRunRoot, "manifest.json"), "utf8")) as { verifier_status: string; runtime_path: string; case_authority_digest: string };
+	const sourceRuntime = JSON.parse(readFileSync(resolve(sourceRunRoot, "runtime.json"), "utf8")) as { settled_events: number; credential_reads: number; network_calls: number; external_provider_calls: number; real_model_calls: number };
+	assert.equal(sourceManifest.verifier_status, "failed");
+	assert.equal(sourceManifest.runtime_path, "prompt_addendum");
+	assert.equal(sourceRuntime.settled_events, 1);
+	assert.deepEqual({ credentials: sourceRuntime.credential_reads, network: sourceRuntime.network_calls, provider: sourceRuntime.external_provider_calls, model: sourceRuntime.real_model_calls }, { credentials: 0, network: 0, provider: 0, model: 0 });
+	assert.equal(sourceBinding.active_state_version > 0, true);
+	assert.equal(sourceBinding.bound_entries.length > 0, true);
+	assert.ok(sourceBinding.lineage);
+
+	const result = await admitTrustedEvidenceG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: v3NegativeRegistration, expectedProjectId: V3_PROJECT_ID });
+	v3NegativeAdmissionId = result.record.admission_id;
+	const state = result.record.provenance.state as { active_binding_revision: number; active_state_version: number; active_state_digest: string; active_decision_id: string };
+	const binding = result.record.provenance.binding as { binding_digest: string; lineage: typeof sourceBinding.lineage };
+	const manifest = result.record.provenance.manifest as { verifier_status: string; runtime_path: string; case_authority_digest: string };
+	assert.deepEqual(result.record.frozen_evidence.outcome, { status: "failed", verifier_status: "failed" });
+	assert.equal(result.record.frozen_evidence.validity.attribution, "verifier");
+	assert.notEqual(result.record.projector_result, "no_opportunity");
+	if (result.record.projector_result !== "no_opportunity") assert.equal(result.record.projector_result.trigger, "hard_failure");
+	assert.deepEqual(state, { active_binding_revision: sourceBinding.active_binding_revision, active_state_version: sourceBinding.active_state_version, active_state_digest: sourceBinding.active_state_digest, active_decision_id: sourceBinding.active_decision_id });
+	assert.equal(binding.binding_digest, sourceBinding.binding_digest);
+	assert.deepEqual(binding.lineage, sourceBinding.lineage);
+	assert.equal(manifest.runtime_path, sourceManifest.runtime_path);
+	assert.equal(manifest.case_authority_digest, sourceBinding.case_authority_digest);
+	assert.equal(result.record.provenance.case_authority_digest, sourceBinding.case_authority_digest);
+	assert.equal(sourceManifest.case_authority_digest, sourceBinding.case_authority_digest);
+});
+
 test("admission writes only its immutable admission record and leaves Source, State, pointer, Workspace, and accepted source unchanged", async () => {
 	const sourceProject = resolve(G1_ROOT, "sources/v0-project");
 	const v2Run = resolve(G1_ROOT, "sources/v2-recovery");
@@ -290,7 +338,7 @@ test("admission writes only its immutable admission record and leaves Source, St
 });
 
 test("independent Inspector reopens the process and reruns source Inspectors/recomputation", async () => {
-	for (const [registrationPath, admissionId, projectId] of [[passRegistration, passAdmissionId, PROJECT_ID], [failRegistration, failAdmissionId, PROJECT_ID], [v2Registration, v2AdmissionId, PROJECT_ID], [v3Registration, v3AdmissionId, V3_PROJECT_ID]] as const) {
+	for (const [registrationPath, admissionId, projectId] of [[passRegistration, passAdmissionId, PROJECT_ID], [failRegistration, failAdmissionId, PROJECT_ID], [v2Registration, v2AdmissionId, PROJECT_ID], [v3Registration, v3AdmissionId, V3_PROJECT_ID], [v3NegativeRegistration, v3NegativeAdmissionId, V3_PROJECT_ID]] as const) {
 		const inspected = await inspectTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath, admissionId, expectedProjectId: projectId });
 		assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
 	}
@@ -432,6 +480,38 @@ test("V3 missing or ambiguous State identity fails closed", async () => {
 	await assert.rejects(deriveRegistered(missing), /missing/);
 	const ambiguous = structuredClone(base); (ambiguous as unknown as Record<string, unknown>).state_version = 0; const { registration_digest: _ambiguous, ...ambiguousBody } = ambiguous as TrustedEvidenceHostRegistrationG1 & { state_version: number }; ambiguous.registration_digest = digestObject(ambiguousBody);
 	await assert.rejects(deriveRegistered(ambiguous), /exact-key/);
+});
+
+test("negative V3 approval remains exact and its reopen detects source and admission tamper", async () => {
+	const base = JSON.parse(readFileSync(resolve(PROJECT_ROOT, v3NegativeRegistration), "utf8")) as TrustedEvidenceHostRegistrationG1;
+	const unknown = cloneRegistration(base, "g1-host-v3-negative-unknown");
+	await assert.rejects(deriveRegistered(unknown), /Host-owned approval root does not approve this registration identity\/digest/);
+	const unknownPath = writeRegistration(unknown);
+	const forgedAuthorization = plainHostAuthorization(unknown, "forged-negative-host-authorization");
+	const forgedOptions = { projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: unknownPath, expectedProjectId: V3_PROJECT_ID, hostAuthorization: forgedAuthorization };
+	await assert.rejects(
+		admitTrustedEvidenceG1(forgedOptions),
+		/Host-owned approval root does not approve this registration identity\/digest/,
+	);
+
+	let inspected = await inspectTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: v3NegativeRegistration, admissionId: v3NegativeAdmissionId, expectedProjectId: V3_PROJECT_ID });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
+	const source = base.source as Extract<TrustedEvidenceSourceG1, { family: "v3g3_bound_state_followup" }>;
+	const sourceResultPath = resolve(PROJECT_ROOT, source.bundle_root, source.run_root, "verifier/result.json");
+	const sourceResultBytes = readFileSync(sourceResultPath, "utf8");
+	writeFileSync(sourceResultPath, `${sourceResultBytes} `);
+	inspected = await inspectTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: v3NegativeRegistration, admissionId: v3NegativeAdmissionId, expectedProjectId: V3_PROJECT_ID });
+	assert.equal(inspected.integrity_valid, false);
+	writeFileSync(sourceResultPath, sourceResultBytes);
+
+	const admissionPath = resolve(ADMISSION_ROOT, v3NegativeAdmissionId, "admission.json");
+	const admissionBytes = readFileSync(admissionPath, "utf8");
+	const admission = JSON.parse(admissionBytes);
+	admission.admission_digest = "0".repeat(64);
+	writeFileSync(admissionPath, `${stableJson(admission)}\n`);
+	inspected = await inspectTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: v3NegativeRegistration, admissionId: v3NegativeAdmissionId, expectedProjectId: V3_PROJECT_ID });
+	assert.equal(inspected.integrity_valid, false);
+	writeFileSync(admissionPath, admissionBytes);
 });
 
 test("stored admission and embedded FrozenEvidence digest tamper are rejected", async () => {

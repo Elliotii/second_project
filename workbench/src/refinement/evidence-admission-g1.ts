@@ -27,6 +27,7 @@ const FIXED_HOST_APPROVALS_G1 = Object.freeze({
 	"final-capstone-g1-project/g1-host-v0-fail": Object.freeze({ approval_id: "fixed-approval-g1-host-v0-fail", registration_digest: "ce813c062e3905e805fa860e6ddcbd7a6c9a20222ee0e7806363c69673606ce1" }),
 	"final-capstone-g1-project/g1-host-v2": Object.freeze({ approval_id: "fixed-approval-g1-host-v2", registration_digest: "45cb66f63a9f1e4fb5203e33f92606d702405b495afad9c48cf08fb43e73b557" }),
 	"final-capstone-g1-v3-project/g1-host-v3": Object.freeze({ approval_id: "fixed-approval-g1-host-v3", registration_digest: "fbf18fdd320e4c076024cf2366c6b49a1e479d69e7cd9fabfd8b079937d480c5" }),
+	"final-capstone-g1-v3-project/g1-host-v3-negative": Object.freeze({ approval_id: "fixed-approval-g1-host-v3-negative", registration_digest: "365dc532234a44c4d9b0cabc9e39c2e94989989f5b4ead7a2b7b230a753b9ff8" }),
 	"final-capstone-g1-project/g1-host-v0-pass-immutability": Object.freeze({ approval_id: "fixed-approval-g1-host-v0-pass-immutability", registration_digest: "acd7652e90fbf1837976a8a9e98b9b7487c4598aeb9dac85d74ae56a1d404f99" }),
 } as const);
 
