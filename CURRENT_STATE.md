@@ -12,7 +12,7 @@ active_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 current_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: correction_round_1_in_progress_after_focused_audit
+  status: corrected_candidate_frozen_pending_affected_finding_reaudit
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
@@ -58,7 +58,7 @@ final_capstone:
   goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_closed
   goal_1_post_acceptance_correction_candidate_commit: 5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
-  goal_2_status: correction_round_1_in_progress_after_focused_audit
+  goal_2_status: corrected_candidate_frozen_pending_affected_finding_reaudit
   goal_2_implementation_owner: fresh_top_level_goal_2_working_session
   goal_2_initial_session: 019ff7cb-123b-7a22-8757-0516932aff59
   goal_2_initial_session_stop: DECISION_REQUIRED_FINAL_CAPSTONE_G2_NEGATIVE_BOUND_STATE_ADMISSION_AUTHORITY_returned_to_Main
@@ -73,13 +73,19 @@ final_capstone:
   goal_2_audit_report: docs/reports/FINAL_CAPSTONE_G2_FOCUSED_AUDIT.md
   goal_2_audit_finding_set: FC-G2-AUDIT-P1-001_and_FC-G2-AUDIT-P2-002
   goal_2_correction_1_authorization: docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_AUTHORIZATION.md
+  goal_2_correction_1_report: docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_REPORT.md
+  goal_2_correction_1_main_rereview: docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_MAIN_REREVIEW.md
+  goal_2_corrected_candidate_commit: b068329854e45df48336bb65c49cf666ab019622
+  goal_2_corrected_candidate_tree: fb96ac21816c1f03bdcfc9cc38e65f07a11b8be2
+  goal_2_corrected_candidate_tests: 61_passed_0_failed_plus_literal_strict_typescript
+  goal_2_affected_finding_reaudit: required_fresh_top_level_session
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_status: blocked_until_goal_2_closeout
   stop_core_feature_development: false_pending_goals_2_and_3
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
-    goal_2: 1_of_2_consumed_in_progress
+    goal_2: 1_of_2_consumed_completed
     goal_3: 0_of_2_implementation_integration
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
     micro_finding_splitting: forbidden
