@@ -1,12 +1,12 @@
 # Final Capstone Goal 1 Post-acceptance Negative Admission Correction Authorization
 
 ```yaml
-status: authorized_round_in_progress
+status: completed_accepted_by_main
 date: 2026-08-13
 goal_id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
 trigger_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 finding_id: FC-G1-POSTACCEPT-P1-001
-correction_budget: 1_of_1_consumed_in_progress
+correction_budget: 1_of_1_consumed_completed
 implementation_owner: fresh_top_level_goal_1_post_acceptance_correction_session
 credential_reads_authorized: 0
 external_network_authorized: false
@@ -77,3 +77,15 @@ node --test tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts
 
 Record exact identities, hashes, commands/exits/counts, zero-access counters and remaining
 limits, then stop for Main re-review without staging or committing.
+
+## Main completion record
+
+The dedicated Session returned the bounded two-file correction without staging or
+committing. Main reviewed the complete delta, reran strict TypeScript and the frozen
+51-test matrix, and accepted the correction. Candidate commit:
+`5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d`. Formal disposition and identities are in
+`docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_CORRECTION_MAIN_REREVIEW.md` and
+`docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_CLOSEOUT_AMENDMENT.md`.
+
+The correction round is complete and Goal 1 remains closed/accepted. Its correction
+budget is exhausted; no further Goal 1 source correction is authorized.

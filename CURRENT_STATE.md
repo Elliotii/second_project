@@ -12,7 +12,7 @@ active_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 current_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: accepted_activated_pending_control_baseline_and_working_session
+  status: active_initial_implementation_restart_pending_corrected_control_baseline
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
   status: active
-  note: detailed_contract_accepted_zero_access_working_session_next
+  note: goal_1_negative_admission_closed_goal_2_initial_implementation_restart_next
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -47,15 +47,18 @@ final_capstone:
   goal_1_status: closed_accepted
   goal_1_disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
   goal_1_rejected_audit_candidate_commit: 0c1c91efcbed3f0db4a3735de1996deff99f9bac
-  goal_1_accepted_source_identity: file_sha256_inventory_in_closeout_no_corrected_commit_authorized
+  goal_1_accepted_source_identity: post_acceptance_closeout_amendment_two_file_sha256_inventory
   goal_1_closeout: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
-  goal_1_tests: 49_passed_0_failed_plus_strict_typescript
+  goal_1_post_acceptance_closeout_amendment: docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_CLOSEOUT_AMENDMENT.md
+  goal_1_post_acceptance_main_rereview: docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_CORRECTION_MAIN_REREVIEW.md
+  goal_1_tests: 51_passed_0_failed_plus_strict_typescript
   goal_1_real_access: credentials_0_network_0_provider_0_model_0
   goal_1_fresh_post_correction_reaudit: not_run_main_acceptance_from_preserved_hit_regression_under_replacement_handoff
   goal_1_post_acceptance_correction_authorization: docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_NEGATIVE_ADMISSION_CORRECTION_AUTHORIZATION.md
-  goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_missing_fixed_negative_bound_state_admission_for_goal_2
+  goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_closed
+  goal_1_post_acceptance_correction_candidate_commit: 5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
-  goal_2_status: initial_implementation_paused_pending_goal_1_negative_admission_correction
+  goal_2_status: initial_implementation_restart_pending_corrected_control_baseline
   goal_2_implementation_owner: fresh_top_level_goal_2_working_session
   goal_2_initial_session: 019ff7cb-123b-7a22-8757-0516932aff59
   goal_2_initial_session_stop: DECISION_REQUIRED_FINAL_CAPSTONE_G2_NEGATIVE_BOUND_STATE_ADMISSION_AUTHORITY_returned_to_Main
@@ -64,7 +67,7 @@ final_capstone:
   stop_core_feature_development: false_pending_goals_2_and_3
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
-    goal_1: 1_of_1_post_acceptance_in_progress
+    goal_1: 1_of_1_post_acceptance_consumed_completed
     goal_2: 0_of_2_after_initial_review
     goal_3: 0_of_2_implementation_integration
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED

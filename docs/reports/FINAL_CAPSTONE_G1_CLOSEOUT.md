@@ -9,6 +9,8 @@ rejected_audit_candidate_commit: 0c1c91efcbed3f0db4a3735de1996deff99f9bac
 rejected_audit_candidate_tree: 194a90cac93cd1fe4c398f9db3db1829f0b9196e
 accepted_correction_commit: null
 accepted_correction_identity: file_sha256_inventory_below
+post_acceptance_correction_candidate_commit: 5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d
+post_acceptance_closeout_amendment: docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_CLOSEOUT_AMENDMENT.md
 credential_reads_observed: 0
 external_network_calls_observed: 0
 external_provider_or_model_calls_observed: 0
@@ -120,3 +122,12 @@ independent re-audit.
 There is no remaining Goal 1 Contract finding and no architecture-level
 `DECISION_REQUIRED` condition. Goal 2 Contract drafting is now permitted; Goal 2 source
 implementation remains separately gated by its detailed Contract.
+
+## Post-acceptance correction amendment
+
+Goal 1 later consumed its sole post-acceptance bounded correction to add one exact fixed
+negative V3 bound-State admission required by Goal 2 Gate C. Main accepted that correction
+after strict TypeScript and 51/51 frozen regressions. The authoritative amendment and
+corrected two-file identities are recorded in
+`docs/reports/FINAL_CAPSTONE_G1_POST_ACCEPTANCE_CLOSEOUT_AMENDMENT.md`; it supersedes only
+the original two-file hash entries and 49-test count, without broadening the Goal 1 claim.
