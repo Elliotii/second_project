@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_1_closed
-  status: FINAL_CAPSTONE_ACTIVE_G1_CLOSED
+  status: FINAL_CAPSTONE_ACTIVE_G2
 
-active_goal: null
+active_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 current_goal:
-  id: null
-  status: final_capstone_goal_1_closed_goal_2_contract_drafting_next
+  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  status: accepted_activated_pending_control_baseline_and_working_session
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
@@ -33,12 +33,12 @@ last_completed_goal:
 
 next_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: contract_drafting_authorized
-  note: goal_2_implementation_requires_detailed_contract_and_preserves_zero_real_access
+  status: active
+  note: detailed_contract_accepted_zero_access_working_session_next
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
-  status: active_goal_1_closed
+  status: active_goal_2
   development_decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
   charter: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   gap_review: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
@@ -52,7 +52,10 @@ final_capstone:
   goal_1_tests: 49_passed_0_failed_plus_strict_typescript
   goal_1_real_access: credentials_0_network_0_provider_0_model_0
   goal_1_fresh_post_correction_reaudit: not_run_main_acceptance_from_preserved_hit_regression_under_replacement_handoff
-  goal_2_status: contract_drafting_authorized_not_implemented
+  goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
+  goal_2_status: accepted_activated_pending_control_baseline
+  goal_2_implementation_owner: fresh_top_level_goal_2_working_session
+  goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_status: blocked_until_goal_2_closeout
   stop_core_feature_development: false_pending_goals_2_and_3
 
@@ -2238,6 +2241,7 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
   - docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW_GOAL_AMENDMENT.md
   - docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_CONTRACT.md
@@ -2445,7 +2449,9 @@ historical_checkpoints:
 
 next_checkpoint:
   - Final_Capstone_Goal_1_closed_accepted
-  - Goal_2_detailed_Contract_is_next
+  - Goal_2_detailed_Contract_accepted_and_activated
+  - create_and_verify_Goal_2_Control_Baseline
+  - start_fresh_top_level_zero_access_Goal_2_Working_Session
   - keep_ordinary_failure_distinct_from_State_attributable_regression
   - keep_new_evidence_distinct_from_direct_supersede
   - no_real_access_or_Goal_3_authority_yet
