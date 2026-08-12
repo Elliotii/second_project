@@ -84,7 +84,7 @@ v3_6_engineering_stabilization_campaign:
 
 post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  status: active_top_level_implementation_in_progress
+  status: candidate_integrated_pending_focused_audit
   parent_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
@@ -95,6 +95,12 @@ post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   implementation_owner: top_level_session_019ff603-ac10-7ba1-a79e-98125f447964
   implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/ef7e/project2
   implementation_started: true
+  implementation_completed: true
+  implementation_candidate_commit: 8ba45fdd15c73fca9c5aa9de4f7bd2cce61b6598
+  main_integrated_candidate_commit: 02096eb80986060bf57a69062f001f358267b72e
+  main_integrated_candidate_tree: a2ec251fe5d5374b96b9c39a248b019d4686109b
+  main_review: passed_after_one_bounded_correction
+  focused_audit_prompt: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_FOCUSED_AUDIT_SESSION_START_PROMPT.md
   implementation_prompt: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_IMPLEMENTATION_SESSION_START_PROMPT.md
   focused_audit: required_once_after_main_candidate_freeze
   retest: exactly_one_after_accepted_maintenance

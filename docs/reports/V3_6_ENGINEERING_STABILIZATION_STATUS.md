@@ -74,6 +74,12 @@ Implementation is owned by top-level Session
 `019ff603-ac10-7ba1-a79e-98125f447964` in isolated worktree `ef7e`, starting from Launch
 Record `73c124072a8ba495e6f25825bd48db774ef57581` with zero real access.
 
+The zero-access candidate is integrated at
+`02096eb80986060bf57a69062f001f358267b72e`. Main light review passed after one bounded
+identity-domain correction returned to the original Implementation Session. The next and
+only active gate is a fresh top-level focused read-only audit; Maintenance acceptance,
+Retest and ES-N04 remain gated.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 
