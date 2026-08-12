@@ -68,7 +68,22 @@ binding Contract, analysis and Closeout are
 `docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md`
 `docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md` and
 `docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md`. Active Goal is null;
-no Attempt 3, Engineering Stabilization loop, V4 or new version is authorized.
+no Attempt 3, V4 or new version is authorized.
+
+The bounded post-closeout `V3_6_ENGINEERING_STABILIZATION_CAMPAIGN` is now active under
+`V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md`. V3.6 remains closed and accepted.
+Main owns Campaign baseline/status, Finding classification, Maintenance/Retest/next-Case
+gates and Closeout. Existing top-level Test Session
+`019ff181-51a8-7381-aae9-b8223e6a8bd3` owns one explicitly authorized Natural Case at a
+time: it may run the frozen daily product with opaque Credential resolution and real
+DeepSeek access, freeze raw Evidence, perform read-only review and hand off, but may not
+edit the product, Apply Source changes, tune budgets, Retry/Replace, start another Case or
+change architecture. A natural Failure stops the Case before recovery. Before-Fix
+Evidence is immutable. Fault Injection is not preauthorized. Any Campaign-plan Decision
+Required condition must stop and return to the user; V4 and Human UI/UX polish remain out
+of scope. The binding baseline and live state are
+`docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md` and
+`docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md`.
 
 Preserve these binding facts:
 

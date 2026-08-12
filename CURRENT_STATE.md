@@ -8,9 +8,21 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: null
+active_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
 
-current_goal: null
+current_goal:
+  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
+  status: accepted_activated_control_baseline_pending
+  kind: bounded_post_closeout_engineering_stabilization
+  version_status: V3_6_remains_closed_accepted
+  plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
+  baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
+  status_file: docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
+  main_owner: current_main_session
+  test_owner: existing_top_level_session_019ff181-51a8-7381-aae9-b8223e6a8bd3
+  natural_workload_first: true
+  human_ui_ux_acceptance_in_scope: false
+  v4_authorized: false
 
 last_executed_goal:
   id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
@@ -37,8 +49,37 @@ last_completed_goal:
 
 next_goal:
   id: null
-  status: not_authorized
-  note: no_Attempt_3_Engineering_Stabilization_V4_or_new_version_authorized
+  status: blocked_while_campaign_active
+  note: no_V4_new_version_human_UI_UX_polish_or_unrelated_goal_authorized
+
+v3_6_engineering_stabilization_campaign:
+  status: accepted_activated_control_baseline_pending
+  version_status: V3_6_remains_closed_accepted
+  functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
+  functional_baseline_tree: df8edd611b1fe819098dbd643222e5535ba53ddb
+  campaign_control_baseline_commit: resulting_HEAD_of_activation_revision
+  plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
+  baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
+  status_file: docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
+  test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
+  current_case: ES_N01_pending_test_session_freeze_and_dispatch
+  natural_cases_started: 0
+  natural_cases_completed: 0
+  natural_cases_failed: 0
+  findings_total: 0
+  bounded_maintenance_count: 0
+  decision_required_count: 0
+  post_maintenance_retests: 0
+  fault_injection_cases: 0
+  current_blocker: null
+  stop_condition_status: not_yet_met
+  product_source_edit_authorized_for_test_session: false
+  source_apply_authorized_for_test_session: false
+  budget_adjustment_authorized: false
+  retry_fallback_replacement_authorized: false
+  fault_injection_authorized_at_activation: false
+  pi_core_patch_authorized: false
+  v4_authorized: false
 
 post_v3_6_finite_budget_terminalization_maintenance:
   goal_id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
@@ -2120,6 +2161,9 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
+  - docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
+  - docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
   - docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   - docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_FOCUSED_AUDIT_REPORT.md
