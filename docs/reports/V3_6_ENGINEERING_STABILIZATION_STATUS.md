@@ -100,6 +100,12 @@ see `POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_CLOSEOUT.md`. The Campaign
 at the exactly-one ES-N03 post-maintenance Retest gate. ES-N03 itself is not accepted or
 replaced, and ES-N04 remains unauthorized.
 
+Main froze the Retest authorization at `da25dbe779d9ff70ca0ccffa5096fa92866eab42`
+and dispatched it to the existing top-level Test Session
+`019ff181-51a8-7381-aae9-b8223e6a8bd3`. The Retest is one fresh Case evidence root with
+the original task/profile/Source/provider/command; no Retry, continuation, Apply,
+replacement, ES-N04 or Fault Injection is authorized.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 

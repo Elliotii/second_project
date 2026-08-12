@@ -12,7 +12,7 @@ active_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
 
 current_goal:
   id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: active_es_n03_post_maintenance_retest_gate
+  status: active_es_n03_post_maintenance_retest_in_progress
   kind: bounded_post_closeout_engineering_stabilization
   version_status: V3_6_remains_closed_accepted
   plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
@@ -52,7 +52,7 @@ next_goal:
   note: no_V4_new_version_human_UI_UX_polish_or_unrelated_goal_authorized
 
 v3_6_engineering_stabilization_campaign:
-  status: active_es_n03_post_maintenance_retest_gate
+  status: active_es_n03_post_maintenance_retest_in_progress
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   functional_baseline_tree: df8edd611b1fe819098dbd643222e5535ba53ddb
@@ -61,7 +61,7 @@ v3_6_engineering_stabilization_campaign:
   baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
   status_file: docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
   test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
-  current_case: ES_N03_post_maintenance_retest_pending
+  current_case: ES_N03_post_maintenance_retest_in_progress
   current_task_sha256: 4852cfd2f9623c4e9a37d0880e4764c5d1c9bd117f10dcb7e36bb04da3812484
   natural_cases_started: 3
   natural_cases_completed: 3
@@ -72,7 +72,9 @@ v3_6_engineering_stabilization_campaign:
   post_maintenance_retests: 0
   fault_injection_cases: 0
   current_blocker: null
-  stop_condition_status: exactly_one_retest_pending
+  stop_condition_status: exactly_one_retest_in_progress
+  es_n03_retest_authorization_record_commit: da25dbe779d9ff70ca0ccffa5096fa92866eab42
+  es_n03_retest_authorization: docs/reports/V3_6_ENGINEERING_STABILIZATION_ES_N03_RETEST_AUTHORIZATION.md
   product_source_edit_authorized_for_test_session: false
   source_apply_authorized_for_test_session: false
   budget_adjustment_authorized: false
@@ -80,6 +82,19 @@ v3_6_engineering_stabilization_campaign:
   fault_injection_authorized_at_activation: false
   pi_core_patch_authorized: false
   v4_authorized: false
+
+v3_6_engineering_stabilization_es_n03_retest:
+  status: authorized_dispatched_to_existing_test_session
+  test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
+  authorization_record_commit: da25dbe779d9ff70ca0ccffa5096fa92866eab42
+  authorization: docs/reports/V3_6_ENGINEERING_STABILIZATION_ES_N03_RETEST_AUTHORIZATION.md
+  maintenance_closeout_commit: 4a0f7176d9b935055752cd292d4d174b9bc84684
+  maintenance_workbench_tree: 53b86da3007cbf367c75a80a74fa0fb5271f0333
+  task_sha256: 4852cfd2f9623c4e9a37d0880e4764c5d1c9bd117f10dcb7e36bb04da3812484
+  dispatch_limit: one
+  retry_fallback_replacement_continuation: forbidden
+  source_apply: forbidden
+  next_case: forbidden_until_main_disposition
 
 post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
