@@ -12,7 +12,7 @@ active_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 current_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: active_initial_implementation_restart_pending_corrected_control_baseline
+  status: active_initial_implementation_running_on_corrected_control_baseline
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
@@ -58,10 +58,13 @@ final_capstone:
   goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_closed
   goal_1_post_acceptance_correction_candidate_commit: 5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
-  goal_2_status: initial_implementation_restart_pending_corrected_control_baseline
+  goal_2_status: initial_implementation_running_on_corrected_control_baseline
   goal_2_implementation_owner: fresh_top_level_goal_2_working_session
   goal_2_initial_session: 019ff7cb-123b-7a22-8757-0516932aff59
   goal_2_initial_session_stop: DECISION_REQUIRED_FINAL_CAPSTONE_G2_NEGATIVE_BOUND_STATE_ADMISSION_AUTHORITY_returned_to_Main
+  goal_2_corrected_control_baseline: e1e5f8d1281424b97487c5d52c7562cf16076e4a
+  goal_2_replacement_initial_session: 019ff806-4002-7de0-83ce-a0932837bfba
+  goal_2_replacement_reason: goal_1_binding_input_corrected_not_a_goal_2_correction_round
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_status: blocked_until_goal_2_closeout
   stop_core_feature_development: false_pending_goals_2_and_3
