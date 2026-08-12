@@ -70,6 +70,10 @@ Contract. It preserves all budget values and Agent Loop/Pi/Source/Apply authorit
 Retest remains gated until implementation, deterministic acceptance and the single focused
 audit pass. ES-N04 remains unauthorized.
 
+Implementation is owned by top-level Session
+`019ff603-ac10-7ba1-a79e-98125f447964` in isolated worktree `ef7e`, starting from Launch
+Record `73c124072a8ba495e6f25825bd48db774ef57581` with zero real access.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 
