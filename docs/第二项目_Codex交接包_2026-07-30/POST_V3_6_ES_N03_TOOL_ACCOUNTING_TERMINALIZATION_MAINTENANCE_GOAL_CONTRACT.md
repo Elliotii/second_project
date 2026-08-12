@@ -1,7 +1,7 @@
 # Post-V3.6 ES-N03 Tool-accounting Terminalization Maintenance Goal Contract
 
 ```yaml
-status: accepted_activated
+status: closed_accepted
 accepted_and_activated_by_user: 2026-08-12
 goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
 goal_kind: bounded_campaign_finding_maintenance
@@ -30,6 +30,10 @@ bounded_correction_commit: 79e74f2b7c1801c5b9001633aebf82c03bd5d734
 main_integrated_correction_commit: 958c09cd35ffe99eb32103fb72424a600d394439
 corrected_candidate_audit_baseline_commit: 6df87e2a4711fd6b3b0b61a6aa720f35815a70ff
 affected_finding_recheck_owner: top_level_session_019ff621-ec68-78e2-bc66-6d3bbca88de9
+affected_finding_recheck_disposition: PASS_AFFECTED_FINDINGS
+affected_finding_recheck_report: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_AFFECTED_FINDING_RECHECK.md
+final_disposition: PASS_POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
+closeout: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_CLOSEOUT.md
 main_owner: current_main_session
 focused_audit: required_once_after_main_candidate_freeze
 post_maintenance_retest: exactly_one_ES_N03_retest_after_accepted_maintenance

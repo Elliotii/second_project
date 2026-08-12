@@ -95,6 +95,11 @@ The original Implementation Session supplied bounded correction
 corrected Candidate Audit Baseline `6df87e2a4711fd6b3b0b61a6aa720f35815a70ff`.
 Only the two audit findings are being rechecked by the original Audit Session.
 
+The affected-finding recheck passed. Main formally accepted and closed the maintenance;
+see `POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_CLOSEOUT.md`. The Campaign is now
+at the exactly-one ES-N03 post-maintenance Retest gate. ES-N03 itself is not accepted or
+replaced, and ES-N04 remains unauthorized.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 
