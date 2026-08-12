@@ -13,6 +13,11 @@ import type {
 	ValidationInspectionV3,
 } from "../contracts/v3g2-types.ts";
 import type { StagedHarnessStateV3 } from "../contracts/v3-types.ts";
+import type {
+	AcceptedStateComparisonG2,
+	AcceptedStateComparisonInspectionG2,
+	AcceptedStateComparisonSeedG2,
+} from "../contracts/final-capstone-g2-types.ts";
 import { JsonlSessionRepo } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { artifactRef, readJsonArtifact, validateArtifactRef, writeOnceBytes, writeOnceJson } from "../evidence/artifacts.ts";
@@ -42,6 +47,15 @@ export interface FauxValidationPortV3 {
 	}): Promise<{ settled: true; events: FauxExecutionEventV3[] }>;
 }
 
+type SymmetricArmSeedV3 = {
+	validation_id: string;
+	base_state_digest: string;
+	candidate_state_digest: string;
+	source_workspace_digest: string;
+	common_identity_digest: string;
+	frozen_identity: InterventionValidationSeedV3["frozen_identity"];
+};
+
 function validateStates(base: HarnessStateVersionV3, candidate: StagedHarnessStateV3): void {
 	exactKeys(base, ["schema_version", "status", "project_id", "state_version", "parent_state_digest", "source_candidate_id", "source_candidate_digest", "source_staged_state_digest", "entries", "state_digest"], "accepted Base State");
 	exactKeys(candidate, ["schema_version", "status", "state_digest", "candidate_id", "candidate_digest", "evidence_identity", "expected_base_state_digest", "entries"], "staged Candidate State");
@@ -60,6 +74,23 @@ function validateStates(base: HarnessStateVersionV3, candidate: StagedHarnessSta
 	if (base.schema_version !== 1 || base.status !== "accepted" || acceptedStateVersionDigestV3(base) !== base.state_digest) throw new Error("accepted Base State identity mismatch");
 	if (candidate.schema_version !== 1 || candidate.status !== "staged_inactive" || stagedStateDigestV3(candidate) !== candidate.state_digest) throw new Error("staged Candidate State identity mismatch");
 	if (candidate.expected_base_state_digest !== base.state_digest) throw new Error("staged Candidate base is stale");
+}
+
+function validateAcceptedComparisonStates(parent: HarnessStateVersionV3, current: HarnessStateVersionV3): void {
+	for (const [label, state] of [["accepted parent", parent], ["accepted current", current]] as const) {
+		exactKeys(state, ["schema_version", "status", "project_id", "state_version", "parent_state_digest", "source_candidate_id", "source_candidate_digest", "source_staged_state_digest", "entries", "state_digest"], `${label} State`);
+		if (state.schema_version !== 1 || state.status !== "accepted" || acceptedStateVersionDigestV3(state) !== state.state_digest) throw new Error(`${label} State identity mismatch`);
+		if (!Array.isArray(state.entries) || state.entries.length > 2 || new Set(state.entries.map((entry) => entry.entry_id)).size !== state.entries.length) throw new Error(`${label} State entry membership invalid`);
+		for (const entry of state.entries) {
+			exactKeys(entry, entry.kind === "prompt_addendum"
+				? ["kind", "entry_id", "content", "applicability", "content_sha256", "composed_prompt_sha256"]
+				: ["kind", "entry_id", "skill_name", "description", "markdown_body", "applicability", "source_ref", "source_sha256", "source_size_bytes", "wrapper_sha256", "wrapper_size_bytes", "disable_model_invocation", "invocation_mode"], `${label} State entry`);
+			exactKeys(entry.applicability, ["task_kinds", "failure_families"], `${label} applicability`);
+			if (entry.kind === "prompt_addendum" && sha256(entry.content) !== entry.content_sha256) throw new Error(`${label} prompt content identity mismatch`);
+			if (entry.kind === "adaptive_skill" && (entry.disable_model_invocation !== true || entry.invocation_mode !== "explicit_skill" || entry.source_ref !== `skills/${entry.skill_name}/SKILL.md`)) throw new Error(`${label} adaptive Skill authority identity mismatch`);
+		}
+	}
+	if (parent.project_id !== current.project_id || current.state_version !== parent.state_version + 1 || current.parent_state_digest !== parent.state_digest || current.state_digest === parent.state_digest) throw new Error("accepted current State must be the immediate child of the accepted parent State");
 }
 
 function validateTask(task: TaskSpecV0B, sourceWorkspaceRoot: string, sourceWorkspaceDigest: string, sourcePath: string): void {
@@ -132,7 +163,7 @@ async function executeArm(options: {
 	arm: "base" | "candidate";
 	state: HarnessStateVersionV3 | StagedHarnessStateV3;
 	stateDigest: string;
-	seed: InterventionValidationSeedV3;
+	seed: SymmetricArmSeedV3;
 	sourceWorkspaceRoot: string;
 	task: TaskSpecV0B;
 	verifier: { path: string; ref: ArtifactRefV0B };
@@ -307,7 +338,7 @@ function rawVerifierStatus(runRoot: string, ref: ArtifactRefV0B, expectedId: str
 	return rawStatus;
 }
 
-function inspectArm(runRoot: string, seed: InterventionValidationSeedV3, ref: ArtifactRefV0B, expectedArm: "base" | "candidate", errors: string[]): ValidationArmV3 | null {
+function inspectArm(runRoot: string, seed: SymmetricArmSeedV3, ref: ArtifactRefV0B, expectedArm: "base" | "candidate", errors: string[]): ValidationArmV3 | null {
 	const errorCountBefore = errors.length;
 	if (!addRefErrors(errors, runRoot, `${expectedArm} arm`, ref)) return null;
 	let arm: ValidationArmV3;
@@ -344,6 +375,116 @@ function inspectArm(runRoot: string, seed: InterventionValidationSeedV3, ref: Ar
 	if (verifierStatus !== arm.verifier_status || regressionPassed !== arm.regression_passed || arm.authority_valid !== true) errors.push(`${expectedArm} derived outcome/authority mismatch`);
 	return { ...structuredClone(arm), ...(metrics ? { metrics } : {}), verifier_status: verifierStatus, regression_passed: regressionPassed, authority_valid: errors.length === errorCountBefore };
 }
+
+export async function executeSymmetricAcceptedStateComparisonV3(options: {
+	projectRoot: string;
+	runRoot: string;
+	comparisonId: string;
+	projectId: string;
+	sourceWorkspaceRoot: string;
+	task: TaskSpecV0B;
+	verifier: LocalCheckV3;
+	regressions: LocalCheckV3[];
+	parentState: HarnessStateVersionV3;
+	currentState: HarnessStateVersionV3;
+	providerModelProfileDigest: string;
+	toolProfileDigest: string;
+	budgetDigest: string;
+	hardConstraintsDigest: string;
+	port: FauxValidationPortV3;
+}): Promise<{ comparison: AcceptedStateComparisonG2; comparisonRef: ArtifactRefV0B }> {
+	if (!ID.test(options.comparisonId) || !ID.test(options.projectId)) throw new Error("invalid comparison or project identity");
+	if (existsSync(options.runRoot)) throw new Error("accepted-State comparison Run root already exists");
+	validateAcceptedComparisonStates(options.parentState, options.currentState);
+	if (options.parentState.project_id !== options.projectId) throw new Error("accepted-State comparison project mismatch");
+	mkdirSync(options.runRoot, { recursive: true });
+	const sourceWorkspaceDigest = treeDigest(options.sourceWorkspaceRoot);
+	validateTask(options.task, options.sourceWorkspaceRoot, sourceWorkspaceDigest, options.verifier.sourcePath);
+	for (const regression of options.regressions) validateTask(regression.task, options.sourceWorkspaceRoot, sourceWorkspaceDigest, regression.sourcePath);
+	const parentStateRef = writeOnceJson(options.runRoot, "config/parent-state.json", options.parentState);
+	const currentStateRef = writeOnceJson(options.runRoot, "config/current-state.json", options.currentState);
+	const verifier = materializeCheck(options.runRoot, "config/external-verifier.mjs", options.verifier);
+	const regressions = options.regressions.map((entry, index) => ({ task: entry.task, ...materializeCheck(options.runRoot, `config/regression-${index + 1}.mjs`, entry) }));
+	const frozenIdentity = {
+		task_digest: digestObject(options.task),
+		instruction_digest: options.task.instruction_sha256,
+		provider_model_profile_digest: options.providerModelProfileDigest,
+		tool_profile_digest: options.toolProfileDigest,
+		external_verifier_id: options.verifier.task.verifier_id,
+		external_verifier_source_sha256: verifier.ref.sha256,
+		external_verifier_digest: digestObject({ task: options.verifier.task, source_sha256: verifier.ref.sha256 }),
+		regression_checks: regressions.map((entry) => ({ verifier_id: entry.task.verifier_id, source_sha256: entry.ref.sha256, task_digest: digestObject(entry.task) })),
+		regression_set_digest: digestObject(regressions.map((entry) => ({ task: entry.task, source_sha256: entry.ref.sha256 }))),
+		budget_digest: options.budgetDigest,
+		hard_constraints_digest: options.hardConstraintsDigest,
+		session_policy: "fresh_both" as const,
+	};
+	for (const [label, digest] of Object.entries(frozenIdentity).filter(([key]) => key.endsWith("digest") || key.endsWith("sha256"))) if (!SHA256.test(String(digest))) throw new Error(`invalid frozen ${label}`);
+	if (!ID.test(frozenIdentity.external_verifier_id) || frozenIdentity.regression_checks.some((entry) => !ID.test(entry.verifier_id) || !SHA256.test(entry.source_sha256) || !SHA256.test(entry.task_digest))) throw new Error("invalid frozen check identities");
+	const seedBody = {
+		schema_version: 1 as const,
+		comparison_id: options.comparisonId,
+		project_id: options.projectId,
+		parent_state_digest: options.parentState.state_digest,
+		current_state_digest: options.currentState.state_digest,
+		source_workspace_digest: sourceWorkspaceDigest,
+		parent_state_ref: parentStateRef,
+		current_state_ref: currentStateRef,
+		frozen_identity: frozenIdentity,
+		common_identity_digest: digestObject({ source_workspace_digest: sourceWorkspaceDigest, frozen_identity: frozenIdentity }),
+	};
+	const seed: AcceptedStateComparisonSeedG2 = { ...seedBody, seed_digest: digestObject(seedBody) };
+	const seedRef = writeOnceJson(options.runRoot, "config/accepted-state-comparison-seed.json", seed);
+	const armSeed: SymmetricArmSeedV3 = { validation_id: options.comparisonId, base_state_digest: seed.parent_state_digest, candidate_state_digest: seed.current_state_digest, source_workspace_digest: seed.source_workspace_digest, common_identity_digest: seed.common_identity_digest, frozen_identity: seed.frozen_identity };
+	const parent = await executeArm({ projectRoot: options.projectRoot, runRoot: options.runRoot, arm: "base", state: options.parentState, stateDigest: options.parentState.state_digest, seed: armSeed, sourceWorkspaceRoot: options.sourceWorkspaceRoot, task: options.task, verifier, regressions, port: options.port });
+	const current = await executeArm({ projectRoot: options.projectRoot, runRoot: options.runRoot, arm: "candidate", state: options.currentState, stateDigest: options.currentState.state_digest, seed: armSeed, sourceWorkspaceRoot: options.sourceWorkspaceRoot, task: options.task, verifier, regressions, port: options.port });
+	const body = { schema_version: 1 as const, comparison_id: options.comparisonId, seed_ref: seedRef, parent_arm_ref: parent.ref, current_arm_ref: current.ref };
+	const comparison: AcceptedStateComparisonG2 = { ...body, comparison_digest: digestObject(body) };
+	return { comparison, comparisonRef: writeOnceJson(options.runRoot, "accepted-state-comparison.json", comparison) };
+}
+
+export function inspectSymmetricAcceptedStateComparisonV3(runRoot: string): AcceptedStateComparisonInspectionG2 {
+	const errors: string[] = [];
+	let comparison: AcceptedStateComparisonG2 | null = null;
+	let seed: AcceptedStateComparisonSeedG2 | null = null;
+	let parentArm: ValidationArmV3 | null = null;
+	let currentArm: ValidationArmV3 | null = null;
+	try {
+		const comparisonBytes = readFileSync(resolve(runRoot, "accepted-state-comparison.json"), "utf8");
+		comparison = JSON.parse(comparisonBytes) as AcceptedStateComparisonG2;
+		if (comparisonBytes !== `${stableJson(comparison)}\n`) throw new Error("accepted-State comparison bytes are not canonical");
+		exactKeys(comparison, ["schema_version", "comparison_id", "seed_ref", "parent_arm_ref", "current_arm_ref", "comparison_digest"], "accepted-State comparison");
+		const { comparison_digest: _comparisonDigest, ...comparisonBody } = comparison;
+		if (comparison.schema_version !== 1 || comparison.comparison_digest !== digestObject(comparisonBody)) throw new Error("accepted-State comparison identity mismatch");
+		if (!addRefErrors(errors, runRoot, "accepted-State comparison Seed", comparison.seed_ref)) throw new Error("accepted-State comparison Seed ref invalid");
+		seed = readJsonArtifact<AcceptedStateComparisonSeedG2>(runRoot, comparison.seed_ref.path);
+		exactKeys(seed, ["schema_version", "comparison_id", "project_id", "parent_state_digest", "current_state_digest", "source_workspace_digest", "parent_state_ref", "current_state_ref", "frozen_identity", "common_identity_digest", "seed_digest"], "accepted-State comparison Seed");
+		exactKeys(seed.frozen_identity, ["task_digest", "instruction_digest", "provider_model_profile_digest", "tool_profile_digest", "external_verifier_id", "external_verifier_source_sha256", "external_verifier_digest", "regression_checks", "regression_set_digest", "budget_digest", "hard_constraints_digest", "session_policy"], "accepted-State frozen identity");
+		for (const check of seed.frozen_identity.regression_checks) exactKeys(check, ["verifier_id", "source_sha256", "task_digest"], "accepted-State frozen regression check");
+		const { seed_digest: _seedDigest, ...seedBody } = seed;
+		if (seed.schema_version !== 1 || seed.comparison_id !== comparison.comparison_id || seed.seed_digest !== digestObject(seedBody) || seed.common_identity_digest !== digestObject({ source_workspace_digest: seed.source_workspace_digest, frozen_identity: seed.frozen_identity }) || seed.frozen_identity.session_policy !== "fresh_both") throw new Error("accepted-State comparison Seed identity mismatch");
+		for (const [label, ref] of [["parent State", seed.parent_state_ref], ["current State", seed.current_state_ref]] as const) if (!addRefErrors(errors, runRoot, label, ref)) throw new Error(`${label} ref invalid`);
+		const parentState = readJsonArtifact<HarnessStateVersionV3>(runRoot, seed.parent_state_ref.path);
+		const currentState = readJsonArtifact<HarnessStateVersionV3>(runRoot, seed.current_state_ref.path);
+		validateAcceptedComparisonStates(parentState, currentState);
+		if (parentState.project_id !== seed.project_id || parentState.state_digest !== seed.parent_state_digest || currentState.state_digest !== seed.current_state_digest) throw new Error("accepted-State comparison State/Seed lineage mismatch");
+		const armSeed: SymmetricArmSeedV3 = { validation_id: seed.comparison_id, base_state_digest: seed.parent_state_digest, candidate_state_digest: seed.current_state_digest, source_workspace_digest: seed.source_workspace_digest, common_identity_digest: seed.common_identity_digest, frozen_identity: seed.frozen_identity };
+		parentArm = inspectArm(runRoot, armSeed, comparison.parent_arm_ref, "base", errors);
+		currentArm = inspectArm(runRoot, armSeed, comparison.current_arm_ref, "candidate", errors);
+		const identities = new Set<string>();
+		for (const root of [resolve(runRoot, "initial", "base"), resolve(runRoot, "initial", "candidate")]) for (const file of treeInventory(root)) {
+			const stats = lstatSync(resolve(root, file.path));
+			if (stats.nlink !== 1) errors.push("accepted-State initial Workspace hardlink rejected");
+			const identity = `${stats.dev}:${stats.ino}`;
+			if (identities.has(identity)) errors.push("accepted-State comparison initial Workspace file identity is shared");
+			identities.add(identity);
+		}
+	} catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
+	const fairnessValid = !!seed && !!parentArm && !!currentArm && parentArm.common_identity_digest === currentArm.common_identity_digest && parentArm.initial_workspace_digest === currentArm.initial_workspace_digest && parentArm.treatment_state_digest !== currentArm.treatment_state_digest && parentArm.session_id !== currentArm.session_id && parentArm.session_parent === null && currentArm.session_parent === null && parentArm.session_entry_count_before === 0 && currentArm.session_entry_count_before === 0 && errors.length === 0;
+	const stateRegressionObserved = fairnessValid && parentArm!.verifier_status === "passed" && parentArm!.regression_passed && (currentArm!.verifier_status === "failed" || !currentArm!.regression_passed);
+	return { integrity_valid: errors.length === 0, fairness_valid: fairnessValid, errors, seed, parent_arm: parentArm, current_arm: currentArm, comparison, state_regression_observed: stateRegressionObserved };
+}
+
 
 export function inspectValidationV3(runRoot: string): ValidationInspectionV3 {
 	const errors: string[] = [];
