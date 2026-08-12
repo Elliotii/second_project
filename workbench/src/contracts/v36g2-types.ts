@@ -164,7 +164,7 @@ export interface ProviderRequestBudgetTerminalV36 {
  * verification, Outcome, comparison, adaptation, promotion, or Apply authority.
  */
 export interface ReconciledFiniteBudgetTerminalV36 {
-	schema_version: 3;
+	schema_version: 3 | 4;
 	budget_profile_id: "v36g2_frozen_acceptance_v1" | "v36_daily_bounded_edit_v2";
 	terminal_kind: "v36_reconciled_finite_budget_terminal";
 	trajectory_outcome: "finite_budget_terminal";
@@ -191,6 +191,14 @@ export interface ReconciledFiniteBudgetTerminalV36 {
 	tool_calls_blocked: number;
 	tool_results_recorded: number;
 	executed_tool_call_ids: string[];
+	/** Schema 4 authenticates every persisted request/result while retaining the
+	 * registered-hook budget domain. These fields are absent from schema 3. */
+	persisted_tool_call_ids?: string[];
+	persisted_tool_result_ids?: string[];
+	registered_tool_attempt_ids?: string[];
+	registered_tool_blocked_ids?: string[];
+	pre_hook_rejected_tool_requests?: Array<{ tool_call_id: string; tool_name: string; category: "unavailable_tool" | "active_tool_pre_hook_rejection"; result_is_error: true }>;
+	budget_blocked_registered_tool_call_id?: string | null;
 	tool_lifecycle_reconciled: true;
 	usage_known: true;
 	harness_diagnostic_error_sha256: string;
@@ -236,6 +244,17 @@ export interface SafeFiniteBudgetTerminalV36 {
 	stop_dimensions: FiniteBudgetDimensionV36[];
 	request_usage: { attempts: number; used: number; max: number };
 	tool_usage: { attempts: number; executed: number; completed: number; blocked: number; results: number; max: number };
+	tool_accounting: {
+		persisted_calls: number;
+		persisted_results: number;
+		registered_attempts: number;
+		registered_executions: number;
+		registered_completions: number;
+		registered_blocked: number;
+		unavailable_requests: Array<{ tool_call_id: string; tool_name: string; result_is_error: true }>;
+		active_tool_pre_hook_rejections: Array<{ tool_call_id: string; tool_name: string; result_is_error: true }>;
+		budget_blocked_registered_tool_call_id: string | null;
+	};
 	usage: { input_tokens: number; output_tokens: number; combined_tokens: number; cost_usd: number; wall_time_ms: number | "not_recorded"; known: true };
 	last_registered_command: ReconciledRegisteredCommandTerminalV36 | null;
 	settled: false;

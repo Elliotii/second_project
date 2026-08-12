@@ -17,7 +17,7 @@ import { loadGoal3DemoProjectionV35 } from "../src/webui/projection-v35g3.ts";
 import { createWorkbenchLoopbackServerV36G1 } from "../src/webui/server-v36g1.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 
-type Scenario = "token" | "cost" | "token_and_cost" | "tool" | "wall";
+type Scenario = "token" | "cost" | "token_and_cost" | "tool" | "tool_with_unavailable" | "wall";
 
 function writeCommandEvidence(input: InteractiveDispatchInputV36, pass: boolean) {
 	const commandRoot = resolve(dirname(input.authority_path), "docker-commands", "command-1");
@@ -49,9 +49,9 @@ function terminalResponses(runId: string, scenario: Scenario): AssistantMessage[
 	if (scenario === "token") return [tokenExhaustingTool];
 	if (scenario === "cost") return [command, costExhaustingTool];
 	if (scenario === "token_and_cost") return [command, tokenExhaustingTool];
-	if (scenario === "tool") {
+	if (scenario === "tool" || scenario === "tool_with_unavailable") {
 		const calls = Array.from({ length: 25 }, (_, index) => fauxToolCall("workspace_read", { path: "src/parse-duration.js" }, { id: `${runId}-read-${index + 1}` }));
-		return [fauxAssistantMessage(calls.slice(0, 12), { stopReason: "toolUse" }), fauxAssistantMessage(calls.slice(12), { stopReason: "toolUse" })];
+		return [...(scenario === "tool_with_unavailable" ? [fauxAssistantMessage([fauxToolCall("read_tool", { path: "src/parse-duration.js" }, { id: `${runId}-unavailable` }), fauxToolCall("workspace_read", {}, { id: `${runId}-invalid-arguments` })], { stopReason: "toolUse" })] : []), fauxAssistantMessage(calls.slice(0, 12), { stopReason: "toolUse" }), fauxAssistantMessage(calls.slice(12), { stopReason: "toolUse" })];
 	}
 	return [fauxAssistantMessage("wall stop must occur before dispatch")];
 }
@@ -68,7 +68,8 @@ function terminalUsage(scenario: Scenario): AssistantMessage["usage"][] | undefi
 }
 
 function setup(scenario: Scenario) {
-	const root = resolve(PROJECT_ROOT, ".runs/post-v3-6-finite-budget-terminalization", `${scenario}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+	const evidenceRoot = scenario === "tool_with_unavailable" ? ".runs/post-v3-6-es-n03-tool-accounting-terminalization" : ".runs/post-v3-6-finite-budget-terminalization";
+	const root = resolve(PROJECT_ROOT, evidenceRoot, `${scenario}-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 	const source = resolve(root, "registered-source");
 	const data = resolve(root, "data");
 	const legacyData = resolve(root, "legacy-data");
@@ -176,6 +177,91 @@ test("loopback task API returns an authority-backed typed Token terminal and den
 	} finally {
 		await loopback.stop();
 	}
+});
+
+test("an unavailable Tool request before the registered Tool-budget stop persists exhaustive schema-4 accounting", async () => {
+	const fixture = setup("tool_with_unavailable");
+	const sourceBefore = readFileSync(resolve(fixture.source, "src/parse-duration.js"));
+	const submitted = await fixture.app.submitTask({ project_id: "duration-parser", requested_mode: "bounded_edit", task_text: "exercise unavailable Tool accounting", title: "schema 4" });
+	const view = submitted as typeof submitted & { goal2: { changes: { change_set_digest: string } } };
+	const run = view.runs[0]!;
+	assert.equal(run.settled, false);
+	assert.equal(run.terminal!.terminal_reason, "tool_call_budget_exhausted");
+	assert.deepEqual(run.terminal!.tool_usage, { attempts: 25, executed: 24, completed: 24, blocked: 1, results: 27, max: 24 });
+	assert.deepEqual(run.terminal!.tool_accounting, {
+		persisted_calls: 27, persisted_results: 27, registered_attempts: 25, registered_executions: 24, registered_completions: 24, registered_blocked: 1,
+		unavailable_requests: [{ tool_call_id: `${run.run_id}-unavailable`, tool_name: "read_tool", result_is_error: true }], active_tool_pre_hook_rejections: [{ tool_call_id: `${run.run_id}-invalid-arguments`, tool_name: "workspace_read", result_is_error: true }], budget_blocked_registered_tool_call_id: `${run.run_id}-read-25`,
+	});
+	const terminalPath = resolve(fixture.data, "sessions", view.session_id, "runtime", "runs", run.run_id, "budget-stop.json");
+	assert.equal(existsSync(resolve(dirname(terminalPath), "manifest.json")), false);
+	const original = readFileSync(terminalPath, "utf8");
+	const terminal = JSON.parse(original) as ReconciledFiniteBudgetTerminalV36;
+	assert.equal(terminal.schema_version, 4);
+	assert.equal(terminal.tool_call_attempts, 25);
+	assert.equal(terminal.tool_results_recorded, 27);
+	assert.deepEqual(terminal.persisted_tool_call_ids, terminal.persisted_tool_result_ids);
+	assert.deepEqual(terminal.registered_tool_blocked_ids, [`${run.run_id}-read-25`]);
+	const reopened = new InteractiveControlPlaneV36({ dataRoot: fixture.data, registry: fixture.registry, goal2Enabled: true });
+	assert.deepEqual((await reopened.session(view.session_id)).runs[0]!.terminal!.tool_accounting, run.terminal!.tool_accounting);
+	assert.match(readFileSync(resolve(PROJECT_ROOT, "workbench/src/webui/static/app.js"), "utf8"), /unavailable_requests.*active_tool_pre_hook_rejections.*budget_blocked_registered_tool_call_id/s);
+	const loopback = createWorkbenchLoopbackServerV36G1(fixture.app);
+	const address = await loopback.start();
+	try {
+		const listed = await fetch(`${address.url}/api/v1/v36/sessions`);
+		assert.equal(listed.status, 200);
+		assert.equal((await listed.json() as { sessions: Array<{ session_id: string }> }).sessions.some((entry) => entry.session_id === view.session_id), true);
+		const detailed = await fetch(`${address.url}/api/v1/v36/sessions/${view.session_id}`);
+		assert.equal(detailed.status, 200);
+		assert.equal((await detailed.json() as { runs: Array<{ terminal: { tool_accounting: { unavailable_requests: unknown[] } } }> }).runs[0]!.terminal.tool_accounting.unavailable_requests.length, 1);
+	} finally { await loopback.stop(); }
+	await assert.rejects(() => fixture.app.handoff({ session_id: view.session_id, change_set_digest: view.goal2.changes!.change_set_digest, action: "apply_all" }), /Apply All is denied/);
+	assert.ok(await fixture.app.handoff({ session_id: view.session_id, change_set_digest: view.goal2.changes!.change_set_digest, action: "export" }));
+	assert.ok(await fixture.app.handoff({ session_id: view.session_id, change_set_digest: view.goal2.changes!.change_set_digest, action: "discard" }));
+	await assert.rejects(() => fixture.plane.submit({ project_id: "duration-parser", requested_mode: "bounded_edit", task_text: "continue", session_id: view.session_id }), /clean new Session/);
+	assert.deepEqual(readFileSync(resolve(fixture.source, "src/parse-duration.js")), sourceBefore);
+	for (const rejectedExecutionId of [`${run.run_id}-unavailable`, `${run.run_id}-invalid-arguments`]) {
+		const forged = JSON.parse(original) as ReconciledFiniteBudgetTerminalV36;
+		// Preserve all surface counts and array lengths while crossing the explicit
+		// registered-execution domain boundary, then authenticate the forged body.
+		forged.executed_tool_call_ids[0] = rejectedExecutionId;
+		const { terminal_digest: _digest, ...body } = forged;
+		forged.terminal_digest = digestObject(body);
+		writeFileSync(terminalPath, `${JSON.stringify(forged)}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /registered execution domain/);
+	}
+	{
+		const forged = JSON.parse(original) as ReconciledFiniteBudgetTerminalV36;
+		forged.registered_tool_blocked_ids = [];
+		const { terminal_digest: _digest, ...body } = forged;
+		forged.terminal_digest = digestObject(body);
+		writeFileSync(terminalPath, `${JSON.stringify(forged)}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /registered blocked domain/);
+	}
+
+	for (const mutate of [
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.persisted_tool_result_ids = value.persisted_tool_result_ids!.slice(1); },
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.persisted_tool_call_ids![1] = value.persisted_tool_call_ids![0]!; },
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.pre_hook_rejected_tool_requests![0]!.tool_call_id = `${run.run_id}-forged`; },
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.pre_hook_rejected_tool_requests![0]!.tool_name = "workspace_read"; },
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.pre_hook_rejected_tool_requests![0]!.result_is_error = false as true; },
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.registered_tool_attempt_ids!.push(`${run.run_id}-unavailable`); },
+		(value: ReconciledFiniteBudgetTerminalV36) => { value.budget_blocked_registered_tool_call_id = `${run.run_id}-read-24`; },
+	] as const) {
+		const forged = JSON.parse(original) as ReconciledFiniteBudgetTerminalV36;
+		mutate(forged);
+		const { terminal_digest: _digest, ...body } = forged;
+		forged.terminal_digest = digestObject(body);
+		writeFileSync(terminalPath, `${JSON.stringify(forged)}\n`);
+		await assert.rejects(() => reopened.session(view.session_id));
+	}
+	writeFileSync(terminalPath, original);
+
+	// Leave one ignored, immutable-by-convention deterministic fixture for Main's
+	// read-only evidence review; the handoff assertions above intentionally consume
+	// their own fixture.
+	const evidence = setup("tool_with_unavailable");
+	const evidenceView = await evidence.app.submitTask({ project_id: "duration-parser", requested_mode: "bounded_edit", task_text: "preserve deterministic schema-4 review evidence", title: "schema 4 evidence" });
+	assert.equal(evidenceView.runs[0]!.terminal!.tool_accounting.unavailable_requests.length, 1);
 });
 
 test("forged schema-3 reconciliation, dimensions, command observation and terminal digest fail closed", async () => {

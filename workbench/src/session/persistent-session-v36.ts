@@ -238,6 +238,11 @@ const FINITE_BUDGET_STOP_KEYS_V3 = [
 	"verification_mode", "formal_outcome", "comparison_eligible", "adaptation_eligible", "promotion_eligible", "terminal_digest",
 ] as const;
 
+const FINITE_BUDGET_STOP_KEYS_V4 = [
+	...FINITE_BUDGET_STOP_KEYS_V3,
+	"persisted_tool_call_ids", "persisted_tool_result_ids", "registered_tool_attempt_ids", "registered_tool_blocked_ids", "pre_hook_rejected_tool_requests", "budget_blocked_registered_tool_call_id",
+] as const;
+
 function terminalBody(value: ProviderRequestBudgetTerminalV36): Omit<ProviderRequestBudgetTerminalV36, "terminal_digest"> {
 	const { terminal_digest: _digest, ...body } = value;
 	return body;
@@ -302,7 +307,8 @@ function finiteBudgetProfile(profileId: ReconciledFiniteBudgetTerminalV36["budge
 function parseFiniteBudgetStopTerminal(value: unknown): ReconciledFiniteBudgetTerminalV36 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 finite-budget terminal is invalid");
 	const terminal = value as ReconciledFiniteBudgetTerminalV36;
-	if (stableJson(Object.keys(terminal).sort()) !== stableJson([...FINITE_BUDGET_STOP_KEYS_V3].sort())) throw new Error("V3.6 finite-budget terminal fields are invalid");
+	const expectedKeys = terminal.schema_version === 3 ? FINITE_BUDGET_STOP_KEYS_V3 : terminal.schema_version === 4 ? FINITE_BUDGET_STOP_KEYS_V4 : [];
+	if (stableJson(Object.keys(terminal).sort()) !== stableJson([...expectedKeys].sort())) throw new Error("V3.6 finite-budget terminal fields are invalid");
 	if (!Array.isArray(terminal.stop_dimensions) || terminal.stop_dimensions.length < 1 || terminal.stop_dimensions.length > 2) throw new Error("V3.6 finite-budget stop dimensions are invalid");
 	const dimensions = terminal.stop_dimensions.map(parseStopDimension);
 	const profile = finiteBudgetProfile(terminal.budget_profile_id);
@@ -313,19 +319,31 @@ function parseFiniteBudgetStopTerminal(value: unknown): ReconciledFiniteBudgetTe
 	const toolStop = terminal.terminal_reason === "tool_call_budget_exhausted" && stableJson(dimensionNames) === stableJson(["tool_call"]) && dimensions[0]!.capture_phase === "before_tool_execution" && dimensions[0]!.observed === dimensions[0]!.allowed + 1;
 	const wallStop = terminal.terminal_reason === "wall_time_budget_exhausted" && stableJson(dimensionNames) === stableJson(["wall_time"]) && (dimensions[0]!.capture_phase === "clean_boundary_before_provider_request" || dimensions[0]!.capture_phase === "clean_boundary_before_tool_execution") && dimensions[0]!.observed > dimensions[0]!.allowed;
 	if (
-		terminal.schema_version !== 3 || (terminal.budget_profile_id !== "v36g2_frozen_acceptance_v1" && terminal.budget_profile_id !== "v36_daily_bounded_edit_v2") || terminal.terminal_kind !== "v36_reconciled_finite_budget_terminal" || terminal.trajectory_outcome !== "finite_budget_terminal" || (!accountedUsage && !toolStop && !wallStop) ||
+		(terminal.schema_version !== 3 && terminal.schema_version !== 4) || (terminal.budget_profile_id !== "v36g2_frozen_acceptance_v1" && terminal.budget_profile_id !== "v36_daily_bounded_edit_v2") || terminal.terminal_kind !== "v36_reconciled_finite_budget_terminal" || terminal.trajectory_outcome !== "finite_budget_terminal" || (!accountedUsage && !toolStop && !wallStop) ||
 		!ID.test(terminal.run_id) || !ID.test(terminal.session_id) || !ID.test(terminal.project_id) || !ID.test(terminal.workspace_id) || ![terminal.session_pin_digest, terminal.authority_digest, terminal.workspace_identity_at_terminal, terminal.session_entries_sha256_before_turn, terminal.session_entries_sha256_at_terminal, terminal.harness_diagnostic_error_sha256, terminal.terminal_digest].every((entry) => SHA256.test(entry)) || terminal.settled !== false ||
 		![terminal.request_attempts, terminal.provider_dispatches, terminal.provider_responses, terminal.tool_call_attempts, terminal.tool_calls_executed, terminal.tool_calls_completed, terminal.tool_calls_blocked, terminal.tool_results_recorded, terminal.input_tokens, terminal.output_tokens, terminal.wall_time_ms, terminal.session_entry_count_before_turn, terminal.session_entry_count_at_terminal].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || terminal.request_attempts !== terminal.provider_dispatches || terminal.provider_dispatches !== terminal.provider_responses || terminal.pending_provider_reservations !== 0 || terminal.provider_accounting_reconciled !== true || terminal.pending_tool_calls !== 0 || terminal.pending_side_effects !== 0 || terminal.tool_calls_executed !== terminal.tool_calls_completed || !Array.isArray(terminal.executed_tool_call_ids) || terminal.executed_tool_call_ids.length !== terminal.tool_calls_executed || terminal.executed_tool_call_ids.some((entry) => !ID.test(entry)) || new Set(terminal.executed_tool_call_ids).size !== terminal.executed_tool_call_ids.length || terminal.tool_lifecycle_reconciled !== true ||
-		terminal.tool_call_attempts !== terminal.tool_calls_executed + terminal.tool_calls_blocked || terminal.tool_results_recorded !== terminal.tool_call_attempts || (toolStop && terminal.tool_calls_blocked !== 1) || terminal.usage_known !== true || !Number.isFinite(terminal.cost_usd) || terminal.cost_usd < 0 || terminal.command_evidence_reconciled !== true || terminal.workspace_identity_reconciled !== true || terminal.session_identity_reconciled !== true || terminal.authority_identity_reconciled !== true || terminal.session_entry_count_before_turn >= terminal.session_entry_count_at_terminal ||
+		terminal.tool_call_attempts !== terminal.tool_calls_executed + terminal.tool_calls_blocked || (terminal.schema_version === 3 && terminal.tool_results_recorded !== terminal.tool_call_attempts) || (toolStop && terminal.tool_calls_blocked !== 1) || terminal.usage_known !== true || !Number.isFinite(terminal.cost_usd) || terminal.cost_usd < 0 || terminal.command_evidence_reconciled !== true || terminal.workspace_identity_reconciled !== true || terminal.session_identity_reconciled !== true || terminal.authority_identity_reconciled !== true || terminal.session_entry_count_before_turn >= terminal.session_entry_count_at_terminal ||
 		terminal.verification_mode !== "unverified" || terminal.formal_outcome !== null || terminal.comparison_eligible !== false || terminal.adaptation_eligible !== false || terminal.promotion_eligible !== false || digestObject(finiteTerminalBody(terminal)) !== terminal.terminal_digest
 	) throw new Error("V3.6 finite-budget terminal is invalid");
+	if (terminal.schema_version === 4) {
+		const persistedCalls = terminal.persisted_tool_call_ids!;
+		const persistedResults = terminal.persisted_tool_result_ids!;
+		const registeredAttempts = terminal.registered_tool_attempt_ids!;
+		const registeredBlocked = terminal.registered_tool_blocked_ids!;
+		const rejected = terminal.pre_hook_rejected_tool_requests!;
+		if (![persistedCalls, persistedResults, registeredAttempts, registeredBlocked, rejected].every(Array.isArray) || persistedCalls.some((id) => !ID.test(id)) || persistedResults.some((id) => !ID.test(id)) || registeredAttempts.some((id) => !ID.test(id)) || registeredBlocked.some((id) => !ID.test(id)) || new Set(persistedCalls).size !== persistedCalls.length || new Set(persistedResults).size !== persistedResults.length || new Set(registeredAttempts).size !== registeredAttempts.length || new Set(registeredBlocked).size !== registeredBlocked.length || stableJson(persistedCalls) !== stableJson(persistedResults) || terminal.tool_results_recorded !== persistedResults.length || terminal.tool_call_attempts !== registeredAttempts.length || rejected.some((entry) => !entry || !ID.test(entry.tool_call_id) || typeof entry.tool_name !== "string" || !["unavailable_tool", "active_tool_pre_hook_rejection"].includes(entry.category) || entry.result_is_error !== true) || new Set(rejected.map((entry) => entry.tool_call_id)).size !== rejected.length || stableJson([...registeredAttempts, ...rejected.map((entry) => entry.tool_call_id)].sort()) !== stableJson([...persistedCalls].sort()) || registeredAttempts.some((id) => rejected.some((entry) => entry.tool_call_id === id)) || terminal.budget_blocked_registered_tool_call_id !== (toolStop ? registeredAttempts.at(-1) : null) || (toolStop && !ID.test(terminal.budget_blocked_registered_tool_call_id ?? ""))) throw new Error("V3.6 schema-4 Tool accounting is invalid");
+		if (terminal.executed_tool_call_ids.some((id) => !registeredAttempts.includes(id))) throw new Error("V3.6 schema-4 registered execution domain is invalid");
+		const expectedRegisteredBlocked = registeredAttempts.filter((id) => !terminal.executed_tool_call_ids.includes(id));
+		if (registeredBlocked.length !== terminal.tool_calls_blocked || stableJson(registeredBlocked) !== stableJson(expectedRegisteredBlocked)) throw new Error("V3.6 schema-4 registered blocked domain is invalid");
+		if (toolStop && (registeredBlocked.length !== 1 || registeredBlocked[0] !== terminal.budget_blocked_registered_tool_call_id)) throw new Error("V3.6 schema-4 unique budget-blocked registered Tool identity is invalid");
+	}
 	if (terminal.last_registered_command !== null) parseReconciledRegisteredCommandTerminal(terminal.last_registered_command);
 	return terminal;
 }
 
 function parseFiniteBudgetTerminal(value: unknown): FiniteBudgetTerminalV36 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 budget terminal is invalid");
-	return (value as { schema_version?: unknown }).schema_version === 3 ? parseFiniteBudgetStopTerminal(value) : parseBudgetStopTerminal(value);
+	return ((value as { schema_version?: unknown }).schema_version === 3 || (value as { schema_version?: unknown }).schema_version === 4) ? parseFiniteBudgetStopTerminal(value) : parseBudgetStopTerminal(value);
 }
 
 function commandObservation(command: RegisteredCommandTerminalV36): ReconciledRegisteredCommandTerminalV36 {
@@ -333,8 +351,9 @@ function commandObservation(command: RegisteredCommandTerminalV36): ReconciledRe
 }
 
 function safeBudgetStopTerminal(terminal: FiniteBudgetTerminalV36): SafeFiniteBudgetTerminalV36 {
-	if (terminal.schema_version === 3) {
+	if (terminal.schema_version === 3 || terminal.schema_version === 4) {
 		const profile = finiteBudgetProfile(terminal.budget_profile_id);
+		const rejected = terminal.schema_version === 4 ? terminal.pre_hook_rejected_tool_requests! : [];
 		return {
 		trajectory_outcome: terminal.trajectory_outcome,
 		terminal_reason: terminal.terminal_reason,
@@ -342,6 +361,7 @@ function safeBudgetStopTerminal(terminal: FiniteBudgetTerminalV36): SafeFiniteBu
 		stop_dimensions: structuredClone(terminal.stop_dimensions),
 		request_usage: { attempts: terminal.request_attempts, used: terminal.provider_dispatches, max: profile.provider_requests_hard_max },
 		tool_usage: { attempts: terminal.tool_call_attempts, executed: terminal.tool_calls_executed, completed: terminal.tool_calls_completed, blocked: terminal.tool_calls_blocked, results: terminal.tool_results_recorded, max: profile.tool_calls_hard_max },
+		tool_accounting: { persisted_calls: terminal.schema_version === 4 ? terminal.persisted_tool_call_ids!.length : terminal.tool_call_attempts, persisted_results: terminal.tool_results_recorded, registered_attempts: terminal.tool_call_attempts, registered_executions: terminal.tool_calls_executed, registered_completions: terminal.tool_calls_completed, registered_blocked: terminal.tool_calls_blocked, unavailable_requests: rejected.filter((entry) => entry.category === "unavailable_tool").map(({ tool_call_id, tool_name, result_is_error }) => ({ tool_call_id, tool_name, result_is_error })), active_tool_pre_hook_rejections: rejected.filter((entry) => entry.category === "active_tool_pre_hook_rejection").map(({ tool_call_id, tool_name, result_is_error }) => ({ tool_call_id, tool_name, result_is_error })), budget_blocked_registered_tool_call_id: terminal.schema_version === 4 ? terminal.budget_blocked_registered_tool_call_id ?? null : null },
 		usage: { input_tokens: terminal.input_tokens, output_tokens: terminal.output_tokens, combined_tokens: terminal.input_tokens + terminal.output_tokens, cost_usd: terminal.cost_usd, wall_time_ms: terminal.wall_time_ms, known: true },
 		last_registered_command: terminal.last_registered_command === null ? null : structuredClone(terminal.last_registered_command),
 		settled: false, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false,
@@ -349,18 +369,20 @@ function safeBudgetStopTerminal(terminal: FiniteBudgetTerminalV36): SafeFiniteBu
 		terminal_digest: terminal.terminal_digest,
 		};
 	}
+	const providerTerminal = terminal as ProviderRequestBudgetTerminalV36;
 	return {
-		trajectory_outcome: terminal.trajectory_outcome,
-		terminal_reason: terminal.terminal_reason,
-		authority_digest: terminal.authority_digest,
-		stop_dimensions: [{ dimension: "provider_request", observed: terminal.request_attempts, allowed: terminal.provider_requests_max, capture_phase: "before_provider_dispatch" }],
-		request_usage: { attempts: terminal.request_attempts, used: terminal.provider_dispatches, max: terminal.provider_requests_max },
-		tool_usage: { attempts: terminal.tool_calls, executed: terminal.tool_calls, completed: terminal.tool_calls, blocked: 0, results: terminal.tool_calls, max: terminal.tool_calls },
-		usage: { input_tokens: terminal.input_tokens, output_tokens: terminal.output_tokens, combined_tokens: terminal.input_tokens + terminal.output_tokens, cost_usd: terminal.cost_usd, wall_time_ms: "not_recorded", known: terminal.usage_known },
-		last_registered_command: commandObservation(terminal.last_registered_command),
+		trajectory_outcome: providerTerminal.trajectory_outcome,
+		terminal_reason: providerTerminal.terminal_reason,
+		authority_digest: providerTerminal.authority_digest,
+		stop_dimensions: [{ dimension: "provider_request", observed: providerTerminal.request_attempts, allowed: providerTerminal.provider_requests_max, capture_phase: "before_provider_dispatch" }],
+		request_usage: { attempts: providerTerminal.request_attempts, used: providerTerminal.provider_dispatches, max: providerTerminal.provider_requests_max },
+		tool_usage: { attempts: providerTerminal.tool_calls, executed: providerTerminal.tool_calls, completed: providerTerminal.tool_calls, blocked: 0, results: providerTerminal.tool_calls, max: providerTerminal.tool_calls },
+		tool_accounting: { persisted_calls: providerTerminal.tool_calls, persisted_results: providerTerminal.tool_calls, registered_attempts: providerTerminal.tool_calls, registered_executions: providerTerminal.tool_calls, registered_completions: providerTerminal.tool_calls, registered_blocked: 0, unavailable_requests: [], active_tool_pre_hook_rejections: [], budget_blocked_registered_tool_call_id: null },
+		usage: { input_tokens: providerTerminal.input_tokens, output_tokens: providerTerminal.output_tokens, combined_tokens: providerTerminal.input_tokens + providerTerminal.output_tokens, cost_usd: providerTerminal.cost_usd, wall_time_ms: "not_recorded", known: providerTerminal.usage_known },
+		last_registered_command: commandObservation(providerTerminal.last_registered_command),
 		settled: false, verification_mode: "unverified", formal_outcome: null, comparison_eligible: false, adaptation_eligible: false, promotion_eligible: false,
 		unverified_changes: true,
-		terminal_digest: terminal.terminal_digest,
+		terminal_digest: providerTerminal.terminal_digest,
 	};
 }
 
@@ -506,7 +528,7 @@ function reconcileFiniteBudgetTerminalSession(entries: readonly SessionTreeEntry
 	const turnEntries = entries.slice(terminal.session_entry_count_before_turn);
 	if (turnEntries.filter((entry) => entry.type === "message" && entry.message.role === "user").length !== 1) throw new Error("V3.6 finite-budget terminal Session turn boundary is invalid");
 	const toolCalls: Array<{ id: string; name: string; commandId: string | null }> = [];
-	const toolResultIds: string[] = [];
+	const toolResults: Array<{ id: string; name: string; isError: boolean }> = [];
 	let providerResponses = 0;
 	let inputTokens = 0;
 	let outputTokens = 0;
@@ -515,8 +537,8 @@ function reconcileFiniteBudgetTerminalSession(entries: readonly SessionTreeEntry
 	for (const entry of turnEntries) {
 		if (entry.type !== "message") continue;
 		if (entry.message.role === "toolResult") {
-			if (!ID.test(entry.message.toolCallId)) throw new Error("V3.6 finite-budget terminal Tool Result identity is invalid");
-			toolResultIds.push(entry.message.toolCallId);
+			if (!ID.test(entry.message.toolCallId) || typeof entry.message.toolName !== "string" || typeof entry.message.isError !== "boolean") throw new Error("V3.6 finite-budget terminal Tool Result identity is invalid");
+			toolResults.push({ id: entry.message.toolCallId, name: entry.message.toolName, isError: entry.message.isError });
 			continue;
 		}
 		if (entry.message.role !== "assistant") continue;
@@ -549,15 +571,28 @@ function reconcileFiniteBudgetTerminalSession(entries: readonly SessionTreeEntry
 		}
 	}
 	const callIds = toolCalls.map((entry) => entry.id);
+	const toolResultIds = toolResults.map((entry) => entry.id);
 	const command = terminal.last_registered_command;
 	const executedSet = new Set(terminal.executed_tool_call_ids);
 	const executedCommands = toolCalls.filter((entry) => entry.commandId !== null && executedSet.has(entry.id)).map((entry) => entry.commandId!);
-	if (diagnosticErrors !== 1 || providerResponses !== terminal.provider_responses || terminal.provider_dispatches !== providerResponses || inputTokens !== terminal.input_tokens || outputTokens !== terminal.output_tokens || costUsd !== terminal.cost_usd || callIds.length !== terminal.tool_call_attempts || toolResultIds.length !== terminal.tool_results_recorded || stableJson(callIds) !== stableJson(toolResultIds) || terminal.executed_tool_call_ids.some((entry) => !callIds.includes(entry)) || executedCommands.length !== (command?.command_ordinal ?? 0) || (command !== null && executedCommands.at(-1) !== command.command_id)) throw new Error("V3.6 finite-budget terminal Session-derived accounting does not match");
+	if (diagnosticErrors !== 1 || providerResponses !== terminal.provider_responses || terminal.provider_dispatches !== providerResponses || inputTokens !== terminal.input_tokens || outputTokens !== terminal.output_tokens || costUsd !== terminal.cost_usd || (terminal.schema_version === 3 && callIds.length !== terminal.tool_call_attempts) || toolResultIds.length !== terminal.tool_results_recorded || stableJson(callIds) !== stableJson(toolResultIds) || terminal.executed_tool_call_ids.some((entry) => !callIds.includes(entry)) || executedCommands.length !== (command?.command_ordinal ?? 0) || (command !== null && executedCommands.at(-1) !== command.command_id)) throw new Error("V3.6 finite-budget terminal Session-derived accounting does not match");
+	if (terminal.schema_version === 4) {
+		const activeNames = new Set(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]);
+		const registered = new Set(terminal.registered_tool_attempt_ids!);
+		if (terminal.registered_tool_attempt_ids!.some((id) => !activeNames.has(toolCalls.find((call) => call.id === id)?.name ?? ""))) throw new Error("V3.6 schema-4 registered Tool attempt is outside the active surface");
+		const rejected = toolCalls.filter((call) => !registered.has(call.id));
+		const derivedRejected = rejected.map((call) => {
+			const result = toolResults.find((entry) => entry.id === call.id);
+			if (!result || result.name !== call.name || result.isError !== true) throw new Error("V3.6 schema-4 rejected Tool Result is not a paired error");
+			return { tool_call_id: call.id, tool_name: call.name, category: activeNames.has(call.name) ? "active_tool_pre_hook_rejection" as const : "unavailable_tool" as const, result_is_error: true as const };
+		});
+		if (stableJson(callIds) !== stableJson(terminal.persisted_tool_call_ids) || stableJson(toolResultIds) !== stableJson(terminal.persisted_tool_result_ids) || stableJson(derivedRejected) !== stableJson(terminal.pre_hook_rejected_tool_requests)) throw new Error("V3.6 schema-4 Session Tool accounting does not match");
+	}
 }
 
 function reconcileBudgetTerminalSession(entries: readonly SessionTreeEntry[], terminal: FiniteBudgetTerminalV36): void {
-	if (terminal.schema_version === 3) reconcileFiniteBudgetTerminalSession(entries, terminal);
-	else reconcileProviderBudgetTerminalSession(entries, terminal);
+	if (terminal.schema_version === 3 || terminal.schema_version === 4) reconcileFiniteBudgetTerminalSession(entries, terminal);
+	else reconcileProviderBudgetTerminalSession(entries, terminal as ProviderRequestBudgetTerminalV36);
 }
 
 export class PersistentInteractiveSessionServiceV36 {
@@ -683,6 +718,7 @@ export class PersistentInteractiveSessionServiceV36 {
 		let settled = 0;
 		let providerRequests = 0;
 		let toolCallAttempts = 0;
+		const registeredToolAttemptIds: string[] = [];
 		let toolCallsExecuted = 0;
 		let toolCallsCompleted = 0;
 		let inputTokens = 0;
@@ -775,9 +811,11 @@ export class PersistentInteractiveSessionServiceV36 {
 			pendingProviderReservation = true;
 			return undefined;
 		});
-		const offTool = harness.on("tool_call", () => {
+		const offTool = harness.on("tool_call", (event) => {
 			assertTurnWallTimeBudget("clean_boundary_before_tool_execution");
 			toolCallAttempts += 1;
+			if (!ID.test(event.toolCallId) || registeredToolAttemptIds.includes(event.toolCallId)) throw new Error("V3.6 registered Tool attempt identity is invalid");
+			registeredToolAttemptIds.push(event.toolCallId);
 			if (toolCallAttempts > options.budgetProfile.tool_calls_hard_max) {
 				finiteBudgetTerminal = new ReconciledFiniteBudgetTerminalV36Error("tool_call_budget_exhausted", [{ dimension: "tool_call", observed: toolCallAttempts, allowed: options.budgetProfile.tool_calls_hard_max, capture_phase: "before_tool_execution" }]);
 				return { block: true, reason: V36_FINITE_BUDGET_TERMINAL_CODE };
@@ -873,6 +911,17 @@ export class PersistentInteractiveSessionServiceV36 {
 			toolCallsExecuted = profile.auditEvents.filter((event) => event.type === "start").length;
 			toolCallsCompleted = profile.auditEvents.filter((event) => event.type === "end" || event.type === "error").length;
 			const executedToolCallIds = profile.auditEvents.filter((event) => event.type === "start").map((event) => event.tool_call_id);
+			const persistedToolCalls = entries.slice(entriesBeforeTurn.length).flatMap((entry) => entry.type === "message" && entry.message.role === "assistant" ? (entry.message as AssistantMessage).content.flatMap((part) => part.type === "toolCall" ? [{ id: part.id, name: part.name }] : []) : []);
+			const persistedToolResults = entries.slice(entriesBeforeTurn.length).flatMap((entry) => entry.type === "message" && entry.message.role === "toolResult" ? [{ id: entry.message.toolCallId, name: entry.message.toolName, isError: entry.message.isError }] : []);
+			if (persistedToolCalls.some((call) => !ID.test(call.id) || typeof call.name !== "string") || persistedToolResults.some((result) => !ID.test(result.id) || typeof result.name !== "string" || typeof result.isError !== "boolean") || stableJson(persistedToolCalls.map((call) => call.id)) !== stableJson(persistedToolResults.map((result) => result.id))) throw new Error("V3.6 persisted Tool identities are not exactly paired");
+			const activeToolNames = new Set(expectedTools);
+			const registeredAttemptSet = new Set(registeredToolAttemptIds);
+			const preHookRejected = persistedToolCalls.filter((call) => !registeredAttemptSet.has(call.id)).map((call) => {
+				const result = persistedToolResults.find((entry) => entry.id === call.id);
+				if (!result || result.name !== call.name || result.isError !== true) throw new Error("V3.6 pre-hook rejected Tool request is not a paired error");
+				return { tool_call_id: call.id, tool_name: call.name, category: activeToolNames.has(call.name) ? "active_tool_pre_hook_rejection" as const : "unavailable_tool" as const, result_is_error: true as const };
+			});
+			const registeredBlockedIds = registeredToolAttemptIds.filter((id) => !executedToolCallIds.includes(id));
 			// A harness-generated diagnostic assistant error is not a Provider response. All
 			// dispatched responses remain known when their reservation counters reconcile.
 			if (!pendingProviderReservation && providerRequests === providerResponses) usageKnown = true;
@@ -895,7 +944,7 @@ export class PersistentInteractiveSessionServiceV36 {
 				};
 			}
 			const body: Omit<ReconciledFiniteBudgetTerminalV36, "terminal_digest"> = {
-				schema_version: 3,
+				schema_version: preHookRejected.length === 0 ? 3 : 4,
 				budget_profile_id: options.budgetProfile.profile_id,
 				terminal_kind: "v36_reconciled_finite_budget_terminal",
 				trajectory_outcome: "finite_budget_terminal",
@@ -920,8 +969,16 @@ export class PersistentInteractiveSessionServiceV36 {
 				tool_calls_executed: toolCallsExecuted,
 				tool_calls_completed: toolCallsCompleted,
 				tool_calls_blocked: toolCallAttempts - toolCallsExecuted,
-				tool_results_recorded: toolCallAttempts,
+				tool_results_recorded: persistedToolResults.length,
 				executed_tool_call_ids: executedToolCallIds,
+				...(preHookRejected.length === 0 ? {} : {
+					persisted_tool_call_ids: persistedToolCalls.map((call) => call.id),
+					persisted_tool_result_ids: persistedToolResults.map((result) => result.id),
+					registered_tool_attempt_ids: registeredToolAttemptIds,
+					registered_tool_blocked_ids: registeredBlockedIds,
+					pre_hook_rejected_tool_requests: preHookRejected,
+					budget_blocked_registered_tool_call_id: toolStop ? registeredBlockedIds.at(-1)! : null,
+				}),
 				tool_lifecycle_reconciled: true,
 				usage_known: true,
 				harness_diagnostic_error_sha256: terminalDiagnosticErrorSha256,
@@ -995,14 +1052,16 @@ export class PersistentInteractiveSessionServiceV36 {
 		}
 		manifests.sort((left, right) => left.created_at.localeCompare(right.created_at));
 		const runs = manifests.map((manifest) => {
-			if ("terminal_kind" in manifest) return {
+			if ("terminal_kind" in manifest) {
+				const reconciled = manifest.schema_version === 3 || manifest.schema_version === 4;
+				return {
 				run_id: manifest.run_id,
 				created_at: manifest.created_at,
 				settled: false,
 				provider_requests: manifest.provider_dispatches,
-				tool_call_count: manifest.schema_version === 3 ? manifest.tool_call_attempts : manifest.tool_calls,
+				tool_call_count: reconciled ? (manifest as ReconciledFiniteBudgetTerminalV36).tool_call_attempts : (manifest as ProviderRequestBudgetTerminalV36).tool_calls,
 				context_reconstructed: true,
-				mode: manifest.schema_version === 3 ? "finite_budget_terminal" as const : "pre_dispatch_budget_terminal" as const,
+				mode: reconciled ? "finite_budget_terminal" as const : "pre_dispatch_budget_terminal" as const,
 				prior_run_id: null,
 				input_tokens: manifest.input_tokens,
 				output_tokens: manifest.output_tokens,
@@ -1014,6 +1073,7 @@ export class PersistentInteractiveSessionServiceV36 {
 				source_ref: `runtime/runs/${manifest.run_id}/budget-stop.json`,
 				terminal: safeBudgetStopTerminal(manifest),
 			};
+			}
 			return {
 				run_id: manifest.run_id,
 				created_at: manifest.created_at,

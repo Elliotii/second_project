@@ -459,6 +459,16 @@ or browser/model-selected budget. A daily hard stop writes the schema-2 `25 / 24
 terminal and retains the same non-settled/unverified, Diff/Export/Discard, Apply-denied
 and clean-new-Session-only behavior.
 
+Known quiescent Token, cost, registered Tool and clean-boundary wall-time stops use the
+additive reconciled finite-budget terminal family. Historical schema-1 `17 / 16 / 16`,
+schema-2 `25 / 24 / 24` and schema-3 artifacts keep their original meaning. Schema 4 is
+used only when the persisted Pi turn also contains pre-hook rejected Tool requests: it
+authenticates every persisted Tool call/result ID while separately exposing registered
+attempts/executions, unavailable names, active-tool pre-hook rejections and the unique
+budget-blocked registered call. Unavailable calls remain paired error results with no
+registered Tool or command execution and do not consume the unchanged registered
+Tool-attempt cap.
+
 Copy `config/v36-product.example.json` to the ignored
 `config/v36-product.local.json`, replace the absolute Source root and path/command policy,
 and use a 64-character Harness State digest that identifies the intended active binding

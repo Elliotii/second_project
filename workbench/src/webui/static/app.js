@@ -182,11 +182,14 @@ function renderV36Session(session) {
     if (run.terminal) {
       const dimensions = run.terminal.stop_dimensions.map((entry) => `${entry.dimension}: ${entry.observed} / ${entry.allowed} (${entry.capture_phase})`).join("; ");
       const command = run.terminal.last_registered_command;
+      const accounting = run.terminal.tool_accounting;
+      const rejected = accounting ? [...accounting.unavailable_requests.map((entry) => `unavailable ${entry.tool_name} (${entry.tool_call_id})`), ...accounting.active_tool_pre_hook_rejections.map((entry) => `active-tool pre-hook rejection ${entry.tool_name} (${entry.tool_call_id})`)].join("; ") : "";
       item.append(
         metric("Stop reason / 停止原因", run.terminal.terminal_reason),
         metric("Crossed finite budget / 超出的有界预算", dimensions),
         metric("Request use / 请求用量", `${run.terminal.request_usage.used} / ${run.terminal.request_usage.max} dispatched; attempt ${run.terminal.request_usage.attempts}`),
         metric("Tool use / 工具用量", `${run.terminal.tool_usage.completed} completed / ${run.terminal.tool_usage.attempts} attempted`),
+        metric("Tool accounting / 工具核算", accounting ? `${accounting.persisted_calls} persisted / ${accounting.registered_attempts} registered attempts / ${accounting.registered_executions} executions / ${accounting.registered_blocked} blocked; ${rejected || "no pre-hook rejections"}; budget-blocked ${accounting.budget_blocked_registered_tool_call_id ?? "none"}` : "not recorded"),
         metric("Known usage / 已知用量", `${run.terminal.usage.combined_tokens} combined tokens, $${run.terminal.usage.cost_usd}, ${run.terminal.usage.wall_time_ms} ms`),
         metric("Last registered command / 最后登记命令", command ? `${command.command_id}; ${command.observation}; exit ${command.exit_code ?? "not recorded"}` : "No registered command executed / 未执行登记命令"),
         metric("Managed changes / 托管变更", "Unverified: inspect, export, or discard only; Apply All denied / 未验证：仅可检查、导出或丢弃；禁止全部应用")
