@@ -84,13 +84,16 @@ v3_6_engineering_stabilization_campaign:
 
 post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  status: accepted_activated_pending_control_baseline
+  status: active_pending_top_level_implementation_session
   parent_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   trigger_case: ES_N03
   trigger_finding: ES_N03_F1_001
-  implementation_owner: future_top_level_implementation_session
+  control_baseline_commit: 856dfa066b34a477e7e7aea92b3c2ed8dfc4734c
+  control_baseline_tree: 9ba0f742fe9d67188c371d505a93e253547adcb6
+  implementation_owner: pending_top_level_session_assignment
+  implementation_prompt: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_IMPLEMENTATION_SESSION_START_PROMPT.md
   focused_audit: required_once_after_main_candidate_freeze
   retest: exactly_one_after_accepted_maintenance
   real_model_calls_authorized: 0
