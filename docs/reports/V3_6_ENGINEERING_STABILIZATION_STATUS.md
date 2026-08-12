@@ -106,6 +106,14 @@ and dispatched it to the existing top-level Test Session
 the original task/profile/Source/provider/command; no Retry, continuation, Apply,
 replacement, ES-N04 or Fault Injection is authorized.
 
+The single Retest completed as a truthful schema-4 Tool-budget terminal. The original
+F1/F2 correctness gap did not recur; the coding task remained incomplete and unverified.
+Main retains budget adequacy/trajectory inefficiency as a known bounded-workload
+limitation and accepts the correct F9 fail-closed response. Campaign Stop Conditions are
+met; the Campaign is closed with disposition
+`PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION`. No Fault
+Injection, ES-N04, budget change, V4 or Human UX stage was started.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 

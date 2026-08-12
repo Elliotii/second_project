@@ -8,51 +8,36 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
+active_goal: null
 
 current_goal:
-  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: active_es_n03_post_maintenance_retest_in_progress
-  kind: bounded_post_closeout_engineering_stabilization
-  version_status: V3_6_remains_closed_accepted
-  plan: docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
-  baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
-  status_file: docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
-  main_owner: current_main_session
-  test_owner: existing_top_level_session_019ff181-51a8-7381-aae9-b8223e6a8bd3
-  natural_workload_first: true
-  human_ui_ux_acceptance_in_scope: false
-  v4_authorized: false
+  id: null
+  status: no_active_goal_campaign_closed
 
 last_executed_goal:
-  id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  implementation_commit: 958c09cd35ffe99eb32103fb72424a600d394439
-  closeout: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_CLOSEOUT.md
+  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
+  status: closed_completed
+  disposition: PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION
+  closeout: docs/reports/V3_6_ENGINEERING_STABILIZATION_CLOSEOUT.md
 
 last_closed_goal:
-  id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  closeout: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_CLOSEOUT.md
+  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
+  status: closed_completed
+  disposition: PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION
+  closeout: docs/reports/V3_6_ENGINEERING_STABILIZATION_CLOSEOUT.md
 
 last_completed_goal:
-  id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  implementation_commit: 958c09cd35ffe99eb32103fb72424a600d394439
+  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
+  status: closed_completed
+  disposition: PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION
 
 next_goal:
   id: null
-  status: blocked_while_campaign_active
-  note: no_V4_new_version_human_UI_UX_polish_or_unrelated_goal_authorized
+  status: awaiting_user_direction
+  note: no_V4_new_version_human_UI_UX_polish_or_budget_change_authorized
 
 v3_6_engineering_stabilization_campaign:
-  status: active_es_n03_post_maintenance_retest_in_progress
+  status: closed_completed
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   functional_baseline_tree: df8edd611b1fe819098dbd643222e5535ba53ddb
@@ -61,7 +46,7 @@ v3_6_engineering_stabilization_campaign:
   baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
   status_file: docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
   test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
-  current_case: ES_N03_post_maintenance_retest_in_progress
+  current_case: null
   current_task_sha256: 4852cfd2f9623c4e9a37d0880e4764c5d1c9bd117f10dcb7e36bb04da3812484
   natural_cases_started: 3
   natural_cases_completed: 3
@@ -69,12 +54,15 @@ v3_6_engineering_stabilization_campaign:
   findings_total: 1
   bounded_maintenance_count: 1
   decision_required_count: 1
-  post_maintenance_retests: 0
+  post_maintenance_retests: 1
   fault_injection_cases: 0
   current_blocker: null
-  stop_condition_status: exactly_one_retest_in_progress
+  stop_condition_status: met_campaign_closed
   es_n03_retest_authorization_record_commit: da25dbe779d9ff70ca0ccffa5096fa92866eab42
   es_n03_retest_authorization: docs/reports/V3_6_ENGINEERING_STABILIZATION_ES_N03_RETEST_AUTHORIZATION.md
+  es_n03_retest_main_review: docs/reports/V3_6_ENGINEERING_STABILIZATION_ES_N03_RETEST_MAIN_REVIEW.md
+  closeout: docs/reports/V3_6_ENGINEERING_STABILIZATION_CLOSEOUT.md
+  failure_case_candidates: docs/reports/V3_6_FAILURE_CASE_CANDIDATES.md
   product_source_edit_authorized_for_test_session: false
   source_apply_authorized_for_test_session: false
   budget_adjustment_authorized: false
@@ -84,7 +72,7 @@ v3_6_engineering_stabilization_campaign:
   v4_authorized: false
 
 v3_6_engineering_stabilization_es_n03_retest:
-  status: authorized_dispatched_to_existing_test_session
+  status: completed_main_accepted
   test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
   authorization_record_commit: da25dbe779d9ff70ca0ccffa5096fa92866eab42
   authorization: docs/reports/V3_6_ENGINEERING_STABILIZATION_ES_N03_RETEST_AUTHORIZATION.md
@@ -94,7 +82,14 @@ v3_6_engineering_stabilization_es_n03_retest:
   dispatch_limit: one
   retry_fallback_replacement_continuation: forbidden
   source_apply: forbidden
-  next_case: forbidden_until_main_disposition
+  next_case: forbidden_campaign_closed
+  session_id: v36-session-8279b1d5-951f-4ad2-941d-c630d3bcc264
+  run_id: v36-run-5a1a5004-03fd-423f-b747-b9dd4b38e0f4
+  terminal_reason: tool_call_budget_exhausted
+  terminal_schema: 4
+  task_completed: false
+  maintenance_objective_verified: true
+  main_review: docs/reports/V3_6_ENGINEERING_STABILIZATION_ES_N03_RETEST_MAIN_REVIEW.md
 
 post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
