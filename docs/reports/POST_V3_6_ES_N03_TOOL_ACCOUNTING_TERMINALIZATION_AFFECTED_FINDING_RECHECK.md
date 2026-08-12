@@ -94,4 +94,3 @@ browser-syntax commands. The only tracked write by this recheck is this report.
 `PASS_AFFECTED_FINDINGS`
 
 `MAIN_DISPOSITION_REQUIRED`
-
