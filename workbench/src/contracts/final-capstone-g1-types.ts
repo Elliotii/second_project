@@ -37,16 +37,22 @@ export interface TrustedEvidenceHostRegistrationG1 {
 		task_kind: string;
 		failure_family: string | null;
 	};
-	host_grant: {
-		authority: "host";
-		adaptation_eligible: true;
-		policy_id: "final-capstone-g1-trusted-evidence-admission-v1";
-	};
 	expected_inspector: {
 		inspector_id: string;
 		inspector_fingerprint: string;
 	};
 	registration_digest: string;
+}
+
+export interface TrustedEvidenceHostApprovalG1 {
+	schema_version: 1;
+	approval_id: string;
+	project_id: string;
+	approved_registration_id: string;
+	approved_registration_digest: string;
+	authority: "host_fixed_approval";
+	adaptation_eligible: true;
+	policy_id: "final-capstone-g1-trusted-evidence-admission-v1";
 }
 
 export interface TrustedEvidenceSourceInventoryItemG1 extends ArtifactRefV0B {
@@ -72,7 +78,7 @@ export interface TrustedEvidenceAdmissionRecordG1 {
 	source_inventory_digest: string;
 	provenance: Record<string, unknown>;
 	trusted_task_context: TrustedEvidenceHostRegistrationG1["trusted_task_context"];
-	host_eligibility: TrustedEvidenceHostRegistrationG1["host_grant"];
+	host_eligibility: TrustedEvidenceHostApprovalG1;
 	frozen_evidence: FrozenEvidenceV3;
 	projector_result: ImprovementOpportunityV3 | "no_opportunity";
 	admission_digest: string;

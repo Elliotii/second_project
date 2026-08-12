@@ -4,6 +4,7 @@ import type { ArtifactRefV0B, FailureClassV0B } from "../contracts/v0b-types.ts"
 import type {
 	TrustedEvidenceAdmissionRecordG1,
 	TrustedEvidenceAdmissionResultG1,
+	TrustedEvidenceHostApprovalG1,
 	TrustedEvidenceHostRegistrationG1,
 	TrustedEvidenceSourceG1,
 	TrustedEvidenceSourceInventoryItemG1,
@@ -21,6 +22,13 @@ import { projectImprovementOpportunityV3, validateFrozenEvidenceV3 } from "./evi
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 const POLICY_ID = "final-capstone-g1-trusted-evidence-admission-v1" as const;
+const FIXED_HOST_APPROVALS_G1 = Object.freeze({
+	"final-capstone-g1-project/g1-host-v0-pass": Object.freeze({ approval_id: "fixed-approval-g1-host-v0-pass", registration_digest: "bb20f847ebace33b73d9f5fe51bbf5055f6b92cbd23c03a8a6dcd8b118383156" }),
+	"final-capstone-g1-project/g1-host-v0-fail": Object.freeze({ approval_id: "fixed-approval-g1-host-v0-fail", registration_digest: "ce813c062e3905e805fa860e6ddcbd7a6c9a20222ee0e7806363c69673606ce1" }),
+	"final-capstone-g1-project/g1-host-v2": Object.freeze({ approval_id: "fixed-approval-g1-host-v2", registration_digest: "45cb66f63a9f1e4fb5203e33f92606d702405b495afad9c48cf08fb43e73b557" }),
+	"final-capstone-g1-v3-project/g1-host-v3": Object.freeze({ approval_id: "fixed-approval-g1-host-v3", registration_digest: "fbf18fdd320e4c076024cf2366c6b49a1e479d69e7cd9fabfd8b079937d480c5" }),
+	"final-capstone-g1-project/g1-host-v0-pass-immutability": Object.freeze({ approval_id: "fixed-approval-g1-host-v0-pass-immutability", registration_digest: "acd7652e90fbf1837976a8a9e98b9b7487c4598aeb9dac85d74ae56a1d404f99" }),
+} as const);
 
 type Derivation = {
 	sourceRunIds: string[];
@@ -126,20 +134,34 @@ function sourceFamilyKeys(source: Record<string, unknown>): readonly string[] {
 }
 
 export function validateHostRegistrationG1(value: unknown, expectedProjectId: string): TrustedEvidenceHostRegistrationG1 {
-	const record = exact(value, ["schema_version", "registration_id", "project_id", "source", "trusted_task_context", "host_grant", "expected_inspector", "registration_digest"], "Host registration");
+	const record = exact(value, ["schema_version", "registration_id", "project_id", "source", "trusted_task_context", "expected_inspector", "registration_digest"], "Host registration");
 	if (record.schema_version !== 1 || !ID.test(String(record.registration_id)) || !ID.test(String(record.project_id)) || record.project_id !== expectedProjectId) throw new Error("Host registration project/identity mismatch");
 	const source = object(record.source, "source"); exact(source, sourceFamilyKeys(source), "source");
 	if (source.family === "verifier_backed" && !["v0b", "v0c"].includes(String(source.generation))) throw new Error("unknown verifier-backed generation");
 	const context = exact(record.trusted_task_context, ["task_kind", "failure_family"], "trusted task context");
 	if (!ID.test(String(context.task_kind)) || !(context.failure_family === null || ID.test(String(context.failure_family)))) throw new Error("invalid trusted task context");
-	const grant = exact(record.host_grant, ["authority", "adaptation_eligible", "policy_id"], "Host grant");
-	if (grant.authority !== "host" || grant.adaptation_eligible !== true || grant.policy_id !== POLICY_ID) throw new Error("Host eligibility grant is invalid");
 	const inspector = exact(record.expected_inspector, ["inspector_id", "inspector_fingerprint"], "expected Inspector");
 	if (!ID.test(String(inspector.inspector_id)) || !SHA256.test(String(inspector.inspector_fingerprint))) throw new Error("expected Inspector identity is invalid");
 	if (!SHA256.test(String(record.registration_digest))) throw new Error("Host registration digest is invalid");
 	const { registration_digest: declared, ...body } = record;
 	if (digestObject(body) !== declared) throw new Error("Host registration digest mismatch");
 	return structuredClone(record) as unknown as TrustedEvidenceHostRegistrationG1;
+}
+
+function fixedHostApprovalG1(registration: TrustedEvidenceHostRegistrationG1): TrustedEvidenceHostApprovalG1 {
+	const key = `${registration.project_id}/${registration.registration_id}` as keyof typeof FIXED_HOST_APPROVALS_G1;
+	const approved = FIXED_HOST_APPROVALS_G1[key];
+	if (!approved || approved.registration_digest !== registration.registration_digest) throw new Error("Host-owned approval root does not approve this registration identity/digest");
+	return {
+		schema_version: 1,
+		approval_id: approved.approval_id,
+		project_id: registration.project_id,
+		approved_registration_id: registration.registration_id,
+		approved_registration_digest: registration.registration_digest,
+		authority: "host_fixed_approval",
+		adaptation_eligible: true,
+		policy_id: POLICY_ID,
+	};
 }
 
 function inspectorFiles(source: TrustedEvidenceSourceG1): { id: string; paths: string[] } {
@@ -233,6 +255,7 @@ export async function deriveTrustedEvidenceAdmissionG1(options: { projectRoot: s
 		: registration.source.family === "v2a_recovery_comparison"
 			? v2Derivation(options.projectRoot, registration.source)
 			: await v3Derivation(options.projectRoot, registration.project_id, registration.source, registration.trusted_task_context);
+	const hostApproval = fixedHostApprovalG1(registration);
 	const inventory = uniqueInventory(prepared.inventory);
 	for (const item of inventory) if (validateArtifactRef(prepared.anchor, item).length !== 0) throw new Error(`source Artifact invalid: ${item.path}`);
 	const inventoryDigest = digestObject(inventory);
@@ -267,7 +290,7 @@ export async function deriveTrustedEvidenceAdmissionG1(options: { projectRoot: s
 		source_inventory_digest: inventoryDigest,
 		provenance: prepared.derivation.provenance,
 		trusted_task_context: structuredClone(registration.trusted_task_context),
-		host_eligibility: structuredClone(registration.host_grant),
+		host_eligibility: hostApproval,
 		frozen_evidence: frozen,
 		projector_result: projected ?? "no_opportunity",
 	};

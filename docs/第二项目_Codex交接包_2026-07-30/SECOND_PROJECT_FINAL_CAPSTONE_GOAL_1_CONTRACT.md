@@ -1,14 +1,14 @@
 # Final Capstone Goal 1 Contract — Trusted Evidence Admission
 
 ```yaml
-status: frozen_main_draft_not_activated
+status: closed_accepted
 goal_id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
 parent_version: SECOND_PROJECT_FINAL_CAPSTONE
 planning_source_commit: 4c4d2f3f397be7784700a2323c2afeaecbad03f0
 planning_source_tree: f21b32938beaf638a68749aff28967d79aaa34a0
-implementation_owner: future_fresh_top_level_goal_1_working_session
+implementation_owner: completed_goal_1_working_session
 main_owner: final_capstone_main_session
-implementation_authority: not_granted
+implementation_authority: consumed_completed
 credential_reads_authorized: 0
 external_network_authorized: false
 external_provider_or_model_calls_authorized: 0

@@ -1,14 +1,14 @@
 # SECOND_PROJECT_FINAL_CAPSTONE Version Charter
 
 ```yaml
-status: frozen_main_draft_awaiting_user_acceptance
+status: accepted_active
 version_id: SECOND_PROJECT_FINAL_CAPSTONE
 date: 2026-08-13
 planning_source_commit: 4c4d2f3f397be7784700a2323c2afeaecbad03f0
 planning_source_tree: f21b32938beaf638a68749aff28967d79aaa34a0
 decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
 active_goal: null
-implementation_authority: not_granted
+implementation_authority: goal_1_consumed_goal_2_requires_detailed_contract
 credential_reads_authorized: 0
 external_network_authorized: false
 external_provider_or_model_calls_authorized: 0
@@ -24,9 +24,10 @@ development sequence. Repository source, tests, immutable evidence and accepted 
 remain the authority for implementation facts. Where the original Gap Review and the
 Amendment differ, the Amendment controls.
 
-This Charter does not activate Goal 1, authorize implementation, authorize a Git commit,
-or authorize real access. It becomes the accepted Final Capstone control document only
-after explicit User acceptance and a Main-owned Control Baseline is created.
+This Charter was accepted through the Final Capstone Main handoff. Goal 1 has since been
+implemented and closed under its detailed Contract. Goal 2 and Goal 3 remain separately
+bounded by their detailed Contracts; real access remains unauthorized until an applicable
+later Contract explicitly grants it.
 
 ## 2. Mission and Version Question
 
@@ -182,12 +183,12 @@ Recovery, Experience system, autonomous improvement cycle or new Agent platform 
 ## 8. Current control point
 
 ```yaml
-charter_acceptance: pending_user
-goal_1_contract: frozen_main_draft_not_activated
+charter_acceptance: accepted_by_final_capstone_handoff
+goal_1_contract: closed_accepted
 goal_1_source_readiness: passed
-goal_1_working_session: not_started
-goal_2_detailed_contract: forbidden_until_goal_1_main_acceptance
+goal_1_working_session: completed
+goal_2_detailed_contract: authorized_after_goal_1_main_acceptance
 goal_3_detailed_contract: forbidden_until_goal_2_main_acceptance
 real_access: not_authorized
-next_action: user_reviews_charter_and_goal_1_contract_then_explicitly_authorizes_control_baseline_and_working_session
+next_action: main_freezes_goal_2_detailed_contract_without_real_access
 ```

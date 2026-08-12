@@ -54,10 +54,22 @@ function hostRegistration(registrationId: string, projectId: string, source: Tru
 		project_id: projectId,
 		source,
 		trusted_task_context: { task_kind: taskKind, failure_family: failureFamily },
-		host_grant: { authority: "host", adaptation_eligible: true, policy_id: "final-capstone-g1-trusted-evidence-admission-v1" },
 		expected_inspector: inspectorIdentityG1(PROJECT_ROOT, source),
 	};
 	return { ...body, registration_digest: digestObject(body) };
+}
+
+function plainHostAuthorization(registration: TrustedEvidenceHostRegistrationG1, authorizationId = `authorization-${registration.registration_id}`) {
+	return {
+		schema_version: 1,
+		authorization_id: authorizationId,
+		project_id: registration.project_id,
+		approved_registration_id: registration.registration_id,
+		approved_registration_digest: registration.registration_digest,
+		authority: "host_control_plane",
+		adaptation_eligible: true,
+		policy_id: "final-capstone-g1-trusted-evidence-admission-v1",
+	};
 }
 
 function writeRegistration(value: TrustedEvidenceHostRegistrationG1): string {
@@ -68,6 +80,10 @@ function writeRegistration(value: TrustedEvidenceHostRegistrationG1): string {
 
 function cloneRegistration(value: TrustedEvidenceHostRegistrationG1, id: string, source = value.source): TrustedEvidenceHostRegistrationG1 {
 	return hostRegistration(id, value.project_id, source, value.trusted_task_context.task_kind, value.trusted_task_context.failure_family);
+}
+
+function deriveRegistered(registration: TrustedEvidenceHostRegistrationG1, expectedProjectId = registration.project_id) {
+	return deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId, registration });
 }
 
 function verifierSource(root: string, verifierId: string, target: "subject" | "protected"): string {
@@ -176,14 +192,18 @@ test.before(async () => {
 	cpSync(resolve(HISTORICAL_ROOT, `.runs/v0-c/runs/${FAIL_RUN_ID}`), failTarget, { recursive: true });
 	const passSource: TrustedEvidenceSourceG1 = { family: "verifier_backed", generation: "v0b", source_project_root: rel(v0Project), run_id: PASS_RUN_ID };
 	const failSource: TrustedEvidenceSourceG1 = { family: "verifier_backed", generation: "v0c", source_project_root: rel(v0Project), run_id: FAIL_RUN_ID };
-	passRegistration = writeRegistration(hostRegistration("g1-host-v0-pass", PROJECT_ID, passSource, "typescript-maintenance", null));
-	failRegistration = writeRegistration(hostRegistration("g1-host-v0-fail", PROJECT_ID, failSource, "typescript-maintenance", "verifier-failure"));
+	const pass = hostRegistration("g1-host-v0-pass", PROJECT_ID, passSource, "typescript-maintenance", null);
+	passRegistration = writeRegistration(pass);
+	const fail = hostRegistration("g1-host-v0-fail", PROJECT_ID, failSource, "typescript-maintenance", "verifier-failure");
+	failRegistration = writeRegistration(fail);
 	const v2Run = resolve(G1_ROOT, "sources/v2-recovery");
 	await executeRunV2A({ projectRoot: PROJECT_ROOT, runRoot: v2Run, runId: "g1-v2-recovery-comparison", primaryMode: "fail", candidateModes: ["pass", "pass"] });
 	const v2Source: TrustedEvidenceSourceG1 = { family: "v2a_recovery_comparison", run_root: rel(v2Run) };
-	v2Registration = writeRegistration(hostRegistration("g1-host-v2", PROJECT_ID, v2Source, "typescript-maintenance", "recovery-comparison"));
+	const v2 = hostRegistration("g1-host-v2", PROJECT_ID, v2Source, "typescript-maintenance", "recovery-comparison");
+	v2Registration = writeRegistration(v2);
 	const v3Source = await generateV3Bundle("v3-bound", true);
-	v3Registration = writeRegistration(hostRegistration("g1-host-v3", V3_PROJECT_ID, v3Source, "typescript-maintenance", "verifier-failure"));
+	const v3 = hostRegistration("g1-host-v3", V3_PROJECT_ID, v3Source, "typescript-maintenance", "verifier-failure");
+	v3Registration = writeRegistration(v3);
 	v3UnboundSource = await generateV3Bundle("v3-unbound", false);
 });
 
@@ -196,6 +216,16 @@ test("verifier-backed PASS admits deterministically and valid non-trigger eviden
 	assert.equal(first.record.projector_result, "no_opportunity");
 	assert.equal(second.idempotent_existing, true);
 	assert.equal(second.record.admission_digest, first.record.admission_digest);
+	assert.deepEqual(first.record.host_eligibility, {
+		schema_version: 1,
+		approval_id: "fixed-approval-g1-host-v0-pass",
+		project_id: PROJECT_ID,
+		approved_registration_id: "g1-host-v0-pass",
+		approved_registration_digest: "bb20f847ebace33b73d9f5fe51bbf5055f6b92cbd23c03a8a6dcd8b118383156",
+		authority: "host_fixed_approval",
+		adaptation_eligible: true,
+		policy_id: "final-capstone-g1-trusted-evidence-admission-v1",
+	});
 });
 
 test("verifier-backed FAIL admits and unchanged V3 projector produces hard_failure Opportunity", async () => {
@@ -284,37 +314,88 @@ test("fail-closed source integrity matrix rejects tamper, Verifier loss, nonterm
 		const cloneRoot = resolve(G1_ROOT, `negative/${id}`); cpSync(sourceProject, cloneRoot, { recursive: true });
 		const path = resolve(cloneRoot, `.runs/v0-b/runs/${PASS_RUN_ID}`, item.path); writeFileSync(path, item.mutate(readFileSync(path, "utf8")));
 		const source: TrustedEvidenceSourceG1 = { family: "verifier_backed", generation: "v0b", source_project_root: rel(cloneRoot), run_id: PASS_RUN_ID };
-		await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: hostRegistration(id, PROJECT_ID, source, "typescript-maintenance", null) }));
+		await assert.rejects(deriveRegistered(hostRegistration(id, PROJECT_ID, source, "typescript-maintenance", null)));
 	});
 	await t.test("missing or invalid Verifier", async () => {
 		const cloneRoot = resolve(G1_ROOT, "negative/missing-verifier"); cpSync(sourceProject, cloneRoot, { recursive: true });
 		rmSync(resolve(cloneRoot, `.runs/v0-b/runs/${PASS_RUN_ID}/evidence/verifier-result.json`));
 		const source: TrustedEvidenceSourceG1 = { family: "verifier_backed", generation: "v0b", source_project_root: rel(cloneRoot), run_id: PASS_RUN_ID };
-		await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: hostRegistration("negative-missing-verifier", PROJECT_ID, source, "typescript-maintenance", null) }));
+		await assert.rejects(deriveRegistered(hostRegistration("negative-missing-verifier", PROJECT_ID, source, "typescript-maintenance", null)));
 	});
 	await t.test("uncommitted or nonterminal", async () => {
 		const cloneRoot = resolve(G1_ROOT, "negative/nonterminal"); cpSync(sourceProject, cloneRoot, { recursive: true });
 		rmSync(resolve(cloneRoot, `.runs/v0-b/runs/${PASS_RUN_ID}/terminal.json`));
 		const source: TrustedEvidenceSourceG1 = { family: "verifier_backed", generation: "v0b", source_project_root: rel(cloneRoot), run_id: PASS_RUN_ID };
-		await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: hostRegistration("negative-nonterminal", PROJECT_ID, source, "typescript-maintenance", null) }));
+		await assert.rejects(deriveRegistered(hostRegistration("negative-nonterminal", PROJECT_ID, source, "typescript-maintenance", null)));
 	});
 });
 
-test("fail-closed authority matrix rejects cross-project, escape, stale Inspector, unknown family/key, and eligibility escalation", async () => {
+test("fixed Host approval root rejects changed identity, caller grants, and caller-selected registration", async () => {
+	const base: TrustedEvidenceHostRegistrationG1 = JSON.parse(readFileSync(resolve(PROJECT_ROOT, passRegistration), "utf8"));
+	const cloned = cloneRegistration(base, "forged-cloned-registration");
+	await assert.rejects(
+		deriveRegistered(cloned),
+		/Host-owned approval root does not approve this registration identity\/digest/,
+	);
+	const forgedBody = {
+		...structuredClone(base),
+		registration_id: "forged-self-authorized-registration",
+		host_grant: { authority: "host", adaptation_eligible: true, policy_id: "final-capstone-g1-trusted-evidence-admission-v1" },
+	};
+	delete (forgedBody as Partial<TrustedEvidenceHostRegistrationG1>).registration_digest;
+	const forged = { ...forgedBody, registration_digest: digestObject(forgedBody) } as unknown as TrustedEvidenceHostRegistrationG1;
+	await assert.rejects(
+		deriveRegistered(forged),
+		/exact-key/,
+	);
+	const clonedPath = writeRegistration(cloned);
+	await assert.rejects(
+		admitTrustedEvidenceG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: clonedPath, expectedProjectId: PROJECT_ID }),
+		/Host-owned approval root does not approve this registration identity\/digest/,
+	);
+	const reopened = await inspectTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: clonedPath, admissionId: passAdmissionId, expectedProjectId: PROJECT_ID });
+	assert.equal(reopened.integrity_valid, false);
+	assert.match(reopened.errors.join("; "), /Host-owned approval root does not approve this registration identity\/digest/);
+});
+
+test("combined registration and matching plain authorization forgery cannot cross any exported boundary", async (t) => {
+	const base: TrustedEvidenceHostRegistrationG1 = JSON.parse(readFileSync(resolve(PROJECT_ROOT, passRegistration), "utf8"));
+	const forged = cloneRegistration(base, "main-forged-registration-and-authorization");
+	const forgedAuthorization = plainHostAuthorization(forged, "main-forged-host-authorization");
+	const forgedPath = writeRegistration(forged);
+	await t.test("direct derivation", async () => {
+		const options = { projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: forged, hostAuthorization: forgedAuthorization };
+		await assert.rejects(
+			deriveTrustedEvidenceAdmissionG1(options),
+			/Host-owned approval/,
+		);
+	});
+	await t.test("file admission", async () => {
+		const options = { projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: forgedPath, hostAuthorization: forgedAuthorization, expectedProjectId: PROJECT_ID };
+		await assert.rejects(
+			admitTrustedEvidenceG1(options),
+			/Host-owned approval/,
+		);
+	});
+	await t.test("reopen inspection", async () => {
+		const options = { projectRoot: PROJECT_ROOT, admissionRoot: rel(ADMISSION_ROOT), registrationPath: forgedPath, hostAuthorization: forgedAuthorization, admissionId: passAdmissionId, expectedProjectId: PROJECT_ID };
+		const inspected = await inspectTrustedEvidenceAdmissionG1(options);
+		assert.equal(inspected.integrity_valid, false);
+		assert.match(inspected.errors.join("; "), /Host-owned approval/);
+	});
+});
+
+test("fail-closed registration authority matrix rejects cross-project, escape, stale Inspector, and unknown family/key", async () => {
 	const base: TrustedEvidenceHostRegistrationG1 = JSON.parse(readFileSync(resolve(PROJECT_ROOT, passRegistration), "utf8"));
 	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: "cross-project", registration: base }), /project/);
 	const escape = cloneRegistration(base, "negative-escape", { ...(base.source as Extract<TrustedEvidenceSourceG1, { family: "verifier_backed" }>), source_project_root: ".." });
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: escape }), /project-relative|escape/);
+	await assert.rejects(deriveRegistered(escape), /project-relative|escape/);
 	const stale = structuredClone(base); stale.expected_inspector.inspector_fingerprint = "0".repeat(64); const { registration_digest: _stale, ...staleBody } = stale; stale.registration_digest = digestObject(staleBody);
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: stale }), /stale Inspector/);
+	await assert.rejects(deriveRegistered(stale), /stale Inspector/);
 	const unknownFamily = { ...structuredClone(base), source: { family: "v36_daily", settled: true, trace: {}, change_set: {}, adaptation_eligible: true } } as unknown as TrustedEvidenceHostRegistrationG1; const { registration_digest: _unknown, ...unknownBody } = unknownFamily; unknownFamily.registration_digest = digestObject(unknownBody);
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: unknownFamily }), /unknown source family/);
+	await assert.rejects(deriveRegistered(unknownFamily), /unknown source family/);
 	const unknownKey = { ...structuredClone(base), caller_validity: true }; const { registration_digest: _key, ...keyBody } = unknownKey as TrustedEvidenceHostRegistrationG1 & { caller_validity: boolean }; unknownKey.registration_digest = digestObject(keyBody);
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: unknownKey }), /exact-key/);
-	for (const authority of ["agent", "browser", "source_artifact"] as const) {
-		const escalated = structuredClone(base) as TrustedEvidenceHostRegistrationG1; (escalated.host_grant as { authority: string }).authority = authority; const { registration_digest: _grant, ...grantBody } = escalated; escalated.registration_digest = digestObject(grantBody);
-		await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: escalated }), /Host eligibility/);
-	}
+	await assert.rejects(deriveRegistered(unknownKey), /exact-key/);
 });
 
 test("fail-closed filesystem matrix rejects junction/reparse and prohibited hardlink", async () => {
@@ -324,11 +405,11 @@ test("fail-closed filesystem matrix rejects junction/reparse and prohibited hard
 	const junctionProject = resolve(G1_ROOT, "negative/junction-project"); mkdirSync(junctionProject, { recursive: true });
 	symlinkSync(resolve(sourceProject, ".runs"), resolve(junctionProject, ".runs"), "junction");
 	const junctionSource: TrustedEvidenceSourceG1 = { ...source, source_project_root: rel(junctionProject) };
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: hostRegistration("negative-junction", PROJECT_ID, junctionSource, "typescript-maintenance", null) }), /symlink|junction/);
+	await assert.rejects(deriveRegistered(hostRegistration("negative-junction", PROJECT_ID, junctionSource, "typescript-maintenance", null)), /symlink|junction/);
 	const hardlinkProject = resolve(G1_ROOT, "negative/hardlink-project"); cpSync(sourceProject, hardlinkProject, { recursive: true });
 	const terminal = resolve(hardlinkProject, `.runs/v0-b/runs/${PASS_RUN_ID}/terminal.json`); linkSync(terminal, resolve(hardlinkProject, `.runs/v0-b/runs/${PASS_RUN_ID}/terminal-hardlink.json`));
 	const hardlinkSource: TrustedEvidenceSourceG1 = { ...source, source_project_root: rel(hardlinkProject) };
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: PROJECT_ID, registration: hostRegistration("negative-hardlink", PROJECT_ID, hardlinkSource, "typescript-maintenance", null) }), /hardlink/);
+	await assert.rejects(deriveRegistered(hostRegistration("negative-hardlink", PROJECT_ID, hardlinkSource, "typescript-maintenance", null)), /hardlink/);
 });
 
 test("V3 inspected version-0 Run with empty binding and null lineage is not a bound-State follow-up", async () => {
@@ -339,7 +420,7 @@ test("V3 inspected version-0 Run with empty binding and null lineage is not a bo
 	assert.deepEqual(binding.bound_entries, []);
 	assert.equal(binding.lineage, null);
 	await assert.rejects(
-		deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: V3_PROJECT_ID, registration: hostRegistration("negative-v3-unbound", V3_PROJECT_ID, source, "typescript-maintenance", null) }),
+		deriveRegistered(hostRegistration("negative-v3-unbound", V3_PROJECT_ID, source, "typescript-maintenance", null)),
 		/requires a promoted non-base State, applicable bound entry, and promotion lineage/,
 	);
 });
@@ -348,9 +429,9 @@ test("V3 missing or ambiguous State identity fails closed", async () => {
 	const base: TrustedEvidenceHostRegistrationG1 = JSON.parse(readFileSync(resolve(PROJECT_ROOT, v3Registration), "utf8"));
 	const source = base.source as Extract<TrustedEvidenceSourceG1, { family: "v3g3_bound_state_followup" }>;
 	const missing = cloneRegistration(base, "negative-v3-missing-state", { ...source, state_root: "missing-state" });
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: V3_PROJECT_ID, registration: missing }), /missing/);
+	await assert.rejects(deriveRegistered(missing), /missing/);
 	const ambiguous = structuredClone(base); (ambiguous as unknown as Record<string, unknown>).state_version = 0; const { registration_digest: _ambiguous, ...ambiguousBody } = ambiguous as TrustedEvidenceHostRegistrationG1 & { state_version: number }; ambiguous.registration_digest = digestObject(ambiguousBody);
-	await assert.rejects(deriveTrustedEvidenceAdmissionG1({ projectRoot: PROJECT_ROOT, expectedProjectId: V3_PROJECT_ID, registration: ambiguous }), /exact-key/);
+	await assert.rejects(deriveRegistered(ambiguous), /exact-key/);
 });
 
 test("stored admission and embedded FrozenEvidence digest tamper are rejected", async () => {

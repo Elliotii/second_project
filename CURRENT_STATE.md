@@ -1,40 +1,60 @@
 # Current State
 
-> Updated: 2026-08-12
+> Updated: 2026-08-13
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_6_completed
-  status: V3_6_CLOSED_ACCEPTED
+  phase: final_capstone_goal_1_closed
+  status: FINAL_CAPSTONE_ACTIVE_G1_CLOSED
 
 active_goal: null
 
 current_goal:
   id: null
-  status: no_active_goal_campaign_closed
+  status: final_capstone_goal_1_closed_goal_2_contract_drafting_next
 
 last_executed_goal:
-  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: closed_completed
-  disposition: PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION
-  closeout: docs/reports/V3_6_ENGINEERING_STABILIZATION_CLOSEOUT.md
+  id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  status: closed_accepted
+  disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  closeout: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: closed_completed
-  disposition: PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION
-  closeout: docs/reports/V3_6_ENGINEERING_STABILIZATION_CLOSEOUT.md
+  id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  status: closed_accepted
+  disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  closeout: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: closed_completed
-  disposition: PASS_ENGINEERING_STABILIZATION_WITH_KNOWN_BOUNDED_WORKLOAD_LIMITATION
+  id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  status: closed_accepted
+  disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
 
 next_goal:
-  id: null
-  status: awaiting_user_direction
-  note: no_V4_new_version_human_UI_UX_polish_or_budget_change_authorized
+  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  status: contract_drafting_authorized
+  note: goal_2_implementation_requires_detailed_contract_and_preserves_zero_real_access
+
+final_capstone:
+  version_id: SECOND_PROJECT_FINAL_CAPSTONE
+  status: active_goal_1_closed
+  development_decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
+  charter: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
+  gap_review: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
+  goal_amendment: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW_GOAL_AMENDMENT.md
+  goal_1_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_CONTRACT.md
+  goal_1_status: closed_accepted
+  goal_1_disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  goal_1_rejected_audit_candidate_commit: 0c1c91efcbed3f0db4a3735de1996deff99f9bac
+  goal_1_accepted_source_identity: file_sha256_inventory_in_closeout_no_corrected_commit_authorized
+  goal_1_closeout: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
+  goal_1_tests: 49_passed_0_failed_plus_strict_typescript
+  goal_1_real_access: credentials_0_network_0_provider_0_model_0
+  goal_1_fresh_post_correction_reaudit: not_run_main_acceptance_from_preserved_hit_regression_under_replacement_handoff
+  goal_2_status: contract_drafting_authorized_not_implemented
+  goal_3_status: blocked_until_goal_2_closeout
+  stop_core_feature_development: false_pending_goals_2_and_3
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
@@ -2217,6 +2237,14 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
+  - docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW_GOAL_AMENDMENT.md
+  - docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
+  - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_CONTRACT.md
+  - docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
+  - docs/reports/FINAL_CAPSTONE_G1_IMPLEMENTATION_REPORT.md
+  - docs/reports/FINAL_CAPSTONE_G1_POST_AUDIT_CORRECTION_MAIN_REREVIEW.md
+  - docs/reports/FINAL_CAPSTONE_G1_FOCUSED_AUDIT_MAIN_REVIEW.md
   - docs/第二项目_Codex交接包_2026-07-30/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_PLAN.md
   - docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
   - docs/reports/V3_6_ENGINEERING_STABILIZATION_STATUS.md
@@ -2416,15 +2444,14 @@ historical_checkpoints:
   - next_step_create_and_verify_Goal_2_5_control_baseline_then_start_new_top_level_zero_access_session
 
 next_checkpoint:
-  - V3_6_closed_accepted
-  - active_goal_null
-  - preserve_V2_real_negative_incomplete_and_V3_5_no_skill_advantage_facts
-  - preserve_V3_6_single_real_fixed_case_and_non_general_security_limits
-  - no_V4_or_further_real_access_authorized
+  - Final_Capstone_Goal_1_closed_accepted
+  - Goal_2_detailed_Contract_is_next
+  - keep_ordinary_failure_distinct_from_State_attributable_regression
+  - keep_new_evidence_distinct_from_direct_supersede
+  - no_real_access_or_Goal_3_authority_yet
 
 open_user_decisions:
-  - none_for_V3_6_closeout
-  - any_V4_or_later_work_requires_new_user_authorized_design_review
+  - none_at_Goal_1_closeout
 ```
 
 ## Current Constraints

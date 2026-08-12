@@ -4,54 +4,61 @@
 
 `PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION`
 
-This is a Closeout draft and recommendation only. Final Goal acceptance, Candidate commit creation, control-state changes, audit disposition, and any Goal 2 authorization remain exclusively with the Main Session and user.
+This is a hit-only correction draft, not acceptance. Goal 1 remains active and unaccepted; Goal 2 remains unauthorized. Main re-review and any Main-directed fresh re-audit remain separate control points.
 
-This revision incorporates the bounded corrections for Main Review findings `G1-MAIN-P1-001` and `G1-MAIN-P1-002`; Main re-review remains required.
+## Finding disposition
+
+| Finding | Evidence | Draft result |
+|---|---|---|
+| `G1-AUDIT-P1-001` combined registration plus matching authorization forgery | Required regression first failed derivation/admission/reopen; final suite rejects all three at the private fixed Host approval root | PASS recommendation |
+| `G1-MAIN-P1-001` unbound V3 base State | Promoted version-1 positive remains exact; version-0/empty/null negative still rejects | remains closed |
+| `G1-MAIN-P1-002` V2 Candidate Path/Run identity | One true Run, two separate Candidate Paths, comparison omitted | remains closed |
 
 ## Contract acceptance mapping
 
-| Contract acceptance criterion | Evidence | Draft result |
+| Criterion | Evidence | Draft result |
 |---|---|---|
-| Exactly three supported source families | `TrustedEvidenceSourceG1`; family matrix and focused positives | PASS |
-| Verifier-backed PASS and FAIL map with correct Inspector/Outcome/Verifier lineage | V0-B PASS and V0-C agent-attributed FAIL admissions; complete raw inventories | PASS |
-| V2 Recovery/Comparison preserves one real Run plus separate Candidate Path identities, hard gates, common Verifier, Seed/group, and Selection | `admission-447cf2f6a2e41f894eae3d9a4c479120`; exactly one `source_run_id`; both Candidate Paths only in provenance; schema-1 comparison omitted | PASS |
-| V3 Goal 3 follow-up preserves exact promoted State/version/decision, applicable binding, promotion lineage, runtime path and Case Authority | `admission-adf99f6d0bf2aa5cef26d5bb833b5664`; State version 1; non-empty prompt binding; non-null recomputable promotion/admission lineage | PASS |
-| Initialized/unbound base State cannot masquerade as bound-State follow-up | Inspector-valid version 0 / empty binding / null lineage receives explicit adapter rejection | PASS |
-| Existing V3 hard-failure projection produces Opportunity | V0-C FAIL projects `opp-ea41caf68ee9f20fb7e4c7c1c5892c0c` with trigger `hard_failure` | PASS |
-| Valid non-trigger Evidence remains admitted with `no_opportunity` | V0-B PASS, V2 selected efficient/equal success, and V3 pass | PASS |
-| Same input has stable identity and repeat write is idempotent/write-once-equivalent | repeated V0-B admission returns identical ID/digest and `idempotent_existing: true` | PASS |
-| Inspector reopens and recomputes after process restart | fresh Node process validates stored V0-B record; in-process loop validates all four positives | PASS |
-| Fail closed for artifact, terminal, Verifier, lineage, attribution, State, project, path, link/hardlink, fingerprint, family/key, and digest failures | focused negative matrix; 16/16 focused tests pass | PASS |
-| Agent/browser/source/caller cannot self-grant eligibility | exact Host registration and explicit authority escalation negatives | PASS |
-| Ordinary V3.6 daily evidence remains ineligible despite settled/Trace/ChangeSet claims | `v36_daily` unknown-family negative | PASS |
-| Admission writes no Candidate, State, pointer, Workspace, or Source | explicit pre/post tree-digest immutability test | PASS |
-| Required accepted-core regressions remain green | V3-G1 13/13; V3-G2 6/6; V3-G3 8/8 | PASS |
-| TypeScript strict check | existing TypeScript 5.9.3 entry point via Node, exit 0 | PASS |
-| Zero Credential/network/Provider/model access | counters all 0 | PASS |
-| Pi remains pinned and clean | HEAD `027a5847…`; tree `0aa996c1…`; clean status | PASS |
-| Allowed delta only | four new source/test files, two required reports, ignored Goal 1 evidence; no accepted-core edits | PASS |
+| Host approval cannot be minted from caller objects | Exported APIs accept no approval object; private frozen root alone grants approval | PASS |
+| Direct derivation has no combined-mint route | matching forged registration + authorization rejects with fixed-root error | PASS |
+| Admission and reopen use same trust root | both route through the same derivation; combined forgery rejects at each | PASS |
+| Exactly three supported families | exact source union and positive family suite | PASS |
+| V0 Verifier/Outcome lineage | V0-B PASS and V0-C agent FAIL immutable admissions | PASS |
+| V2 Run and Candidate Path identities truthful | `admission-2c6d5d08d67cdbd065505880d84adffc`; comparison omitted | PASS |
+| V3 exact promoted State/binding/lineage/Case Authority | `admission-62f2896d6c590fc257804b32997725c4`; version 1 and one prompt binding | PASS |
+| Unbound base State fails closed | exact explicit version-0 error retained | PASS |
+| Existing projector unchanged | V0-C produces hard-failure Opportunity; valid non-triggers yield `no_opportunity` | PASS |
+| Deterministic/write-once and reopen | repeated V0-B identity is idempotent; all positives reopen, including fresh process | PASS |
+| Integrity/family/path/link/hardlink/tamper failures | focused negative matrix | PASS |
+| No Candidate/State/pointer/Workspace/Source mutation | explicit before/after tree digests | PASS |
+| Accepted-core regressions | V3-G1 13/13; V3-G2 6/6; V3-G3 8/8 | PASS |
+| Strict typecheck | exit 0 | PASS |
+| Zero external access | all counters 0 | PASS |
+| Allowed delta/Git boundary | five allowed tracked paths; staging and commit absent | PASS |
 
-## Verification summary
+## Red-to-green verification
 
-- Typecheck: exit 0.
-- Goal 1 focused suite: 17 passed, 0 failed.
-- V3-G1 regression: 13 passed, 0 failed.
-- V3-G2 regression: 6 passed, 0 failed.
-- V3-G3 regression: 8 passed, 0 failed.
-- Aggregate: 44 passed, 0 failed.
+- Required pre-implementation red run: exit 1; 18 passed and 4 failed, including all three combined-forgery boundary subtests.
+- Final TypeScript check: exit 0.
+- Final Goal 1 suite: 22 passed, 0 failed, exit 0.
+- V3-G1: 13 passed, 0 failed, exit 0.
+- V3-G2: 6 passed, 0 failed, exit 0.
+- V3-G3 combined: 8 passed, 0 failed, exit 0.
+- Final aggregate: 49 passed, 0 failed, plus typecheck.
+- Credential reads, network calls, external Provider/model calls, real-model calls, and dependency installations: all 0.
 - Git staging/commit: not performed.
 - `CURRENT_STATE.md`: not modified.
 - Goal 2: not entered.
 
-## Remaining Main decisions
+## Key corrected identities
 
-1. Review the new admission, Inspector, and test symbols against the frozen Contract.
-2. Decide whether to freeze a Candidate commit and dispatch a fresh focused independent Audit Session for this evidence/authority boundary.
-3. Accept the Goal only after Main’s review and any required audit/correction loop.
-4. Keep Goal 2 unauthorized until Goal 1 is formally accepted and its next Goal Contract is separately reviewed.
+- V2 admission/digest: `admission-2c6d5d08d67cdbd065505880d84adffc` / `e8ddf2a7b2233aed9f01aeabe30cde591e90fe84de52d3c2f70ac5c3dcc8e2a6`.
+- V2 Run: `g1-v2-recovery-comparison`; Candidate Paths `...candidate-a` and `...candidate-b`; selected `...candidate-b`; schema-1 comparison omitted.
+- V3 admission/digest: `admission-62f2896d6c590fc257804b32997725c4` / `bf475c53e8b8c3b4d77d03595e92e23bc89c26258731606b91cd50a3de23f0fb`.
+- V3 State version/digest: `1` / `8c26430e7b17adfec0e59f329eb371b75cb97965f31aa16b5b885d0dbe03790a`.
+- V3 binding/Case Authority digests: `f1c254ae96775c3435b7ee33c701f5faff0c4766e120dee0544d73f1628e88ca` / `244b2174dd38c604ca7056ff1bd5959863be3ed1c0b7ecf892a1c9d3029ea259`.
 
-## Claim limits
+## Claim limits and next control point
 
-This draft establishes only the minimum trusted admission/provenance boundary. It does not establish State assessment, State-attributable regression, regression-set publication, replacement/supersede rules, promotion, rollback, V3.6 effective binding, statistical recovery superiority, product integration, or a continual-learning loop.
+The trust root is a fixed in-process Host approval list with no runtime enrollment API. It is not cryptographic signing, credentials, an OS authorization layer, or a generic registry. Any future approval addition requires an authorized source change and review.
 
-The report-only `CURRENT_STATE_UPDATE_PROPOSAL` is in `docs/reports/FINAL_CAPSTONE_G1_IMPLEMENTATION_REPORT.md`; it was not applied.
+Main must now perform the hit-focused re-review. Main alone decides Candidate freeze, re-audit, Goal acceptance, and control-state changes. State assessment/publication, replacement, promotion/rollback, V3.6 integration, product surfaces, statistical claims, continual learning, and Goal 2 remain outside authority.

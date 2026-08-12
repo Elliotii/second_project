@@ -2,201 +2,210 @@
 
 ## Disposition
 
-**Recommendation:** `PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION`
+**Working Session recommendation:** `PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION`
 
-This is a Working Session recommendation, not Goal acceptance. No Candidate commit, control-state update, audit acceptance, Goal 2 work, staging, or Git commit was performed.
+This is the hit-only authority-root correction report, not Goal acceptance. Goal 1 remains active and unaccepted; Goal 2 remains unauthorized. No staging, commit, Candidate freeze, audit dispatch, control-state change, or product integration occurred.
 
-## Main Review bounded correction
+## Main hit and required red phase
 
-**Fact:** Main Review disposition `REVISE_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION` identified two correctable semantic identity findings. This report now incorporates the bounded correction:
+**Fact:** Main re-review retained `G1-AUDIT-P1-001`: a caller could clone a registration, change its ID and self-digest, create a second matching plain `hostAuthorization` object, and have both accepted.
 
-- `G1-MAIN-P1-001` closed: V3 admission rejects version 0, empty applicable binding, null promotion lineage, or a runtime path inconsistent with the bound State. The positive source now stages, symmetrically validates, promotes, and binds the admitted prompt State before the Goal 3 follow-up Run.
-- `G1-MAIN-P1-002` closed: V2 `source_run_ids` contains only the single top-level Run ID. Candidate Path IDs and hard gates remain separate admission provenance. Schema-1 `comparison` is omitted because Candidate Paths are not peer Runs.
+Before changing implementation, the focused test was extended with the exact combined forgery and invoked all relevant exported boundaries. The red run was:
 
-Only `workbench/src/refinement/evidence-admission-g1.ts`, `workbench/tests/final-capstone-g1-evidence-admission.test.ts`, and the two Working Session reports changed in this correction. The Goal 1 contract-types and independent Inspector modules were reread and left byte-identical.
+| Command | Exit | Result |
+|---|---:|---|
+| `node --test tests/final-capstone-g1-evidence-admission.test.ts` | 1 | 18 passed, 4 failed |
 
-The correction resumed at the same HEAD/tree/branch with zero tracked and staged delta. Main's two pre-existing correction-control documents were read and left unchanged:
+The parent combined-forgery case and all three boundary subtests failed as intended:
 
-| Correction control document | SHA-256 |
-|---|---|
-| `docs/reports/FINAL_CAPSTONE_G1_MAIN_REVIEW.md` | `1057c8f02465c82700ac2c3b7b641353cac67cdff94c225f9adc29d346487576` |
-| `docs/reports/FINAL_CAPSTONE_G1_BOUNDED_CORRECTION_PROMPT.md` | `8593c7643b091b9619a6bc4764e9052a05a526ce925d20c028f5a4d491e5cda2` |
+- direct derivation: `Missing expected rejection`;
+- file admission: `Missing expected rejection`;
+- reopen inspection: returned only `admission recomputation mismatch`, not an authority-root rejection.
 
-## Gate A — exact control identity
+The regression remains in the final suite as `combined registration and matching plain authorization forgery cannot cross any exported boundary`.
 
-**Fact:** Gate A passed before the first source edit in the sole authoritative worktree `C:\Users\HUAWEI\.codex\worktrees\g25main\project2`.
+## Semantic correction
+
+Registration integrity remains an ordinary self-digest, but approval is no longer accepted from any caller object, boolean, ID, digest, or path.
+
+- `TrustedEvidenceHostAuthorizationG1` and every exported `hostAuthorization` parameter were removed.
+- A module-private, frozen `FIXED_HOST_APPROVALS_G1` is now the bounded Host-owned trust root. It freezes the exact approved project/registration ID/digest tuples and cannot be extended through any exported API.
+- `fixedHostApprovalG1` compares the integrity-validated registration against that fixed root and internally derives the persisted `TrustedEvidenceHostApprovalG1` record.
+- `deriveTrustedEvidenceAdmissionG1` accepts only project root, expected project ID, and registration. A caller cannot submit approval material.
+- `admitTrustedEvidenceG1` accepts only the registration path and fixed request context. The path selects bytes to inspect; it cannot create approval.
+- `inspectTrustedEvidenceAdmissionG1` uses the same derivation and therefore the same fixed root when reopening.
+- Extra caller properties such as a forged matching `hostAuthorization` are inert and cannot affect approval.
+
+The fixed root is deliberately not a generic registry. Changing its approvals requires an authorized source change to the Host boundary itself. Exact replay of an already approved registration remains authorized; changing its project, ID, context, source locator, Inspector identity, or digest does not.
+
+Post-correction reproduction:
+
+```json
+{"boundary":"derive","accepted":false,"error":"Host-owned approval root does not approve this registration identity/digest"}
+{"boundary":"admit","accepted":false,"error":"Host-owned approval root does not approve this registration identity/digest"}
+{"boundary":"reopen","accepted":false,"errors":["Host-owned approval root does not approve this registration identity/digest"]}
+```
+
+No credentials, signing, network access, external dependency, generic registry, plugin system, or product integration was added.
+
+## Starting gate and control identity
 
 | Item | Observed |
 |---|---|
+| Sole worktree | `C:\Users\HUAWEI\.codex\worktrees\g25main\project2` |
 | Branch | `codex/v2-b-bounded-r2` |
-| HEAD | `4c4d2f3f397be7784700a2323c2afeaecbad03f0` |
-| HEAD tree | `f21b32938beaf638a68749aff28967d79aaa34a0` |
-| Tracked delta before implementation | `0` |
-| Staged delta before implementation | `0` |
-| Pre-existing untracked set before implementation | Exactly the five files below |
-| Pinned Pi HEAD | `027a5847901b5dde30270abaa1041046cd2b4b55` |
-| Pinned Pi tree | `0aa996c1d6108d5ffd8ff24ff498d08720283f29` |
-| Pinned Pi status | tracked/staged clean |
-| Node | `v24.14.1` |
-| Local TypeScript | `5.9.3`; SHA-256 `8d5fa5bd883fec0979fc2004f1fe1d99aef40570155d550eadc0b03b55513bf0` |
-| Public emitted Pi resolution | `packages/agent/dist/index.js` (`Agent` exported); `packages/ai/dist/index.js` (45 namespace exports) |
-| Credential reads | `0` |
-| External network calls | `0` |
-| External Provider/model calls | `0` |
-| Real-model calls | `0` |
+| HEAD | `0c1c91efcbed3f0db4a3735de1996deff99f9bac` |
+| HEAD tree | `194a90cac93cd1fe4c398f9db3db1829f0b9196e` |
+| Staged delta | 0 before correction; 0 at handoff |
+| Pinned Pi HEAD/tree | `027a5847901b5dde30270abaa1041046cd2b4b55` / `0aa996c1d6108d5ffd8ff24ff498d08720283f29` |
+| Pinned Pi status | clean |
+| Accepted Contract SHA-256 | `d965c1e47cb18262572eedd33318527e534409178e59b70e7b522ab1842d9963` |
 
-The five pre-existing untracked control/evidence documents were rehashed before editing and again after verification:
+The worktree began with the previous six-file uncommitted Working Session correction. Six pre-existing untracked Main/control reports were identified separately and left unmodified:
 
-| Path | Recomputed SHA-256 |
+| Path | SHA-256 |
 |---|---|
+| `docs/reports/FINAL_CAPSTONE_G1_POST_AUDIT_CORRECTION_MAIN_REREVIEW.md` | `17829361061404a2675986792e7b68049f3075b93b7b7412e6b097b9a0f558d7` |
+| `docs/reports/FINAL_CAPSTONE_G1_AUTHORITY_ROOT_CORRECTION_PROMPT.md` | `b9eed097423504c4e8db5efcadb56c896ed53c2993b2de5b550ec97528082d83` |
+| `docs/reports/FINAL_CAPSTONE_G1_FOCUSED_AUDIT_MAIN_REVIEW.md` | `e24de503266d8015299ea94716abea747835b7443da8c2e05206894f91d26b81` |
+| `docs/reports/FINAL_CAPSTONE_G1_FOCUSED_AUDIT_PROMPT.md` | `cf8aaa1d07b4a20569834f346242bc7fed4f7e16d2793b19cb23af24f0de625b` |
+| `docs/reports/FINAL_CAPSTONE_G1_POST_AUDIT_BOUNDED_CORRECTION_PROMPT.md` | `37b8a97ea16bd29171de8a1a9f7bb7998e7a3a65722e0e06a9707388d4130c60` |
 | `docs/reports/SECOND_PROJECT_CASE_EVIDENCE_AUDIT.md` | `721560f141ec0a55a26728a753820525bf46fa66935d0c54e4d6e9a81ed9a5da` |
-| `docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md` | `d36532233b113a81b5027f2c906c9281fae732ca4bf198e0281eff1bc5fc07dd` |
-| `docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_CONTRACT.md` | `d965c1e47cb18262572eedd33318527e534409178e59b70e7b522ab1842d9963` |
-| `docs/reports/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_READINESS_REPORT.md` | `6cbc2692d97cd22b97287642c1ea12878f3278d41b1ec2ec942bdfa614cc5c35` |
-| `docs/reports/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_WORKING_SESSION_START_PROMPT.md` | `061d5c7d39ecf7d36a21849d890b545e7def79c4292045e10dce189188070359` |
 
-## Implementation and complete tracked delta
+## Exact final tracked delta
 
-**Fact:** No accepted-core file was edited. The implementation creates exactly the four source/test files allowed by Contract section 5, plus the two required reports. No tracked fixture was needed.
+The final diff from rejected Candidate `0c1c91e...` contains five allowed paths; `workbench/src/inspect-final-capstone-g1.ts` was restored byte-identical to the rejected Candidate because it now reaches the common fixed root through derivation without a caller authorization parameter.
 
-| New file / symbol | Purpose |
+| Changed path | Final correction |
 |---|---|
-| `workbench/src/contracts/final-capstone-g1-types.ts` — `TrustedEvidenceHostRegistrationG1`, `TrustedEvidenceAdmissionRecordG1`, family/result types | Narrow exact persisted contract for Host registration, inventory/provenance, derived Evidence, and Inspector output. |
-| `workbench/src/refinement/evidence-admission-g1.ts` — `validateHostRegistrationG1`, `inspectorIdentityG1`, `deriveTrustedEvidenceAdmissionG1`, `admitTrustedEvidenceG1`, `validateAdmissionEnvelopeG1` | Implements the three-family Host-registration boundary, independent reuse of existing Inspectors, complete link-free/hardlink-free source inventory, schema-1 `FrozenEvidenceV3` derivation, unchanged projector invocation, and idempotent write-once-equivalent persistence. |
-| `workbench/src/inspect-final-capstone-g1.ts` — `inspectTrustedEvidenceAdmissionG1` | Reopens ordinary files, enforces project-relative/link-free paths, reruns the existing family Inspector through fresh derivation, and compares the complete stored admission/Frozen/projector record. |
-| `workbench/tests/final-capstone-g1-evidence-admission.test.ts` | Focused deterministic positive, immutability, process-reopen, and fail-closed matrix for Goal 1. |
-| `docs/reports/FINAL_CAPSTONE_G1_IMPLEMENTATION_REPORT.md` | This raw implementation/verification report. |
-| `docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT_DRAFT.md` | Contract acceptance mapping and non-authoritative PASS recommendation. |
+| `workbench/src/contracts/final-capstone-g1-types.ts` | Registration contains no grant; persisted internally derived fixed approval has its own narrow type. |
+| `workbench/src/refinement/evidence-admission-g1.ts` | Private fixed approval root, fixed-root resolver, and caller-approval-free exported derivation/admission APIs. |
+| `workbench/tests/final-capstone-g1-evidence-admission.test.ts` | Required red-first combined forgery across all boundaries plus fixed-root positive/negative coverage. |
+| `docs/reports/FINAL_CAPSTONE_G1_IMPLEMENTATION_REPORT.md` | This report. |
+| `docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT_DRAFT.md` | Revised acceptance mapping. |
 
-Pre-report hashes of the four implementation/test files were:
+No out-of-allowlist tracked file changed. `CURRENT_STATE.md`, accepted-core V0-V3.6, Main/audit/control reports, Pi, historical Runs, State, active pointers, Workspaces, Sources, and Git state were not modified.
+
+Pre-report implementation hashes:
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `workbench/src/contracts/final-capstone-g1-types.ts` | 95 | 2,643 | `ef7ae9178224d57055bcc8686f36db92d8546405e4645258fe8a062f9715a99d` |
-| `workbench/src/refinement/evidence-admission-g1.ts` | 307 | 25,651 | `c7a7bfd87e35c9ef9ab8474f326323addb06b2315a7d89b12fe74636087c2eb7` |
-| `workbench/src/inspect-final-capstone-g1.ts` | 57 | 3,668 | `19f0c4584df342e29267a8c501d2cbf4a45f7fe7c47dd49fe0fa0e64f566cc74` |
-| `workbench/tests/final-capstone-g1-evidence-admission.test.ts` | 369 | 31,879 | `856fbb6bda9d5f6b2a7328ef1bbf0b4bbc62a81fc8937832ab80928a5b6a19af` |
+| `workbench/src/contracts/final-capstone-g1-types.ts` | 101 | 2,807 | `f77f7e87f34c650aced5b1854a6ffa415eeadf1070517bd6199aba3ef92013b2` |
+| `workbench/src/refinement/evidence-admission-g1.ts` | 330 | 27,291 | `a71b813c59f4e008b8f6c83a6381b500a7476cdd2a8e525eb575a927e9911493` |
+| `workbench/src/inspect-final-capstone-g1.ts` | 57 | 3,668 | `19f0c4584df342e29267a8c501d2cbf4a45f7fe7c47dd49fe0fa0e64f566cc74` (unchanged) |
+| `workbench/tests/final-capstone-g1-evidence-admission.test.ts` | 450 | 34,602 | `5b9696418a2c2bb8eb8e045d85c0ddad4f8f26f6bf27ef2cc698c50d57721cf2` |
 
-## Authority and data flow
+## Supported and rejected source matrix
 
-```text
-Host-owned exact-key registration
-  -> family-specific existing Inspector rerun
-  -> complete ordinary-file source inventory + digests
-  -> frozen admission/provenance record
-  -> schema-1 FrozenEvidenceV3
-  -> existing projectImprovementOpportunityV3
-  -> write only <admission-root>/<admission-id>/admission.json
+| Source | Result and preserved identity |
+|---|---|
+| V0-B/V0-C verifier-backed terminal Run | Supported only with fixed Host approval and existing Inspector-valid terminal/Outcome/Verifier/artifact lineage. |
+| V2-A recovery/comparison | Supported only for Inspector-valid selected recovery; preserves one real Run ID, Seed/group, both Candidate Paths, common Verifier, hard gates, budgets, and Selection. |
+| V3 Goal 3 bound-State follow-up | Supported only for a promoted non-base State with applicable binding, recomputable lineage, consistent runtime path, Case Authority, and existing Inspector success. |
+| V3 version 0 / empty binding / null lineage | Rejected explicitly. |
+| V3.6 daily or any unknown/fourth family | Rejected by exact source-family boundary; settled/Trace/ChangeSet claims do not confer eligibility. |
+| Valid source under unapproved or modified registration identity/digest | Rejected by the fixed Host approval root. |
+
+## Corrected admission identities
+
+All four positives independently reopened with `integrity_valid: true`, and V0-B also reopened in a fresh Node process.
+
+| Case | Admission ID | Admission digest | Evidence ID | Evidence digest |
+|---|---|---|---|---|
+| V0-B PASS | `admission-44457ecf38bd0c05f2674a1da9feeb8e` | `c4f3b4327a289707c8d772156a2653c9af97fd9227b4328485d43667b95515aa` | `evidence-b0b3c2523816f31269845d901b985c3f` | `53350a082b8b1ce556ca06c8ce7508a5aa8a8ae8767269013f41da1dc212d565` |
+| V0-C agent FAIL | `admission-0fc9ba18bd2148d3adfbe985919c4385` | `44952abb8631c80c65878ce6687cc317c2e72560aa3c4446ef5d76f7b86e690e` | `evidence-591785c9a08259d4add9fc431b2dae63` | `09be496e308c2adf60654d6652fc87fb0a6078a7fe9491896ac30cf49473a0de` |
+| V2 recovery/comparison | `admission-2c6d5d08d67cdbd065505880d84adffc` | `e8ddf2a7b2233aed9f01aeabe30cde591e90fe84de52d3c2f70ac5c3dcc8e2a6` | `evidence-c0be39cef9c1760aa8cd035143380fcb` | `263326f1992d9e8079a10596ec908346f9ac594d2b2942de1b50fd4dfed965fe` |
+| V3 promoted bound-State | `admission-62f2896d6c590fc257804b32997725c4` | `bf475c53e8b8c3b4d77d03595e92e23bc89c26258731606b91cd50a3de23f0fb` | `evidence-09f13419fec8fb94419fc840de4b757c` | `23d7557a83636e091b97e0d3aa1ed96f1fce7d6f5a45171f48d4de9333887fb9` |
+
+### V2 truthfulness retained
+
+- Run: `g1-v2-recovery-comparison`, the only `source_run_id`.
+- Recovery group/Seed: `g1-v2-recovery-comparison-recovery-group-01` / `g1-v2-recovery-comparison-recovery-group-01-seed-01`.
+- Candidate Paths: `...candidate-a` and `...candidate-b`; selected `...candidate-b`.
+- Common artifact/Verifier digest: `ba1ef09060e724a4494ca58ed2e45a2197c87bd99aff81708528320391ed2d97`; all eight hard gates per Candidate remain frozen.
+- Schema-1 `comparison` remains omitted because Candidate Paths are not peer Runs.
+
+### V3 promoted binding retained
+
+- State version/digest: `1` / `8c26430e7b17adfec0e59f329eb371b75cb97965f31aa16b5b885d0dbe03790a`.
+- Decision: `decision-cd8566516c667a6d50ae4f151f877712`; decision digest `cd8566516c667a6d50ae4f151f8777124b99179867ddc8d9ea853be5910c9427`.
+- Binding digest: `f1c254ae96775c3435b7ee33c701f5faff0c4766e120dee0544d73f1628e88ca`; one applicable `prompt_addendum` entry and matching runtime path.
+- Promotion admission digest: `32d166ccc03a359aedbd8d2704bc9c55108d59fa99b4a9df950a0f9a14338132`.
+- Case Authority digest: `244b2174dd38c604ca7056ff1bd5959863be3ed1c0b7ecf892a1c9d3029ea259`.
+
+The explicit unbound negative remains:
+
+```json
+{"accepted":false,"error":"V3 bound-State follow-up requires a promoted non-base State, applicable bound entry, and promotion lineage"}
 ```
 
-**Fact:** Eligibility is absent from source artifacts and is not a caller boolean. It is accepted only from the separate exact-key Host registration with `authority: "host"`, `adaptation_eligible: true`, and the frozen Goal 1 policy ID. Agent-, browser-, and source-artifact-authored authority values fail closed.
+## Final Contract verification
 
-**Fact:** Admission does not write a Candidate, State version, active pointer, Workspace, source artifact, comparator result, promotion, rollback, or V3.6 object. A dedicated test snapshots V0, V2, V3 bundle (including State/pointer/Workspace), and accepted `workbench/src` tree digests before admission and proves they remain identical afterward.
+Run from `C:\Users\HUAWEI\.codex\worktrees\g25main\project2\workbench` using existing local dependencies only:
 
-## Supported and rejected family matrix
-
-| Source | Admission decision | Preserved authority |
-|---|---|---|
-| V0-B committed verifier-backed terminal Run | Supported | Run/attempt/session/workspace identity, terminal reason, Outcome/failure attribution, Verifier, complete artifact inventory |
-| V0-C committed verifier-backed terminal Run | Supported | Run and all attempts, recovery summary, terminal reason, Outcome/failure attribution, final Verifier, complete artifact inventory |
-| V2-A recovery/comparison Run | Supported only for Inspector-valid `recovery_selected` with exactly two common-Verifier passing Candidate Paths | the single parent Run ID; Recovery Seed/group; both Candidate Path IDs, hard gates and budgets; common artifact/Verifier identity; full Selection; no schema-1 peer-Run comparison claim |
-| V3 Goal 3 bound-State follow-up | Supported only after `inspectGoal3RunV3` and binding recomputation pass and the binding proves a promoted non-base State, at least one applicable entry, non-null promotion lineage, and matching runtime path | State revision/version/digest/decision, binding/context/entries/promotion lineage, Case Authority, Manifest/runtime/Verifier, pointer-drift observation |
-| V2 initial pass, incomplete recovery, failed peer, or invalid Selection | Rejected for this family |
-| Ordinary V3.6 daily Run, including claims of settled Trace/ChangeSet | Rejected: unknown source family; daily false eligibility is not upgraded |
-| Any fourth or unknown family | Rejected |
-
-## Positive admission identities and Inspector results
-
-The identities below are from the final focused test evidence. All four independent Inspector results were `integrity_valid: true`, `errors: []`, and were also revalidated after a new Node process opened the stored evidence.
-
-| Case | Admission ID | Admission digest | Evidence ID | Evidence digest | Projector |
-|---|---|---|---|---|---|
-| V0-B PASS | `admission-2bd54508579ac031be2315d7c1726c07` | `717eac3c7db75b8b0f1f20efc7050f96228d0f7632fd355f2870bdbdf613527b` | `evidence-7f38963f3deebb472677e31ff8ee7d5b` | `2cea213c37a93297d2e53daf3793cfb68e640ee1fd431d3899fb0043d05298f7` | `no_opportunity` |
-| V0-C agent-attributed FAIL | `admission-802d61acc77e2f845bae182c8d4920a4` | `ac6ac94cd9731c164a0208e2043191d098a5ed8dfbd966c57915a0d8260621cc` | `evidence-b9d3eca26f00d9d0c219b4b6d624b44b` | `cdc0195349f8ab5628428a55cc4f156aa20fdaf97b049104cac8fed2abb17ab7` | `opp-ea41caf68ee9f20fb7e4c7c1c5892c0c` (`hard_failure`) |
-| V2 two-Candidate-Path recovery | `admission-447cf2f6a2e41f894eae3d9a4c479120` | `a27ebe87b5a946a1ea849335f4c59d5764e6277afbc5e05cbd1847a6efe657d5` | `evidence-4b37377b6bd3851d94101ac6dd89f98f` | `7ef5b0be85e9f9ea58575036f55647842286357f5bb8dbe65386810ba514f96b` | `no_opportunity`; `source_run_ids = ["g1-v2-recovery-comparison"]`; schema-1 `comparison` omitted |
-| V3 promoted bound-State follow-up | `admission-adf99f6d0bf2aa5cef26d5bb833b5664` | `6cc7b7f8572ea515a282ddd122e9b82e6a6c3f8fd0913409b2cb95290e0c7a6c` | `evidence-006b8f230916e00d268ca8a9b925cfc9` | `223de0f71cfb20c52a4c111f38f7ee83d09d075ff21e0e925892a76a72acc841` | `no_opportunity`; State version 1; `prompt_addendum` runtime |
-
-The V0-B idempotence/immutability registration produced a second valid identity (`admission-3f530784746f1b2b63e2057caa1b535f`) solely to prove a new admission writes only its record. Exact repeated admission of the original registration returned the same ID/digest with `idempotent_existing: true`.
-
-## Negative-test matrix
-
-| Rejected boundary | Evidence in focused test |
-|---|---|
-| Artifact tamper | V0 Outcome byte tamper rejected by existing Inspector/digest lineage |
-| Missing/invalid Verifier | V0 Verifier result removal rejected |
-| Nonterminal/uncommitted Run | V0 terminal removal rejected |
-| Unclosed lineage | V0 journal terminal-line removal rejected |
-| Invalid attribution | coherently unauthorized failure-class mutation rejected by existing Inspector identity |
-| Missing/ambiguous State identity | nonexistent V3 State root and caller-added State field rejected |
-| Unbound/base State mislabeled as follow-up | Inspector-valid version 0 with `bound_entries: []` and `lineage: null` rejected with `V3 bound-State follow-up requires a promoted non-base State, applicable bound entry, and promotion lineage` |
-| Cross-project identity | Host registration/project mismatch rejected |
-| Source-root escape | `..` source root rejected before source inspection |
-| Symlink/junction/reparse point | junction in source path rejected |
-| Prohibited hardlink | additional link to terminal bytes rejected through `nlink !== 1` inventory rule |
-| Stale Inspector fingerprint | substituted fingerprint rejected before admission |
-| Unknown source family | `v36_daily` and its settled/Trace/ChangeSet/eligibility claims rejected |
-| Unknown key | caller validity key and ambiguous State key rejected by exact-key validation |
-| Admission/FrozenEvidence digest tamper | both stored digest variants rejected by independent Inspector |
-| Eligibility escalation | `agent`, `browser`, and `source_artifact` authority rejected |
-
-## Final verification commands
-
-The Windows shell tried to associate the extensionless `tsc` JavaScript entry point with a desktop application when invoked directly. That invocation was not counted as verification. The same already-present, hash-verified TypeScript 5.9.3 entry point was therefore launched explicitly through the already-present Node executable; there was no install or download.
-
-| Command | Exit | Tests |
-|---|---:|---:|
-| `node 'D:\AI\AI_Projects\project2\.runs\g006\pi\node_modules\typescript\bin\tsc' -p tsconfig.json --noEmit` | 0 | typecheck, no test count |
-| `node --test tests/final-capstone-g1-evidence-admission.test.ts` | 0 | 17 passed, 0 failed |
+| Command | Exit | Result |
+|---|---:|---|
+| `node 'D:\AI\AI_Projects\project2\.runs\g006\pi\node_modules\typescript\bin\tsc' -p tsconfig.json --noEmit` | 0 | TypeScript clean |
+| `node --test tests/final-capstone-g1-evidence-admission.test.ts` | 0 | 22 passed, 0 failed |
 | `node --test tests/v3g1-evidence-to-candidate.test.ts` | 0 | 13 passed, 0 failed |
 | `node --test tests/v3g2-validate-promote-reject-rollback.test.ts` | 0 | 6 passed, 0 failed |
 | `node --test tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts` | 0 | 8 passed, 0 failed |
 
-Total final tests: **44 passed, 0 failed**.
+Final aggregate: **49 passed, 0 failed**, plus clean typecheck.
 
-## Tracked and ignored evidence inventory
+## Negative coverage
 
-**Fact:** `.runs/final-capstone/g1/` is ignored and contains 571 files / 1,055,427 bytes after the corrected final focused suite:
+The focused suite rejects combined registration/authorization forgery at all three exported boundaries; changed registration identity/digest; caller `host_grant`; caller-selected unapproved registration path; cross-project identity; unknown family/key; stale Inspector; artifact/Outcome/journal tamper; missing Verifier/terminal; invalid attribution; source escape; junction/reparse; hardlink; missing/ambiguous State; unbound base State; and stored admission/FrozenEvidence digest mutation.
 
-| Ignored subtree | Files | Bytes | Purpose |
-|---|---:|---:|---|
-| `admissions/` | 5 | 100,407 | write-once-equivalent admission records |
-| `host-registrations/` | 5 | 4,207 | exact-key Host authority inputs |
-| `sources/` | 172 | 233,159 | byte-copy V0 inputs, deterministic V2, promoted/bound Faux V3 positive, and inspected unbound V3 negative |
-| `negative/` | 389 | 717,654 | isolated tamper/path/link/hardlink variants |
+## Ignored evidence and immutability
 
-No historical V0–V3.6 evidence or fixture was modified. The two V0 source runs were copied byte-for-byte into the Goal 1 ignored root. V2 and V3 source evidence was generated under that root. Required V3 regressions created only their existing ignored test evidence.
+`.runs/final-capstone/g1/` remains ignored: 573 files / 1,057,374 bytes.
 
-## Remaining unverified items and claim limits
+| Subtree | Files | Bytes |
+|---|---:|---:|
+| `admissions/` | 5 | 101,741 |
+| `host-registrations/` | 7 | 4,818 |
+| `sources/` | 172 | 233,161 |
+| `negative/` | 389 | 717,654 |
 
-- **Fact:** No independent focused Audit Session has reviewed this Working Session delta; Main decides whether the risk boundary requires one before creating a Candidate commit.
-- **Fact:** No Git Candidate commit or Execution Baseline exists for Goal 1.
-- **Fact:** The V3 positive fixture uses accepted V3 helpers to stage, symmetrically validate, promote, and bind a prompt State solely to create valid source evidence. Goal 1 admission itself still has no State publication, assessment, replacement, promotion, or rollback authority; those remain Goal 2 or later authority.
-- **Fact:** Host authority is represented by a separate exact-key registration file supplied to a Host-only API boundary. Deployment must keep that registration location outside Agent/browser write authority; Goal 1 does not add an OS permission or generic registry service.
-- **Fact:** V2 coverage is the accepted bounded deterministic two-arm recovery substrate. It is not statistical superiority evidence and does not claim a natural failure.
-- **Fact:** No CLI, Web UI, daily V3.6 integration, generic adapter registry, mining, clustering, Experience DB, or continual loop was added.
-- **Fact:** No Credential, external network, Provider/model, or real-model access occurred.
+The two additional registration files preserve the changed-ID and combined-forgery regressions. Admission writes only its own immutable record; explicit tree-digest coverage proves no Source, State, pointer, Workspace, or accepted source mutation.
+
+## Zero-access counters and remaining limits
+
+| Counter | Value |
+|---|---:|
+| Credential reads | 0 |
+| External network calls | 0 |
+| External Provider/model calls | 0 |
+| Real-model calls | 0 |
+| Dependency installations | 0 |
+
+- The fixed approval root is intentionally bounded to the currently authorized Goal 1 registrations. Adding or changing an approval requires reviewed source change; no runtime enrollment surface exists.
+- This is an in-process code trust root, not cryptographic authentication or an OS permission boundary. Callers able to modify accepted source already control the Host implementation; protecting accepted source is the existing project control boundary.
+- No independent re-audit has reviewed this hit-only correction. Main acceptance remains pending.
+- Goal 1 does not authorize State assessment/publication, replacement, promotion/rollback, V3.6 integration, statistical recovery conclusions, or continual learning.
 
 ## CURRENT_STATE_UPDATE_PROPOSAL (report-only; not applied)
 
 ```yaml
 active_goal: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
-status: implementation_reported_pending_main_review
+status: authority_root_correction_reported_pending_main_rereview
 control_baseline:
-  commit: 4c4d2f3f397be7784700a2323c2afeaecbad03f0
-  tree: f21b32938beaf638a68749aff28967d79aaa34a0
+  commit: 0c1c91efcbed3f0db4a3735de1996deff99f9bac
+  tree: 194a90cac93cd1fe4c398f9db3db1829f0b9196e
 working_session_result:
   recommendation: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
-  implementation_report: docs/reports/FINAL_CAPSTONE_G1_IMPLEMENTATION_REPORT.md
-  closeout_draft: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT_DRAFT.md
-  verification: 44_passed_0_failed_plus_typecheck
+  red_reproduction: 18_passed_4_failed_expected
+  final_verification: 49_passed_0_failed_plus_typecheck
   credential_reads: 0
   network_calls: 0
   external_provider_calls: 0
   real_model_calls: 0
-acceptance: pending_main_review
+acceptance: pending_main_rereview_and_any_required_reaudit
 candidate_commit: null
-next_authorized_control_point: Main review; optionally freeze Candidate and dispatch a focused independent audit
 goal_2_authority: not_granted
 ```
 
-**Recommendation:** Main should inspect the cited new symbols and raw admission identities, decide whether to freeze a Candidate and run the Contract’s risk-driven independent audit, and only then accept or return a bounded correction. This Working Session must not update `CURRENT_STATE.md` itself.
+## Recommendation
+
+**Recommendation:** `PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION` for Main hit-focused re-review. Main alone may freeze a corrected Candidate, dispatch a fresh re-audit, accept Goal 1, or update control state. This Working Session stops here.
