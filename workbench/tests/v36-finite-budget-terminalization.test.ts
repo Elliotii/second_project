@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall, type AssistantMessage } from "@earendil-works/pi-ai";
@@ -236,6 +236,27 @@ test("an unavailable Tool request before the registered Tool-budget stop persist
 		forged.terminal_digest = digestObject(body);
 		writeFileSync(terminalPath, `${JSON.stringify(forged)}\n`);
 		await assert.rejects(() => reopened.session(view.session_id), /registered blocked domain/);
+	}
+	{
+		const sessionRoot = resolve(fixture.data, "sessions", view.session_id, "runtime", "sessions");
+		const repository = readdirSync(sessionRoot, { withFileTypes: true }).find((entry) => entry.isDirectory());
+		assert.ok(repository);
+		const sessionFile = readdirSync(resolve(sessionRoot, repository.name)).find((name) => name.endsWith(".jsonl"));
+		assert.ok(sessionFile);
+		const sessionPath = resolve(sessionRoot, repository.name, sessionFile);
+		const sessionOriginal = readFileSync(sessionPath, "utf8");
+		const entries = sessionOriginal.trimEnd().split(/\r?\n/).map((line) => JSON.parse(line) as { message?: { role?: string; toolCallId?: string; toolName?: string } });
+		const registeredResult = entries.find((entry) => entry.message?.role === "toolResult" && entry.message.toolCallId === `${run.run_id}-read-1`);
+		assert.ok(registeredResult?.message);
+		registeredResult.message.toolName = "workspace_list";
+		writeFileSync(sessionPath, `${entries.map((entry) => JSON.stringify(entry)).join("\n")}\n`);
+		const forged = JSON.parse(original) as ReconciledFiniteBudgetTerminalV36;
+		forged.session_entries_sha256_at_terminal = digestObject(entries.slice(1));
+		const { terminal_digest: _digest, ...body } = forged;
+		forged.terminal_digest = digestObject(body);
+		writeFileSync(terminalPath, `${JSON.stringify(forged)}\n`);
+		await assert.rejects(() => reopened.session(view.session_id), /registered Tool call\/result name binding/);
+		writeFileSync(sessionPath, sessionOriginal);
 	}
 
 	for (const mutate of [

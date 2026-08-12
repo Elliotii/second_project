@@ -1,20 +1,21 @@
 # POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE Closeout Draft
 
-Status: `DRAFT_FOR_MAIN_REVIEW`  
-Implementation handoff: `MAIN_REVIEW_REQUIRED`  
+Status: `DRAFT_FOR_MAIN_REVIEW`
+Implementation handoff: `MAIN_REVIEW_REQUIRED`
 Date: 2026-08-12 (Asia/Hong_Kong)
 
 This draft is an Implementation Session deliverable. It does not close or accept the
-maintenance, Campaign, ES-N03, V3.6, or any later version. Main must revise it after its
-review, Candidate freeze, focused audit, and the remaining Contract gates.
+maintenance, Campaign, ES-N03, V3.6, or any later version. Main must revise it after
+focused-audit finding review and the remaining Contract gates.
 
 ## Draft disposition
 
-Recommendation: Main may begin the Contract-required light review of the uncommitted
-candidate. The deterministic implementation evidence currently supports all twelve
-implementation Exit Criteria, but final maintenance acceptance is not yet available.
+Recommendation: Main may perform hit-item review of the bounded correction for Focused
+Audit finding `POST-V3.6-ES-N03-AUDIT-P1-001`. Deterministic evidence currently supports
+all twelve implementation Exit Criteria, but final maintenance acceptance is not yet
+available.
 
-Provisional allowed claim, subject to Main review and focused-audit confirmation:
+Provisional allowed claim, subject to Main finding review and audit disposition:
 
 > A reconciled registered Tool-budget stop remains typed, persistent and inspectable even
 > when the same Pi Session contains explicitly accounted unavailable Tool requests, while
@@ -33,6 +34,9 @@ Provisional allowed claim, subject to Main review and focused-audit confirmation
   paired error status, execution as a strict subset of registered attempts, blocked IDs
   as the exact registered-minus-executed difference, and the budget-blocked registered
   identity.
+- Disk reopen binds every registered ToolResult name to its paired registered Tool call
+  name; a Session-summary- and terminal-digest-recomputed `workspace_read` ->
+  `workspace_list` result-name forgery fails closed.
 - Safe list/detail/Run/static projections expose only bounded accounting. Managed changes
   remain unverified; Export/Discard remain available; Apply and same-Session continuation
   remain denied.
@@ -70,23 +74,25 @@ change occurred. No Git commit was created by the Implementation Session.
 The deterministic fixture is ignored new evidence, not a substitute for ES-N03
 Before-Fix Evidence and not a real-model Retest. It proves only the bounded Faux path.
 
-Main's bounded correction is included: digest-recomputed attempts to place either an
+Main's pre-audit bounded correction is included: digest-recomputed attempts to place either an
 unavailable or active-tool pre-hook-rejected identity into registered executions now fail
 the explicit execution-domain invariant while retaining all surface counts and array
 lengths. Blocked-array length and exact-difference validation is unconditional across all
 schema-4 finite reasons; Tool stop additionally keeps exactly one budget-blocked
 registered identity. The final total remains 28/28 deterministic tests passed.
 
+Focused Audit P1 correction is also included: all registered call/result identities now
+have an explicit `toolName` equality binding, with the audit-requested digest-recomputed
+negative regression. The P3 trailing spaces on former lines 3-4 were removed.
+
 ## Remaining gates before formal closeout
 
-1. Main light review of the exact diff and evidence.
-2. Main correction disposition, if any, returned to this same Session within Contract
-   scope.
-3. Main Candidate Commit freeze.
-4. New top-level read-only focused audit of the Contract-listed boundaries.
-5. Main acceptance decision and formal Closeout update with exact Candidate/audit facts.
-6. Main-owned `CURRENT_STATE.md` transition from active maintenance to the Retest gate.
-7. Only after acceptance, a separately authorized single ES-N03 Retest; it is not part of
+1. Main hit-item review of Focused Audit finding `POST-V3.6-ES-N03-AUDIT-P1-001` and the
+   attached P3 whitespace correction.
+2. Audit disposition against the bounded correction commit.
+3. Main acceptance decision and formal Closeout update with exact Candidate/audit facts.
+4. Main-owned `CURRENT_STATE.md` transition from active maintenance to the Retest gate.
+5. Only after acceptance, a separately authorized single ES-N03 Retest; it is not part of
    this deterministic implementation closeout.
 
 ## Non-claims

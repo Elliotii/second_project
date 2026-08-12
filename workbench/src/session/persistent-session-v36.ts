@@ -580,6 +580,11 @@ function reconcileFiniteBudgetTerminalSession(entries: readonly SessionTreeEntry
 		const activeNames = new Set(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]);
 		const registered = new Set(terminal.registered_tool_attempt_ids!);
 		if (terminal.registered_tool_attempt_ids!.some((id) => !activeNames.has(toolCalls.find((call) => call.id === id)?.name ?? ""))) throw new Error("V3.6 schema-4 registered Tool attempt is outside the active surface");
+		for (const id of terminal.registered_tool_attempt_ids!) {
+			const call = toolCalls.find((entry) => entry.id === id);
+			const result = toolResults.find((entry) => entry.id === id);
+			if (!call || !result || result.name !== call.name) throw new Error("V3.6 schema-4 registered Tool call/result name binding does not match");
+		}
 		const rejected = toolCalls.filter((call) => !registered.has(call.id));
 		const derivedRejected = rejected.map((call) => {
 			const result = toolResults.find((entry) => entry.id === call.id);

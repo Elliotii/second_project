@@ -58,8 +58,9 @@ a rejected/unavailable identity injected into registered executions, any blocked
 length or exact-difference mismatch, an absent/forged/non-unique budget block, or a
 registered ID outside the active Tool surface. Execution-subset and blocked exact-
 difference checks are unconditional for every schema-4 finite terminal reason; the unique
-budget-blocked ID is the additional Tool-stop invariant. Schema `1`, `2`, and `3` field
-sets and semantics were not changed or migrated.
+budget-blocked ID is the additional Tool-stop invariant. Every registered persisted Tool
+call/result pair also binds equal `toolName` values on independent reopen. Schema `1`,
+`2`, and `3` field sets and semantics were not changed or migrated.
 
 The safe list/detail/Run projection and static session view now expose persisted versus
 registered accounting, unavailable requests, cause-neutral active-tool pre-hook
@@ -124,15 +125,15 @@ Session-derived reconciliation rather than only stale-digest detection.
 Preserved ignored review fixture:
 
 - root:
-  `.runs/post-v3-6-es-n03-tool-accounting-terminalization/tool_with_unavailable-16700-1786540515865-3a9d58d541fba8/`
+  `.runs/post-v3-6-es-n03-tool-accounting-terminalization/tool_with_unavailable-19620-1786542086118-d4e73b5239e038/`
 - terminal:
-  `data/sessions/v36-session-073f5a3b-1eb7-494a-9721-7ebd211df6cd/runtime/runs/v36-run-ad974fb6-c166-4235-8eaf-ec4b33abfdd0/budget-stop.json`
+  `data/sessions/v36-session-1b0ab2c8-3075-41ff-bbb2-fa2fdadd1e3d/runtime/runs/v36-run-6f29fb2d-c2e7-4740-a1ce-7bb90ea3327f/budget-stop.json`
 - file SHA-256:
-  `d8dd2cc5d5d68492b4e317dcdd697560a05e7cd39c5939cc6b19cd35bab579f7`
+  `2264e08609620c6918b497f8e3b349fcd48aa4e20b122dc85e875d7c0eea3b5e`
 - terminal digest:
-  `519d2bab6df8b95e881d2fa312564c411225303ec8b7dccbec51d3b203766fa3`
+  `7b09a1b6b345d7e896ce39220daa0e35b546afd27fbb607ba7fd92d2cd0a0e45`
 - budget-blocked registered call:
-  `v36-run-ad974fb6-c166-4235-8eaf-ec4b33abfdd0-read-25`
+  `v36-run-6f29fb2d-c2e7-4740-a1ce-7bb90ea3327f-read-25`
 
 This fixture is deterministic/Faux evidence only. It is not ES-N03 Before-Fix Evidence,
 not real-model evidence, and not an Outcome.
@@ -150,6 +151,7 @@ Final verification commands:
 | `node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p workbench/tsconfig.v35g2.json --noEmit` | 0 | strict TypeScript pass |
 | `node --check workbench/src/webui/static/app.js` | 0 | browser script syntax pass |
 | `git diff --check` | 0 | no whitespace errors |
+| `git diff --check 73c124072a8ba495e6f25825bd48db774ef57581` | 0 | whole Candidate from Launch Record has no whitespace errors |
 | `git -c safe.directory=D:/AI/AI_Projects/project2/.upstream/pi -C D:/AI/AI_Projects/project2/.upstream/pi rev-parse HEAD` | 0 | fixed Pi exact |
 | `git -c safe.directory=D:/AI/AI_Projects/project2/.upstream/pi -C D:/AI/AI_Projects/project2/.upstream/pi status --short` | 0 | empty output; Pi clean |
 
@@ -164,9 +166,14 @@ cast, and the focused test exited `1` for two test-expectation shape/count corre
 During Main's bounded correction, the focused command exited `1` once because the new
 blocked-domain regression reached the older compound Tool-stop rejection message before
 the new unconditional blocked-domain branch. The checks were separated explicitly and
-the focused suite then passed 9/9. These were Contract-local implementation/test
-corrections, not a material terminal-design failure and not a Hard Stop. No failing
-result is represented as final evidence.
+the focused suite then passed 9/9. During focused-audit P1 correction, the first negative
+test run exited `1` because the test recomputed the Session entries digest over the JSONL
+header plus entries, so reopen failed at the outer Session identity gate before reaching
+the new name-binding invariant. Recomputing over Session entries only made the intended
+digest-recomputed `workspace_read` -> `workspace_list` mismatch reach and fail the named
+binding check; the focused suite then passed 9/9. These were Contract-local
+implementation/test corrections, not a material terminal-design failure and not a Hard
+Stop. No failing result is represented as final evidence.
 
 ## 7. Contract Exit-Criteria matrix
 
@@ -176,7 +183,7 @@ result is represented as final evidence.
 | 2 | PASS | Ordered 27/27 persisted pairing plus exhaustive registered/rejected union; reopen validates from disk. |
 | 3 | PASS | Unavailable paired error has no registered execution/command/side effect and is distinct from `read-25`. |
 | 4 | PASS | Registered accounting is 25/24/24/1; hard maximum remains 24. |
-| 5 | PASS | Missing/duplicate/forged/mismatched/non-error/overlap/missing-block/forged-block mutations fail closed. Digest-recomputed unavailable and active-pre-hook IDs injected into the unchanged-length execution array fail the explicit execution-subset invariant; blocked length and exact registered-minus-executed difference are checked independently for every schema-4 reason. |
+| 5 | PASS | Missing/duplicate/forged/mismatched/non-error/overlap/missing-block/forged-block mutations fail closed. Digest-recomputed unavailable and active-pre-hook IDs injected into the unchanged-length execution array fail the explicit execution-subset invariant; blocked length and exact registered-minus-executed difference are checked independently for every schema-4 reason; a digest-recomputed registered `workspace_read` result renamed `workspace_list` fails the explicit call/result name binding. |
 | 6 | PASS | Combined schema-1/2 compatibility plus accepted schema-3 matrix and tamper regressions pass. |
 | 7 | PASS | Registered-only Provider/Token/cost/Tool/wall variants remain schema 1/2/3 and pass. |
 | 8 | PASS | A fresh control-plane instance independently reopens and validates schema 4. |
@@ -218,14 +225,20 @@ blocked count and the exact registered-attempts-minus-executed difference. Two c
 execution forgeries and one blocked-array forgery recompute the terminal digest and still
 fail closed at those named boundaries.
 
+Focused Audit finding `POST-V3.6-ES-N03-AUDIT-P1-001` was corrected without schema or
+feature expansion: independent reopen now binds every registered persisted ToolResult
+`toolName` to its paired registered Tool call name. A negative regression rewrites the
+registered `read-1` result from `workspace_read` to `workspace_list`, recomputes both the
+Session entries SHA-256 and terminal digest, and still fails closed at the binding.
+
 Hard-stop status: `NOT_TRIGGERED`. Completion required no budget/domain, Pi, Agent Loop,
 authority, protected-evidence, real-access, recovery, backend, or scope change. The same
 core terminal design did not suffer a material failure.
 
 Remaining unverified/non-claims:
 
-- Main review, Candidate freeze, focused independent audit, acceptance, Campaign control
-  update, and any authorized ES-N03 Retest have not occurred.
+- Focused Audit finding correction review, acceptance, Campaign control update, and any
+  authorized ES-N03 Retest have not occurred.
 - ES-N03 is not completed, passed, recovered, replaced, or rerun by this work.
 - No claim is made about real DeepSeek/model behavior, universal Tool-cap adequacy,
   arbitrary Tool failures, crashes, uncertain in-flight side effects, or recovery.
@@ -257,7 +270,7 @@ CURRENT_STATE_UPDATE_PROPOSAL:
     real_model_calls: 0
     real_cost_usd: 0
   hard_stop: NOT_TRIGGERED
-  next_gate: MAIN_LIGHT_REVIEW
+  next_gate: MAIN_FOCUSED_AUDIT_FINDING_REVIEW
   forbidden_claims_preserved:
     - no maintenance acceptance or closeout
     - no ES-N03 Retest authority consumed
