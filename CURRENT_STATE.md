@@ -58,6 +58,14 @@ final_capstone:
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_status: blocked_until_goal_2_closeout
   stop_core_feature_development: false_pending_goals_2_and_3
+  correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
+  correction_budgets:
+    goal_1: 0_of_1_post_acceptance
+    goal_2: 0_of_2_after_initial_review
+    goal_3: 0_of_2_implementation_integration
+    same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
+    micro_finding_splitting: forbidden
+    platform_safety_usage_sandbox_tool_execution_faults_count: false
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed

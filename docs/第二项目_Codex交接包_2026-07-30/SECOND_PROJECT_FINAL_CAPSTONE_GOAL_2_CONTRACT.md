@@ -229,6 +229,11 @@ The Closeout Draft maps every criterion and recommends only
 
 ## 8. Main review and audit
 
+The accepted `FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md` applies: initial Main review
+may be followed by at most two bounded correction rounds. The same authority/integrity
+defect class recurring after correction, or failure to reach acceptance after round two,
+returns `DECISION_REQUIRED`.
+
 Main reviews the complete delta and evidence, returns one bundled bounded correction if
 needed, and alone freezes the Candidate. Because this Goal controls regression membership,
 assessment attribution and rollback authorization, a fresh focused independent audit of

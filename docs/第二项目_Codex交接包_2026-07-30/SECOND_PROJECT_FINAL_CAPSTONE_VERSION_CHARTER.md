@@ -129,6 +129,11 @@ Verifier product.
 
 ## 5. Main / Working Session governance
 
+Correction rounds are additionally bounded by
+`docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md`. That accepted User
+Amendment controls the maximum rounds and structural-defect stop rule without expanding
+any Goal authority.
+
 - Main owns this Charter, Goal Contracts, architecture and scope decisions, Control and
   Candidate baselines, Main review, Goal acceptance, `CURRENT_STATE.md`, and Final Closeout.
 - Each implementation Goal uses a fresh top-level Working Session only after explicit User
