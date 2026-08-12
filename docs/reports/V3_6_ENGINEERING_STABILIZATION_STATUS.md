@@ -84,6 +84,12 @@ The exact Candidate Audit Baseline is
 `1b826237249d29be111107be44f474c6355107a5`. The focused audit is owned by top-level
 Session `019ff621-ec68-78e2-bc66-6d3bbca88de9` in isolated worktree `264f`.
 
+The audit disposition is `REVISE`: it reproduced one blocking semantic-pairing gap in
+schema 4, where a digest-recomputed registered ToolResult name mismatch could survive
+Session reopen. One non-blocking report-accuracy issue also identified two trailing-space
+lines in the Closeout Draft. Both findings are returned to the original Implementation
+Session as one affected correction; no new audit or governance stage is created.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 

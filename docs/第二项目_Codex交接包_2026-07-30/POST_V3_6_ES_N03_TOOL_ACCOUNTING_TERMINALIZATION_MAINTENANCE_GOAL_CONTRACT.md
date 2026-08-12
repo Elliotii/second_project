@@ -22,6 +22,10 @@ main_review: passed_after_one_bounded_correction
 candidate_audit_baseline_commit: 1b826237249d29be111107be44f474c6355107a5
 focused_audit_owner: top_level_session_019ff621-ec68-78e2-bc66-6d3bbca88de9
 focused_audit_worktree: C:/Users/HUAWEI/.codex/worktrees/264f/project2
+focused_audit_disposition: REVISE_POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_FOCUSED_AUDIT
+focused_audit_report: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_FOCUSED_AUDIT_REPORT.md
+blocking_finding: POST-V3.6-ES-N03-AUDIT-P1-001
+bounded_correction_owner: top_level_session_019ff603-ac10-7ba1-a79e-98125f447964
 main_owner: current_main_session
 focused_audit: required_once_after_main_candidate_freeze
 post_maintenance_retest: exactly_one_ES_N03_retest_after_accepted_maintenance
