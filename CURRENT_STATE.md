@@ -84,7 +84,7 @@ v3_6_engineering_stabilization_campaign:
 
 post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   goal_id: POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE
-  status: focused_audit_revise_bounded_correction_in_progress
+  status: corrected_candidate_pending_affected_finding_recheck
   parent_goal: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
@@ -107,6 +107,10 @@ post_v3_6_es_n03_tool_accounting_terminalization_maintenance:
   focused_audit_report: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_FOCUSED_AUDIT_REPORT.md
   blocking_finding: POST-V3.6-ES-N03-AUDIT-P1-001
   bounded_correction_owner: top_level_session_019ff603-ac10-7ba1-a79e-98125f447964
+  bounded_correction_commit: 79e74f2b7c1801c5b9001633aebf82c03bd5d734
+  main_integrated_correction_commit: 958c09cd35ffe99eb32103fb72424a600d394439
+  corrected_candidate_audit_baseline_commit: 6df87e2a4711fd6b3b0b61a6aa720f35815a70ff
+  affected_finding_recheck_owner: top_level_session_019ff621-ec68-78e2-bc66-6d3bbca88de9
   focused_audit_prompt: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_FOCUSED_AUDIT_SESSION_START_PROMPT.md
   implementation_prompt: docs/reports/POST_V3_6_ES_N03_TOOL_ACCOUNTING_TERMINALIZATION_IMPLEMENTATION_SESSION_START_PROMPT.md
   focused_audit: required_once_after_main_candidate_freeze

@@ -90,6 +90,11 @@ Session reopen. One non-blocking report-accuracy issue also identified two trail
 lines in the Closeout Draft. Both findings are returned to the original Implementation
 Session as one affected correction; no new audit or governance stage is created.
 
+The original Implementation Session supplied bounded correction
+`79e74f2b7c1801c5b9001633aebf82c03bd5d734`; Main integrated it as `958c09cd…` and froze
+corrected Candidate Audit Baseline `6df87e2a4711fd6b3b0b61a6aa720f35815a70ff`.
+Only the two audit findings are being rechecked by the original Audit Session.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 
