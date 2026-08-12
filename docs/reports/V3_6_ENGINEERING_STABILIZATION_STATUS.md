@@ -80,6 +80,10 @@ identity-domain correction returned to the original Implementation Session. The 
 only active gate is a fresh top-level focused read-only audit; Maintenance acceptance,
 Retest and ES-N04 remain gated.
 
+The exact Candidate Audit Baseline is
+`1b826237249d29be111107be44f474c6355107a5`. The focused audit is owned by top-level
+Session `019ff621-ec68-78e2-bc66-6d3bbca88de9` in isolated worktree `264f`.
+
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
 
