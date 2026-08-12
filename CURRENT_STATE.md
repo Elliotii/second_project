@@ -12,7 +12,7 @@ active_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 current_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: candidate_frozen_pending_mandatory_focused_audit
+  status: correction_round_1_in_progress_after_focused_audit
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
@@ -58,7 +58,7 @@ final_capstone:
   goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_closed
   goal_1_post_acceptance_correction_candidate_commit: 5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
-  goal_2_status: candidate_frozen_pending_mandatory_focused_audit
+  goal_2_status: correction_round_1_in_progress_after_focused_audit
   goal_2_implementation_owner: fresh_top_level_goal_2_working_session
   goal_2_initial_session: 019ff7cb-123b-7a22-8757-0516932aff59
   goal_2_initial_session_stop: DECISION_REQUIRED_FINAL_CAPSTONE_G2_NEGATIVE_BOUND_STATE_ADMISSION_AUTHORITY_returned_to_Main
@@ -69,14 +69,17 @@ final_capstone:
   goal_2_candidate_tree: 29a0b2e4a85fb2452763a88bfa54055735aac823
   goal_2_main_review: docs/reports/FINAL_CAPSTONE_G2_MAIN_REVIEW.md
   goal_2_main_review_result: passed_no_findings_58_of_58_plus_literal_strict_typescript
-  goal_2_mandatory_audit: pending_fresh_top_level_session
+  goal_2_mandatory_audit: completed_correction_required_session_019ff82f-802e-7b92-9f09-0862601853f5
+  goal_2_audit_report: docs/reports/FINAL_CAPSTONE_G2_FOCUSED_AUDIT.md
+  goal_2_audit_finding_set: FC-G2-AUDIT-P1-001_and_FC-G2-AUDIT-P2-002
+  goal_2_correction_1_authorization: docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_AUTHORIZATION.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_status: blocked_until_goal_2_closeout
   stop_core_feature_development: false_pending_goals_2_and_3
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
-    goal_2: 0_of_2_after_initial_review
+    goal_2: 1_of_2_consumed_in_progress
     goal_3: 0_of_2_implementation_integration
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
     micro_finding_splitting: forbidden
