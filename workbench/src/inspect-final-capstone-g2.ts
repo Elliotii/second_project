@@ -1,5 +1,5 @@
-import { existsSync, lstatSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import type {
 	AssessedRollbackApplicationG2,
 	AssessedRollbackAuthorizationG2,
@@ -21,6 +21,29 @@ function ordinaryJson<T>(path: string, label: string): T {
 	const value = JSON.parse(bytes) as T;
 	if (bytes !== `${stableJson(value)}\n`) throw new Error(`${label} bytes are not canonical`);
 	return value;
+}
+
+function contained(root: string, target: string): boolean {
+	const rel = relative(root, target);
+	return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`));
+}
+
+function artifactJson<T>(root: string, relativePath: string, label: string): T {
+	const ordinaryRoot = resolve(root); const target = resolve(ordinaryRoot, relativePath);
+	if (!contained(ordinaryRoot, target)) throw new Error(`${label} escapes Goal 2 artifact root`);
+	const rootStats = lstatSync(ordinaryRoot);
+	if (rootStats.isSymbolicLink() || !rootStats.isDirectory()) throw new Error("Goal 2 artifact root must be an ordinary directory");
+	const realRoot = realpathSync.native(ordinaryRoot);
+	let current = ordinaryRoot;
+	for (const segment of relative(ordinaryRoot, target).split(sep).filter(Boolean)) {
+		current = resolve(current, segment);
+		if (!existsSync(current)) throw new Error(`${label} is missing`);
+		const stats = lstatSync(current);
+		if (stats.isSymbolicLink()) throw new Error(`${label} contains a symlink or junction`);
+		if (current !== target && !stats.isDirectory()) throw new Error(`${label} contains a non-directory ancestor`);
+		if (!contained(realRoot, realpathSync.native(current))) throw new Error(`${label} real path escapes Goal 2 artifact root`);
+	}
+	return ordinaryJson<T>(target, label);
 }
 
 function activeIdentity(value: { binding_revision: number; state_version: number; state_digest: string }) {
@@ -48,8 +71,8 @@ export async function inspectFinalCapstoneG2(options: StateAssessmentContextG2 &
 			if (assessment.assessment_result !== "rollback" && (assessment.rollback_target_digest !== null || assessment.comparison_id !== null && assessment.assessment_result === "retain")) throw new Error("non-rollback assessment carries rollback authority");
 		} else {
 			if (assessment.assessment_result !== "rollback" || !assessment.rollback_target_digest) throw new Error("non-rollback assessment has an application");
-			authorization = ordinaryJson<AssessedRollbackAuthorizationG2>(authorizationPath, "rollback authorization");
-			application = ordinaryJson<AssessedRollbackApplicationG2>(applicationPath, "rollback application");
+			authorization = artifactJson<AssessedRollbackAuthorizationG2>(root, `authorizations/${assessment.assessment_id}.json`, "rollback authorization");
+			application = artifactJson<AssessedRollbackApplicationG2>(root, `applications/${assessment.assessment_id}.json`, "rollback application");
 			if (digestObject(assessedRollbackAuthorizationBodyG2(authorization)) !== authorization.authorization_digest || digestObject(assessedRollbackApplicationBodyG2(application)) !== application.application_digest) throw new Error("assessed rollback link digest mismatch");
 			if (authorization.project_id !== assessment.project_id || authorization.assessment_id !== assessment.assessment_id || authorization.assessment_digest !== assessment.assessment_digest || authorization.authority !== "host_assessed_rollback" || stableJson(authorization.expected_active) !== stableJson(assessment.bound_state) || authorization.target_state_digest !== assessment.rollback_target_digest) throw new Error("rollback authorization/assessment lineage mismatch");
 			if (application.project_id !== assessment.project_id || application.assessment_id !== assessment.assessment_id || application.assessment_digest !== assessment.assessment_digest || application.authorization_id !== authorization.authorization_id || application.authorization_digest !== authorization.authorization_digest || stableJson(application.prior_active) !== stableJson(assessment.bound_state) || application.target_state_digest !== assessment.rollback_target_digest) throw new Error("rollback application/authorization lineage mismatch");

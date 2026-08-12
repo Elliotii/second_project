@@ -1,8 +1,8 @@
 # Final Capstone Goal 2 Implementation Report
 
-Status: `COMPLETED_PENDING_MAIN_REVIEW`
+Status: `COMPLETED_PENDING_MAIN_REREVIEW`
 
-Recommended Main disposition: freeze and review this unstaged candidate, then dispatch the Contract-mandated fresh focused independent audit. This Working Session does not accept Goal 2 or authorize Goal 3.
+Recommended Main disposition: re-review correction round 1/2 against `FC-G2-AUDIT-P1-001` and `FC-G2-AUDIT-P2-002`, freeze a corrected Candidate only if the finding set is closed, and run the bounded affected-finding re-audit. This Working Session does not accept Goal 2 or authorize Goal 3.
 
 ## 1. Authority and Gate A
 
@@ -12,24 +12,32 @@ Recommended Main disposition: freeze and review this unstaged candidate, then di
 - **Fact — public boundary probe:** with the checked-in public-Pi loader addressed as a file URL, `AgentHarness` and `JsonlSessionRepo` both resolved as public functions. Loader SHA-256 is `b12bc1c4a437159576b99347fda9917a2d0a1ded97a8bb76c185a1e0a9cd137a`.
 - **Fact — compiler:** pinned TypeScript is 5.9.3; `typescript/bin/tsc` SHA-256 is `8d5fa5bd883fec0979fc2004f1fe1d99aef40570155d550eadc0b03b55513bf0`.
 - **Fact — Goal 1 binding:** tracked Goal 1 authority remains the fixed registration `g1-host-v3-negative` with digest `365dc532234a44c4d9b0cabc9e39c2e94989989f5b4ead7a2b7b230a753b9ff8`. Per Main clarification, Goal 2 source-generates legitimate Inspector-valid follow-ups under that fixed authority and freezes their worktree-local admission/evidence identities; it neither copies correction-Session ignored evidence nor claims those generated IDs equal the accepted correction record.
-- **Fact — correction budget:** Goal 2 remains initial implementation, `0/2` correction rounds used. Setup/patch-transport failures recorded below are environment/execution issues, not correction rounds.
+- **Fact — correction authority:** Main rejected Candidate `198854d2565f3aa591da2ca083d614091a37c3fa` and authorized the indivisible round-1 package at control commit `96b51cee633dbeb6e94fb0b294f9a5cd877f69d0`. Goal 2 correction usage is now `1/2`.
 
 ## 2. Exact allowed delta
 
-| File | Delta | SHA-256 before reports |
-|---|---|---|
-| `workbench/src/contracts/final-capstone-g2-types.ts` | new narrow Goal 2 contracts | `62b6ac8ab966ec674e5ec1784001958df4f40644cf7df141141811d828d5f2b6` |
-| `workbench/src/refinement/comparator-v3.ts` | minimal additive accepted-State symmetric comparison primitive; existing Candidate behavior preserved | `2081fdb0d0b09ba5488a466750118ef7486403ad1560a52d4fff26dd7128d220` |
-| `workbench/src/refinement/regression-gate-g2.ts` | new Host-owned applicability and regression gate | `6b51dc0a7123dd71fa9eae4fb937e55537f5534ec3521d8fb91bafb106a8472f` |
-| `workbench/src/state/state-feedback-g2.ts` | new immutable assessment and assessed rollback application | `6bee578fa3824bdd7d639fb5458cabd377ae02a727839e8796612440c62db07e` |
-| `workbench/src/inspect-final-capstone-g2.ts` | new independent reopen Inspector | `5ab1cd8ddbbf6037e273be4298a933e5646d987eb894984a9dd240f1fa96d3fb` |
-| `workbench/tests/final-capstone-g2-regression-state-feedback.test.ts` | new focused 7-test Gate B/C/D matrix | `478d519f9613c7ef16d28b46da26d86fc25941670480c7d69a3531add5753d12` |
-| `docs/reports/FINAL_CAPSTONE_G2_IMPLEMENTATION_REPORT.md` | this report | created |
-| `docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT_DRAFT.md` | Main-owned acceptance draft | created |
+| File | Delta |
+|---|---|
+| `workbench/src/contracts/final-capstone-g2-types.ts` | new narrow Goal 2 contracts |
+| `workbench/src/refinement/comparator-v3.ts` | minimal additive accepted-State symmetric comparison primitive; existing Candidate behavior preserved |
+| `workbench/src/refinement/regression-gate-g2.ts` | new Host-owned applicability and regression gate |
+| `workbench/src/state/state-feedback-g2.ts` | assessment/application plus round-1 path and recovery correction |
+| `workbench/src/inspect-final-capstone-g2.ts` | independent reopen Inspector plus round-1 artifact-path validation |
+| `workbench/tests/final-capstone-g2-regression-state-feedback.test.ts` | focused 10-test Gate B/C/D and audit-hit matrix |
+| `docs/reports/FINAL_CAPSTONE_G2_IMPLEMENTATION_REPORT.md` | updated implementation report |
+| `docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT_DRAFT.md` | updated Main-owned acceptance draft |
+| `docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_REPORT.md` | round-1 report |
 
 No `store-v3.ts`, `binding-v3.ts`, `inspect-v3.ts`, Goal 1 source/test/report, accepted State/history, Contract, Charter, `CURRENT_STATE.md`, `AGENTS.md`, Pi, reference, dependency, or control-state file was edited.
 
-The Working Session's exact eight-file SHA-256 inventory is frozen in ignored evidence at `.runs/final-capstone/g2/implementation-file-inventory.json`. Main's `apply_patch` integration normalized one extra trailing blank line in the new type and regression-gate files; the two Main Candidate hashes above supersede those two inventory entries. Main's re-review records the final Candidate inventory.
+Hash-domain rule: all hashes created by this Working Session after correction are explicitly `working_tree_sha256`, meaning SHA-256 over checkout bytes at handoff. They are not Git blob, archive, tree, or committed-Candidate identities. The ignored inventory is `.runs/final-capstone/g2/correction-1-working-tree-inventory.json`. Main alone must recompute the exact committed-path Git archive inventory after freezing the corrected Candidate; the superseded two Markdown hash claims are not reused.
+
+## 2.1 Correction round 1/2
+
+- Future assessment roots are walked from the ordinary project root through every existing segment. Junction/reparse paths, non-directory ancestors and real-path escapes reject.
+- Existing assessment, authorization and application artifacts require a link-safe descendant path plus ordinary singly-linked canonical JSON bytes.
+- Interrupted post-V3 application persistence recovers only from an exact authorization, exactly one matching valid rollback Decision and a pointer still naming that Decision. Recovery writes only the missing application and never invokes rollback again.
+- Orphan authorization, missing/ambiguous Decision, conflicting bytes, invalid store and later pointer movement reject.
 
 ## 3. Implementation and reused authority
 
@@ -86,13 +94,13 @@ All Node test commands used process-only `NODE_OPTIONS=--experimental-loader=fil
 | `node 'D:\AI\AI_Projects\project2\.runs\g006\pi\node_modules\typescript\bin\tsc' -p tsconfig.json --noEmit` | 1 | environment-layout failure `TS2688`: local ignored `@types/node` absent; no source diagnostics were reached |
 | same command plus canonical `--typeRoots` | 1 | confirms `tsconfig.json` also lacks portable public Pi path mappings in a fresh worktree |
 | `node 'D:\AI\AI_Projects\project2\.runs\g006\pi\node_modules\typescript\bin\tsc' -p tsconfig.v35g2.json --noEmit` | 0 | strict check passes against canonical public Pi declarations |
-| `node --test tests/final-capstone-g2-regression-state-feedback.test.ts` | 0 | 7/7 pass |
+| `node --test tests/final-capstone-g2-regression-state-feedback.test.ts` | 0 | 10/10 pass, including audit-hit path/recovery/hardlink/concurrency equivalents |
 | `node --test tests/final-capstone-g1-evidence-admission.test.ts` | 0 | 24/24 pass |
 | `node --test tests/v3g1-evidence-to-candidate.test.ts` | 0 | 13/13 pass |
 | `node --test tests/v3g2-validate-promote-reject-rollback.test.ts` | 0 | 6/6 pass |
 | `node --test tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts` | 0 | 8/8 pass |
 
-Total required test observations: 58/58 pass, zero skipped/cancelled/todo. `git diff --check` passes.
+Total corrected matrix: **61/61 pass**, zero skipped/cancelled/todo. This is the original 58-observation Contract matrix plus three focused correction tests. `git diff --check` passes.
 
 ## 7. Zero-access and boundary accounting
 
@@ -114,9 +122,9 @@ Only Faux/deterministic local execution and the existing public emitted Pi bound
 
 - **Unconfirmed due environment layout:** the literal `tsconfig.json` command cannot pass in this generated worktree without creating the links/copies Main expressly prohibited. The checked-in canonical declaration config `tsconfig.v35g2.json` passes strictly. Main should classify this as the documented fresh-worktree environment limitation or run the literal command in a prepared worktree; no product/config expansion is recommended here.
 - Real Provider/model behavior is intentionally unverified and unauthorized.
-- Main review, Candidate freeze, and the mandatory fresh focused independent audit remain outstanding.
+- Main correction re-review, corrected Candidate freeze, and affected-finding re-audit remain outstanding.
 - No architecture, scope, or product decision is requested from this Working Session.
 
 ## 9. Report-only `CURRENT_STATE_UPDATE_PROPOSAL`
 
-Do not apply before Main review and audit. If accepted, Main may record Goal 2 as `PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK`, cite the frozen Candidate commit plus this report/Closeout/audit, preserve Goal 1 and all accepted history, record the strict-command fresh-worktree limitation, and keep Goal 3 unauthorized until its own Contract. This Session did not edit `CURRENT_STATE.md`.
+Do not apply before Main correction re-review and affected-finding re-audit. If accepted, Main may record Goal 2 as `PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK`, cite the corrected frozen Candidate plus initial audit, correction report, rereview and re-audit, preserve Goal 1 and all accepted history, and keep Goal 3 unauthorized until its own Contract. This Session did not edit `CURRENT_STATE.md`.

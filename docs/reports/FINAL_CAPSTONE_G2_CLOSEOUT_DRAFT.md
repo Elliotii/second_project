@@ -1,6 +1,6 @@
 # Final Capstone Goal 2 Closeout Draft
 
-Draft status: `COMPLETED_PENDING_MAIN_REVIEW`
+Draft status: `COMPLETED_PENDING_MAIN_REREVIEW`
 
 Proposed result after Main review and the mandatory focused independent audit: `PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK`.
 
@@ -22,14 +22,19 @@ This is a draft only. The Working Session does not accept Goal 2, update control
 | Separate assessed rollback application | canonical write-once Host authorization followed by existing `rollbackActiveStateV3` CAS; V3 Decision and before/after identities linked | satisfied |
 | No direct supersede or caller-selected assessment | no assessment-result input authority; new evidence can only assess or enter the existing Candidate path; direct pack/Session-policy fields reject | satisfied |
 | Idempotence/write-once | identical assessment/application reopens deterministically; conflicting bytes and tampered existing linkage fail closed | satisfied |
+| Correction 1 future-path integrity | every existing assessment-root segment is checked; intermediate junction/reparse, non-directory ancestor and real-path escape reject before persistence | satisfied pending rereview |
+| Correction 1 existing-artifact integrity | idempotent assessment/authorization/application requires link-safe path plus ordinary singly-linked canonical JSON bytes | satisfied pending rereview |
+| Correction 1 interrupted rollback recovery | exact authorization + one matching V3 rollback Decision + unchanged Decision pointer completes one application without a second rollback; orphan/conflict/later movement reject | satisfied pending rereview |
 | Independent reopen/tamper detection | process reopen plus assessment, authorization, application, comparison, accepted State version, V3 Decision, and active-pointer tamper matrix | satisfied |
-| Preserved regression suites | Goal 2 7/7; Goal 1 24/24; V3-G1 13/13; V3-G2 6/6; V3-G3 8/8 | satisfied |
+| Preserved regression suites | Goal 2 10/10; Goal 1 24/24; V3-G1 13/13; V3-G2 6/6; V3-G3 8/8 | satisfied |
 | Zero-access boundary | Credential/network/external-Provider/real-model/install/Pi-edit counters all zero | satisfied |
 | Reports and control-state boundary | Implementation Report and this draft created; `CURRENT_STATE.md` unchanged | satisfied |
 
 ## Verification qualification
 
-The literal required `tsc -p tsconfig.json --noEmit` command was run and exited 1 before source checking because this generated worktree has no ignored local `node_modules`/Pi declarations. Main prohibited links or copies. The repository's checked-in `tsconfig.v35g2.json`, which points only to the canonical public Pi declaration tree and canonical `@types`, passed strict TypeScript with exit 0. All 58 required test observations passed. This is an environment-layout qualification, not a TypeScript source failure or a correction round.
+The literal required `tsc -p tsconfig.json --noEmit` command was unavailable only in the deliberately unprepared Working Session because ignored local dependencies are not distributed with fresh worktrees. Main ran the literal command successfully after exact integration. All 61 corrected test observations passed. Goal 2 correction usage is 1/2.
+
+Working Session hashes use only the explicit `working_tree_sha256` domain. Main must authenticate the committed corrected Candidate with a fresh Git archive inventory; no initial-Candidate Markdown hash is carried forward.
 
 ## Claim boundary
 
@@ -37,9 +42,9 @@ The evidence supports only deterministic zero-access regression-gated Candidate 
 
 ## Remaining gates
 
-1. Main reviews the complete unstaged delta and evidence.
-2. Main alone freezes the Candidate if review passes.
-3. A fresh focused independent audit reviews regression membership, attribution, write-once linkage, CAS authority, and the documented strict-command environment qualification.
+1. Main re-reviews the complete correction against the indivisible authorized finding set.
+2. Main alone freezes the corrected Candidate if re-review passes and recomputes committed-path Git archive identities.
+3. The affected-finding re-audit verifies path integrity, failure-atomic recovery, exact idempotent artifact checks, and required regressions.
 4. Main and the user alone accept or reject Goal 2 and decide any later Goal 3 Contract.
 
 Subject to those gates, the recommended closeout string is `PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK`.
