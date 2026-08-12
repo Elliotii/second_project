@@ -1,7 +1,7 @@
 # V3.6 Engineering Stabilization Campaign Baseline
 
 ```yaml
-status: accepted_activated_control_baseline_pending
+status: accepted_activated
 campaign_id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
 campaign_kind: bounded_post_closeout_engineering_stabilization
 new_version: false
@@ -11,7 +11,7 @@ main_owner: current_main_session
 test_owner: existing_top_level_session_019ff181-51a8-7381-aae9-b8223e6a8bd3
 functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
 functional_baseline_tree: df8edd611b1fe819098dbd643222e5535ba53ddb
-campaign_control_baseline_commit: resulting_HEAD_of_activation_revision
+campaign_control_baseline_commit: e6451c273c1186728a6b6a8f98b02bf1f88b1cc4
 fixed_pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 primary_mode: natural_workload_first
 human_ui_ux_acceptance_in_scope: false
@@ -103,10 +103,11 @@ Normal completion is evidence. Failure is not an instruction to recover. The Tes
 must not retry, replace, continue, modify the product, tune a budget, alter a Case, Apply
 changes, or start the next Case while the current Case remains under Main review.
 
-The first newly authorized Case is one Natural Workload chosen and frozen by the Test
-Session under the plan's 10–30 minute, 2–4 files understood and 1–3 files ordinarily
-changed discipline. It must differ from the historical poison-status task and must not be
-selected to trigger Retry, Branch, Recovery or a particular budget terminal.
+The first newly authorized Case is one Main-frozen Natural Workload under the plan's
+10–30 minute, 2–4 files understood and 1–3 files ordinarily changed discipline. It
+differs from the historical poison-status task and was not selected to trigger Retry,
+Branch, Recovery or a particular budget terminal. Its exact prompt is recorded in the
+Test Session authorization.
 
 ## 5. Authority and access
 
