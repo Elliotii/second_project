@@ -8,75 +8,88 @@ project:
   phase: v3_6_completed
   status: V3_6_CLOSED_ACCEPTED
 
-active_goal: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+active_goal: null
 
-current_goal:
-  id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
-  status: accepted_activated_control_baseline_pending
-  version_status: V3_6_remains_closed_accepted
-  contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
-  analysis: docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md
-  implementation_owner: one_new_top_level_zero_real_access_implementation_session
-  implementation_started: false
-  focused_audit_required: true
-  real_model_calls_authorized: 0
-  credential_reads_authorized: 0
-  external_network_authorized: false
-  budget_value_change_authorized: false
-  ux_attempt_3_authorized: false
-  pi_core_patch_authorized: false
+current_goal: null
 
 last_executed_goal:
-  id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
-  implementation_commit: 1150e61630b578095da681b6506deff2a291063a
-  closeout: docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+  implementation_commit: f83b23da77bb8f57f383c8a44cf4909d73ccbfb1
+  audit_commit: 4659c542e58bebc110572c7d13a0a101da6f0d2f
+  closeout: docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md
 
 last_closed_goal:
-  id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
-  closeout: docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+  closeout: docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md
 
 last_completed_goal:
-  id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
+  id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
   status: closed_accepted
-  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
-  disposition: PASS_POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
-  implementation_commit: 1150e61630b578095da681b6506deff2a291063a
+  authority: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+  implementation_commit: f83b23da77bb8f57f383c8a44cf4909d73ccbfb1
 
 next_goal:
   id: null
-  status: blocked_while_active_maintenance
+  status: not_authorized
   note: no_Attempt_3_Engineering_Stabilization_V4_or_new_version_authorized
 
 post_v3_6_finite_budget_terminalization_maintenance:
   goal_id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
-  status: accepted_activated_control_baseline_pending
+  status: closed_accepted
   version_status: V3_6_remains_closed_accepted
   contract: docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
   analysis: docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md
-  implementation_owner: one_new_top_level_zero_real_access_implementation_session
-  focused_audit_owner: one_new_top_level_read_only_session_after_candidate_freeze
-  supported_target_variants:
+  control_baseline_commit: c2dc5d7bac14bb63e30c3669e70caaddbf6d913f
+  control_baseline_tree: 4b313ca191694074169ca95bdad7eac45b65a08f
+  implementation_owner: completed_top_level_session_019ff261-eda6-7333-84f1-c3e5e56a258b
+  implementation_commit: f83b23da77bb8f57f383c8a44cf4909d73ccbfb1
+  implementation_tree: 15f41350490a5e1e0b8098f4cc1db7559175a903
+  focused_audit_owner: completed_top_level_session_019ff52f-8423-7622-bf60-6e0e2b74c656
+  focused_audit_commit: 4659c542e58bebc110572c7d13a0a101da6f0d2f
+  focused_audit_disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_FOCUSED_AUDIT
+  supported_terminal_variants:
     - provider_request
     - combined_token
     - cost
+    - simultaneous_combined_token_and_cost
     - tool_call
     - clean_boundary_wall_time
+  terminal_status: nonsettled_unverified_null_outcome_ineligible
+  terminal_authority: settled_manifest_XOR_typed_finite_budget_terminal
+  apply: denied_server_side
+  allowed_review_actions:
+    - diff
+    - export
+    - discard
+  same_failed_session_continuation: denied
+  clean_new_session: authenticated_registered_source_only
+  provider_schema_1_compatibility: preserved_17_16_16
+  provider_schema_2_compatibility: preserved_25_24_24
+  deterministic_focused_tests: 8_passed_0_failed_0_skipped
+  deterministic_product_gap_negative: 1_passed_0_failed_0_skipped
+  narrow_v36_v35_regressions: 10_passed_0_failed_0_skipped
+  main_docker_normal_two_turn_regression: 1_passed_0_failed
+  strict_typescript: passed
+  browser_syntax: passed
+  disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+  closeout: docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md
+  closeout_commit: resulting_HEAD_of_this_revision
   attempt_1_evidence: immutable
   attempt_2_evidence: immutable
-  real_model_calls_authorized: 0
-  credential_reads_authorized: 0
-  external_network_authorized: false
-  budget_value_change_authorized: false
-  ux_attempt_3_authorized: false
-  agent_loop_change_authorized: false
-  pi_core_patch_authorized: false
-  v4_authorized: false
+  attempt_2_generic_request_rejected_gap: closed_deterministically_without_rerun_or_relabeling_attempt_2
+  real_access_observed: credentials_0_network_0_external_provider_0_real_model_0
+  budget_values_changed: false
+  ux_attempt_3_executed: false
+  agent_loop_changed: false
+  pi_core_patches: 0
+  v4_started: false
 
 post_v3_6_budget_adequacy_maintenance:
   goal_id: POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE
@@ -2107,6 +2120,10 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md
+  - docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md
+  - docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_FOCUSED_AUDIT_REPORT.md
+  - docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md
   - docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md
   - docs/reports/POST_V3_6_BUDGET_STOP_TERMINALIZATION_CLOSEOUT.md

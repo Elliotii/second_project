@@ -1,15 +1,23 @@
 # Post-V3.6 Finite-budget Terminalization Maintenance Goal Contract
 
 ```yaml
-status: accepted_activated
+status: closed_accepted
 accepted_and_activated_by_user: 2026-08-12
+closed_by_main_under_user_authority: 2026-08-12
 goal_id: POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
 goal_kind: bounded_post_closeout_product_correctness_maintenance
 version_status: V3_6_remains_closed_accepted
-control_baseline_commit: resulting_HEAD_of_this_activation_revision
-implementation_owner: one_new_top_level_zero_real_access_implementation_session
+control_baseline_commit: c2dc5d7bac14bb63e30c3669e70caaddbf6d913f
+control_baseline_tree: 4b313ca191694074169ca95bdad7eac45b65a08f
+implementation_owner: completed_top_level_session_019ff261-eda6-7333-84f1-c3e5e56a258b
+implementation_commit: f83b23da77bb8f57f383c8a44cf4909d73ccbfb1
+implementation_tree: 15f41350490a5e1e0b8098f4cc1db7559175a903
 main_owner: current_main_session
-focused_audit: one_new_top_level_read_only_session_after_candidate_freeze
+focused_audit: completed_top_level_session_019ff52f-8423-7622-bf60-6e0e2b74c656
+focused_audit_commit: 4659c542e58bebc110572c7d13a0a101da6f0d2f
+focused_audit_disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_FOCUSED_AUDIT
+disposition: PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE
+closeout: docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md
 real_model_calls_authorized: 0
 credential_reads_authorized: 0
 external_network_authorized: false
@@ -21,6 +29,14 @@ sdk_extension_rpc_switch_authorized: false
 retry_resume_fallback_replacement_authorized: false
 apply_unverified_terminal_changes_authorized: false
 ```
+
+## 0. Accepted result
+
+Main accepted and closed this bounded maintenance under the user's prior completion and
+Closeout authority after the exact Candidate passed Main verification and one fresh
+read-only focused audit. The frozen scope, budgets, authority boundaries, hard stops and
+claims below were not amended. The formal evidence and remaining non-claims are recorded
+in `docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md`.
 
 ## 1. Goal
 

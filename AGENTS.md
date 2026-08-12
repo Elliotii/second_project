@@ -52,19 +52,23 @@ The Contract and Closeout are
 `docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_GOAL_CONTRACT.md`
 and `docs/reports/POST_V3_6_BUDGET_ADEQUACY_MAINTENANCE_CLOSEOUT.md`.
 
-The active bounded post-closeout Goal is
-`POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE`. It may add only typed,
-persistent and inspectable non-settled terminals for known, reconciled Provider-request,
-combined-Token, cost, Tool-call and clean-boundary wall-time stops. Existing finite
-budget values, schema-1/schema-2 Provider terminals, Attempt 1/2 evidence, Direct Pi
-AgentHarness, Agent Loop, Session/Verifier/ChangeSet/Source/Apply authority and V3.6
-accepted claims are frozen. Implementation and verification use one new top-level
-zero-real-access Implementation Session; Main owns baselines and acceptance; one later
-top-level read-only focused audit is required. Credential, network, Provider/model,
-UX Attempt 3, retry/resume/replacement, Pi change, V4 and broader stabilization are not
-authorized. The binding Contract and analysis are
+The bounded post-closeout Goal
+`POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE` is closed and accepted as
+`PASS_POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE`. Known, reconciled
+Provider-request, combined-Token, cost, simultaneous Token+cost, Tool-call and clean-
+boundary wall-time stops can now persist typed, safely inspectable non-settled terminals.
+Schema-1 `17/16/16` and schema-2 `25/24/24` Provider terminals remain compatible.
+Every accepted terminal stays unverified with null Outcome and false eligibility;
+Diff/Export/Discard remain available, while Apply and same-failed-Session continuation
+are denied server-side. Clean-new-Session handoff remains constrained to authenticated
+registered Source. Attempt 1/2 evidence and all budget values are unchanged. The focused
+audit passed; Credential, network, external Provider/model, UX Attempt 3, retry/resume/
+replacement, Pi, Agent Loop, V4 and broader stabilization were not used or changed. The
+binding Contract, analysis and Closeout are
 `docs/第二项目_Codex交接包_2026-07-30/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_MAINTENANCE_GOAL_CONTRACT.md`
-and `docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md`.
+`docs/reports/V3_6_UX_ATTEMPT2_TOKEN_STOP_MAIN_ANALYSIS.md` and
+`docs/reports/POST_V3_6_FINITE_BUDGET_TERMINALIZATION_CLOSEOUT.md`. Active Goal is null;
+no Attempt 3, Engineering Stabilization loop, V4 or new version is authorized.
 
 Preserve these binding facts:
 
