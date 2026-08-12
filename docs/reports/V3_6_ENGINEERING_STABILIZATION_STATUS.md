@@ -3,7 +3,7 @@
 ```yaml
 campaign_status:
   campaign_id: V3_6_ENGINEERING_STABILIZATION_CAMPAIGN
-  status: paused_waiting_user_approval_before_real_dispatch
+  status: active_natural_case_2_authorized_pending_dispatch
   version_status: V3_6_remains_closed_accepted
   functional_baseline_commit: 7d63e76c3df357294d480c45e4bad785e8f2fa8a
   campaign_control_baseline_commit: e6451c273c1186728a6b6a8f98b02bf1f88b1cc4
@@ -11,7 +11,7 @@ campaign_status:
   baseline: docs/reports/V3_6_ENGINEERING_STABILIZATION_CAMPAIGN_BASELINE.md
   test_session_id: 019ff181-51a8-7381-aae9-b8223e6a8bd3
   natural_cases_started: 1
-  natural_cases_completed: 0
+  natural_cases_completed: 1
   natural_cases_failed: 0
   findings_total: 0
   bounded_maintenance_count: 0
@@ -25,9 +25,9 @@ campaign_status:
     - uncertain_tool_side_effect
     - same_session_durable_crash_recovery
     - generalized_transactional_multi_file_apply
-  current_case: ES_N01_gate_A_passed_real_dispatch_not_started
-  current_task_sha256: 0f5b7b47866f5a666bda0a2de418a033a22bbc5e5804871a7e8370f8eb17b52a
-  current_blocker: Test_Session_command_permission_waiting_on_user_approval
+  current_case: ES_N02_skill_cooldown_regression_authorized_pending_dispatch
+  current_task_sha256: f21515983e65388b0f8b4b57c0aca25800d6f278adb15eae98c5e900c8f1489a
+  current_blocker: null
   stop_condition_status: not_yet_met
   decision_required: false
   active_maintenance: null
@@ -36,15 +36,17 @@ campaign_status:
 
 ## Current disposition
 
-Campaign activation is complete. Main dispatched the frozen ES-N01 healing-potion
-Natural Case to existing Test Session `019ff181-51a8-7381-aae9-b8223e6a8bd3` from exact
-Authorization Record Commit `5f86fa0f7b2cd623dffee38d62958f2361af4157`. Gate A passed,
-including the 11 registered baseline tests. The single real dispatch has not started:
-the Session is waiting on a user-visible Codex command permission approval. This is an
-external execution permission, not a Campaign Decision Required or a product Finding.
-After approval, the Session must perform one dispatch and stop with a normal-completion
-record or Finding handoff. No second Case, Retest or Fault Injection is authorized until
-Main receives and classifies that evidence.
+ES-N01 is Main-accepted as a normal completion with no F1–F11 Finding: one clean Session
+and one Run settled, the registered Docker command passed 16/16, the proposed ChangeSet
+contains exactly `src/inventory.ts` and `tests/inventory.test.ts`, registered Source stayed
+at its frozen inventory, and there was no Apply/Retry/Fallback/Replacement/continuation.
+Raw Evidence remains immutable under the ES-N01 data root; the external handoff SHA-256
+is `6cddf552d21ac604ee4513c5f6544e737584c6b94ee122d0771c443f6fe3f7b0`.
+
+Main has authorized one differentiated Natural regression-fix Case, ES-N02. The same
+existing Test Session must run it from a new clean Session/data root and then stop with a
+normal-completion record or Finding handoff. No ES-N03, Retest or Fault Injection is yet
+authorized.
 
 Historical Attempt 1 and Attempt 2 are preserved as Campaign context and potential later
 curation inputs; they do not increment the new Natural Case counters above.
