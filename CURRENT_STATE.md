@@ -5,40 +5,40 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: final_capstone_goal_1_closed
-  status: FINAL_CAPSTONE_ACTIVE_G2
+  phase: final_capstone_goal_2_closed
+  status: FINAL_CAPSTONE_READY_G3_CONTRACT
 
-active_goal: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+active_goal: null
 
 current_goal:
-  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: corrected_candidate_frozen_pending_affected_finding_reaudit
+  id: null
+  status: none_goal_2_closed_goal_3_contract_not_yet_frozen
 
 last_executed_goal:
-  id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
   status: closed_accepted
-  disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
-  closeout: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
+  disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
 
 last_closed_goal:
-  id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
   status: closed_accepted
-  disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
-  closeout: docs/reports/FINAL_CAPSTONE_G1_CLOSEOUT.md
+  disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
 
 last_completed_goal:
-  id: FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
   status: closed_accepted
-  disposition: PASS_FINAL_CAPSTONE_G1_TRUSTED_EVIDENCE_ADMISSION
+  disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 next_goal:
-  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  status: active
-  note: goal_1_negative_admission_closed_goal_2_initial_implementation_restart_next
+  id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
+  status: pending_contract
+  note: goal_2_closed_goal_3_contract_must_be_frozen_from_authoritative_goal_1_and_goal_2_results
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
-  status: active_goal_2
+  status: goal_2_closed_ready_goal_3_contract
   development_decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
   charter: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   gap_review: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
@@ -58,7 +58,8 @@ final_capstone:
   goal_1_post_acceptance_finding: FC-G1-POSTACCEPT-P1-001_closed
   goal_1_post_acceptance_correction_candidate_commit: 5ff70947465f9dc2cbccd5d6e4ca10b6afb3868d
   goal_2_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
-  goal_2_status: corrected_candidate_frozen_pending_affected_finding_reaudit
+  goal_2_status: closed_accepted
+  goal_2_disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
   goal_2_implementation_owner: fresh_top_level_goal_2_working_session
   goal_2_initial_session: 019ff7cb-123b-7a22-8757-0516932aff59
   goal_2_initial_session_stop: DECISION_REQUIRED_FINAL_CAPSTONE_G2_NEGATIVE_BOUND_STATE_ADMISSION_AUTHORITY_returned_to_Main
@@ -78,10 +79,14 @@ final_capstone:
   goal_2_corrected_candidate_commit: b068329854e45df48336bb65c49cf666ab019622
   goal_2_corrected_candidate_tree: fb96ac21816c1f03bdcfc9cc38e65f07a11b8be2
   goal_2_corrected_candidate_tests: 61_passed_0_failed_plus_literal_strict_typescript
-  goal_2_affected_finding_reaudit: required_fresh_top_level_session
+  goal_2_affected_finding_reaudit: completed_pass
+  goal_2_affected_finding_reaudit_session: 019ff857-6338-7631-b22a-ffcbc6ea28ed
+  goal_2_affected_finding_reaudit_report: docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_AFFECTED_FINDING_REAUDIT.md
+  goal_2_affected_finding_reaudit_disposition: PASS_FINAL_CAPSTONE_G2_CORRECTION_1_AFFECTED_FINDING_REAUDIT
+  goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
-  goal_3_status: blocked_until_goal_2_closeout
-  stop_core_feature_development: false_pending_goals_2_and_3
+  goal_3_status: pending_detailed_contract
+  stop_core_feature_development: false_pending_goal_3
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
