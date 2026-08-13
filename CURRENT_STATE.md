@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_REPLACEMENT_ZERO_CALL_SESSION_PENDING
+  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_REPLACEMENT_ZERO_CALL_SESSION_ACTIVE
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: structural_amendment_replacement_zero_call_session_pending
+  status: structural_amendment_replacement_zero_call_session_active
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: structural_amendment_gate_a_execution_fault_closed_replacement_pending
+  goal_3_status: structural_amendment_replacement_zero_call_implementation_active
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -131,6 +131,10 @@ final_capstone:
   goal_3_structural_amendment_user_rotation_required: false
   goal_3_structural_amendment_execution_fault_disposition: closed_start_fresh_session_without_environment_enumeration
   goal_3_structural_amendment_partial_source_status: two_unaccepted_unstaged_files_preserved_only_in_e9e9_worktree
+  goal_3_structural_amendment_replacement_implementation_owner: fresh_top_level_session_019ff9ef-76c4-7da0-bf11-f6ef3b53ea86
+  goal_3_structural_amendment_replacement_worktree: C:/Users/HUAWEI/.codex/worktrees/06c7/project2
+  goal_3_structural_amendment_replacement_control_baseline_commit: 23683a3272d9d0e156ab808bf6b67db3f87ac4ad
+  goal_3_structural_amendment_replacement_control_baseline_tree: afb15ca4e39d7187cd06d32061a4ed80d827a495
   goal_3_structural_amendment_correction_budget: 0_of_1_consumed
   goal_3_blocking_finding: promotion_admission_registry_source_identity_cardinality_authorized_for_narrow_structural_resolution
   goal_3_candidate_frozen: false
@@ -153,7 +157,7 @@ final_capstone:
   goal_3_docker_profile_digest: f31414d3a8aa288337f0b5ba2a1d976b7cb8c49b7935633e838fcbe4c2a96b05
   goal_3_retry_fallback_replacement_task_swap_result_hunting: forbidden
   goal_3_implementation_real_access: credentials_0_network_0_provider_0_model_0
-  stop_core_feature_development: false_goal_3_replacement_zero_call_session_pending
+  stop_core_feature_development: false_goal_3_replacement_zero_call_session_active
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
@@ -2577,7 +2581,7 @@ next_checkpoint:
   - Structural_Amendment_Session_019ff9dd-2a00-7043-a0b7-3f88312afaaf_stopped_after_credential_exposure
   - User_confirmed_no_Anthropic_credential_and_metadata_proved_process_only_Codex_parent_injection
   - credential_execution_fault_closed_without_User_rotation_or_correction_budget_use
-  - freeze_new_clean_control_baseline_and_start_fresh_zero_call_replacement_Session
+  - fresh_zero_call_replacement_Session_019ff9ef-76c4-7da0-bf11-f6ef3b53ea86_active_from_23683a3272d9d0e156ab808bf6b67db3f87ac4ad
 
 open_user_decisions: []
 ```
