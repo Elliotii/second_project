@@ -7,8 +7,8 @@ date: 2026-08-13
 planning_source_commit: 4c4d2f3f397be7784700a2323c2afeaecbad03f0
 planning_source_tree: f21b32938beaf638a68749aff28967d79aaa34a0
 decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
-active_goal: null
-implementation_authority: goal_1_consumed_goal_2_requires_detailed_contract
+active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
+implementation_authority: goal_1_and_goal_2_consumed_goal_3_zero_access_implementation_activated
 credential_reads_authorized: 0
 external_network_authorized: false
 external_provider_or_model_calls_authorized: 0
@@ -24,10 +24,11 @@ development sequence. Repository source, tests, immutable evidence and accepted 
 remain the authority for implementation facts. Where the original Gap Review and the
 Amendment differ, the Amendment controls.
 
-This Charter was accepted through the Final Capstone Main handoff. Goal 1 has since been
-implemented and closed under its detailed Contract. Goal 2 and Goal 3 remain separately
-bounded by their detailed Contracts; real access remains unauthorized until an applicable
-later Contract explicitly grants it.
+This Charter was accepted through the Final Capstone Main handoff. Goal 1 and Goal 2 have
+since been implemented, independently reviewed as required, and closed under their detailed
+Contracts. Goal 3 is now activated only for zero-access implementation under its detailed
+Contract; its one real Run remains withheld until Main freezes a Candidate and the mandatory
+focused authority/lineage audit passes.
 
 ## 2. Mission and Version Question
 
@@ -192,8 +193,9 @@ charter_acceptance: accepted_by_final_capstone_handoff
 goal_1_contract: closed_accepted
 goal_1_source_readiness: passed
 goal_1_working_session: completed
-goal_2_detailed_contract: accepted_activated_zero_access
-goal_3_detailed_contract: forbidden_until_goal_2_main_acceptance
-real_access: not_authorized
-next_action: main_creates_goal_2_control_baseline_then_starts_fresh_working_session
+goal_2_detailed_contract: closed_accepted
+goal_3_detailed_contract: accepted_activated_zero_access_implementation
+goal_3_contract: SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
+goal_3_real_access: withheld_until_candidate_and_mandatory_focused_audit_pass
+next_action: main_creates_goal_3_control_baseline_then_starts_fresh_top_level_implementation_session
 ```

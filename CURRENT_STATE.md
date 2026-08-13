@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: final_capstone_goal_2_closed
-  status: FINAL_CAPSTONE_READY_G3_CONTRACT
+  phase: final_capstone_goal_3
+  status: FINAL_CAPSTONE_G3_ZERO_ACCESS_IMPLEMENTATION_AUTHORIZED
 
-active_goal: null
+active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
-  id: null
-  status: none_goal_2_closed_goal_3_contract_not_yet_frozen
+  id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
+  status: detailed_contract_accepted_activated_zero_access_implementation_control_baseline_pending
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -32,13 +32,13 @@ last_completed_goal:
   disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 next_goal:
-  id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: pending_contract
-  note: goal_2_closed_goal_3_contract_must_be_frozen_from_authoritative_goal_1_and_goal_2_results
+  id: null
+  status: none_final_capstone_goal_3_active
+  note: stop_core_feature_development_after_goal_3_and_final_capstone_acceptance
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
-  status: goal_2_closed_ready_goal_3_contract
+  status: active_goal_3_zero_access_implementation
   development_decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
   charter: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   gap_review: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
@@ -85,7 +85,24 @@ final_capstone:
   goal_2_affected_finding_reaudit_disposition: PASS_FINAL_CAPSTONE_G2_CORRECTION_1_AFFECTED_FINDING_REAUDIT
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
-  goal_3_status: pending_detailed_contract
+  goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
+  goal_3_status: detailed_contract_accepted_activated_zero_access_implementation
+  goal_3_implementation_owner: pending_fresh_top_level_goal_3_implementation_session
+  goal_3_control_baseline_commit: pending_resulting_commit_of_this_activation_revision
+  goal_3_control_baseline_tree: pending_resulting_tree_of_this_activation_revision
+  goal_3_real_execution_authority: withheld_until_main_candidate_and_mandatory_focused_audit_pass
+  goal_3_single_real_run_max: 1
+  goal_3_task_id: final-capstone-g3-v1-parse-duration
+  goal_3_task_source_sha256: d2c7c3b085b351ce868ca2a6706f103f07a037e1320ab1bd1702d988a0f09cec
+  goal_3_task_input_sha256: cc4c17609f1031774e4be4bc0cc9d8afff671a11f019b2515c304d9a4a1be262
+  goal_3_workspace_source_digest: 5690aab9c1e7eb3905258c342d7bad4504e23377c18fec9fde39f22f9a99defa
+  goal_3_verifier_source_sha256: 0924cb0f56e43a56dc74b262539f2ad0700b2cb2a43da26a9415b7e9ffaf21da
+  goal_3_acceptance_task_spec_digest: 336503d26d2c0d31aa74f7ee22b16cf52801ddb4cfa82cc3212e1163278e09e5
+  goal_3_provider_profile_digest: 6b90b83a047ce7745fc92a6f1ef99dd7f7ea6e046a5107e060f4b041e864cf32
+  goal_3_budget_profile_digest: 6b20b55e7930b193b7975c15668bba883961c9d3976e9d200b45cfd69d96be21
+  goal_3_docker_profile_digest: f31414d3a8aa288337f0b5ba2a1d976b7cb8c49b7935633e838fcbe4c2a96b05
+  goal_3_retry_fallback_replacement_task_swap_result_hunting: forbidden
+  goal_3_implementation_real_access: credentials_0_network_0_provider_0_model_0
   stop_core_feature_development: false_pending_goal_3
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
@@ -2278,7 +2295,11 @@ reference_analysis:
 
 required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
+  - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
+  - docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
+  - docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
+  - docs/reports/FINAL_CAPSTONE_G2_CORRECTION_1_AFFECTED_FINDING_REAUDIT.md
   - docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW_GOAL_AMENDMENT.md
   - docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_1_CONTRACT.md
@@ -2486,22 +2507,32 @@ historical_checkpoints:
 
 next_checkpoint:
   - Final_Capstone_Goal_1_closed_accepted
-  - Goal_2_detailed_Contract_accepted_and_activated
-  - create_and_verify_Goal_2_Control_Baseline
-  - start_fresh_top_level_zero_access_Goal_2_Working_Session
+  - Final_Capstone_Goal_2_closed_accepted
+  - Goal_3_detailed_Contract_accepted_and_activated
+  - create_and_verify_Goal_3_Control_Baseline
+  - start_fresh_top_level_zero_access_Goal_3_Implementation_Session
+  - freeze_Main_Candidate_and_complete_mandatory_focused_authority_lineage_audit
+  - withhold_single_real_Run_until_audited_Execution_Baseline
   - keep_ordinary_failure_distinct_from_State_attributable_regression
   - keep_new_evidence_distinct_from_direct_supersede
-  - no_real_access_or_Goal_3_authority_yet
+  - preserve_exactly_one_real_Run_no_result_hunting
 
 open_user_decisions:
-  - none_currently_Main_authorized_the_single_Goal_1_post_acceptance_correction
+  - none_currently_user_authorized_full_final_capstone_lifecycle_under_replacement_prompt_and_correction_budget_amendment
 ```
 
 ## Current Constraints
 
-- V3.6 is closed and accepted; no Goal is active.
+- V3.6 remains closed and accepted; Final Capstone Goal 3 is active only for its frozen
+  zero-access implementation stage.
 - Do not reopen V2, V3, V3.5 or V3.6, start V4, call a model, read a Credential, use
-  external network or modify Pi without new explicit user authority.
+  external network or modify Pi during Goal 3 implementation/Main integration/audit.
+- The later Goal 3 real Execution Session remains separately gated by a Main-frozen,
+  independently audited Execution Baseline. It may execute exactly one frozen task/Run;
+  rerun, fallback, replacement, task swap, result hunting and failure manufacture are
+  forbidden.
+- Goal 3 implementation/integration has at most two bounded correction rounds. A repeated
+  authority/integrity defect class or failure after round two returns `DECISION_REQUIRED`.
 - Preserve Goal 2 as inconclusive and Goal 2.5 as one valid Pair with no observed Skill
   task-success advantage.
 - Preserve V3.6 as one fixed real two-Turn product Journey, not proof of arbitrary-project
