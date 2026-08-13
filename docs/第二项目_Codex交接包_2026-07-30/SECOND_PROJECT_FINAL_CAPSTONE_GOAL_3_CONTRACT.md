@@ -1,7 +1,7 @@
 # Final Capstone Goal 3 Contract — One Real Closed-loop Product Acceptance
 
 ```yaml
-status: accepted_activated_zero_access_implementation
+status: accepted_activated_zero_access_implementation_after_correction_1
 goal_id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 parent_version: SECOND_PROJECT_FINAL_CAPSTONE
 date: 2026-08-13
@@ -16,7 +16,7 @@ external_provider_or_model_calls_authorized_for_implementation: 0
 pi_changes_authorized: false
 git_commit_authority_for_working_sessions: false
 correction_rounds_max_for_implementation_integration: 2
-correction_rounds_used: 0
+correction_rounds_used: 1
 real_acceptance_runs_max: 1
 retry_fallback_replacement_task_swap_result_hunting_authorized: false
 ```
@@ -126,8 +126,8 @@ The acceptance carrier derives one narrow `TaskSpecV0B` from the frozen source f
 Its canonical digest is frozen here:
 
 ```yaml
-acceptance_task_spec_digest: 336503d26d2c0d31aa74f7ee22b16cf52801ddb4cfa82cc3212e1163278e09e5
-tool_profile_id: final_capstone_g3_v36_registered_only
+acceptance_task_spec_digest: 58cc5ff437714996ae2312868bf182618e964a9e3cdf780e16d429d524ca661d
+tool_profile_id: v3g3_bounded_local
 tool_profile_digest: 76464e44b6c39c0afd5a54ce09b6a12498a084f022a7003315ab0f323b135fcb
 commands:
   - command_id: test
@@ -139,9 +139,17 @@ commands:
 registered_command_descriptor_digest: 2740096afc07d6532f205675eb59f3c9f47c569b4204596c04ba049c458c0c29
 ```
 
-Only this registered command is available to the real V3.6 bounded-edit Run. Shell,
-arbitrary command, dependency installation, additional test commands, network tools and
-out-of-Workspace paths are not registered.
+This TaskSpec `tool_profile_id` is the already accepted outer V3 Goal 3 Case Authority
+identity. Its digest domain is the complete existing V1 task object with only `task_id`,
+`tool_profile_id` and `command_descriptors` replaced by the values frozen above.
+
+The inner V3.6 Project Profile remains separately registered with the accepted frozen
+Docker execution-backend identity and exposes only this command under
+`command_execution_authority: docker_registered_only`. The outer TaskSpec profile ID and
+inner V3.6 command-authority label are different authority-plane fields and must not be
+made equal or translated by caller data. Shell, arbitrary command, dependency
+installation, additional test commands, network tools and out-of-Workspace paths are not
+registered.
 
 ### 3.3 Provider, budget and execution backend
 
@@ -415,6 +423,14 @@ faults do not consume a correction round.
 
 Correction authority never expands the single-real-Run budget. No correction may alter,
 rerun or replace an already started real acceptance task to obtain a preferred result.
+
+Correction round 1 is consumed by the Main finding set recorded in
+`docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_AUTHORIZATION.md`: the initial frozen
+TaskSpec incorrectly used the inner V3.6 registration label where accepted outer V3 Case
+Authority requires `v3g3_bounded_local`. The correction changes only that Contract field,
+its complete-task-object digest and the explanatory authority-plane separation. No source,
+test, fixture, State, evidence or real access changed. One correction round remains; any
+recurrence of this tool-profile authority-class defect returns `DECISION_REQUIRED`.
 
 ## 10. Frozen real Execution Session protocol
 
