@@ -1,7 +1,7 @@
 # Final Capstone Goal 3 Contract — One Real Closed-loop Product Acceptance
 
 ```yaml
-status: accepted_activated_zero_access_implementation_after_correction_1
+status: accepted_activated_zero_access_implementation_after_correction_2
 goal_id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 parent_version: SECOND_PROJECT_FINAL_CAPSTONE
 date: 2026-08-13
@@ -16,7 +16,7 @@ external_provider_or_model_calls_authorized_for_implementation: 0
 pi_changes_authorized: false
 git_commit_authority_for_working_sessions: false
 correction_rounds_max_for_implementation_integration: 2
-correction_rounds_used: 1
+correction_rounds_used: 2
 real_acceptance_runs_max: 1
 retry_fallback_replacement_task_swap_result_hunting_authorized: false
 ```
@@ -126,9 +126,10 @@ The acceptance carrier derives one narrow `TaskSpecV0B` from the frozen source f
 Its canonical digest is frozen here:
 
 ```yaml
-acceptance_task_spec_digest: 58cc5ff437714996ae2312868bf182618e964a9e3cdf780e16d429d524ca661d
+acceptance_task_spec_digest: d251789ebbfa8b5f9a59a2fcd695a34723eee1b9d374d8a9caca3461f122e888
 tool_profile_id: v3g3_bounded_local
 tool_profile_digest: 76464e44b6c39c0afd5a54ce09b6a12498a084f022a7003315ab0f323b135fcb
+acceptance_visibility: hidden_external
 commands:
   - command_id: test
     executable: current_node_executable
@@ -137,11 +138,30 @@ commands:
     timeout_seconds: 30
     max_combined_output_bytes: 65536
 registered_command_descriptor_digest: 2740096afc07d6532f205675eb59f3c9f47c569b4204596c04ba049c458c0c29
+verifier_command:
+  executable: current_node_executable
+  argv: [fixtures/verifiers/v1/parse-duration.mjs]
+  cwd: project
+  timeout_ms: 30000
+  output_limit_bytes: 65536
 ```
 
 This TaskSpec `tool_profile_id` is the already accepted outer V3 Goal 3 Case Authority
-identity. Its digest domain is the complete existing V1 task object with only `task_id`,
-`tool_profile_id` and `command_descriptors` replaced by the values frozen above.
+identity. Its digest domain is exactly the stable JSON of this `TaskSpecV0B` projection:
+
+- `schema_version`, corrected `task_id`, instruction ref/hash, Workspace ref/digest,
+  writable/protected paths from the frozen V1 source task;
+- `verifier_id`, `verifier_ref`, and `verifier_sha256` projected exactly from the V1
+  `external_verifier_*` fields frozen in section 3.1;
+- `acceptance_visibility: hidden_external`;
+- `tool_profile_id` plus the one command descriptor frozen above; and
+- the complete `verifier_command` frozen above.
+
+V1-only `family`, `public_check_id`, `reference_patch_*`, and `external_verifier_*` field
+names are source-task provenance and are not members of the `TaskSpecV0B` digest domain.
+Their original complete source identity remains separately frozen by
+`task_source_file_sha256` and `original_task_object_digest` in section 3.1. No caller may
+choose, omit, add, rename or override a projection field.
 
 The inner V3.6 Project Profile remains separately registered with the accepted frozen
 Docker execution-backend identity and exposes only this command under
@@ -431,6 +451,19 @@ Authority requires `v3g3_bounded_local`. The correction changes only that Contra
 its complete-task-object digest and the explanatory authority-plane separation. No source,
 test, fixture, State, evidence or real access changed. One correction round remains; any
 recurrence of this tool-profile authority-class defect returns `DECISION_REQUIRED`.
+
+Correction round 2 is consumed by the separate Main finding set recorded in
+`docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_AUTHORIZATION.md`: the correction-1 Contract
+called the complete V1 source task object a `TaskSpecV0B`, but the accepted outer V3 Run
+requires the V0B verifier identity, visibility and verifier-command fields. The correction
+freezes the exact V0B projection and its complete-object digest
+`d251789ebbfa8b5f9a59a2fcd695a34723eee1b9d374d8a9caca3461f122e888` while preserving
+the original V1 source object as separate provenance. No accepted-core source, fixture,
+State, evidence or real access changed.
+
+The correction budget is now exhausted at `2/2`. Any further implementation/integration
+finding that prevents acceptance, or any authority/integrity recurrence, returns
+`DECISION_REQUIRED`; no additional patch round is authorized.
 
 ## 10. Frozen real Execution Session protocol
 

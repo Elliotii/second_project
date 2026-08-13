@@ -12,7 +12,7 @@ active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: correction_1_main_rereview_passed_original_implementation_session_to_resume
+  status: correction_2_control_fix_frozen_main_rereview_pending_budget_exhausted
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: detailed_contract_corrected_after_preimplementation_authority_finding_round_1_of_2
+  goal_3_status: detailed_contract_corrected_after_task_schema_authority_finding_round_2_of_2
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -99,6 +99,10 @@ final_capstone:
   goal_3_correction_1_main_rereview_disposition: PASS_FINAL_CAPSTONE_G3_CORRECTION_1_MAIN_REREVIEW
   goal_3_corrected_control_baseline_commit: pending_resulting_commit_of_main_rereview_revision
   goal_3_corrected_control_baseline_tree: pending_resulting_tree_of_main_rereview_revision
+  goal_3_correction_2_finding: FC-G3-IMPLEMENTATION-P1-002_task_schema_verifier_authority_identity
+  goal_3_correction_2_authorization: docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_AUTHORIZATION.md
+  goal_3_correction_2_candidate_commit: pending_resulting_commit_of_this_correction_revision
+  goal_3_correction_2_candidate_tree: pending_resulting_tree_of_this_correction_revision
   goal_3_real_execution_authority: withheld_until_main_candidate_and_mandatory_focused_audit_pass
   goal_3_single_real_run_max: 1
   goal_3_task_id: final-capstone-g3-v1-parse-duration
@@ -106,7 +110,7 @@ final_capstone:
   goal_3_task_input_sha256: cc4c17609f1031774e4be4bc0cc9d8afff671a11f019b2515c304d9a4a1be262
   goal_3_workspace_source_digest: 5690aab9c1e7eb3905258c342d7bad4504e23377c18fec9fde39f22f9a99defa
   goal_3_verifier_source_sha256: 0924cb0f56e43a56dc74b262539f2ad0700b2cb2a43da26a9415b7e9ffaf21da
-  goal_3_acceptance_task_spec_digest: 58cc5ff437714996ae2312868bf182618e964a9e3cdf780e16d429d524ca661d
+  goal_3_acceptance_task_spec_digest: d251789ebbfa8b5f9a59a2fcd695a34723eee1b9d374d8a9caca3461f122e888
   goal_3_outer_tool_profile_id: v3g3_bounded_local
   goal_3_inner_v36_command_authority: docker_registered_only
   goal_3_provider_profile_digest: 6b90b83a047ce7745fc92a6f1ef99dd7f7ea6e046a5107e060f4b041e864cf32
@@ -119,7 +123,7 @@ final_capstone:
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
     goal_2: 1_of_2_consumed_completed
-    goal_3: 1_of_2_implementation_integration
+    goal_3: 2_of_2_implementation_integration_exhausted
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
     micro_finding_splitting: forbidden
     platform_safety_usage_sandbox_tool_execution_faults_count: false
@@ -2309,6 +2313,7 @@ required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_AUTHORIZATION.md
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_MAIN_REREVIEW.md
+  - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_AUTHORIZATION.md
   - docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
   - docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
