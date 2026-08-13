@@ -12,7 +12,7 @@ active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: correction_2_control_fix_frozen_main_rereview_pending_budget_exhausted
+  status: correction_2_main_rereview_passed_original_implementation_session_to_resume_budget_exhausted
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -101,8 +101,12 @@ final_capstone:
   goal_3_corrected_control_baseline_tree: pending_resulting_tree_of_main_rereview_revision
   goal_3_correction_2_finding: FC-G3-IMPLEMENTATION-P1-002_task_schema_verifier_authority_identity
   goal_3_correction_2_authorization: docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_AUTHORIZATION.md
-  goal_3_correction_2_candidate_commit: pending_resulting_commit_of_this_correction_revision
-  goal_3_correction_2_candidate_tree: pending_resulting_tree_of_this_correction_revision
+  goal_3_correction_2_candidate_commit: 7e754927efd82c171cf57b823c21dff7162916c2
+  goal_3_correction_2_candidate_tree: 66dd78f9bbd87977eb5cd0b5126ab53b6201c4bb
+  goal_3_correction_2_main_rereview: docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_MAIN_REREVIEW.md
+  goal_3_correction_2_main_rereview_disposition: PASS_FINAL_CAPSTONE_G3_CORRECTION_2_MAIN_REREVIEW
+  goal_3_final_corrected_control_baseline_commit: pending_resulting_commit_of_main_rereview_revision
+  goal_3_final_corrected_control_baseline_tree: pending_resulting_tree_of_main_rereview_revision
   goal_3_real_execution_authority: withheld_until_main_candidate_and_mandatory_focused_audit_pass
   goal_3_single_real_run_max: 1
   goal_3_task_id: final-capstone-g3-v1-parse-duration
@@ -2314,6 +2318,7 @@ required_reading:
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_AUTHORIZATION.md
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_MAIN_REREVIEW.md
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_AUTHORIZATION.md
+  - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_2_MAIN_REREVIEW.md
   - docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
   - docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
