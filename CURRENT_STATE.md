@@ -110,6 +110,8 @@ final_capstone:
   goal_3_implementation_report: docs/reports/FINAL_CAPSTONE_G3_IMPLEMENTATION_REPORT.md
   goal_3_closeout_draft: docs/reports/FINAL_CAPSTONE_G3_CLOSEOUT_DRAFT.md
   goal_3_decision_required_main_review: docs/reports/FINAL_CAPSTONE_G3_DECISION_REQUIRED_MAIN_REVIEW.md
+  goal_3_structural_amendment_decision_proposal: docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_DECISION_PROPOSAL.md
+  goal_3_structural_amendment_proposal_status: decision_proposal_ready_not_authorized
   goal_3_blocking_finding: promotion_admission_registry_source_identity_cardinality
   goal_3_candidate_frozen: false
   goal_3_mandatory_focused_audit_started: false
@@ -2331,6 +2333,7 @@ required_reading:
   - docs/reports/FINAL_CAPSTONE_G3_IMPLEMENTATION_REPORT.md
   - docs/reports/FINAL_CAPSTONE_G3_CLOSEOUT_DRAFT.md
   - docs/reports/FINAL_CAPSTONE_G3_DECISION_REQUIRED_MAIN_REVIEW.md
+  - docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_DECISION_PROPOSAL.md
   - docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_2_CONTRACT.md
   - docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
@@ -2551,7 +2554,7 @@ next_checkpoint:
   - await_User_structural_amendment_or_incomplete_closeout_decision
 
 open_user_decisions:
-  - Goal_3_DECISION_REQUIRED_choose_new_structural_amendment_or_incomplete_Final_Capstone_closeout
+  - Goal_3_DECISION_REQUIRED_choose_AUTHORIZE_G3_STRUCTURAL_AMENDMENT_or_CLOSE_FINAL_CAPSTONE_INCOMPLETE_G3
 ```
 
 ## Current Constraints
