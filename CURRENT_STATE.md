@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_FROZEN_ZERO_CALL_IMPLEMENTATION_PENDING
+  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_ZERO_CALL_IMPLEMENTATION_ACTIVE
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: structural_amendment_frozen_zero_call_implementation_pending
+  status: structural_amendment_zero_call_implementation_active
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: structural_amendment_frozen_zero_call_implementation_pending
+  goal_3_status: structural_amendment_zero_call_implementation_active
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -117,7 +117,10 @@ final_capstone:
   goal_3_structural_amendment_freeze_tree: eb355a1ebcf4ae5372913dd0c54a34034c9d39a1
   goal_3_structural_amendment_user_decision_sha256: fd11740e27845bc70f223f50c60cb1f9b472a692d98131b0bd61bbcf979adca9
   goal_3_structural_amendment_schema_decision: explicit_registry_schema_2_with_strict_schema_1_compatibility_reader
-  goal_3_structural_amendment_implementation_owner: fresh_dedicated_top_level_zero_call_session_pending_creation
+  goal_3_structural_amendment_implementation_owner: fresh_top_level_session_019ff9dd-2a00-7043-a0b7-3f88312afaaf
+  goal_3_structural_amendment_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/e9e9/project2
+  goal_3_structural_amendment_control_baseline_commit: 1c1a1d4aa72a80035a9b413631327801b6bd907c
+  goal_3_structural_amendment_control_baseline_tree: d9b5130152ccec0c015e2bbb83079f57700c57e3
   goal_3_structural_amendment_correction_budget: 0_of_1_consumed
   goal_3_blocking_finding: promotion_admission_registry_source_identity_cardinality_authorized_for_narrow_structural_resolution
   goal_3_candidate_frozen: false
@@ -2560,7 +2563,7 @@ next_checkpoint:
   - Goal_3_correction_budget_2_of_2_exhausted
   - User_authorized_new_narrow_Goal_3_Structural_Amendment_not_correction_round_3
   - formal_Structural_Amendment_frozen_at_e16665ea2b4c775a10e68395854fc0e49ac7c7e2
-  - create_fresh_dedicated_zero_call_Structural_Amendment_implementation_Session
+  - fresh_dedicated_zero_call_Structural_Amendment_implementation_Session_019ff9dd-2a00-7043-a0b7-3f88312afaaf_active
   - Main_review_and_deterministic_verification_before_Candidate_freeze
   - mandatory_fresh_focused_audit_before_unique_real_Run
 
