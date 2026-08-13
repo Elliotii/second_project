@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_DECISION_REQUIRED_CREDENTIAL_ROTATION
+  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_REPLACEMENT_ZERO_CALL_SESSION_PENDING
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: decision_required_rotate_exposed_anthropic_auth_token
+  status: structural_amendment_replacement_zero_call_session_pending
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: structural_amendment_gate_a_stopped_credential_rotation_required
+  goal_3_status: structural_amendment_gate_a_execution_fault_closed_replacement_pending
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -125,6 +125,11 @@ final_capstone:
   goal_3_structural_amendment_gate_a_stop_report: docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_GATE_A_CREDENTIAL_EXPOSURE_STOP.md
   goal_3_structural_amendment_exposed_variable_name: ANTHROPIC_AUTH_TOKEN
   goal_3_structural_amendment_exposed_value_workspace_capture: false_by_session_incident_report
+  goal_3_structural_amendment_exposed_variable_scope: process_only_absent_from_user_and_machine_persistent_environment
+  goal_3_structural_amendment_exposed_variable_parent_process: codex.exe
+  goal_3_structural_amendment_user_anthropic_credential_ownership: none_confirmed_by_user
+  goal_3_structural_amendment_user_rotation_required: false
+  goal_3_structural_amendment_execution_fault_disposition: closed_start_fresh_session_without_environment_enumeration
   goal_3_structural_amendment_partial_source_status: two_unaccepted_unstaged_files_preserved_only_in_e9e9_worktree
   goal_3_structural_amendment_correction_budget: 0_of_1_consumed
   goal_3_blocking_finding: promotion_admission_registry_source_identity_cardinality_authorized_for_narrow_structural_resolution
@@ -148,7 +153,7 @@ final_capstone:
   goal_3_docker_profile_digest: f31414d3a8aa288337f0b5ba2a1d976b7cb8c49b7935633e838fcbe4c2a96b05
   goal_3_retry_fallback_replacement_task_swap_result_hunting: forbidden
   goal_3_implementation_real_access: credentials_0_network_0_provider_0_model_0
-  stop_core_feature_development: false_goal_3_decision_required_credential_rotation
+  stop_core_feature_development: false_goal_3_replacement_zero_call_session_pending
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
@@ -2570,19 +2575,22 @@ next_checkpoint:
   - User_authorized_new_narrow_Goal_3_Structural_Amendment_not_correction_round_3
   - formal_Structural_Amendment_frozen_at_e16665ea2b4c775a10e68395854fc0e49ac7c7e2
   - Structural_Amendment_Session_019ff9dd-2a00-7043-a0b7-3f88312afaaf_stopped_after_credential_exposure
-  - rotate_exposed_ANTHROPIC_AUTH_TOKEN_without_sharing_value
-  - after_User_confirmation_freeze_new_clean_control_baseline_and_start_fresh_zero_call_replacement_Session
+  - User_confirmed_no_Anthropic_credential_and_metadata_proved_process_only_Codex_parent_injection
+  - credential_execution_fault_closed_without_User_rotation_or_correction_budget_use
+  - freeze_new_clean_control_baseline_and_start_fresh_zero_call_replacement_Session
 
-open_user_decisions:
-  - confirm_ANTHROPIC_AUTH_TOKEN_revoked_or_rotated_before_replacement_Session
+open_user_decisions: []
 ```
 
 ## Current Constraints
 
-- V3.6 remains closed and accepted. Final Capstone Goal 3 is stopped at a credential-safety
-  gate under the frozen narrow Structural Amendment. The original Goal 3 correction budget
-  remains exhausted at `2/2`; the new structural delta remains `0/1` because this Gate A
-  execution fault is not a correction round.
+- V3.6 remains closed and accepted. Final Capstone Goal 3 remains active under the frozen
+  narrow Structural Amendment. The first structural implementation Session stopped after a
+  process-only Codex-injected variable was exposed; the User has no Anthropic credential to
+  rotate. A fresh replacement Session is required and must not enumerate environment
+  variables. The original Goal 3 correction budget remains exhausted at `2/2`; the new
+  structural delta remains `0/1` because this Gate A execution fault is not a correction
+  round.
 - Do not reopen V2, V3, V3.5 or V3.6, start V4, call a model, read a Credential, use
   external network or modify Pi during Goal 3 implementation/Main integration/audit.
 - The later Goal 3 real Execution Session remains separately gated by a Main-frozen,

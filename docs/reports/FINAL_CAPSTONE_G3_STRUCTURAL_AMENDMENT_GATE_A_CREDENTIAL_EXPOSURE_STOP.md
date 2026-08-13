@@ -1,7 +1,7 @@
 # Final Capstone Goal 3 Structural Amendment Gate A Credential Exposure Stop
 
 ```yaml
-status: DECISION_REQUIRED_CREDENTIAL_ROTATION
+status: EXECUTION_FAULT_CLOSED_PLATFORM_PROCESS_INJECTION_NO_USER_ROTATION
 date: 2026-08-13
 goal_id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 amendment_id: FINAL_CAPSTONE_G3_PROMOTION_ADMISSION_PER_ENTRY_SOURCE_AUTHORITY
@@ -49,16 +49,33 @@ The zero-Credential precondition for this Session is irrecoverably violated. The
 Session cannot continue even after token rotation because its Gate A evidence is no longer
 zero-read.
 
-## Required user action
+## Main follow-up classification
 
-Treat `ANTHROPIC_AUTH_TOKEN` as compromised and revoke/rotate it through the account or
-secret-management surface that issued it. Do not send the old or replacement value in this
-task.
+After the stop, the User confirmed that they have no Anthropic key or credential. Main then
+performed a metadata-only scope check that enumerated environment variable names but did
+not read any value. It established:
 
-After the User confirms rotation, Main may create one fresh replacement top-level zero-call
-implementation Session from a newly frozen clean control baseline. The replacement Session
-must not enumerate environment variables or read credentials; dependency resolution must
-use explicit known paths and non-secret metadata only.
+- the variable name is present in the current process environment;
+- it is absent from the Windows User persistent environment;
+- it is absent from the Windows Machine persistent environment; and
+- the shell's parent process is `codex.exe` at the installed Codex application path.
+
+**Fact:** This is not a User- or Machine-persisted environment variable, and the User has no
+Anthropic credential to revoke.
+
+**Inference:** The variable is process-scoped runtime injection by the Codex application or
+its execution environment. Its exact issuer and lifetime are unconfirmed because Main did
+not inspect the value or application internals.
+
+**Decision:** No User credential rotation is required or possible on the available evidence.
+The event remains a valid zero-Credential Gate A violation for the stopped Session, but the
+required external-state action is satisfied by the User's ownership clarification and the
+metadata-only scope proof.
+
+Main may create one fresh replacement top-level zero-call implementation Session from a
+newly frozen clean control baseline. The replacement Session must not enumerate environment
+variables or read credentials; dependency resolution must use explicit known paths and
+non-secret metadata only.
 
 ## Preserved gates
 
@@ -69,7 +86,6 @@ use explicit known paths and non-secret metadata only.
 - No rerun, fallback, replacement task, task swap, result hunting or manufactured failure
   is authorized.
 
-Disposition:
+Final disposition:
 
-`DECISION_REQUIRED_ROTATE_ANTHROPIC_AUTH_TOKEN_THEN_FRESH_ZERO_CALL_SESSION`
-
+`CLOSED_EXECUTION_FAULT_START_FRESH_ZERO_CALL_SESSION_WITH_NO_ENVIRONMENT_ENUMERATION`
