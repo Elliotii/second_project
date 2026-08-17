@@ -1,0 +1,156 @@
+# V3.7 Goal 1 Implementation Report
+
+```yaml
+status: READY_FOR_MAIN_PRELIMINARY_REVIEW
+goal: V3.7 Goal 1 - Registered Recovery Evidence Bridge
+implementation_owner: dedicated_v37_goal_1_implementation_session
+original_starting_commit: 7d6b62223503309b4c39785eec767b437eee6abd
+original_starting_tree: 3adbe64faff229766a60553afa444f3569918b81
+control_amendment_main_commit: f01e7b471cc11cd87d2babe6a7dc508465480cba
+control_amendment_integrated_commit: b477a99360bcb93128aaf23b796cc897b2cf1951
+control_amendment_integrated_tree: d5c20bb328648e168a1378c34f60ab51f527d02b
+candidate_commit: containing_commit_reported_in_session_handoff
+candidate_tree: containing_tree_reported_in_session_handoff
+implementation_started: true
+goal_2_started: false
+credential_reads: 0
+network_calls: 0
+external_provider_calls: 0
+real_model_calls: 0
+docker_product_tasks: 0
+pi_source_reads_or_changes: 0
+hard_stops: []
+scope_deviations: []
+```
+
+The candidate identity cannot be embedded literally in a file that participates in its
+own Git commit/tree hash. The dedicated Session reports the exact containing commit and
+tree immediately after creating the single authorized candidate commit.
+
+## Changed-file inventory
+
+- `workbench/src/contracts/v37-types.ts`
+- `workbench/src/v37/host-registry-v37.ts`
+- `workbench/src/v37/workflow-registration-v37.ts`
+- `workbench/src/v37/registered-recovery-v37.ts`
+- `workbench/src/v37/candidate-v37.ts`
+- `workbench/src/inspect-v37g1.ts`
+- `workbench/config/v37/registered-cases/registry-v1.json`
+- `workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json`
+- `workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json`
+- `workbench/tests/v37g1-registered-recovery.test.ts`
+- `docs/reports/V3_7_G1_IMPLEMENTATION_REPORT.md`
+- `docs/reports/V3_7_G1_CLOSEOUT_DRAFT.md`
+
+No accepted business-source module, old G1 family, V2 schema/truth, V3 State Store/CAS,
+G2 Assessment/rollback, Pi source, `CURRENT_STATE.md`, or rejected Schema 2 path changed.
+
+## Implemented contracts and source symbols
+
+| Contract | Implementation |
+|---|---|
+| Fixed Host trust root | `loadRegisteredCaseFromHostRegistryV37`, `validateRegisteredCaseManifestV37`, `validateRegistrationEnvelopeV37` |
+| Workflow/task identity | `createWorkflowRegistrationV37`, `loadWorkflowRegistrationV37`; fixed Primary/follow-up task instances, no caller parameters |
+| V2 truth and Comparison | `deriveRegisteredRecoveryPackageV37`; reopens `inspectRunV2A`, preserves two Candidate Path identities, emits `selected` or terminal `no_valid_recovery` |
+| Evidence/request persistence | `persistRegisteredRecoveryPackageV37`; distinct immutable Evidence, confirmation and submission request objects |
+| G1 Admit/Reject | `admitRegisteredRecoveryV37`, `recomputeRegisteredRecoveryAdmissionV37`, `inspectRegisteredRecoveryAdmissionV37` |
+| Opportunity projection | direct `ImprovementOpportunityV3` construction only for admitted selected recovery; no opportunity for terminal rejection |
+| Candidate boundary | `producePromptCandidateV37`; exact active Base/State scope/applicability and one prompt addendum through the existing bounded producer |
+
+The Inspector reloads the fixed Host registry and all V2 source artifacts; package-carried
+approval data is not Authority. Registry/digest overrides, browser/caller approval,
+cross-workflow substitution, link/reparse ambiguity, source/package mutation, stale Base,
+adaptive Skill and authority/leakage text fail closed.
+
+## Frozen Host configuration
+
+```yaml
+configuration_baseline_id: v37-g1-host-registry-v1
+registry_location: workbench/config/v37/registered-cases/registry-v1.json
+manifest_location: workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json
+envelope_location: workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json
+loader_entry_point: workbench/src/v37/host-registry-v37.ts#loadRegisteredCaseFromHostRegistryV37
+loader_contract_id: v37-host-registry-loader-v1
+digest_algorithm: sha256_over_canonical_utf8_json_v1
+case_id: v37-g1-det-recovery
+manifest_version: 1
+registry_index_digest: ce7ddba86bbdd42499ad5977a0bd687fa5b9247de824d3f59623a0085370a523
+manifest_body_digest: ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90
+registration_digest: 94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724
+registry_trust_root_digest: cdeeafc6fba40cb8d07cf85b8f04187fd4ffe4db54aa68fb64cef3ac19776f02
+```
+
+Complete Manifest spec digest inventory:
+
+```yaml
+source_baseline_spec: 4665eeb9e69f9531ee6bc0b40fff86a61fa4373100ceadf6e12b91eb9e51c4cd
+primary_task_spec: 39c61f4cc73f4ef3ca4932427773009dd4c2aedfc212c687145372b8cba49eb0
+primary_verifier_spec: 89d1b28a40472aa1d49ff48351623fb3eead93fd70fbd6654592a3f98d6bfde0
+problem_trigger_spec: c4aa306a8410dbac0a1923d3966f7523a264155e71e9f035f8668e12b9a78b48
+recovery_a_strategy_spec: 060aec5724bb0a6d19caecd0b60bb0f79b15d086d03f641b7bec4854af87754f
+recovery_b_strategy_spec: f59dbca50b981d588f196b5e475c9c79cd44ba4790b9a51ef332134e72977765
+comparison_profile_spec: 23b1948e5569a784af1c186371efe98d50faa922f183f54a4671d0159d99f1f6
+candidate_policy_spec: d7a9285290631e5ed2f0efa03a02e671572e76881f91492d653e6e88c24d9d53
+regression_pack_spec: 296ddaaeac5883c35a2ceb6fec4b3f18ad383af5e78083d3a801c1dea8e11c4e
+follow_up_task_spec: 1c8c5ca89d0bb16b5cc99e1939e99c40a693c3fca4e0855d26ca79daadc5c1b8
+follow_up_source_baseline_spec: 75046aceae2e751dee8b410de1393b7cf3f1743c82ae0e8b35e71f86d319f68d
+follow_up_verifier_spec: 59934ae3ec0d8f6fc3254769dab513330002b1e75a57a0c95535375fb7fb1dd8
+provider_profile_spec: f695d0e636960c117c7176bd395e6fc19d2adaa9f649cf68973a15d715662e89
+tool_profile_spec: 2f44ac225979c1965e7612bbcaa06b6b550f3004b294dce6bb276d6da425fbbe
+command_profile_spec: ac8b697d2b850d7b234801c65523dccbbdd67f1849c4ecce3f725062c1809e08
+budget_profile_spec: d7963f6d311682b73a7dc84cc5b66f245db49a133f03cd485b3b5b37f9375ec1
+stop_condition_profile_spec: 5d7f0f95a9bf3b3d1b0a43bc602ce9bd8832dbe1397901acf11d7e764bdb377f
+runtime_base_prompt_spec: 02802ee30a2e24895d380b28ea8cb32adcb92e8546693fb03f06181c0cd45c31
+```
+
+## Deterministic identities
+
+```yaml
+project_id: v37-g1-project
+state_store_configured_location: .runs/v37/g1-tests/state-store
+state_store_scope_digest: ee650680b0e3bf68948125388a6148f870136a0c880778715e8f3009064577c0
+initial_state_digest: ef49e812b72b03b23deeffec51e06b9c84f6cdcdfcc9d6c0f7969e70b94b8956
+runtime_base_prompt_digest: 317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf
+primary_task_id: v1-parse-duration
+follow_up_task_id: v37-g1-det-follow-up-clamp-retries
+follow_up_task_body_sha256: 4ff40dfc9c27c3083b2694175ea34f78ceecf522202a894f91c7fd614c8a73b8
+follow_up_source_sha256: 77271bd589e03e3d3b54dd25db95877baf5f45b3b21917b9e4e67893776f8c11
+follow_up_verifier_sha256: 2a4019af3501332b9c53365ed907120b2c9e496de59ebf37c4fd8dab78d4ec87
+follow_up_verifier_command_sha256: 4b54db2265af6b195de93467a95970bdac4a1d7f2a5a3af85a628e9f84305033
+test_workflow_ids:
+  - v37-g1-workflow-a
+  - v37-g1-workflow-b
+  - v37-g1-workflow-both-fail
+```
+
+Workflow and task-instance digests are Host-derived per instance at creation time and are
+therefore not static registry constants.
+
+## Verification
+
+| Command | Result |
+|---|---|
+| `node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit` | Environment stop before source checking: `TS2688`, isolated worktree has no `node_modules/@types/node` |
+| supplemental strict TypeScript compiler-API check over all seven new TS/test roots with pinned Node/Pi declaration paths | PASS, 0 diagnostics |
+| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g1-registered-recovery.test.ts` | PASS, 11/11 |
+| same command, `tests/v2a-recovery.test.ts` | PASS, 5/5 |
+| same command, `tests/v3g1-evidence-to-candidate.test.ts` | PASS, 13/13 |
+| same command, `tests/v3g2-validate-promote-reject-rollback.test.ts` | PASS, 6/6 |
+| exact command, `tests/final-capstone-g1-evidence-admission.test.ts` | 23/24; only spawned child lacked inherited Pi loader and failed module resolution before product inspection |
+| same G1 Capstone with identical fixed loader inherited through `NODE_OPTIONS` by child processes | PASS, 24/24 |
+| exact command, `tests/final-capstone-g2-regression-state-feedback.test.ts` | 8/10; both spawned-child failures were the same missing Pi package resolution |
+| same G2 Capstone with identical fixed loader inherited through `NODE_OPTIONS` by child processes | PASS, 10/10 |
+
+No product assertion failed once the already-authorized fixed public Pi loader was visible
+to the tests' child Node processes. No dependency was installed and no tracked file was
+changed to compensate for the isolated-worktree dependency layout.
+
+## Remaining unverified
+
+- The exact repository-wide `tsc -p tsconfig.json --noEmit` invocation remains blocked by
+  the isolated worktree's absent ignored Node type dependencies; the bounded strict check
+  over all new roots passed.
+- The two exact Capstone commands do not propagate their parent loader into spawned child
+  processes in this isolated worktree; the source-equivalent inherited-loader reruns pass.
+- Independent focused audit and Main Goal acceptance remain pending and are not claimed.
+- Goal 1 performs no State publication and Goal 2 execution is not started.
