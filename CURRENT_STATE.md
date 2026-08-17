@@ -1,18 +1,18 @@
 # Current State
 
-> Updated: 2026-08-13
+> Updated: 2026-08-18
 
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_CORRECTION_1_ACTIVE
+  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_AMENDMENT_AUTHORIZED_BASELINE_FREEZE
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: structural_amendment_correction_1_active
+  status: outer_runtime_schema_2_amendment_authorized_baseline_freeze
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -38,7 +38,7 @@ next_goal:
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
-  status: active_goal_3_structural_amendment_correction_1
+  status: active_goal_3_outer_runtime_schema_2_amendment_authorized
   development_decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
   charter: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   gap_review: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: structural_amendment_correction_1_active
+  goal_3_status: outer_runtime_schema_2_amendment_authorized_baseline_freeze
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -135,10 +135,23 @@ final_capstone:
   goal_3_structural_amendment_replacement_worktree: C:/Users/HUAWEI/.codex/worktrees/06c7/project2
   goal_3_structural_amendment_replacement_control_baseline_commit: 23683a3272d9d0e156ab808bf6b67db3f87ac4ad
   goal_3_structural_amendment_replacement_control_baseline_tree: afb15ca4e39d7187cd06d32061a4ed80d827a495
-  goal_3_structural_amendment_correction_budget: 1_of_1_consumed_pending_correction_and_main_rereview
+  goal_3_structural_amendment_correction_budget: 1_of_1_exhausted_decision_required
   goal_3_structural_amendment_correction_1_authorization: docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_CORRECTION_1_AUTHORIZATION.md
   goal_3_structural_amendment_correction_1_finding_set: FC-G3-SA-MAIN-P1-001_FC-G3-SA-MAIN-P1-002_FC-G3-SA-MAIN-P2-003
-  goal_3_blocking_finding: promotion_admission_registry_source_identity_cardinality_authorized_for_narrow_structural_resolution
+  goal_3_structural_amendment_correction_1_main_rereview: docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_CORRECTION_1_DECISION_REQUIRED_MAIN_REREVIEW.md
+  goal_3_structural_amendment_correction_1_disposition: DECISION_REQUIRED_same_projection_authority_integrity_class_unresolved_outside_allowlist
+  goal_3_outer_runtime_schema_2_decision_proposal: docs/reports/FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_DECISION_PROPOSAL.md
+  goal_3_outer_runtime_schema_2_proposal_status: accepted_by_user_superseded_by_formal_amendment
+  goal_3_outer_runtime_schema_2_user_direction: authorize_recommended_decision_proposal
+  goal_3_outer_runtime_schema_2_formal_amendment: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT.md
+  goal_3_outer_runtime_schema_2_user_decision: AUTHORIZE_G3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT
+  goal_3_outer_runtime_schema_2_user_decision_sha256_utf8: f4cccdcc061668ae798f1a5fbb3b1f997889e3104bc6ff39ed1db95a9ec51217
+  goal_3_outer_runtime_schema_2_formal_amendment_authorized: true
+  goal_3_outer_runtime_schema_2_implementation_authorized: true_after_exact_control_baseline
+  goal_3_outer_runtime_schema_2_correction_budget: 0_of_1_authorized
+  goal_3_outer_runtime_schema_2_candidate_frozen: false
+  goal_3_outer_runtime_schema_2_audit_started: false
+  goal_3_blocking_finding: inner_v36_multi_request_vs_outer_v3_schema1_faux_single_request_projection_conflict
   goal_3_candidate_frozen: false
   goal_3_mandatory_focused_audit_started: false
   goal_3_real_run_started: false
@@ -159,13 +172,14 @@ final_capstone:
   goal_3_docker_profile_digest: f31414d3a8aa288337f0b5ba2a1d976b7cb8c49b7935633e838fcbe4c2a96b05
   goal_3_retry_fallback_replacement_task_swap_result_hunting: forbidden
   goal_3_implementation_real_access: credentials_0_network_0_provider_0_model_0
-  stop_core_feature_development: false_goal_3_structural_amendment_correction_1_active
+  stop_core_feature_development: false_goal_3_outer_runtime_schema_2_implementation_pending
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
     goal_2: 1_of_2_consumed_completed
     goal_3: 2_of_2_implementation_integration_exhausted
-    goal_3_structural_amendment: 1_of_1_new_narrow_budget_consumed_pending_correction_and_main_rereview
+    goal_3_structural_amendment: 1_of_1_new_narrow_budget_exhausted_DECISION_REQUIRED
+    goal_3_outer_runtime_schema_2_amendment: 0_of_1_authorized
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
     micro_finding_splitting: forbidden
     platform_safety_usage_sandbox_tool_execution_faults_count: false
@@ -2354,6 +2368,9 @@ required_reading:
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_STRUCTURAL_AMENDMENT.md
+  - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT.md
+  - docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_CORRECTION_1_DECISION_REQUIRED_MAIN_REREVIEW.md
+  - docs/reports/FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_DECISION_PROPOSAL.md
   - docs/reports/FINAL_CAPSTONE_G3_STRUCTURAL_AMENDMENT_GATE_A_CREDENTIAL_EXPOSURE_STOP.md
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_AUTHORIZATION.md
   - docs/reports/FINAL_CAPSTONE_G3_CORRECTION_1_MAIN_REREVIEW.md
@@ -2583,20 +2600,28 @@ next_checkpoint:
   - Structural_Amendment_Session_019ff9dd-2a00-7043-a0b7-3f88312afaaf_stopped_after_credential_exposure
   - User_confirmed_no_Anthropic_credential_and_metadata_proved_process_only_Codex_parent_injection
   - credential_execution_fault_closed_without_User_rotation_or_correction_budget_use
-  - fresh_zero_call_replacement_Session_019ff9ef-76c4-7da0-bf11-f6ef3b53ea86_active_from_23683a3272d9d0e156ab808bf6b67db3f87ac4ad
+  - fresh_zero_call_replacement_Session_019ff9ef-76c4-7da0-bf11-f6ef3b53ea86_returned_DECISION_REQUIRED
+  - Structural_Amendment_correction_1_of_1_exhausted_with_same_projection_authority_integrity_class_unresolved
+  - Candidate_false_audit_false_unique_real_Run_unstarted_unconsumed_0_of_1
+  - User_authorized_Main_to_draft_recommended_outer_runtime_manifest_schema_2_decision_proposal
+  - proposal_drafted_pending_formal_Amendment_authorization
+  - User_authorized_G3_outer_runtime_manifest_schema_2_formal_Structural_Amendment
+  - next_freeze_formal_Amendment_and_exact_Control_Baseline_then_start_fresh_zero_call_implementation_Session
 
 open_user_decisions: []
 ```
 
 ## Current Constraints
 
-- V3.6 remains closed and accepted. Final Capstone Goal 3 remains active under the frozen
-  narrow Structural Amendment. The first structural implementation Session stopped after a
-  process-only Codex-injected variable was exposed; the User has no Anthropic credential to
-  rotate. A fresh replacement Session is required and must not enumerate environment
-  variables. The original Goal 3 correction budget remains exhausted at `2/2`; the new
-  structural delta remains `0/1` because this Gate A execution fault is not a correction
-  round.
+- V3.6 remains closed and accepted. Final Capstone Goal 3 remains active but stopped at a
+  structural decision boundary. The replacement Structural Amendment Session returned
+  `DECISION_REQUIRED`: accepted outer V3 schema 1 requires one Faux Provider request while
+  an honest settled V3.6 bounded-edit carrier can require multiple Provider requests. The
+  Amendment correction budget is exhausted at `1/1`, so its unaccepted delta cannot become
+  a Candidate. The User authorized the separate explicit outer V3 runtime/manifest schema-2
+  Structural Amendment with a new narrow `0/1` correction budget. Main must freeze its exact
+  Control Baseline and start one fresh zero-call implementation Session. Original Goal 3
+  remains exhausted at `2/2`; the unique real Run remains unstarted and unconsumed at `0/1`.
 - Do not reopen V2, V3, V3.5 or V3.6, start V4, call a model, read a Credential, use
   external network or modify Pi during Goal 3 implementation/Main integration/audit.
 - The later Goal 3 real Execution Session remains separately gated by a Main-frozen,

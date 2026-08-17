@@ -1046,3 +1046,52 @@ concrete product/portfolio question
 
 不得因为 V3.5 已完成而自动建设 Router、Curator、Experience Platform、semantic Memory、
 multi-user service、database、streaming subsystem、IDE 或 Pi feature parity。
+
+---
+
+# 16. Final Capstone Goal 3 - Current Authority (2026-08-18)
+
+本节是对本文件早期 current-state / next-step 快照的增量覆盖，不改写其历史 provenance。
+
+```yaml
+version: SECOND_PROJECT_FINAL_CAPSTONE
+active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
+goal_1: closed_accepted
+goal_2: closed_accepted
+goal_3: outer_runtime_manifest_schema_2_structural_amendment_authorized
+original_goal_3_corrections: 2_of_2_exhausted
+promotion_admission_structural_amendment_corrections: 1_of_1_exhausted
+outer_runtime_schema_2_amendment_corrections: 0_of_1_authorized
+candidate_frozen: false
+mandatory_focused_audit_started: false
+unique_real_run: 0_of_1_unstarted_unconsumed
+```
+
+第一份 Goal 3 Structural Amendment 证明了 per-entry promotion-admission 方向，但其唯一
+correction 无法把 inner V3.6 多请求 bounded-edit carrier 诚实投影为 outer V3 schema-1
+Faux 单请求形状。用户因此授权了另一份窄结构 Amendment：
+
+`docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT.md`。
+
+当前接受路线是：
+
+```text
+freeze explicit schema-2 Amendment and Control Baseline
+  -> fresh dedicated zero-call implementation Session
+  -> Main line-by-line review and complete Gate E
+  -> Candidate freeze
+  -> fresh mandatory focused audit
+  -> audited Execution Baseline
+  -> exactly one frozen real acceptance Run
+  -> Goal 3 and aggregate Final Capstone Closeout
+  -> STOP CORE FEATURE DEVELOPMENT
+```
+
+Schema 1 保持精确兼容。Schema 2 仅限冻结的 Final Capstone V3.6 bridge，必须保留有序、
+Host-observed 的 request identity 及完整 inner/outer counters，不得 value substitution。
+不授权 V3.6 或 Pi 变更、新任务、新 Goal 1 family、task swap、rerun、fallback、result
+hunting 或 manufactured failure。
+
+新 Amendment 最多有一轮 bounded correction。同一 projection authority/integrity 缺陷
+再次出现、scope escape，或一轮后仍不能验收，均返回 `DECISION_REQUIRED`。平台 safety、
+usage limit、sandbox/tool interruption 不计入该轮。

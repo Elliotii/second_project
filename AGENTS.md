@@ -1,5 +1,30 @@
 # Project Instructions
 
+## Current Final Capstone Authority Override (2026-08-18)
+
+`CURRENT_STATE.md` is the live control source. Final Capstone Goal 1 and Goal 2 are closed
+and accepted. Goal 3 remains active. Its original correction budget is exhausted at `2/2`,
+and the first promotion-admission Structural Amendment correction budget is exhausted at
+`1/1` with `DECISION_REQUIRED`.
+
+The User has now authorized the separate binding
+`SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT.md`.
+It permits one fresh dedicated top-level zero-call implementation Session to add an explicit
+Final Capstone outer V3 runtime/manifest schema 2 while preserving accepted schema 1
+exactly. The Amendment's exact allowlist, proof obligations and new `1/1` correction budget
+control that Session. The stopped correction worktree is unaccepted evidence and must not
+be resumed or adopted wholesale.
+
+Main alone freezes the Control Baseline and Candidate, performs Main acceptance, updates
+control state, and grants later execution handoff. A fresh focused audit of the frozen
+Candidate is mandatory. Credential/environment enumeration, network, Provider/model, real
+model and Pi changes remain forbidden until the separately gated real Execution Session.
+The unique real acceptance Run remains unstarted and unconsumed at `0/1`; rerun, fallback,
+replacement, task swap, result hunting and manufactured failure remain forbidden.
+
+Where older Purpose/current-status prose below conflicts with this override and
+`CURRENT_STATE.md`, treat it as historical context rather than live authority.
+
 ## Purpose
 
 This repository contains the accepted V0–V3.6 implementation of a reliability-first
