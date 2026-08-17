@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_AMENDMENT_AUTHORIZED_BASELINE_FREEZE
+  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_IMPLEMENTATION_READY
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: outer_runtime_schema_2_amendment_authorized_baseline_freeze
+  status: outer_runtime_schema_2_implementation_ready
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: outer_runtime_schema_2_amendment_authorized_baseline_freeze
+  goal_3_status: outer_runtime_schema_2_implementation_ready
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -144,10 +144,14 @@ final_capstone:
   goal_3_outer_runtime_schema_2_proposal_status: accepted_by_user_superseded_by_formal_amendment
   goal_3_outer_runtime_schema_2_user_direction: authorize_recommended_decision_proposal
   goal_3_outer_runtime_schema_2_formal_amendment: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT.md
+  goal_3_outer_runtime_schema_2_formal_amendment_freeze_commit: aed6218371672a05fb026b110d9be23e7b78c9af
+  goal_3_outer_runtime_schema_2_formal_amendment_freeze_tree: bb344238c893892a3088eae055a8c7dde357d653
   goal_3_outer_runtime_schema_2_user_decision: AUTHORIZE_G3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT
   goal_3_outer_runtime_schema_2_user_decision_sha256_utf8: f4cccdcc061668ae798f1a5fbb3b1f997889e3104bc6ff39ed1db95a9ec51217
   goal_3_outer_runtime_schema_2_formal_amendment_authorized: true
   goal_3_outer_runtime_schema_2_implementation_authorized: true_after_exact_control_baseline
+  goal_3_outer_runtime_schema_2_control_baseline_commit: resulting_commit_of_this_revision
+  goal_3_outer_runtime_schema_2_implementation_owner: fresh_top_level_session_pending_creation
   goal_3_outer_runtime_schema_2_correction_budget: 0_of_1_authorized
   goal_3_outer_runtime_schema_2_candidate_frozen: false
   goal_3_outer_runtime_schema_2_audit_started: false
@@ -2606,7 +2610,8 @@ next_checkpoint:
   - User_authorized_Main_to_draft_recommended_outer_runtime_manifest_schema_2_decision_proposal
   - proposal_drafted_pending_formal_Amendment_authorization
   - User_authorized_G3_outer_runtime_manifest_schema_2_formal_Structural_Amendment
-  - next_freeze_formal_Amendment_and_exact_Control_Baseline_then_start_fresh_zero_call_implementation_Session
+  - formal_outer_runtime_manifest_schema_2_Amendment_frozen_at_aed6218371672a05fb026b110d9be23e7b78c9af
+  - next_create_exact_Control_Baseline_then_start_fresh_zero_call_implementation_Session
 
 open_user_decisions: []
 ```

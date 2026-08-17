@@ -291,4 +291,3 @@ Final Capstone.
 After accepted implementation and audit, Main proceeds to the unique real Run and final
 Closeout without further intermediate approval unless a Contract decision boundary,
 platform block or `DECISION_REQUIRED` occurs.
-
