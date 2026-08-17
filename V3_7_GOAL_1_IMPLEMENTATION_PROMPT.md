@@ -343,7 +343,10 @@ feat: implement V3.7 registered recovery evidence bridge
 
 `V3_7_G1_IMPLEMENTATION_REPORT.md` and `V3_7_G1_CLOSEOUT_DRAFT.md` must record:
 
-- starting and candidate commit/tree;
+- exact starting commit/tree;
+- `candidate_commit: SELF` and `candidate_tree: SELF` as symbolic references to the one
+  commit containing the reports; embedding that commit/tree hash in its own tree is
+  mechanically impossible and must not be guessed;
 - exact changed-file inventory;
 - implemented schema/Authority decisions and source symbols;
 - registry location, configuration baseline, loader contract and complete digest inventory;
@@ -353,6 +356,11 @@ feat: implement V3.7 registered recovery evidence bridge
 - Credential/network/Provider/model/Docker counts, all zero;
 - scope deviations or Hard Stops;
 - candidate status `READY_FOR_MAIN_PRELIMINARY_REVIEW`, never Goal acceptance.
+
+The Session return must provide the resolved candidate commit/tree obtained after the
+commit succeeds. Main preliminary review is the first authoritative document that records
+those resolved hashes. No second implementation/report-only commit is permitted merely to
+replace `SELF`.
 
 Do not tag, push, update `CURRENT_STATE.md`, declare audit PASS, accept Goal 1 or start
 Goal 2.

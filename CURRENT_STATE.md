@@ -235,6 +235,7 @@ next_version:
   active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
+  goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
   goal_1_candidate_commit: null
   goal_1_audit_status: not_started
   goal_2_status: locked_pending_goal_1_acceptance
