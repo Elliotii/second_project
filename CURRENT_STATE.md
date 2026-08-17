@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: final_capstone_closed
-  status: FINAL_CAPSTONE_G3_CLOSED_INCOMPLETE_STOPPED_UNACCEPTED
+  phase: v3_7_goal_1_active
+  status: V3_7_G1_IMPLEMENTATION_AUTHORIZED
 
-active_goal: null
+active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
-  id: null
-  status: none
+  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  status: implementation_authorized_pending_dedicated_session
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -32,9 +32,9 @@ last_completed_goal:
   disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
 
 next_goal:
-  id: null
-  status: none_user_decision_required
-  note: V3.7_planning_may_begin_only_under_a_separate_User_decision
+  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  status: active
+  note: accepted_Charter_authorizes_dedicated_zero_access_implementation_only
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -227,8 +227,18 @@ strict_g3:
 
 next_version:
   version: V3.7
-  planning_status: not_started
-  implementation_status: not_started
+  planning_status: charter_accepted
+  implementation_status: goal_1_authorized
+  charter: V3_7_CHARTER.md
+  charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
+  charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
+  active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
+  goal_1_candidate_commit: null
+  goal_1_audit_status: not_started
+  goal_2_status: locked_pending_goal_1_acceptance
+  goal_3a_status: locked_pending_goals_1_2_acceptance
+  goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
@@ -2411,6 +2421,9 @@ reference_analysis:
     recovery_budget: mature_pattern_unverified
 
 required_reading:
+  - V3_7_CHARTER.md
+  - V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
+  - V3_7_PREIMPLEMENTATION_REVIEW.md
   - docs/reports/FINAL_CAPSTONE_G3_INCOMPLETE_CLOSEOUT.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   - docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
@@ -2669,8 +2682,9 @@ next_checkpoint:
   - Final_Capstone_Goal_3_closed_incomplete_STOPPED_UNACCEPTED
   - rejected_schema_2_delta_not_accepted
   - Candidate_false_audit_false_unique_real_Run_permanently_unconsumed
-  - active_goal_null
-  - V3_7_planning_and_implementation_not_started
+  - V3_7_Charter_accepted_at_58f3f1aace8b0eafa153082dc34dd0a41bfe2922
+  - V3_7_Goal_1_active_zero_real_access
+  - Goal_2_locked_until_Goal_1_Main_acceptance_after_audit_PASS
 
 open_user_decisions: []
 ```
@@ -2688,10 +2702,12 @@ open_user_decisions: []
   it cannot become a Candidate or enter audit. Original Goal 3 remains exhausted at `2/2`,
   the first Structural Amendment remains exhausted at `1/1`, and the unique real Run is
   permanently unconsumed under closed Goal 3.
-- Do not reopen V2, V3, V3.5 or V3.6, call a model, read a Credential, use external
-  network, modify Pi, or execute Goal 3. No Goal is active.
-- V3.7 is only the next unstarted version. Planning and implementation remain
-  `not_started`; planning may begin only under a separate User decision.
+- V3.7 Goal 1 is active under the accepted `V3_7_CHARTER.md`. Only the exact zero-access
+  work in `V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md` is authorized. Existing V2/G1/V3/G2
+  semantics are read-only dependencies, not amendment surfaces.
+- Do not call a model, read a Credential, use external network, run a Docker product task,
+  modify Pi, or begin Goal 2/3. Goal 2 remains locked until Goal 1 receives candidate
+  review, independent focused-audit PASS and Main final acceptance.
 - Goal 3 used both original bounded correction rounds, the first Structural Amendment used
   its `1/1`, and the outer schema-2 Amendment used its `1/1`. Do not issue another patch,
   Candidate, audit or real execution. Goal 3 is closed and no further patch is authorized.
@@ -2791,6 +2807,12 @@ open_user_decisions: []
   mandatory real Negative or full V2 acceptance passed.
 
 ## Expected Next Handoff
+
+V3.7 is active under the user-accepted `V3_7_CHARTER.md`. Goal 1 is the only unlocked
+Goal. Its dedicated Implementation Session must start from the recorded Charter baseline,
+obey `V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md`, make zero real-access calls, create one
+candidate commit and stop for Main preliminary review. Goal 2 remains locked pending a
+fresh independent focused-audit PASS and Main final Goal 1 acceptance.
 
 V0-A, V0-B and V0-C are closed and accepted. V0 now provides the minimal real
 Coding Agent Workbench foundation: controlled Workspace, Direct Pi
