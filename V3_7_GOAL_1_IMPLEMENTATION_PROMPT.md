@@ -182,6 +182,59 @@ The Candidate wrapper must:
 Goal 1 must not publish, promote, reject or roll back State. No temporary or alternate
 State lineage may be created.
 
+### 6.1 Exact deterministic follow-up identity
+
+The Goal 1 registered Manifest must contain the following complete follow-up inputs. They
+are frozen now so the same workflow can continue into Goal 2; placeholders such as
+`reserved_not_executed_in_goal_1` are forbidden.
+
+```yaml
+follow_up_task_id: v37-g1-det-follow-up-clamp-retries
+follow_up_task_kind: typescript-maintenance
+follow_up_failure_family: verifier-failure
+follow_up_task_body_sha256: 4ff40dfc9c27c3083b2694175ea34f78ceecf522202a894f91c7fd614c8a73b8
+follow_up_source_baseline_id: v37-g1-det-follow-up-source-v1
+follow_up_source_path: src/policy.mjs
+follow_up_source_sha256: 77271bd589e03e3d3b54dd25db95877baf5f45b3b21917b9e4e67893776f8c11
+follow_up_verifier_id: v37-g1-det-follow-up-verifier-v1
+follow_up_verifier_path: verifier/follow-up.test.mjs
+follow_up_verifier_sha256: 2a4019af3501332b9c53365ed907120b2c9e496de59ebf37c4fd8dab78d4ec87
+follow_up_verifier_command: node --test verifier/follow-up.test.mjs
+follow_up_verifier_command_sha256: 4b54db2265af6b195de93467a95970bdac4a1d7f2a5a3af85a628e9f84305033
+```
+
+Exact UTF-8 task body, without a trailing newline:
+
+```text
+Update `src/policy.mjs` so `clampRetries` returns `0` for negative integer inputs and preserves non-negative integer inputs. Do not modify verifier files.
+```
+
+Exact UTF-8 source bytes, with LF line endings and one final LF:
+
+```javascript
+export function clampRetries(value) {
+  return value;
+}
+```
+
+Exact UTF-8 Verifier bytes, with LF line endings and one final LF:
+
+```javascript
+import assert from "node:assert/strict";
+import test from "node:test";
+import { clampRetries } from "../src/policy.mjs";
+
+test("clampRetries follows the registered boundary contract", () => {
+  assert.equal(clampRetries(-1), 0);
+  assert.equal(clampRetries(0), 0);
+  assert.equal(clampRetries(2), 2);
+});
+```
+
+The Manifest must embed these exact bodies or content-address them with the exact digests
+above. Goal 1 does not execute the follow-up. Goal 2 must consume these same identities;
+changing them requires a new Manifest/version and cannot continue the Goal 1 workflow.
+
 ## 7. Recovery and Comparison truth
 
 - Reuse `inspectRunV2A` and persisted V2 artifacts as truth; do not change their schema.
