@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_CORRECTION_1_ACTIVE
+  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_DECISION_REQUIRED
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: outer_runtime_schema_2_correction_1_active
+  status: outer_runtime_schema_2_correction_1_exhausted_DECISION_REQUIRED
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -38,7 +38,7 @@ next_goal:
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
-  status: active_goal_3_outer_runtime_schema_2_amendment_authorized
+  status: goal_3_outer_runtime_schema_2_correction_exhausted_DECISION_REQUIRED
   development_decision: RECOMMEND_FINAL_CORE_DEVELOPMENT
   charter: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_VERSION_CHARTER.md
   gap_review: docs/reports/SECOND_PROJECT_FINAL_CAPABILITY_GAP_REVIEW.md
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: outer_runtime_schema_2_correction_1_active
+  goal_3_status: outer_runtime_schema_2_correction_1_exhausted_DECISION_REQUIRED
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -155,16 +155,19 @@ final_capstone:
   goal_3_outer_runtime_schema_2_control_baseline_tree: 48608c2e9cd05cdbd29b9999886b4fce0ad72d9a
   goal_3_outer_runtime_schema_2_implementation_owner: fresh_top_level_session_01a01088-6def-7df3-8a4c-b7b239e4606b
   goal_3_outer_runtime_schema_2_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/d19a/project2
-  goal_3_outer_runtime_schema_2_implementation_status: initial_return_Main_reviewed_correction_1_active
+  goal_3_outer_runtime_schema_2_implementation_status: correction_1_returned_Main_rereviewed_not_accepted
   goal_3_outer_runtime_schema_2_prompt_hash_fault: delegated_Main_worktree_byte_hash_superseded_by_exact_frozen_Git_blob_hash_no_budget_use
   goal_3_outer_runtime_schema_2_initial_focused_tests: strict_typescript_plus_18_of_18_passed_Main_reproduced
   goal_3_outer_runtime_schema_2_initial_gate_e: incomplete_child_process_dependency_resolution_and_Docker_unavailable_platform_faults
-  goal_3_outer_runtime_schema_2_correction_budget: 1_of_1_consumed_pending_correction_and_main_rereview
+  goal_3_outer_runtime_schema_2_correction_budget: 1_of_1_exhausted_DECISION_REQUIRED
   goal_3_outer_runtime_schema_2_correction_1_authorization: docs/reports/FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_CORRECTION_1_AUTHORIZATION.md
   goal_3_outer_runtime_schema_2_correction_1_finding_set: FC-G3-S2-MAIN-P1-001_FC-G3-S2-MAIN-P1-002_FC-G3-S2-MAIN-P1-003
+  goal_3_outer_runtime_schema_2_correction_1_main_rereview: docs/reports/FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_CORRECTION_1_DECISION_REQUIRED_MAIN_REREVIEW.md
+  goal_3_outer_runtime_schema_2_correction_1_disposition: DECISION_REQUIRED_same_projection_lineage_authority_integrity_class_recurred
+  goal_3_outer_runtime_schema_2_main_tests: strict_typescript_plus_focused_15_of_15_plus_v3g1_13_of_13_plus_v3g2_6_of_6
   goal_3_outer_runtime_schema_2_candidate_frozen: false
   goal_3_outer_runtime_schema_2_audit_started: false
-  goal_3_blocking_finding: inner_v36_multi_request_vs_outer_v3_schema1_faux_single_request_projection_conflict
+  goal_3_blocking_finding: schema2_observation_not_independently_recomputable_and_real_carrier_authority_remains_caller_selectable
   goal_3_candidate_frozen: false
   goal_3_mandatory_focused_audit_started: false
   goal_3_real_run_started: false
@@ -185,14 +188,14 @@ final_capstone:
   goal_3_docker_profile_digest: f31414d3a8aa288337f0b5ba2a1d976b7cb8c49b7935633e838fcbe4c2a96b05
   goal_3_retry_fallback_replacement_task_swap_result_hunting: forbidden
   goal_3_implementation_real_access: credentials_0_network_0_provider_0_model_0
-  stop_core_feature_development: false_goal_3_outer_runtime_schema_2_correction_1_active
+  stop_core_feature_development: true_goal_3_outer_runtime_schema_2_DECISION_REQUIRED
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
     goal_2: 1_of_2_consumed_completed
     goal_3: 2_of_2_implementation_integration_exhausted
     goal_3_structural_amendment: 1_of_1_new_narrow_budget_exhausted_DECISION_REQUIRED
-    goal_3_outer_runtime_schema_2_amendment: 1_of_1_consumed_pending_correction_and_main_rereview
+    goal_3_outer_runtime_schema_2_amendment: 1_of_1_exhausted_DECISION_REQUIRED
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
     micro_finding_splitting: forbidden
     platform_safety_usage_sandbox_tool_execution_faults_count: false
@@ -2621,35 +2624,40 @@ next_checkpoint:
   - User_authorized_G3_outer_runtime_manifest_schema_2_formal_Structural_Amendment
   - formal_outer_runtime_manifest_schema_2_Amendment_frozen_at_aed6218371672a05fb026b110d9be23e7b78c9af
   - outer_runtime_manifest_schema_2_Control_Baseline_eed86bb99b66201c9f1fd84f4081366cc8960c53
-  - fresh_zero_call_implementation_Session_01a01088-6def-7df3-8a4c-b7b239e4606b_active
+  - fresh_zero_call_implementation_Session_01a01088-6def-7df3-8a4c-b7b239e4606b_returned_correction_1
   - Gate_A_prompt_hash_corrected_from_checkout_bytes_to_frozen_Git_blob_bytes_without_budget_use
   - initial_schema_2_implementation_returned_strict_typescript_and_focused_18_of_18_passed
   - Main_review_found_one_bundled_projection_lineage_authority_integrity_finding_set
-  - outer_runtime_schema_2_correction_1_of_1_consumed_active_in_original_Session
+  - outer_runtime_schema_2_correction_1_of_1_exhausted_after_Main_rereview
+  - same_projection_lineage_authority_integrity_class_recurred_DECISION_REQUIRED
+  - Candidate_false_audit_false_unique_real_Run_unstarted_unconsumed_0_of_1
 
-open_user_decisions: []
+open_user_decisions:
+  - FINAL_CAPSTONE_G3_POST_SCHEMA_2_BUDGET_STRUCTURAL_AUTHORITY_DECISION
 ```
 
 ## Current Constraints
 
-- V3.6 remains closed and accepted. Final Capstone Goal 3 remains active but stopped at a
-  structural decision boundary. The replacement Structural Amendment Session returned
-  `DECISION_REQUIRED`: accepted outer V3 schema 1 requires one Faux Provider request while
-  an honest settled V3.6 bounded-edit carrier can require multiple Provider requests. The
-  Amendment correction budget is exhausted at `1/1`, so its unaccepted delta cannot become
-  a Candidate. The User authorized the separate explicit outer V3 runtime/manifest schema-2
-  Structural Amendment with a new narrow `0/1` correction budget. Main must freeze its exact
-  Control Baseline and start one fresh zero-call implementation Session. Original Goal 3
-  remains exhausted at `2/2`; the unique real Run remains unstarted and unconsumed at `0/1`.
+- V3.6 remains closed and accepted. Final Capstone Goal 3 remains active but stopped at
+  `DECISION_REQUIRED`. The outer runtime/Manifest schema-2 correction budget is exhausted
+  at `1/1`, and Main re-review found the same projection/lineage authority-integrity class:
+  per-request model/payload hashes are not independently recomputable under coherent outer
+  rehash, production Provider/Docker ports remain caller-selectable, complete inspection
+  occurs after Manifest freeze, and schema-1 Inspector identity uses a stale hard-coded
+  source hash. The unaccepted implementation delta remains only in its dedicated worktree;
+  it cannot become a Candidate or enter audit. Original Goal 3 remains exhausted at `2/2`,
+  the first Structural Amendment remains exhausted at `1/1`, and the unique real Run
+  remains unstarted and unconsumed at `0/1`.
 - Do not reopen V2, V3, V3.5 or V3.6, start V4, call a model, read a Credential, use
   external network or modify Pi during Goal 3 implementation/Main integration/audit.
 - The later Goal 3 real Execution Session remains separately gated by a Main-frozen,
   independently audited Execution Baseline. It may execute exactly one frozen task/Run;
   rerun, fallback, replacement, task swap, result hunting and failure manufacture are
   forbidden.
-- Goal 3 used both original bounded correction rounds. Do not call the Structural Amendment
-  correction round 3. Only its frozen source/test surface may change, and Candidate, audit
-  and real execution remain gated in the exact Amendment order.
+- Goal 3 used both original bounded correction rounds, the first Structural Amendment used
+  its `1/1`, and the outer schema-2 Amendment used its `1/1`. Do not issue another patch,
+  Candidate, audit or real execution without a new explicit User structural decision and
+  frozen authority amendment.
 - Preserve Goal 2 as inconclusive and Goal 2.5 as one valid Pair with no observed Skill
   task-success advantage.
 - Preserve V3.6 as one fixed real two-Turn product Journey, not proof of arbitrary-project
