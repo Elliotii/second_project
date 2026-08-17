@@ -3,24 +3,19 @@
 ## Current Final Capstone Authority Override (2026-08-18)
 
 `CURRENT_STATE.md` is the live control source. Final Capstone Goal 1 and Goal 2 are closed
-and accepted. Goal 3 remains active. Its original correction budget is exhausted at `2/2`,
-and the first promotion-admission Structural Amendment correction budget is exhausted at
-`1/1` with `DECISION_REQUIRED`.
+and accepted. Goal 3 is `closed_incomplete` with final disposition `STOPPED_UNACCEPTED`.
+Its original correction budget and every authorized Structural Amendment correction budget
+are exhausted. The rejected outer-runtime schema-2 delta remains unaccepted in its separate
+implementation worktree and must not be adopted, copied, staged, cleaned, reset, or deleted.
 
-The User has now authorized the separate binding
-`SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_OUTER_RUNTIME_SCHEMA_2_STRUCTURAL_AMENDMENT.md`.
-It permits one fresh dedicated top-level zero-call implementation Session to add an explicit
-Final Capstone outer V3 runtime/manifest schema 2 while preserving accepted schema 1
-exactly. The Amendment's exact allowlist, proof obligations and new `1/1` correction budget
-control that Session. The stopped correction worktree is unaccepted evidence and must not
-be resumed or adopted wholesale.
+No Goal 3 Candidate was frozen, no audit started, and the unique real acceptance Run is
+permanently unconsumed under closed Goal 3. No further Goal 3 source modification,
+Structural Amendment, Candidate freeze, audit, or real execution is authorized. Goal 1 and
+Goal 2 remain the accepted Final Capstone baseline.
 
-Main alone freezes the Control Baseline and Candidate, performs Main acceptance, updates
-control state, and grants later execution handoff. A fresh focused audit of the frozen
-Candidate is mandatory. Credential/environment enumeration, network, Provider/model, real
-model and Pi changes remain forbidden until the separately gated real Execution Session.
-The unique real acceptance Run remains unstarted and unconsumed at `0/1`; rerun, fallback,
-replacement, task swap, result hunting and manufactured failure remain forbidden.
+No Goal is active. V3.7 is only the next unstarted version; its planning and implementation
+are both `not_started`. V3.7 planning requires a separate User decision. This closeout does
+not define V3.7 scope, architecture, Goals, UI, budgets, Charter, or implementation.
 
 Where older Purpose/current-status prose below conflicts with this override and
 `CURRENT_STATE.md`, treat it as historical context rather than live authority.

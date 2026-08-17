@@ -1049,23 +1049,35 @@ multi-user service、database、streaming subsystem、IDE 或 Pi feature parity�
 
 ---
 
-# 16. Final Capstone Goal 3 - Current Authority (2026-08-18)
+# 16. Final Capstone - Final Disposition (2026-08-18)
 
 本节是对本文件早期 current-state / next-step 快照的增量覆盖，不改写其历史 provenance。
 
 ```yaml
 version: SECOND_PROJECT_FINAL_CAPSTONE
-active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
+active_goal: null
 goal_1: closed_accepted
 goal_2: closed_accepted
-goal_3: outer_runtime_manifest_schema_2_structural_amendment_authorized
+goal_3: closed_incomplete
+goal_3_final_disposition: STOPPED_UNACCEPTED
 original_goal_3_corrections: 2_of_2_exhausted
 promotion_admission_structural_amendment_corrections: 1_of_1_exhausted
-outer_runtime_schema_2_amendment_corrections: 0_of_1_authorized
+outer_runtime_schema_2_amendment_corrections: 1_of_1_exhausted
 candidate_frozen: false
 mandatory_focused_audit_started: false
-unique_real_run: 0_of_1_unstarted_unconsumed
+unique_real_run: 0_of_1_permanently_unconsumed_under_closed_g3
+schema_2_delta_accepted: false
+further_goal_3_patch_authorized: false
+next_version: V3.7
+v3_7_planning_status: not_started
+v3_7_implementation_status: not_started
 ```
+
+This final disposition supersedes the former active schema-2 implementation route in the
+historical prose below. Goal 3 is not pending correction or another structural decision.
+No Goal 3 Candidate, audit, or real Run may start. V3.7 planning may begin only under a
+separate User decision; no V3.7 scope, architecture, Goal, budget, Charter, planning file,
+or implementation is created here.
 
 第一份 Goal 3 Structural Amendment 证明了 per-entry promotion-admission 方向，但其唯一
 correction 无法把 inner V3.6 多请求 bounded-edit carrier 诚实投影为 outer V3 schema-1
