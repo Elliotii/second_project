@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: final_capstone_goal_3
-  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_IMPLEMENTATION_ACTIVE
+  status: FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_CORRECTION_1_ACTIVE
 
 active_goal: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
 
 current_goal:
   id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: outer_runtime_schema_2_initial_implementation_active
+  status: outer_runtime_schema_2_correction_1_active
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -86,7 +86,7 @@ final_capstone:
   goal_2_closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
   goal_2_real_access: credentials_0_network_0_provider_0_model_0
   goal_3_contract: docs/第二项目_Codex交接包_2026-07-30/SECOND_PROJECT_FINAL_CAPSTONE_GOAL_3_CONTRACT.md
-  goal_3_status: outer_runtime_schema_2_initial_implementation_active
+  goal_3_status: outer_runtime_schema_2_correction_1_active
   goal_3_implementation_owner: fresh_top_level_session_019ff874-8c99-7683-bc8a-36e6c57ab1d7
   goal_3_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/38ff/project2
   goal_3_control_baseline_commit: 0d906ade3063b9fa418e0b21c2d6cd4a417f83dc
@@ -155,9 +155,13 @@ final_capstone:
   goal_3_outer_runtime_schema_2_control_baseline_tree: 48608c2e9cd05cdbd29b9999886b4fce0ad72d9a
   goal_3_outer_runtime_schema_2_implementation_owner: fresh_top_level_session_01a01088-6def-7df3-8a4c-b7b239e4606b
   goal_3_outer_runtime_schema_2_implementation_worktree: C:/Users/HUAWEI/.codex/worktrees/d19a/project2
-  goal_3_outer_runtime_schema_2_implementation_status: active_Gate_A_blob_hash_clarified_after_checkout_line_ending_normalization
+  goal_3_outer_runtime_schema_2_implementation_status: initial_return_Main_reviewed_correction_1_active
   goal_3_outer_runtime_schema_2_prompt_hash_fault: delegated_Main_worktree_byte_hash_superseded_by_exact_frozen_Git_blob_hash_no_budget_use
-  goal_3_outer_runtime_schema_2_correction_budget: 0_of_1_authorized
+  goal_3_outer_runtime_schema_2_initial_focused_tests: strict_typescript_plus_18_of_18_passed_Main_reproduced
+  goal_3_outer_runtime_schema_2_initial_gate_e: incomplete_child_process_dependency_resolution_and_Docker_unavailable_platform_faults
+  goal_3_outer_runtime_schema_2_correction_budget: 1_of_1_consumed_pending_correction_and_main_rereview
+  goal_3_outer_runtime_schema_2_correction_1_authorization: docs/reports/FINAL_CAPSTONE_G3_OUTER_RUNTIME_SCHEMA_2_CORRECTION_1_AUTHORIZATION.md
+  goal_3_outer_runtime_schema_2_correction_1_finding_set: FC-G3-S2-MAIN-P1-001_FC-G3-S2-MAIN-P1-002_FC-G3-S2-MAIN-P1-003
   goal_3_outer_runtime_schema_2_candidate_frozen: false
   goal_3_outer_runtime_schema_2_audit_started: false
   goal_3_blocking_finding: inner_v36_multi_request_vs_outer_v3_schema1_faux_single_request_projection_conflict
@@ -181,14 +185,14 @@ final_capstone:
   goal_3_docker_profile_digest: f31414d3a8aa288337f0b5ba2a1d976b7cb8c49b7935633e838fcbe4c2a96b05
   goal_3_retry_fallback_replacement_task_swap_result_hunting: forbidden
   goal_3_implementation_real_access: credentials_0_network_0_provider_0_model_0
-  stop_core_feature_development: false_goal_3_outer_runtime_schema_2_initial_implementation_active
+  stop_core_feature_development: false_goal_3_outer_runtime_schema_2_correction_1_active
   correction_budget_amendment: docs/reports/FINAL_CAPSTONE_CORRECTION_BUDGET_AMENDMENT.md
   correction_budgets:
     goal_1: 1_of_1_post_acceptance_consumed_completed
     goal_2: 1_of_2_consumed_completed
     goal_3: 2_of_2_implementation_integration_exhausted
     goal_3_structural_amendment: 1_of_1_new_narrow_budget_exhausted_DECISION_REQUIRED
-    goal_3_outer_runtime_schema_2_amendment: 0_of_1_authorized
+    goal_3_outer_runtime_schema_2_amendment: 1_of_1_consumed_pending_correction_and_main_rereview
     same_authority_or_integrity_class_recurrence: DECISION_REQUIRED
     micro_finding_splitting: forbidden
     platform_safety_usage_sandbox_tool_execution_faults_count: false
@@ -2619,6 +2623,9 @@ next_checkpoint:
   - outer_runtime_manifest_schema_2_Control_Baseline_eed86bb99b66201c9f1fd84f4081366cc8960c53
   - fresh_zero_call_implementation_Session_01a01088-6def-7df3-8a4c-b7b239e4606b_active
   - Gate_A_prompt_hash_corrected_from_checkout_bytes_to_frozen_Git_blob_bytes_without_budget_use
+  - initial_schema_2_implementation_returned_strict_typescript_and_focused_18_of_18_passed
+  - Main_review_found_one_bundled_projection_lineage_authority_integrity_finding_set
+  - outer_runtime_schema_2_correction_1_of_1_consumed_active_in_original_Session
 
 open_user_decisions: []
 ```
