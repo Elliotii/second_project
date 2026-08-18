@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_correction_round_1
-  status: V3_7_G1_MAIN_PRELIMINARY_REVIEW_FAILED_REPLACEMENT_CORRECTION_1_AUTHORIZED
+  phase: v3_7_goal_1_correction_round_2
+  status: V3_7_G1_CORRECTION_1_REREVIEW_FAILED_CORRECTION_2_AUTHORIZED
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: correction_round_1_replacement_session_in_progress
+  status: correction_round_2_authorized_pending_replacement_session
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: active
-  note: failed_candidate_preserved_and_user_authorized_fresh_replacement_correction_session
+  note: correction_1_candidate_preserved_and_one_residual_P1_003_sent_to_final_correction_round
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_correction_round_1_fresh_replacement_in_progress
+  implementation_status: goal_1_correction_round_2_authorized
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -243,10 +243,15 @@ next_version:
   goal_1_correction_1_authorization: docs/reports/V3_7_G1_CORRECTION_1_AUTHORIZATION.md
   goal_1_correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
   goal_1_correction_1_session: /root/v37_g1_correction_1
-  goal_1_correction_1_session_status: started
+  goal_1_correction_1_session_status: completed_candidate_failed_Main_rereview
   goal_1_correction_1_owner_deviation_authorized_by_user: true
   goal_1_correction_1_owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable
-  goal_1_correction_budget: 1_of_2_consumed
+  goal_1_correction_1_candidate_commit: a62051044332d438cbc0f33ec6ccc3f74097ef2f
+  goal_1_correction_1_candidate_tree: 7eb150cdaecb9234d62fde2bba31f1e59dd7f107
+  goal_1_correction_1_main_rereview: docs/reports/V3_7_G1_CORRECTION_1_MAIN_REREVIEW.md
+  goal_1_correction_1_main_rereview_result: failed_one_residual_P1_003
+  goal_1_correction_2_authorization: docs/reports/V3_7_G1_CORRECTION_2_AUTHORIZATION.md
+  goal_1_correction_budget: 2_of_2_consumed
   goal_1_corrected_candidate_commit: null
   goal_1_audit_status: not_started
   goal_2_status: locked_pending_goal_1_acceptance
