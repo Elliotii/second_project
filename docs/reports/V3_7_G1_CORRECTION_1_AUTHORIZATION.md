@@ -1,13 +1,14 @@
 # V3.7 Goal 1 Correction Round 1 Authorization
 
 ```yaml
-status: AUTHORIZED_FOR_FRESH_REPLACEMENT_IMPLEMENTATION_SESSION
+status: IN_PROGRESS_BY_FRESH_REPLACEMENT_IMPLEMENTATION_SESSION
 goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 correction_round: 1_of_2
 failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
 failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
 binding_review: docs/reports/V3_7_G1_MAIN_PRELIMINARY_REVIEW.md
 implementation_owner: fresh_replacement_goal_1_correction_session
+implementation_session: /root/v37_g1_correction_1
 owner_deviation_authorized_by_user: true
 owner_deviation_authorized_on: 2026-08-18
 owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable

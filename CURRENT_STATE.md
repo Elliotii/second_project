@@ -12,7 +12,7 @@ active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: correction_round_1_replacement_session_authorized_pending_start
+  status: correction_round_1_replacement_session_in_progress
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_correction_round_1_fresh_replacement_authorized
+  implementation_status: goal_1_correction_round_1_fresh_replacement_in_progress
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -242,6 +242,8 @@ next_version:
   goal_1_main_preliminary_review_result: failed_four_P1_findings
   goal_1_correction_1_authorization: docs/reports/V3_7_G1_CORRECTION_1_AUTHORIZATION.md
   goal_1_correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
+  goal_1_correction_1_session: /root/v37_g1_correction_1
+  goal_1_correction_1_session_status: started
   goal_1_correction_1_owner_deviation_authorized_by_user: true
   goal_1_correction_1_owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable
   goal_1_correction_budget: 1_of_2_consumed
