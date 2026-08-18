@@ -1,13 +1,16 @@
 # V3.7 Goal 1 Correction Round 1 Authorization
 
 ```yaml
-status: AUTHORIZED_FOR_ORIGINAL_IMPLEMENTATION_SESSION
+status: AUTHORIZED_FOR_FRESH_REPLACEMENT_IMPLEMENTATION_SESSION
 goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 correction_round: 1_of_2
 failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
 failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
 binding_review: docs/reports/V3_7_G1_MAIN_PRELIMINARY_REVIEW.md
-implementation_owner: original_dedicated_v37_goal_1_implementation_session
+implementation_owner: fresh_replacement_goal_1_correction_session
+owner_deviation_authorized_by_user: true
+owner_deviation_authorized_on: 2026-08-18
+owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable
 architecture_and_acceptance_owner: authoritative_V3_7_successor_Main_Session
 audit_authority: false
 goal_2_authority: false
@@ -19,6 +22,11 @@ docker_product_tasks: 0
 ```
 
 ## Mission
+
+The accepted default owner was the original implementation Session. That Session cannot be
+resumed by the successor Main after its `systemError`. The user explicitly authorized a fresh
+replacement Session on 2026-08-18. This is an owner-only governance deviation: the frozen
+candidate, correction budget, allowlist, test obligations and acceptance authority are unchanged.
 
 Correct only findings `V37-G1-MAIN-P1-001` through `004` and add the necessary focused
 regressions. Preserve the failed candidate commit/tree unchanged; create one new candidate
@@ -94,4 +102,3 @@ On success, update the two implementation reports with the correction delta and 
 verification results, create one new candidate commit/tree, and return only the identity,
 changed files, test summary, zero-access counters and remaining unverified items. Do not
 audit, accept Goal 1, update control state, tag, push or begin Goal 2.
-

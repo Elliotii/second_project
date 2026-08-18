@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_1_correction_round_1
-  status: V3_7_G1_MAIN_PRELIMINARY_REVIEW_FAILED_CORRECTION_1_AUTHORIZED
+  status: V3_7_G1_MAIN_PRELIMINARY_REVIEW_FAILED_REPLACEMENT_CORRECTION_1_AUTHORIZED
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: correction_round_1_authorized_pending_original_implementation_session
+  status: correction_round_1_replacement_session_authorized_pending_start
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: active
-  note: failed_candidate_preserved_and_four_finding_zero_access_correction_round_1_authorized
+  note: failed_candidate_preserved_and_user_authorized_fresh_replacement_correction_session
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_correction_round_1_authorized
+  implementation_status: goal_1_correction_round_1_fresh_replacement_authorized
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -241,6 +241,9 @@ next_version:
   goal_1_main_preliminary_review: docs/reports/V3_7_G1_MAIN_PRELIMINARY_REVIEW.md
   goal_1_main_preliminary_review_result: failed_four_P1_findings
   goal_1_correction_1_authorization: docs/reports/V3_7_G1_CORRECTION_1_AUTHORIZATION.md
+  goal_1_correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
+  goal_1_correction_1_owner_deviation_authorized_by_user: true
+  goal_1_correction_1_owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable
   goal_1_correction_budget: 1_of_2_consumed
   goal_1_corrected_candidate_commit: null
   goal_1_audit_status: not_started
