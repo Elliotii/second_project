@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_active
-  status: V3_7_G1_IMPLEMENTATION_AUTHORIZED
+  phase: v3_7_goal_1_correction_round_1
+  status: V3_7_G1_MAIN_PRELIMINARY_REVIEW_FAILED_CORRECTION_1_AUTHORIZED
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: implementation_authorized_pending_dedicated_session
+  status: correction_round_1_authorized_pending_original_implementation_session
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: active
-  note: accepted_Charter_authorizes_dedicated_zero_access_implementation_only
+  note: failed_candidate_preserved_and_four_finding_zero_access_correction_round_1_authorized
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_authorized
+  implementation_status: goal_1_correction_round_1_authorized
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -236,7 +236,13 @@ next_version:
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
-  goal_1_candidate_commit: null
+  goal_1_failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
+  goal_1_failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
+  goal_1_main_preliminary_review: docs/reports/V3_7_G1_MAIN_PRELIMINARY_REVIEW.md
+  goal_1_main_preliminary_review_result: failed_four_P1_findings
+  goal_1_correction_1_authorization: docs/reports/V3_7_G1_CORRECTION_1_AUTHORIZATION.md
+  goal_1_correction_budget: 1_of_2_consumed
+  goal_1_corrected_candidate_commit: null
   goal_1_audit_status: not_started
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
