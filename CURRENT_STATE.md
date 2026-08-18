@@ -260,7 +260,10 @@ next_version:
   goal_1_main_preliminary_rereview_result: passed
   goal_1_audit_candidate_commit: 0cf5b81976880d57a8b09bbd3f87be68853cbb3b
   goal_1_audit_candidate_tree: d6c59a29d1833fccd53164c295c5bf3bc90ebcba
-  goal_1_audit_session: /root/v37_g1_focused_audit
+  goal_1_audit_initial_session: /root/v37_g1_focused_audit
+  goal_1_audit_initial_session_status: platform_content_classification_error_before_tests_or_conclusion
+  goal_1_audit_replacement_session: /root/v37_g1_focused_audit_retry
+  goal_1_audit_replacement_reason: initial_session_platform_error_with_zero_candidate_delta
   goal_1_audit_status: in_progress_read_only
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
