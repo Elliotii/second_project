@@ -14,7 +14,7 @@ import { artifactRef, writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, fileSha256, stableJson } from "../hash.ts";
 import { inspectRunV2A } from "../inspect-v2.ts";
 import { V2A_STRATEGY_ORDER } from "../contracts/v2-types.ts";
-import { v37DataRootPath, loadWorkflowRegistrationV37 } from "./workflow-registration-v37.ts";
+import { v37DataRootPath, loadPrimaryRunBindingV37, loadWorkflowRegistrationV37 } from "./workflow-registration-v37.ts";
 
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 
@@ -86,18 +86,22 @@ function requireRegisteredV2Execution(manifest: RunManifestV2A, registered: Retu
 	if (manifest.base_prompt_sha256 !== registeredManifest.state_store_scope_spec.runtime_base_prompt_digest) throw new Error("V2 Base Prompt does not match registered runtime Base identity");
 }
 
-export function deriveRegisteredRecoveryPackageV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string }): {
+type RecoveryPackageOptionsV37 = { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string };
+
+function deriveRegisteredRecoveryPackageCoreV37(options: RecoveryPackageOptionsV37, allowHistoricalReadOnly: boolean): {
 	comparison: RegisteredRecoveryComparisonV37;
 	evidence: RegisteredRecoveryEvidenceBodyV37;
 	confirmation: EvidenceConfirmationReceiptV37;
 	request: RecoveryEvidenceSubmissionRequestV37;
 } {
 	if (!ID.test(options.workflowId) || Number.isNaN(Date.parse(options.confirmedAt)) || Number.isNaN(Date.parse(options.requestedAt))) throw new Error("Recovery package workflow/timestamp invalid");
-	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId });
+	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly });
+	const primaryRunBinding = loadPrimaryRunBindingV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, runRoot: options.runRoot, allowHistoricalReadOnly });
 	const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot });
 	if (!inspected.integrity_valid || !inspected.terminal_valid || !inspected.terminal || !inspected.recovery_seed || inspected.candidates.length !== 2 || !inspected.selection) throw new Error(`V2 Recovery truth rejected: ${inspected.errors.join("; ") || "incomplete recovery episode"}`);
 	if (!(["recovery_selected", "recovery_none"] as const).includes(inspected.terminal.outcome as "recovery_selected" | "recovery_none") || inspected.terminal.primary_verifier_status !== "failed") throw new Error("registered recovery evidence requires a terminal comparison after Primary verifier failure");
 	const v2Manifest = ordinaryJson<RunManifestV2A>(resolve(options.runRoot, "config/manifest.json"), "V2 Run Manifest");
+	if (primaryRunBinding.primary_run_id !== v2Manifest.run_id || primaryRunBinding.primary_run_id !== inspected.terminal.run_id) throw new Error("Primary Run binding ID mismatch");
 	requireRegisteredV2Execution(v2Manifest, registered);
 	if (inspected.recovery_seed.task_id !== v2Manifest.task_id || inspected.recovery_seed.tool_profile_digest !== v2Manifest.tool_profile_digest) throw new Error("V2 Recovery Seed/Manifest identity mismatch");
 	const ordered = [...inspected.candidates].sort((left, right) => V2A_STRATEGY_ORDER.indexOf(left.strategy_id) - V2A_STRATEGY_ORDER.indexOf(right.strategy_id));
@@ -190,6 +194,10 @@ export function deriveRegisteredRecoveryPackageV37(options: { projectRoot: strin
 	return { comparison, evidence, confirmation, request };
 }
 
+export function deriveRegisteredRecoveryPackageV37(options: RecoveryPackageOptionsV37): ReturnType<typeof deriveRegisteredRecoveryPackageCoreV37> {
+	return deriveRegisteredRecoveryPackageCoreV37(options, false);
+}
+
 export function persistRegisteredRecoveryPackageV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string }): ReturnType<typeof deriveRegisteredRecoveryPackageV37> {
 	const packageValue = deriveRegisteredRecoveryPackageV37(options);
 	const root = v37DataRootPath(options.projectRoot, options.dataRoot);
@@ -272,9 +280,9 @@ export function recomputeRegisteredRecoveryAdmissionV37(options: { projectRoot: 
 	const storedConfirmation = ordinaryJson<EvidenceConfirmationReceiptV37>(resolve(recoveryRoot, "confirmation.json"), "Recovery confirmation");
 	const storedRequest = ordinaryJson<RecoveryEvidenceSubmissionRequestV37>(resolve(recoveryRoot, "request.json"), "Recovery submission request");
 	const stored = ordinaryJson<RegisteredRecoveryAdmissionV37>(resolve(recoveryRoot, "admission.json"), "Recovery admission");
-	const expectedPackage = deriveRegisteredRecoveryPackageV37(options);
+	const expectedPackage = deriveRegisteredRecoveryPackageCoreV37(options, true);
 	if (stableJson({ comparison: storedComparison, evidence: storedEvidence, confirmation: storedConfirmation, request: storedRequest }) !== stableJson(expectedPackage)) throw new Error("Recovery package recomputation mismatch");
-	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId });
+	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly: true });
 	const opportunity = expectedPackage.comparison.decision_result === "selected" ? buildOpportunity(expectedPackage.evidence, expectedPackage.comparison, registered.loadedCase.manifest.state_applicability.task_kinds[0]!) : null;
 	const result = expectedPackage.comparison.decision_result === "selected" ? "admitted" as const : "rejected" as const;
 	const reasons = result === "admitted" ? [] : ["no_valid_recovery"];

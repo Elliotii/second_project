@@ -8,13 +8,14 @@ import type {
 	RegisteredCaseManifestBodyV37,
 	StateStoreScopeSpecV37,
 } from "../contracts/v37-types.ts";
-import { digestObject, sha256, stableJson } from "../hash.ts";
+import { digestObject, fileSha256, sha256, stableJson } from "../hash.ts";
 
 export const V37_REGISTRY_LOCATION = "workbench/config/v37/registered-cases/registry-v1.json" as const;
 export const V37_MANIFEST_LOCATION = "workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json" as const;
 export const V37_ENVELOPE_LOCATION = "workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json" as const;
 export const V37_CONFIGURATION_BASELINE_ID = "v37-g1-host-registry-v1" as const;
 export const V37_LOADER_CONTRACT_ID = "v37-host-registry-loader-v1" as const;
+const V37_HOST_PROJECT_ROOT = resolve(import.meta.dirname, "../../..");
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
@@ -56,6 +57,52 @@ function fixedProjectFile(projectRoot: string, relativePath: string, label: stri
 
 function readJson(projectRoot: string, relativePath: string, label: string): unknown {
 	return JSON.parse(readFileSync(fixedProjectFile(projectRoot, relativePath, label), "utf8"));
+}
+
+function hostProjectRoot(projectRoot: string): string {
+	const owned = realpathSync.native(V37_HOST_PROJECT_ROOT);
+	let supplied: string;
+	try {
+		supplied = realpathSync.native(resolve(projectRoot));
+	} catch {
+		throw new Error("caller projectRoot does not identify the loader-owned Host checkout");
+	}
+	if (supplied.toLowerCase() !== owned.toLowerCase()) throw new Error("caller projectRoot cannot select an alternate Host registry baseline");
+	return owned;
+}
+
+function loaderContractFingerprint(projectRoot: string): string {
+	return digestObject({
+		loader_contract_id: V37_LOADER_CONTRACT_ID,
+		loader_source_sha256: fileSha256(fixedProjectFile(projectRoot, "workbench/src/v37/host-registry-v37.ts", "Host registry loader source")),
+		registry_location: V37_REGISTRY_LOCATION,
+		manifest_location: V37_MANIFEST_LOCATION,
+		first_envelope_location: V37_ENVELOPE_LOCATION,
+		root_resolution: "module_owned_candidate_checkout_v1",
+	});
+}
+
+export function deriveRegistryTrustRootDigestV37(loaded: Pick<LoadedRegisteredCaseV37, "registry" | "manifest" | "envelopes" | "loader_contract_fingerprint">, envelopeCount = loaded.envelopes.length): string {
+	if (!Number.isSafeInteger(envelopeCount) || envelopeCount < 1 || envelopeCount > loaded.envelopes.length) throw new Error("registry trust-root envelope prefix invalid");
+	const entry = loaded.registry.entries[0]!;
+	const envelopes = loaded.envelopes.slice(0, envelopeCount);
+	const trustRoot = {
+		configuration_baseline_id: loaded.registry.configuration_baseline_id,
+		registry_location: V37_REGISTRY_LOCATION,
+		loader_contract_id: loaded.registry.loader_contract_id,
+		loader_contract_fingerprint: loaded.loader_contract_fingerprint,
+		digest_algorithm: loaded.registry.digest_algorithm,
+		allowed_digest_inventory: {
+			case_id: entry.case_id,
+			manifest_version: entry.manifest_version,
+			manifest_location: entry.manifest_location,
+			manifest_body_digest: loaded.manifest.manifest_body_digest,
+			envelope_locations: entry.envelope_locations.slice(0, envelopeCount),
+			envelope_digests: envelopes.map((envelope) => envelope.registration_digest),
+			current_registration_digest: envelopes.at(-1)!.registration_digest,
+		},
+	};
+	return digestObject(trustRoot);
 }
 
 function validateSpec(value: unknown, label: string): ContentSpecV37 {
@@ -136,14 +183,15 @@ export function loadRegisteredCaseFromHostRegistryV37(options: { projectRoot: st
 	const allowedOptionKeys = new Set(["projectRoot", "caseId", "allowDisabledHistorical"]);
 	if (optionKeys.some((key) => !allowedOptionKeys.has(key))) throw new Error("caller registry/digest override rejected");
 	if (!ID.test(options.caseId)) throw new Error("case_id invalid");
-	const registry = validateRegistry(readJson(options.projectRoot, V37_REGISTRY_LOCATION, "Host registry index"));
+	const projectRoot = hostProjectRoot(options.projectRoot);
+	const registry = validateRegistry(readJson(projectRoot, V37_REGISTRY_LOCATION, "Host registry index"));
 	const entry = registry.entries[0]!;
 	if (entry.case_id !== options.caseId) throw new Error("Case is not present in fixed Host registry");
-	const manifest = validateRegisteredCaseManifestV37(readJson(options.projectRoot, entry.manifest_location, "Manifest Body"));
+	const manifest = validateRegisteredCaseManifestV37(readJson(projectRoot, entry.manifest_location, "Manifest Body"));
 	if (manifest.case_id !== entry.case_id || manifest.manifest_version !== entry.manifest_version || manifest.manifest_body_digest !== entry.manifest_body_digest) throw new Error("registry/Manifest identity mismatch");
 	const envelopes: CaseRegistrationEnvelopeV37[] = [];
 	for (const [index, location] of entry.envelope_locations.entries()) {
-		const envelope = validateRegistrationEnvelopeV37(readJson(options.projectRoot, location, `Registration Envelope ${index + 1}`));
+		const envelope = validateRegistrationEnvelopeV37(readJson(projectRoot, location, `Registration Envelope ${index + 1}`));
 		if (envelope.registration_digest !== entry.envelope_digests[index] || envelope.case_id !== manifest.case_id || envelope.manifest_version !== manifest.manifest_version || envelope.approved_manifest_body_digest !== manifest.manifest_body_digest || envelope.registration_revision !== index + 1 || envelope.previous_registration_digest !== (index === 0 ? null : envelopes[index - 1]!.registration_digest)) throw new Error("Registration Envelope chain mismatch");
 		envelopes.push(envelope);
 	}
@@ -151,16 +199,8 @@ export function loadRegisteredCaseFromHostRegistryV37(options: { projectRoot: st
 	if (current.registration_digest !== entry.current_registration_digest) throw new Error("current Registration Envelope mismatch");
 	const historicalReadOnly = current.registration_status === "disabled";
 	if (historicalReadOnly && !options.allowDisabledHistorical) throw new Error("Case registration is disabled");
-	const trustRoot = {
-		configuration_baseline_id: registry.configuration_baseline_id,
-		registry_location: V37_REGISTRY_LOCATION,
-		loader_contract_id: registry.loader_contract_id,
-		digest_algorithm: registry.digest_algorithm,
-		allowed_digest_inventory: {
-			registry_index_digest: registry.registry_index_digest,
-			manifest_body_digest: manifest.manifest_body_digest,
-			envelope_digests: envelopes.map((envelope) => envelope.registration_digest),
-		},
-	};
-	return { manifest, envelopes, current_envelope: current, registry, registry_trust_root_digest: digestObject(trustRoot), historical_read_only: historicalReadOnly };
+	const loaderFingerprint = loaderContractFingerprint(projectRoot);
+	const loaded = { manifest, envelopes, current_envelope: current, registry, loader_contract_fingerprint: loaderFingerprint, registry_trust_root_digest: "", historical_read_only: historicalReadOnly };
+	loaded.registry_trust_root_digest = deriveRegistryTrustRootDigestV37(loaded);
+	return loaded;
 }

@@ -1,9 +1,12 @@
 # V3.7 Goal 1 Implementation Report
 
 ```yaml
-status: READY_FOR_MAIN_PRELIMINARY_REVIEW
+status: CORRECTION_1_READY_FOR_MAIN_PRELIMINARY_REREVIEW
 goal: V3.7 Goal 1 - Registered Recovery Evidence Bridge
 implementation_owner: dedicated_v37_goal_1_implementation_session
+correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
+owner_deviation_authorized_by_user: true
+owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable
 original_starting_commit: 7d6b62223503309b4c39785eec767b437eee6abd
 original_starting_tree: 3adbe64faff229766a60553afa444f3569918b81
 control_amendment_main_commit: f01e7b471cc11cd87d2babe6a7dc508465480cba
@@ -11,6 +14,9 @@ control_amendment_integrated_commit: b477a99360bcb93128aaf23b796cc897b2cf1951
 control_amendment_integrated_tree: d5c20bb328648e168a1378c34f60ab51f527d02b
 candidate_commit: containing_commit_reported_in_session_handoff
 candidate_tree: containing_tree_reported_in_session_handoff
+failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
+failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
+correction_round: 1_of_2
 implementation_started: true
 goal_2_started: false
 credential_reads: 0
@@ -45,6 +51,30 @@ tree immediately after creating the single authorized candidate commit.
 No accepted business-source module, old G1 family, V2 schema/truth, V3 State Store/CAS,
 G2 Assessment/rollback, Pi source, `CURRENT_STATE.md`, or rejected Schema 2 path changed.
 
+## Correction round 1
+
+The user-authorized fresh replacement Session corrected only findings
+`V37-G1-MAIN-P1-001` through `004`. The correction delta changes these eight allowlisted
+paths: the five V3.7 source/type modules below, the focused test, and both reports.
+
+- `workbench/src/contracts/v37-types.ts`
+- `workbench/src/v37/host-registry-v37.ts`
+- `workbench/src/v37/workflow-registration-v37.ts`
+- `workbench/src/v37/registered-recovery-v37.ts`
+- `workbench/src/v37/candidate-v37.ts`
+- `workbench/tests/v37g1-registered-recovery.test.ts`
+- `docs/reports/V3_7_G1_IMPLEMENTATION_REPORT.md`
+- `docs/reports/V3_7_G1_CLOSEOUT_DRAFT.md`
+
+The correction adds a write-once, globally unique pre-execution Primary Run binding for
+Run ID/root/workflow/task identity; makes the registry baseline loader-module-owned and
+adds its source contract fingerprint to the trust root; reloads and recomputes the exact
+frozen Primary Task, Source tree and Verifier before Candidate content-independence
+checks; and gives admission recomputation a read-only historical path whose pinned
+accepted trust-root prefix remains stable after an append-only disable. New workflow,
+execution/package derivation, admission and Candidate mutation continue to require the
+current accepted envelope.
+
 ## Implemented contracts and source symbols
 
 | Contract | Implementation |
@@ -77,7 +107,8 @@ manifest_version: 1
 registry_index_digest: ce7ddba86bbdd42499ad5977a0bd687fa5b9247de824d3f59623a0085370a523
 manifest_body_digest: ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90
 registration_digest: 94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724
-registry_trust_root_digest: cdeeafc6fba40cb8d07cf85b8f04187fd4ffe4db54aa68fb64cef3ac19776f02
+loader_contract_fingerprint: 0d5a8c6f5cbed31b2ae9d59362f18705a6a0f10e440cedf3fe0f1de079e3d506
+registry_trust_root_digest: ba8ecc6ea67b74f08182e7e1c09ee6f2ead8be71187a4b3e41c9451eefb822d7
 ```
 
 Complete Manifest spec digest inventory:
@@ -131,8 +162,8 @@ therefore not static registry constants.
 | Command | Result |
 |---|---|
 | `node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit` | Environment stop before source checking: `TS2688`, isolated worktree has no `node_modules/@types/node` |
-| supplemental strict TypeScript compiler-API check over all seven new TS/test roots with pinned Node/Pi declaration paths | PASS, 0 diagnostics |
-| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g1-registered-recovery.test.ts` | PASS, 11/11 |
+| `node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p ../.runs/v37/g1-correction/tsconfig.json --noEmit` | PASS, 0 diagnostics; strict seven-root environment-equivalent check with pinned Node/Pi declarations |
+| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g1-registered-recovery.test.ts` | PASS, 13/13 |
 | same command, `tests/v2a-recovery.test.ts` | PASS, 5/5 |
 | same command, `tests/v3g1-evidence-to-candidate.test.ts` | PASS, 13/13 |
 | same command, `tests/v3g2-validate-promote-reject-rollback.test.ts` | PASS, 6/6 |
@@ -140,6 +171,9 @@ therefore not static registry constants.
 | same G1 Capstone with identical fixed loader inherited through `NODE_OPTIONS` by child processes | PASS, 24/24 |
 | exact command, `tests/final-capstone-g2-regression-state-feedback.test.ts` | 8/10; both spawned-child failures were the same missing Pi package resolution |
 | same G2 Capstone with identical fixed loader inherited through `NODE_OPTIONS` by child processes | PASS, 10/10 |
+| `git diff --check` | PASS |
+| correction allowlist/status check from failed candidate | PASS, eight allowlisted changed files after reports are included |
+| Pi cleanliness | Environment-qualified: `.upstream/pi` is absent from this isolated worktree; no Pi path was read or changed |
 
 No product assertion failed once the already-authorized fixed public Pi loader was visible
 to the tests' child Node processes. No dependency was installed and no tracked file was
@@ -154,3 +188,5 @@ changed to compensate for the isolated-worktree dependency layout.
   processes in this isolated worktree; the source-equivalent inherited-loader reruns pass.
 - Independent focused audit and Main Goal acceptance remain pending and are not claimed.
 - Goal 1 performs no State publication and Goal 2 execution is not started.
+- Main preliminary re-review, immutable candidate freeze and independent focused audit
+  remain pending and are not claimed.

@@ -1,7 +1,7 @@
 # V3.7 Goal 1 Closeout Draft
 
 ```yaml
-status: READY_FOR_MAIN_PRELIMINARY_REVIEW
+status: CORRECTION_1_READY_FOR_MAIN_PRELIMINARY_REREVIEW
 goal_acceptance: NOT_CLAIMED
 focused_audit: PENDING
 original_starting_commit: 7d6b62223503309b4c39785eec767b437eee6abd
@@ -10,6 +10,11 @@ control_amendment_integrated_commit: b477a99360bcb93128aaf23b796cc897b2cf1951
 control_amendment_integrated_tree: d5c20bb328648e168a1378c34f60ab51f527d02b
 candidate_commit: containing_commit_reported_in_session_handoff
 candidate_tree: containing_tree_reported_in_session_handoff
+failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
+failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
+correction_round: 1_of_2
+correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
+owner_deviation_authorized_by_user: true
 credential_reads: 0
 network_calls: 0
 external_provider_calls: 0
@@ -20,6 +25,11 @@ goal_2_started: false
 
 The containing candidate commit/tree is necessarily reported outside the self-hashed Git
 object immediately after the one authorized commit is created.
+
+The original implementation Session stopped with `systemError` and could not be resumed
+by successor Main. The user explicitly authorized this fresh replacement Correction
+Session. The owner-only deviation changes no Charter decision, allowlist, budget or
+acceptance authority.
 
 ## Deliverables
 
@@ -41,6 +51,13 @@ Implemented Goal 1 behavior:
 - prompt-only Candidate production bound to the exact active V3 State scope;
 - fail-closed reopen against Authority, lineage, source/package mutation and filesystem
   substitution.
+- Host-owned pre-execution Primary Run ID/root/workflow/task binding with global Run/root
+  uniqueness;
+- loader-owned candidate-checkout registry root plus loader contract fingerprint;
+- deterministic frozen Primary Task/Source/Verifier content recomputation and direct
+  answer-leakage rejection while generic transferable guidance remains accepted;
+- disabled-current registration mutation denial with exact pinned accepted admission
+  read-only reopen and unchanged identity.
 
 ## Frozen identity inventory
 
@@ -50,7 +67,8 @@ loader_contract_id: v37-host-registry-loader-v1
 registry_index_digest: ce7ddba86bbdd42499ad5977a0bd687fa5b9247de824d3f59623a0085370a523
 manifest_body_digest: ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90
 registration_digest: 94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724
-registry_trust_root_digest: cdeeafc6fba40cb8d07cf85b8f04187fd4ffe4db54aa68fb64cef3ac19776f02
+loader_contract_fingerprint: 0d5a8c6f5cbed31b2ae9d59362f18705a6a0f10e440cedf3fe0f1de079e3d506
+registry_trust_root_digest: ba8ecc6ea67b74f08182e7e1c09ee6f2ead8be71187a4b3e41c9451eefb822d7
 state_store_scope_digest: ee650680b0e3bf68948125388a6148f870136a0c880778715e8f3009064577c0
 initial_state_digest: ef49e812b72b03b23deeffec51e06b9c84f6cdcdfcc9d6c0f7969e70b94b8956
 runtime_base_prompt_digest: 317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf
@@ -64,13 +82,14 @@ report and is part of this Closeout evidence by that fixed report path.
 
 ## Verification summary
 
-- V3.7 Goal 1 focused suite: PASS, 11/11.
+- V3.7 Goal 1 focused suite: PASS, 13/13.
 - Accepted V2 recovery suite: PASS, 5/5.
 - Accepted V3 G1 suite: PASS, 13/13.
 - Accepted V3 G2 suite: PASS, 6/6.
 - Final Capstone G1 with inherited fixed child loader: PASS, 24/24.
 - Final Capstone G2 with inherited fixed child loader: PASS, 10/10.
-- Supplemental strict compile of every new TS/test root: PASS, 0 diagnostics.
+- Strict environment-equivalent compile of every new TS/test root using pinned Node/Pi
+  declarations: PASS, 0 diagnostics.
 - Exact repository `tsc` stopped at `TS2688` because ignored Node declarations are absent
   from this isolated worktree.
 - Exact Capstone commands reached 23/24 and 8/10; their only failures were spawned child
@@ -99,7 +118,7 @@ report. No fixture was fabricated and no dependency was installed.
 
 The exact full-workbench typecheck and loader-unpropagated child-process forms remain
 environment-qualified as described above. The immutable candidate now requires Main
-preliminary review, candidate commit/tree freeze, and a fresh independent read-only
+preliminary re-review, candidate commit/tree freeze, and a fresh independent read-only
 focused audit. Any source/configuration change after freeze requires a new candidate and
 fresh audit. Goal 2 must not start until audit PASS and Main Goal 1 acceptance.
 

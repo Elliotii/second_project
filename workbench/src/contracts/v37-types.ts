@@ -85,6 +85,7 @@ export interface LoadedRegisteredCaseV37 {
 	envelopes: CaseRegistrationEnvelopeV37[];
 	current_envelope: CaseRegistrationEnvelopeV37;
 	registry: HostRegistryIndexV37;
+	loader_contract_fingerprint: string;
 	registry_trust_root_digest: string;
 	historical_read_only: boolean;
 }
@@ -119,6 +120,18 @@ export interface TaskInstanceV37 {
 	role: "primary" | "follow_up";
 	task_spec_digest: string;
 	task_instance_digest: string;
+}
+
+export interface PrimaryRunBindingV37 {
+	schema_version: 1;
+	kind: "v37_primary_run_binding";
+	workflow_id: string;
+	workflow_registration_digest: string;
+	primary_task_instance_digest: string;
+	primary_run_id: string;
+	primary_run_root_location: string;
+	bound_at: string;
+	primary_run_binding_digest: string;
 }
 
 export interface RecoveryComparisonArmV37 {
