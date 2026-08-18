@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_correction_round_2
-  status: V3_7_G1_CORRECTION_1_REREVIEW_FAILED_CORRECTION_2_AUTHORIZED
+  phase: v3_7_goal_1_focused_audit
+  status: V3_7_G1_MAIN_REREVIEW_PASSED_AUDIT_CANDIDATE_FROZEN
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: correction_round_2_authorized_pending_replacement_session
+  status: focused_audit_authorized_pending_start
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: active
-  note: correction_1_candidate_preserved_and_one_residual_P1_003_sent_to_final_correction_round
+  note: final_corrected_candidate_frozen_pending_fresh_independent_read_only_audit
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_correction_round_2_authorized
+  implementation_status: goal_1_audit_candidate_frozen
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -251,9 +251,16 @@ next_version:
   goal_1_correction_1_main_rereview: docs/reports/V3_7_G1_CORRECTION_1_MAIN_REREVIEW.md
   goal_1_correction_1_main_rereview_result: failed_one_residual_P1_003
   goal_1_correction_2_authorization: docs/reports/V3_7_G1_CORRECTION_2_AUTHORIZATION.md
+  goal_1_correction_2_session: /root/v37_g1_correction_1
+  goal_1_correction_2_session_status: completed_candidate_Main_rereview_passed
   goal_1_correction_budget: 2_of_2_consumed
-  goal_1_corrected_candidate_commit: null
-  goal_1_audit_status: not_started
+  goal_1_corrected_candidate_commit: 0cf5b81976880d57a8b09bbd3f87be68853cbb3b
+  goal_1_corrected_candidate_tree: d6c59a29d1833fccd53164c295c5bf3bc90ebcba
+  goal_1_main_preliminary_rereview: docs/reports/V3_7_G1_CORRECTION_2_MAIN_REREVIEW.md
+  goal_1_main_preliminary_rereview_result: passed
+  goal_1_audit_candidate_commit: 0cf5b81976880d57a8b09bbd3f87be68853cbb3b
+  goal_1_audit_candidate_tree: d6c59a29d1833fccd53164c295c5bf3bc90ebcba
+  goal_1_audit_status: authorized_pending_start
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze

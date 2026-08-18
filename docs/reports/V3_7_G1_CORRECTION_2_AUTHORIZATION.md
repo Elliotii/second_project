@@ -1,13 +1,17 @@
 # V3.7 Goal 1 Correction Round 2 Authorization
 
 ```yaml
-status: AUTHORIZED_FOR_REPLACEMENT_IMPLEMENTATION_SESSION
+status: COMPLETED_MAIN_REREVIEW_PASSED_AUDIT_CANDIDATE_FROZEN
 goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 correction_round: 2_of_2
 failed_candidate_commit: a62051044332d438cbc0f33ec6ccc3f74097ef2f
 failed_candidate_tree: 7eb150cdaecb9234d62fde2bba31f1e59dd7f107
 binding_review: docs/reports/V3_7_G1_CORRECTION_1_MAIN_REREVIEW.md
 implementation_owner: /root/v37_g1_correction_1
+candidate_commit: 0cf5b81976880d57a8b09bbd3f87be68853cbb3b
+candidate_tree: d6c59a29d1833fccd53164c295c5bf3bc90ebcba
+main_rereview: docs/reports/V3_7_G1_CORRECTION_2_MAIN_REREVIEW.md
+main_rereview_result: passed
 architecture_and_acceptance_owner: authoritative_V3_7_successor_Main_Session
 audit_authority: false
 goal_2_authority: false
