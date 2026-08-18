@@ -1,7 +1,7 @@
 # V3.7 Goal 1 Closeout Draft
 
 ```yaml
-status: CORRECTION_1_READY_FOR_MAIN_PRELIMINARY_REREVIEW
+status: CORRECTION_2_READY_FOR_MAIN_PRELIMINARY_REREVIEW
 goal_acceptance: NOT_CLAIMED
 focused_audit: PENDING
 original_starting_commit: 7d6b62223503309b4c39785eec767b437eee6abd
@@ -10,9 +10,11 @@ control_amendment_integrated_commit: b477a99360bcb93128aaf23b796cc897b2cf1951
 control_amendment_integrated_tree: d5c20bb328648e168a1378c34f60ab51f527d02b
 candidate_commit: containing_commit_reported_in_session_handoff
 candidate_tree: containing_tree_reported_in_session_handoff
-failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
-failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
-correction_round: 1_of_2
+initial_failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
+initial_failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
+correction_1_failed_candidate_commit: a62051044332d438cbc0f33ec6ccc3f74097ef2f
+correction_1_failed_candidate_tree: 7eb150cdaecb9234d62fde2bba31f1e59dd7f107
+correction_round: 2_of_2
 correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
 owner_deviation_authorized_by_user: true
 credential_reads: 0
@@ -30,6 +32,12 @@ The original implementation Session stopped with `systemError` and could not be 
 by successor Main. The user explicitly authorized this fresh replacement Correction
 Session. The owner-only deviation changes no Charter decision, allowlist, budget or
 acceptance authority.
+
+Correction 2 is the final ordinary correction round. It is limited to residual finding
+`V37-G1-MAIN-P1-003-R1`: exact frozen exported task symbols now fail content-independence
+without a token-count threshold, Verifier-derived literal pairs remain rejected, and
+generic transferable guidance remains accepted. No Correction 1 registry, binding,
+recovery, historical-reopen or configuration behavior changed.
 
 ## Deliverables
 

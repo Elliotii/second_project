@@ -59,12 +59,15 @@ export function validateFrozenPrimaryCandidateContentV37(projectRoot: string, ma
 	const source = treeInventory(sourceRoot).map((entry) => readFileSync(resolve(sourceRoot, entry.path), "utf8")).join("\n");
 	const referenceTokens = lexicalTokens(`${instruction}\n${source}\n${verifier}`);
 	const candidateTokens = lexicalTokens(candidateContent);
-	const protectedSymbols = [...lexicalTokens(`${instruction}\n${verifier}`)].filter((token) => token.length >= 8 && /[a-z]/.test(token));
+	const protectedSymbols = [...source.matchAll(/\bexport\s+(?:async\s+)?(?:function|class|const|let|var)\s+([A-Za-z_$][\w$]*)/g)]
+		.map((match) => match[1]!)
+		.filter((symbol) => new RegExp(`\\b${symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(instruction) && new RegExp(`\\b${symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(verifier))
+		.map((symbol) => symbol.toLowerCase());
 	const shared = [...candidateTokens].filter((token) => referenceTokens.has(token));
 	const namesFrozenSymbol = protectedSymbols.some((token) => candidateTokens.has(token));
 	const normalizedContent = candidateContent.normalize("NFKC").toLowerCase();
 	const literalHits = [...verifierAnswerLiterals(verifier)].filter((literal) => normalizedContent.includes(literal));
-	if ((namesFrozenSymbol && shared.length >= 5) || literalHits.length >= 2) throw new Error("Candidate direct frozen Task/Source/Verifier answer leakage rejected");
+	if (namesFrozenSymbol || (shared.length >= 5 && literalHits.length >= 1) || literalHits.length >= 2) throw new Error("Candidate direct frozen Task/Source/Verifier answer leakage rejected");
 }
 
 export async function producePromptCandidateV37(options: {

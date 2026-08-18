@@ -1,10 +1,11 @@
 # V3.7 Goal 1 Implementation Report
 
 ```yaml
-status: CORRECTION_1_READY_FOR_MAIN_PRELIMINARY_REREVIEW
+status: CORRECTION_2_READY_FOR_MAIN_PRELIMINARY_REREVIEW
 goal: V3.7 Goal 1 - Registered Recovery Evidence Bridge
 implementation_owner: dedicated_v37_goal_1_implementation_session
 correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
+correction_2_implementation_owner: fresh_replacement_goal_1_correction_session
 owner_deviation_authorized_by_user: true
 owner_deviation_reason: predecessor_session_stopped_with_systemError_and_is_not_successor_resumable
 original_starting_commit: 7d6b62223503309b4c39785eec767b437eee6abd
@@ -14,9 +15,11 @@ control_amendment_integrated_commit: b477a99360bcb93128aaf23b796cc897b2cf1951
 control_amendment_integrated_tree: d5c20bb328648e168a1378c34f60ab51f527d02b
 candidate_commit: containing_commit_reported_in_session_handoff
 candidate_tree: containing_tree_reported_in_session_handoff
-failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
-failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
-correction_round: 1_of_2
+initial_failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
+initial_failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
+correction_1_failed_candidate_commit: a62051044332d438cbc0f33ec6ccc3f74097ef2f
+correction_1_failed_candidate_tree: 7eb150cdaecb9234d62fde2bba31f1e59dd7f107
+correction_round: 2_of_2
 implementation_started: true
 goal_2_started: false
 credential_reads: 0
@@ -74,6 +77,18 @@ checks; and gives admission recomputation a read-only historical path whose pinn
 accepted trust-root prefix remains stable after an append-only disable. New workflow,
 execution/package derivation, admission and Candidate mutation continue to require the
 current accepted envelope.
+
+## Correction round 2
+
+Main re-review preserved Correction 1 and found one residual of P1-003: the concise
+task-specific answer `Make parseDuration multiply seconds by 1000.` remained admissible.
+Correction 2 changes only Candidate content validation, its focused tests and these two
+reports. It derives protected symbols from actual frozen Source exports that are also
+present in the frozen Task and Verifier. Any exact protected symbol in Candidate content
+is non-transferable and rejected without a shared-token threshold. Independent Verifier
+literal-pair rejection remains active. Tests now explicitly reject the short Main repro,
+the original long direct answer and `For 3s return 3000.`, while the existing generic
+pre-completion verification guidance remains accepted.
 
 ## Implemented contracts and source symbols
 
@@ -172,7 +187,7 @@ therefore not static registry constants.
 | exact command, `tests/final-capstone-g2-regression-state-feedback.test.ts` | 8/10; both spawned-child failures were the same missing Pi package resolution |
 | same G2 Capstone with identical fixed loader inherited through `NODE_OPTIONS` by child processes | PASS, 10/10 |
 | `git diff --check` | PASS |
-| correction allowlist/status check from failed candidate | PASS, eight allowlisted changed files after reports are included |
+| Correction 2 allowlist/status check from `a620510...` | PASS, exactly four authorized changed files after reports are included |
 | Pi cleanliness | Environment-qualified: `.upstream/pi` is absent from this isolated worktree; no Pi path was read or changed |
 
 No product assertion failed once the already-authorized fixed public Pi loader was visible
