@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_focused_audit
-  status: V3_7_G1_MAIN_REREVIEW_PASSED_AUDIT_CANDIDATE_FROZEN
+  phase: v3_7_goal_1_hard_stop
+  status: V3_7_G1_FOCUSED_AUDIT_FAILED_CORRECTION_BUDGET_EXHAUSTED
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: focused_audit_in_progress
+  status: hard_stop_user_decision_required
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: active
-  note: final_corrected_candidate_frozen_pending_fresh_independent_read_only_audit
+  status: hard_stop
+  note: independent_audit_failed_three_P1_findings_after_correction_budget_exhaustion
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_audit_candidate_frozen
+  implementation_status: goal_1_unaccepted_hard_stop
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -268,7 +268,14 @@ next_version:
   goal_1_audit_resumed_session: /root/v37_g1_local_consistency_review
   goal_1_audit_resumed_on: 2026-08-20
   goal_1_audit_resumed_by_user: true
-  goal_1_audit_status: in_progress_read_only
+  goal_1_audit_status: completed_failed_three_P1_findings
+  goal_1_audit_disposition: FAIL_V3_7_G1_FOCUSED_AUDIT_THREE_P1_FINDINGS
+  goal_1_audit_report: docs/reports/V3_7_G1_FOCUSED_AUDIT.md
+  goal_1_audit_finding_1: caller_selected_dataRoot_partitions_global_Primary_Run_binding
+  goal_1_audit_finding_2: symbol_omitting_direct_frozen_task_answers_remain_admissible
+  goal_1_audit_finding_3: recovery_artifact_subtree_junction_accepted_on_reopen
+  goal_1_hard_stop: docs/reports/V3_7_G1_AUDIT_HARD_STOP.md
+  goal_1_acceptance_status: not_accepted
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
