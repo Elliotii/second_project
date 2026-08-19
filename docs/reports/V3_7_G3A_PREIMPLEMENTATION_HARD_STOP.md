@@ -1,14 +1,16 @@
 # V3.7 Goal 3A Preimplementation Hard Stop
 
 ```yaml
-status: DECISION_REQUIRED
+status: RESOLVED_BY_ACCEPTED_OPTIMIZED_AMENDMENT
 recorded_on: 2026-08-20
 goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 implementation_started: false
 source_changes: false
 correction_budget_consumed: 0_of_2
 blocker: accepted_singleton_G1_G2_authority_cannot_load_two_frozen_G3A_cases
-recommended_decision: AUTHORIZE_VERSIONED_G3A_MULTI_CASE_AUTHORITY_EXTENSION
+accepted_decision: AUTHORIZE_OPTIMIZED_VERSIONED_G3A_AUTHORITY_EXTENSION
+formal_amendment: V3_7_G3A_AUTHORITY_EXTENSION_AMENDMENT.md
+amendment_freeze_commit: 425dc6752c9074dc079fa7b952cb93869080a3df
 goal_3b_locked: true
 real_access: false
 ```
@@ -48,7 +50,7 @@ Provider/model or Docker product authority has been granted.
 
 ## Next action
 
-User/Main must accept, narrow or reject the optimized
-`V3_7_G3A_PLANNING_OPTIMIZATION_PROPOSAL.md`. The original authority proposal is preserved
-as superseded history. No Goal 3A implementation Session may start until the decision is
-frozen in a Charter-subordinate amendment and an exact implementation Prompt.
+The user accepted the optimized proposal. Main froze the Charter-subordinate
+`V3_7_G3A_AUTHORITY_EXTENSION_AMENDMENT.md` and prepared the exact
+`V3_7_GOAL_3A_IMPLEMENTATION_PROMPT.md`. Goal 3A may proceed only from the subsequently
+recorded Control Baseline through a fresh dedicated zero-access Implementation Session.

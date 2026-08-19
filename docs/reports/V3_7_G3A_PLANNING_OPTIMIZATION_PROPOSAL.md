@@ -1,7 +1,7 @@
 # V3.7 Goal 3A Planning Optimization Proposal
 
 ```yaml
-status: PROPOSED_FOR_USER_DECISION
+status: ACCEPTED_BY_USER_SUPERSEDED_BY_FORMAL_AMENDMENT
 proposal_id: V3_7_G3A_OPTIMIZED_BOUNDED_MULTI_CASE_AUTHORITY
 supersedes: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
 recommended_decision: AUTHORIZE_OPTIMIZED_VERSIONED_G3A_AUTHORITY_EXTENSION
@@ -11,6 +11,8 @@ new_goal_or_product_stage: false
 implementation_started: false
 goal_3a_correction_budget_consumed: 0_of_2
 goal_3b_authority: false
+formal_amendment: V3_7_G3A_AUTHORITY_EXTENSION_AMENDMENT.md
+amendment_freeze_commit: 425dc6752c9074dc079fa7b952cb93869080a3df
 ```
 
 ## Main conclusion
