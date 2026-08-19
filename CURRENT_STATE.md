@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_2_preimplementation
-  status: V3_7_G2_PREIMPLEMENTATION_HARD_STOP_DECISION_REQUIRED
+  status: V3_7_G2_EXECUTION_PROFILE_AMENDMENT_ACCEPTED_PROMPT_PENDING
 
 active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 
 current_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: blocked_pending_execution_profile_authority_amendment_decision
+  status: amendment_accepted_preimplementation_prompt_pending
 
 last_executed_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: unlocked_but_hard_stopped_before_implementation
-  note: user_decision_required_for_narrow_follow_up_execution_profile_authority_amendment
+  status: unlocked_preimplementation
+  note: freeze_exact_prompt_allowlist_tests_and_follow_up_execution_profile_then_dispatch_fresh_session
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_closed_accepted_goal_2_preimplementation_hard_stop
+  implementation_status: goal_1_closed_accepted_goal_2_amendment_accepted_prompt_pending
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -297,10 +297,12 @@ next_version:
   goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
   goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
   goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
-  goal_2_status: hard_stop_decision_required_before_prompt_or_implementation
+  goal_2_status: amendment_accepted_preimplementation_prompt_pending
   goal_2_preimplementation_hard_stop: docs/reports/V3_7_G2_PREIMPLEMENTATION_HARD_STOP.md
   goal_2_blocker: accepted_Manifest_execution_tuple_lacks_complete_Goal_2_runtime_limits_and_names_Goal_1_profiles
-  goal_2_recommended_decision: narrow_Host_registered_follow_up_execution_profile_authority_amendment
+  goal_2_execution_profile_authority_amendment: V3_7_G2_EXECUTION_PROFILE_AUTHORITY_AMENDMENT.md
+  goal_2_execution_profile_authority_amendment_status: accepted_by_user_2026_08_20
+  goal_2_recommended_decision: accepted_narrow_Host_registered_follow_up_execution_profile_authority_amendment
   goal_2_implementation_started: false
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
