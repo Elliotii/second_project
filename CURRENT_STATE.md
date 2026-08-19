@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_2_implementation
-  status: V3_7_G2_MAIN_PRELIMINARY_REVIEW_FAILED_CORRECTION_1_AUTHORIZED
+  status: V3_7_G2_CORRECTION_1_HARD_STOP_NEGATIVE_FIXTURE_DECISION_REQUIRED
 
 active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 
 current_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: correction_1_in_progress
+  status: blocked_pending_registered_negative_fixture_decision
 
 last_executed_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: active
-  note: original_implementation_session_must_return_one_bounded_correction_candidate_then_stop_for_Main_rereview
+  status: hard_stopped_before_correction_delta
+  note: user_must_approve_or_reject_bounded_registered_negative_follow_up_scenario
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_closed_accepted_goal_2_correction_1_in_progress
+  implementation_status: goal_1_closed_accepted_goal_2_correction_1_hard_stop_decision_required
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -297,7 +297,7 @@ next_version:
   goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
   goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
   goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
-  goal_2_status: main_preliminary_review_failed_correction_1_in_progress
+  goal_2_status: correction_1_hard_stop_negative_fixture_decision_required
   goal_2_preimplementation_hard_stop: docs/reports/V3_7_G2_PREIMPLEMENTATION_HARD_STOP.md
   goal_2_blocker: accepted_Manifest_execution_tuple_lacks_complete_Goal_2_runtime_limits_and_names_Goal_1_profiles
   goal_2_execution_profile_authority_amendment: V3_7_G2_EXECUTION_PROFILE_AUTHORITY_AMENDMENT.md
@@ -315,7 +315,9 @@ next_version:
   goal_2_main_preliminary_review: docs/reports/V3_7_G2_MAIN_PRELIMINARY_REVIEW.md
   goal_2_main_preliminary_review_result: failed_three_P1_one_P2
   goal_2_correction_1_authorization: docs/reports/V3_7_G2_CORRECTION_1_AUTHORIZATION.md
-  goal_2_correction_budget: 1_of_2_authorized
+  goal_2_correction_1_hard_stop: docs/reports/V3_7_G2_CORRECTION_1_HARD_STOP.md
+  goal_2_negative_fixture_decision_proposal: docs/reports/V3_7_G2_NEGATIVE_FIXTURE_DECISION_PROPOSAL.md
+  goal_2_correction_budget: 0_of_2_consumed_correction_1_authorized_but_zero_delta_stopped
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
