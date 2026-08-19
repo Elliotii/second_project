@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: fresh_affected_finding_reaudit_pending
-  note: remediation_candidate_passed_Main_review_and_is_frozen_for_read_only_reaudit
+  status: fresh_affected_finding_reaudit_running
+  note: remediation_candidate_passed_Main_review_and_is_under_fresh_read_only_reaudit
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_closed_accepted_goal_2_remediation_reaudit_pending
+  implementation_status: goal_1_closed_accepted_goal_2_remediation_reaudit_running
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -297,7 +297,7 @@ next_version:
   goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
   goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
   goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
-  goal_2_status: audit_remediation_candidate_frozen_pending_reaudit
+  goal_2_status: audit_remediation_candidate_under_fresh_reaudit
   goal_2_preimplementation_hard_stop: docs/reports/V3_7_G2_PREIMPLEMENTATION_HARD_STOP.md
   goal_2_blocker: accepted_Manifest_execution_tuple_lacks_complete_Goal_2_runtime_limits_and_names_Goal_1_profiles
   goal_2_execution_profile_authority_amendment: V3_7_G2_EXECUTION_PROFILE_AUTHORITY_AMENDMENT.md
@@ -354,7 +354,9 @@ next_version:
   goal_2_audit_remediation_main_review_result: passed_with_G1_NTFS_Number_identity_environment_qualification
   goal_2_reaudit_candidate_commit: b954b303770be5f3232a56cb12805fcae2a0b019
   goal_2_reaudit_candidate_tree: 37fd1cd2df6a8f7536c644e958f22dc92e16a344
-  goal_2_reaudit_status: pending_fresh_independent_read_only_session
+  goal_2_reaudit_session: /root/v37_g2_remediation_reaudit
+  goal_2_reaudit_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g2-remediation-reaudit/project2
+  goal_2_reaudit_status: running_fresh_independent_read_only_session
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
