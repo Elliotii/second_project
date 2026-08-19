@@ -83,7 +83,7 @@ interface RuntimeManifestV36 {
 }
 
 export interface RuntimeManifestG2V36 {
-	schema_version: 2;
+	schema_version: 2 | 3;
 	mode: "v36_interactive_bounded_edit";
 	run_id: string;
 	session_id: string;
@@ -113,6 +113,7 @@ export interface RuntimeManifestG2V36 {
 	input_tokens: number;
 	output_tokens: number;
 	cost_usd: number;
+	registered_runtime_observation_digest?: string;
 	manifest_digest: string;
 }
 
@@ -135,6 +136,17 @@ export interface PersistentInteractiveTurnResultV36 {
 
 export interface PersistentInteractiveBoundedTurnResultV36 extends PersistentInteractiveTurnResultV36 {
 	manifest: RuntimeManifestG2V36 | FiniteBudgetTerminalV36;
+}
+
+export interface RegisteredRuntimeObservationInputV37 {
+	workflow_id: string;
+	workflow_registration_digest: string;
+	follow_up_run_id: string;
+	system_prompt_digest: string;
+	frozen_binding_digest: string;
+	follow_up_execution_authority_digest: string;
+	command_profile_digest: string;
+	before_first_provider_request: () => void;
 }
 
 function identifier(value: string, label: string): void {
@@ -218,7 +230,11 @@ function parseManifestG2(value: unknown): RuntimeManifestG2V36 {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
 	const manifest = value as RuntimeManifestG2V36;
 	const { manifest_digest: _digest, ...body } = manifest;
-	if (manifest.schema_version !== 2 || manifest.mode !== "v36_interactive_bounded_edit" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || !Number.isSafeInteger(manifest.provider_requests) || manifest.provider_requests < 1 || manifest.provider_requests > V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max || !Array.isArray(manifest.active_tool_names) || stableJson(manifest.active_tool_names) !== stableJson(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || ![manifest.credential_reads, manifest.network_calls, manifest.external_provider_calls, manifest.real_model_calls, manifest.project_command_executions, manifest.docker_project_command_executions, manifest.input_tokens, manifest.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || manifest.project_command_executions < 1 || manifest.project_command_executions !== manifest.docker_project_command_executions || !Array.isArray(manifest.backend_terminal_digests) || manifest.backend_terminal_digests.length !== manifest.project_command_executions || manifest.backend_terminal_digests.some((entry) => !SHA256.test(entry)) || !SHA256.test(manifest.workspace_identity_after) || !Number.isFinite(manifest.cost_usd) || manifest.cost_usd < 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
+	const registered = manifest.schema_version === 3;
+	const commandIdentityValid = registered
+		? manifest.project_command_executions === 0 && manifest.docker_project_command_executions === 0 && Array.isArray(manifest.backend_terminal_digests) && manifest.backend_terminal_digests.length === 0 && SHA256.test(manifest.registered_runtime_observation_digest ?? "")
+		: manifest.schema_version === 2 && manifest.project_command_executions >= 1 && manifest.project_command_executions === manifest.docker_project_command_executions && Array.isArray(manifest.backend_terminal_digests) && manifest.backend_terminal_digests.length === manifest.project_command_executions && manifest.backend_terminal_digests.every((entry) => SHA256.test(entry)) && manifest.registered_runtime_observation_digest === undefined;
+	if ((!registered && manifest.schema_version !== 2) || manifest.mode !== "v36_interactive_bounded_edit" || !ID.test(manifest.run_id) || !ID.test(manifest.session_id) || !ID.test(manifest.project_id) || !ID.test(manifest.workspace_id) || !SHA256.test(manifest.session_pin_digest) || manifest.settled !== true || !SHA256.test(manifest.prior_context_sha256) || manifest.prior_context_sha256 !== manifest.provider_observed_prior_context_sha256 || !SHA256.test(manifest.session_entries_sha256_after_turn) || !SHA256.test(manifest.prompt_sha256) || !Number.isSafeInteger(manifest.provider_requests) || manifest.provider_requests < 1 || manifest.provider_requests > V36_DAILY_BOUNDED_EDIT_BUDGET_PROFILE.provider_requests_hard_max || !Array.isArray(manifest.active_tool_names) || stableJson(manifest.active_tool_names) !== stableJson(["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"]) || !Array.isArray(manifest.tool_call_ids) || stableJson(manifest.tool_call_ids) !== stableJson(manifest.tool_result_ids) || ![manifest.credential_reads, manifest.network_calls, manifest.external_provider_calls, manifest.real_model_calls, manifest.project_command_executions, manifest.docker_project_command_executions, manifest.input_tokens, manifest.output_tokens].every((entry) => Number.isSafeInteger(entry) && entry >= 0) || !commandIdentityValid || !SHA256.test(manifest.workspace_identity_after) || !Number.isFinite(manifest.cost_usd) || manifest.cost_usd < 0 || !SHA256.test(manifest.manifest_digest) || digestObject(body) !== manifest.manifest_digest) throw new Error("V3.6 Goal 2 Runtime Manifest is invalid");
 	return manifest;
 }
 
@@ -694,6 +710,7 @@ export class PersistentInteractiveSessionServiceV36 {
 		credentialReads?: number;
 		externalModel?: boolean;
 		authorityDigest?: string;
+		registeredRuntimeObservation?: RegisteredRuntimeObservationInputV37;
 		testOnlyAssistantUsageByResponse?: AssistantMessage["usage"][];
 		testOnlyClock?: () => number;
 	}): Promise<PersistentInteractiveBoundedTurnResultV36> {
@@ -703,6 +720,10 @@ export class PersistentInteractiveSessionServiceV36 {
 		if (Buffer.byteLength(options.prompt, "utf8") < 1 || Buffer.byteLength(options.prompt, "utf8") > 16_384 || Buffer.byteLength(options.systemPrompt, "utf8") < 1 || Buffer.byteLength(options.systemPrompt, "utf8") > 16_384) throw new Error("V3.6 bounded Turn prompt is invalid");
 		const root = runRoot(this.runtimeRoot, options.runId, true);
 		const session = await this.open();
+		if (options.registeredRuntimeObservation) {
+			const observed = options.registeredRuntimeObservation;
+			if (observed.follow_up_run_id !== options.runId || !SHA256.test(observed.workflow_registration_digest) || !SHA256.test(observed.system_prompt_digest) || observed.system_prompt_digest !== sha256(options.systemPrompt) || !SHA256.test(observed.frozen_binding_digest) || !SHA256.test(observed.follow_up_execution_authority_digest) || !SHA256.test(observed.command_profile_digest) || typeof observed.before_first_provider_request !== "function") throw new Error("V3.7 registered Runtime observation input is invalid");
+		}
 		let testUsageOrdinal = 0;
 		if (options.testOnlyAssistantUsageByResponse !== undefined) {
 			const appendMessage = session.appendMessage.bind(session);
@@ -804,9 +825,32 @@ export class PersistentInteractiveSessionServiceV36 {
 			if (observedPrior !== priorDigest) throw new Error("V3.6 Goal 2 prior Session context mismatch");
 			return { messages: event.messages };
 		});
+		let registeredObservationPersisted = false;
+		let registeredObservationDigest: string | null = null;
+		let registeredObservationError: Error | null = null;
 		const offRequest = harness.on("before_provider_request", () => {
 			assertTurnWallTimeBudget("clean_boundary_before_provider_request");
 			assertTurnUsageBudget();
+			if (options.registeredRuntimeObservation && !registeredObservationPersisted) {
+				try { options.registeredRuntimeObservation.before_first_provider_request(); }
+				catch (error) { registeredObservationError = error instanceof Error ? error : new Error(String(error)); throw registeredObservationError; }
+				const observationBody = {
+					schema_version: 1 as const,
+					kind: "v37_follow_up_runtime_observation" as const,
+					workflow_id: options.registeredRuntimeObservation.workflow_id,
+					workflow_registration_digest: options.registeredRuntimeObservation.workflow_registration_digest,
+					follow_up_run_id: options.registeredRuntimeObservation.follow_up_run_id,
+					session_id: this.sessionId,
+					workspace_id: this.workspaceId,
+					system_prompt_digest: options.registeredRuntimeObservation.system_prompt_digest,
+					frozen_binding_digest: options.registeredRuntimeObservation.frozen_binding_digest,
+					follow_up_execution_authority_digest: options.registeredRuntimeObservation.follow_up_execution_authority_digest,
+					observed_before_first_provider_request: true as const,
+				};
+				registeredObservationDigest = digestObject(observationBody);
+				writeOnceJson(root, "registered-observation.json", { ...observationBody, runtime_observed_binding_digest: registeredObservationDigest });
+				registeredObservationPersisted = true;
+			}
 			providerRequests += 1;
 			if (pendingProviderReservation) throw new Error("V3.6 Goal 2 Provider reservation is already pending");
 			if (providerRequests > options.budgetProfile.provider_requests_hard_max) {
@@ -1016,7 +1060,9 @@ export class PersistentInteractiveSessionServiceV36 {
 		}
 		assertTurnWallTimeBudget("clean_boundary_before_provider_request");
 		assertTurnUsageBudget();
-		if (settled !== 1 || observedPrior !== priorDigest || profile.pendingSideEffects() !== 0 || profile.commandExecutions.length < 1 || profile.commandExecutions.some((entry) => entry.cleanup_complete !== true || !SHA256.test(entry.terminal_digest ?? "") || entry.backend_profile_digest !== FROZEN_DOCKER_PROFILE_V36.profile_digest)) throw new Error("V3.6 Goal 2 bounded Turn did not settle with exact frozen terminal Docker evidence");
+		if (registeredObservationError) throw registeredObservationError;
+		const registeredMode = options.registeredRuntimeObservation !== undefined;
+		if (settled !== 1 || observedPrior !== priorDigest || profile.pendingSideEffects() !== 0 || (!registeredMode && profile.commandExecutions.length < 1) || (registeredMode && !registeredObservationPersisted) || profile.commandExecutions.some((entry) => entry.cleanup_complete !== true || !SHA256.test(entry.terminal_digest ?? "") || entry.backend_profile_digest !== (registeredMode ? options.registeredRuntimeObservation!.command_profile_digest : FROZEN_DOCKER_PROFILE_V36.profile_digest))) throw new Error(registeredMode ? "V3.7 registered bounded Turn did not settle with exact observation identity" : "V3.6 Goal 2 bounded Turn did not settle with exact frozen terminal Docker evidence");
 		const entries = await session.getEntries();
 		const toolCallIds = profile.auditEvents.filter((event) => event.type === "start").map((event) => event.tool_call_id);
 		const toolResultIds = entries.flatMap((entry) => entry.type === "message" && entry.message.role === "toolResult" ? [entry.message.toolCallId] : []).slice(-toolCallIds.length);
@@ -1024,8 +1070,9 @@ export class PersistentInteractiveSessionServiceV36 {
 		const external = options.externalModel === true;
 		assertTurnUsageBudget();
 		const body: Omit<RuntimeManifestG2V36, "manifest_digest"> = {
-			schema_version: 2, mode: "v36_interactive_bounded_edit", run_id: options.runId, session_id: this.sessionId, project_id: this.projectId, workspace_id: this.workspaceId, session_pin_digest: this.pinDigest, created_at: new Date().toISOString(), settled: true,
+			schema_version: registeredMode ? 3 : 2, mode: "v36_interactive_bounded_edit", run_id: options.runId, session_id: this.sessionId, project_id: this.projectId, workspace_id: this.workspaceId, session_pin_digest: this.pinDigest, created_at: new Date().toISOString(), settled: true,
 			prior_context_message_count: priorMessages.length, prior_context_sha256: priorDigest, provider_observed_prior_context_sha256: observedPrior, session_entry_count_after_turn: entries.length, session_entries_sha256_after_turn: digestObject(entries), prompt_sha256: sha256(options.prompt), provider_requests: providerRequests, active_tool_names: expectedTools, tool_call_ids: toolCallIds, tool_result_ids: toolResultIds, credential_reads: options.credentialReads ?? 0, network_calls: external ? providerRequests : 0, external_provider_calls: external ? providerRequests : 0, real_model_calls: external ? providerRequests : 0, project_command_executions: profile.commandExecutions.length, docker_project_command_executions: profile.commandExecutions.length, backend_terminal_digests: profile.commandExecutions.map((entry) => entry.terminal_digest!), workspace_identity_after: managedWorkspaceIdentityV36(this.workspaceRoot), input_tokens: inputTokens, output_tokens: outputTokens, cost_usd: costUsd,
+			...(registeredMode ? { registered_runtime_observation_digest: registeredObservationDigest! } : {}),
 		};
 		const manifest: RuntimeManifestG2V36 = { ...body, manifest_digest: digestObject(body) };
 		writeOnceJson(root, "manifest.json", manifest);
@@ -1044,7 +1091,7 @@ export class PersistentInteractiveSessionServiceV36 {
 			if (existsSync(manifestPath) === existsSync(terminalPath)) throw new Error("V3.6 Runtime must have exactly one settled Manifest or budget terminal");
 			if (existsSync(manifestPath)) {
 				const rawManifest = readJsonArtifact<{ schema_version?: unknown }>(root, "manifest.json");
-				const manifest = rawManifest.schema_version === 2 ? parseManifestG2(rawManifest) : parseManifest(rawManifest);
+				const manifest = rawManifest.schema_version === 2 || rawManifest.schema_version === 3 ? parseManifestG2(rawManifest) : parseManifest(rawManifest);
 				if (manifest.run_id !== entry.name || manifest.session_id !== this.sessionId || manifest.project_id !== this.projectId || manifest.workspace_id !== this.workspaceId || manifest.session_pin_digest !== this.pinDigest || entries.length < manifest.session_entry_count_after_turn || digestObject(entries.slice(0, manifest.session_entry_count_after_turn)) !== manifest.session_entries_sha256_after_turn) throw new Error("V3.6 Runtime/Session historical identity mismatch");
 				manifests.push(manifest);
 			} else {
@@ -1086,11 +1133,11 @@ export class PersistentInteractiveSessionServiceV36 {
 				provider_requests: manifest.provider_requests,
 				tool_call_count: manifest.tool_call_ids.length,
 				context_reconstructed: manifest.prior_context_message_count === 0 || manifest.prior_context_sha256 === manifest.provider_observed_prior_context_sha256,
-				mode: manifest.schema_version === 2 && manifest.real_model_calls > 0 ? "real_product_smoke" as const : "deterministic_faux" as const,
+				mode: (manifest.schema_version === 2 || manifest.schema_version === 3) && manifest.real_model_calls > 0 ? "real_product_smoke" as const : "deterministic_faux" as const,
 				prior_run_id: null,
-				input_tokens: manifest.schema_version === 2 ? manifest.input_tokens : "not_recorded" as const,
-				output_tokens: manifest.schema_version === 2 ? manifest.output_tokens : "not_recorded" as const,
-				cost_usd: manifest.schema_version === 2 ? manifest.cost_usd : "not_recorded" as const,
+				input_tokens: manifest.schema_version === 2 || manifest.schema_version === 3 ? manifest.input_tokens : "not_recorded" as const,
+				output_tokens: manifest.schema_version === 2 || manifest.schema_version === 3 ? manifest.output_tokens : "not_recorded" as const,
+				cost_usd: manifest.schema_version === 2 || manifest.schema_version === 3 ? manifest.cost_usd : "not_recorded" as const,
 				verifier_id: "not_recorded" as const,
 				verifier_status: "not_recorded" as const,
 				outcome: "not_recorded" as const,

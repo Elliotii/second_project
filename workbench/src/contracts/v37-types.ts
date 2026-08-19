@@ -262,3 +262,276 @@ export interface CandidateResultV37 {
 	state_store_scope_digest: string;
 	active_state_digest: string;
 }
+
+export interface FollowUpProviderProfileV37 {
+	profile_id: "v37-g2-deterministic-faux-v1";
+	provider_kind: "public_emitted_faux";
+	model_id: "v37-g2-faux/faux-1";
+	external: false;
+	credential_reads: 0;
+	network_calls: 0;
+	real_model_calls: 0;
+}
+
+export interface FollowUpToolProfileV37 {
+	profile_id: "v37-g2-bounded-follow-up-v1";
+	allowed_tool_names: ["workspace_read", "workspace_list", "workspace_search", "workspace_edit", "workspace_write", "run_command"];
+	writable_paths: ["src/policy.mjs"];
+	protected_paths: ["verifier/follow-up.test.mjs"];
+	allow_repository_commands: false;
+}
+
+export interface FollowUpCommandProfileV37 {
+	profile_id: "v37-g2-follow-up-command-v1";
+	commands_hard_max: 1;
+	descriptors: [{
+		command_id: "follow_up_test";
+		executable: "current_node_executable";
+		argv: ["--test", "verifier/follow-up.test.mjs"];
+		cwd: "workspace";
+		timeout_seconds: 15;
+		max_combined_output_bytes: 65536;
+	}];
+}
+
+export interface FollowUpBudgetProfileV37 {
+	profile_id: "v37-g2-deterministic-budget-v1";
+	v36_runtime_budget_profile_id: "v36g2_frozen_acceptance_v1";
+	provider_requests_observation_threshold: 16;
+	provider_requests_hard_max: 16;
+	tool_calls_hard_max: 24;
+	combined_tokens_hard_max: 131072;
+	cost_usd_hard_max: 0.2;
+	commands_hard_max: 1;
+	verifier_runs_hard_max: 1;
+	verifier_timeout_ms_hard_max: 15000;
+	verifier_output_bytes_hard_max: 65536;
+	wall_time_ms_hard_max: 900000;
+}
+
+export interface FollowUpStopConditionProfileV37 {
+	profile_id: "v37-g2-no-retry-stop-v1";
+	retry: 0;
+	same_run_retry: 0;
+	fallback: 0;
+	replacement: 0;
+	automatic_replacement: 0;
+	task_swap: 0;
+	result_hunting: 0;
+	terminal_requires_complete_inspection: true;
+}
+
+export interface RegisteredFollowUpExecutionProfileV37 {
+	schema_version: 1;
+	kind: "v37_registered_follow_up_execution_profile";
+	profile_id: "v37-g2-follow-up-profile-v1";
+	case_id: string;
+	manifest_body_digest: string;
+	parent_provider_profile_digest: string;
+	parent_tool_profile_digest: string;
+	parent_command_profile_digest: string;
+	parent_budget_profile_digest: string;
+	parent_stop_condition_profile_digest: string;
+	provider_profile: FollowUpProviderProfileV37;
+	provider_profile_digest: string;
+	tool_profile: FollowUpToolProfileV37;
+	tool_profile_digest: string;
+	command_profile: FollowUpCommandProfileV37;
+	command_profile_digest: string;
+	budget_profile: FollowUpBudgetProfileV37;
+	budget_profile_digest: string;
+	stop_condition_profile: FollowUpStopConditionProfileV37;
+	stop_condition_profile_digest: string;
+	follow_up_execution_profile_digest: string;
+}
+
+export interface FollowUpExecutionAuthorityV37 {
+	workflow_id: string;
+	workflow_registration_digest: string;
+	registry_trust_root_digest: string;
+	manifest_body_digest: string;
+	parent_provider_profile_digest: string;
+	parent_tool_profile_digest: string;
+	parent_command_profile_digest: string;
+	parent_budget_profile_digest: string;
+	parent_stop_condition_profile_digest: string;
+	configuration_location: string;
+	loader_contract_id: "v37-follow-up-execution-profile-loader-v1";
+	loader_contract_fingerprint: string;
+	follow_up_execution_profile_digest: string;
+	follow_up_execution_authority_digest: string;
+}
+
+export interface RegisteredFollowUpBindingV37 {
+	schema_version: 1;
+	kind: "v37_registered_follow_up_binding";
+	case_id: string;
+	workflow_id: string;
+	workflow_registration_digest: string;
+	follow_up_run_id: string;
+	follow_up_task_instance_digest: string;
+	follow_up_source_workspace_digest: string;
+	state_store_scope_digest: string;
+	state_version_id: number;
+	active_state_digest: string;
+	active_binding_revision: number;
+	promotion_decision_id: string;
+	promotion_decision_digest: string;
+	candidate_id: string;
+	candidate_digest: string;
+	runtime_base_prompt_digest: string;
+	composed_prompt_digest: string;
+	parent_provider_profile_digest: string;
+	parent_tool_profile_digest: string;
+	parent_command_profile_digest: string;
+	parent_budget_profile_digest: string;
+	parent_stop_condition_profile_digest: string;
+	provider_profile_digest: string;
+	tool_profile_digest: string;
+	command_profile_digest: string;
+	budget_profile_digest: string;
+	stop_condition_profile_digest: string;
+	follow_up_execution_profile_digest: string;
+	follow_up_execution_authority_digest: string;
+	bound_at: string;
+	frozen_binding_digest: string;
+}
+
+export interface FollowUpRuntimeObservationV37 {
+	schema_version: 1;
+	kind: "v37_follow_up_runtime_observation";
+	workflow_id: string;
+	workflow_registration_digest: string;
+	follow_up_run_id: string;
+	session_id: string;
+	workspace_id: string;
+	system_prompt_digest: string;
+	frozen_binding_digest: string;
+	follow_up_execution_authority_digest: string;
+	observed_before_first_provider_request: true;
+	runtime_observed_binding_digest: string;
+}
+
+export interface FollowUpVerifierArtifactV37 {
+	schema_version: 1;
+	kind: "v37_follow_up_verifier_artifact";
+	verifier_id: string;
+	verifier_source_sha256: string;
+	command_profile_digest: string;
+	follow_up_run_id: string;
+	exit_code: number | null;
+	timed_out: boolean;
+	output_truncated: boolean;
+	output_sha256: string;
+	status: "passed" | "failed" | "invalid";
+	verifier_artifact_digest: string;
+}
+
+export interface FollowUpFormalOutcomeV37 {
+	schema_version: 1;
+	kind: "v37_follow_up_formal_outcome";
+	follow_up_run_id: string;
+	runtime_manifest_digest: string;
+	runtime_observed_binding_digest: string;
+	verifier_artifact_digest: string;
+	formal_outcome: "passed" | "failed" | "invalid" | "cancelled";
+	terminal_status: "settled" | "budget_terminal" | "integrity_terminal";
+	formal_outcome_artifact_digest: string;
+}
+
+export interface RegisteredBoundFollowUpEvidenceBodyV37 {
+	schema_version: 1;
+	family: "v37_registered_bound_state_followup";
+	case_id: string;
+	manifest_body_digest: string;
+	case_registration_digest: string;
+	workflow_id: string;
+	workflow_registration_digest: string;
+	follow_up_run_id: string;
+	follow_up_task_instance_digest: string;
+	follow_up_source_workspace_digest: string;
+	state_store_scope_digest: string;
+	state_version_id: number;
+	active_state_digest: string;
+	promotion_decision_id: string;
+	promotion_decision_digest: string;
+	candidate_id: string;
+	candidate_digest: string;
+	frozen_binding_digest: string;
+	runtime_base_prompt_digest: string;
+	composed_prompt_digest: string;
+	runtime_observed_binding_digest: string;
+	parent_provider_profile_digest: string;
+	parent_tool_profile_digest: string;
+	parent_command_profile_digest: string;
+	parent_budget_profile_digest: string;
+	parent_stop_condition_profile_digest: string;
+	provider_profile_digest: string;
+	tool_profile_digest: string;
+	command_profile_digest: string;
+	budget_profile_digest: string;
+	stop_condition_profile_digest: string;
+	follow_up_execution_profile_digest: string;
+	follow_up_execution_authority_digest: string;
+	verifier_artifact_digest: string;
+	formal_outcome_artifact_digest: string;
+	formal_outcome: "passed" | "failed" | "invalid" | "cancelled";
+	terminal_status: "settled" | "budget_terminal" | "integrity_terminal";
+	evidence_body_digest: string;
+}
+
+export interface FollowUpEvidenceConfirmationReceiptV37 {
+	schema_version: 1;
+	kind: "v37_follow_up_evidence_confirmation_receipt";
+	workflow_id: string;
+	workflow_registration_digest: string;
+	evidence_body_digest: string;
+	action_id: "confirm_registered_bound_follow_up_evidence";
+	confirmed_at: string;
+	confirmation_receipt_id: string;
+	confirmation_receipt_digest: string;
+}
+
+export interface FollowUpEvidenceSubmissionRequestV37 {
+	schema_version: 1;
+	kind: "v37_follow_up_evidence_submission_request";
+	workflow_id: string;
+	workflow_registration_digest: string;
+	evidence_body_digest: string;
+	confirmation_receipt_id: string;
+	confirmation_receipt_digest: string;
+	requested_at: string;
+	submission_request_digest: string;
+}
+
+export interface RegisteredBoundFollowUpAdmissionV37 {
+	schema_version: 1;
+	kind: "v37_registered_bound_follow_up_admission";
+	admission_id: string;
+	workflow_id: string;
+	workflow_registration_digest: string;
+	manifest_body_digest: string;
+	case_registration_digest: string;
+	registry_trust_root_digest: string;
+	evidence_body_digest: string;
+	submission_request_digest: string;
+	inspector_id: "inspect-v37g2-registered-follow-up-v1";
+	inspector_fingerprint: string;
+	result: "admitted" | "rejected";
+	reasons: string[];
+	source_inventory_digest: string;
+	admission_digest: string;
+}
+
+export interface CanonicalBoundStateAssessmentInputG2 {
+	admission_identity: { admission_id: string; admission_digest: string };
+	evidence_identity: { evidence_id: string; evidence_digest: string };
+	trusted_task_context: { task_kind: string; failure_family: string | null };
+	state_store_scope_digest: string;
+	bound_active_state_identity: { binding_revision: number; state_version: number; state_digest: string };
+	bound_promotion_decision_identity: { decision_id: string; decision_digest: string };
+	binding_digest: string;
+	outcome_status: "passed" | "failed" | "invalid" | "cancelled";
+	verifier_status: "passed" | "failed" | "invalid" | "missing";
+	failure_attribution: "verifier" | "none" | "infrastructure";
+}
