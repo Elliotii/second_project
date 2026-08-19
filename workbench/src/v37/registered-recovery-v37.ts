@@ -1,5 +1,5 @@
-import { existsSync, lstatSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { ArtifactRefV0B } from "../contracts/v0b-types.ts";
 import type { RunManifestV2A } from "../contracts/v2-types.ts";
 import type {
@@ -30,16 +30,55 @@ function ordinaryJson<T>(path: string, label: string): T {
 	return JSON.parse(readFileSync(path, "utf8")) as T;
 }
 
-function persistIdentical(root: string, relativePath: string, value: unknown): void {
-	const target = resolve(root, relativePath);
-	const expected = `${stableJson(value)}\n`;
+const FORMAL_RECOVERY_FILES = new Set(["comparison.json", "evidence.json", "confirmation.json", "request.json", "admission.json"]);
+
+function contained(root: string, target: string): boolean {
+	const rel = relative(root, target);
+	return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`));
+}
+
+function formalRecoveryPath(root: string, workflowId: string, fileName: string, requireFile: boolean): string {
+	if (!ID.test(workflowId) || !FORMAL_RECOVERY_FILES.has(fileName)) throw new Error("formal Recovery artifact identity invalid");
+	const trustedRoot = resolve(root);
+	const recoveryRoot = resolve(trustedRoot, "workflows", workflowId, "recovery");
+	const target = resolve(recoveryRoot, fileName);
+	if (!contained(trustedRoot, target)) throw new Error("formal Recovery artifact escapes trusted data root");
+	const rootStats = lstatSync(trustedRoot);
+	if (!rootStats.isDirectory() || rootStats.isSymbolicLink()) throw new Error("formal Recovery trusted root must be an ordinary directory");
+	let cursor = trustedRoot;
+	for (const segment of relative(trustedRoot, recoveryRoot).split(sep).filter(Boolean)) {
+		cursor = resolve(cursor, segment);
+		if (!existsSync(cursor)) {
+			if (!requireFile && cursor === recoveryRoot) break;
+			throw new Error("formal Recovery path component is missing");
+		}
+		const stats = lstatSync(cursor);
+		if (stats.isSymbolicLink() || !stats.isDirectory()) throw new Error("formal Recovery path contains a symlink, junction, reparse point or non-directory");
+	}
+	if (existsSync(recoveryRoot) && !contained(realpathSync.native(trustedRoot), realpathSync.native(recoveryRoot))) throw new Error("formal Recovery real path escapes trusted data root");
 	if (existsSync(target)) {
 		const stats = lstatSync(target);
-		if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1) throw new Error("existing V3.7 artifact must be an ordinary singly linked file");
+		if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1) throw new Error("formal Recovery artifact must be an ordinary singly linked file");
+		if (!contained(realpathSync.native(trustedRoot), realpathSync.native(target))) throw new Error("formal Recovery artifact real path escapes trusted data root");
+	} else if (requireFile) {
+		throw new Error("formal Recovery artifact is missing");
+	}
+	return target;
+}
+
+function readFormalRecoveryJson<T>(root: string, workflowId: string, fileName: string, _label: string): T {
+	return JSON.parse(readFileSync(formalRecoveryPath(root, workflowId, fileName, true), "utf8")) as T;
+}
+
+function persistFormalRecoveryJson(root: string, workflowId: string, fileName: string, value: unknown): void {
+	const target = formalRecoveryPath(root, workflowId, fileName, false);
+	const expected = `${stableJson(value)}\n`;
+	if (existsSync(target)) {
 		if (readFileSync(target, "utf8") !== expected) throw new Error("write-once V3.7 artifact identity conflict");
 		return;
 	}
-	writeOnceJson(root, relativePath, value);
+	writeOnceJson(root, `workflows/${workflowId}/recovery/${fileName}`, value);
+	formalRecoveryPath(root, workflowId, fileName, true);
 }
 
 function strategyDigest(manifest: ReturnType<typeof loadWorkflowRegistrationV37>["loadedCase"]["manifest"], strategyId: string): string {
@@ -201,11 +240,10 @@ export function deriveRegisteredRecoveryPackageV37(options: RecoveryPackageOptio
 export function persistRegisteredRecoveryPackageV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string }): ReturnType<typeof deriveRegisteredRecoveryPackageV37> {
 	const packageValue = deriveRegisteredRecoveryPackageV37(options);
 	const root = v37DataRootPath(options.projectRoot, options.dataRoot);
-	const prefix = `workflows/${options.workflowId}/recovery`;
-	persistIdentical(root, `${prefix}/comparison.json`, packageValue.comparison);
-	persistIdentical(root, `${prefix}/evidence.json`, packageValue.evidence);
-	persistIdentical(root, `${prefix}/confirmation.json`, packageValue.confirmation);
-	persistIdentical(root, `${prefix}/request.json`, packageValue.request);
+	persistFormalRecoveryJson(root, options.workflowId, "comparison.json", packageValue.comparison);
+	persistFormalRecoveryJson(root, options.workflowId, "evidence.json", packageValue.evidence);
+	persistFormalRecoveryJson(root, options.workflowId, "confirmation.json", packageValue.confirmation);
+	persistFormalRecoveryJson(root, options.workflowId, "request.json", packageValue.request);
 	return packageValue;
 }
 
@@ -233,11 +271,10 @@ function buildOpportunity(evidence: RegisteredRecoveryEvidenceBodyV37, compariso
 export function admitRegisteredRecoveryV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string }): RegisteredRecoveryAdmissionV37 {
 	const expected = deriveRegisteredRecoveryPackageV37(options);
 	const root = v37DataRootPath(options.projectRoot, options.dataRoot);
-	const prefix = resolve(root, "workflows", options.workflowId, "recovery");
-	const comparison = ordinaryJson<RegisteredRecoveryComparisonV37>(resolve(prefix, "comparison.json"), "registered Comparison");
-	const evidence = ordinaryJson<RegisteredRecoveryEvidenceBodyV37>(resolve(prefix, "evidence.json"), "Recovery Evidence Body");
-	const confirmation = ordinaryJson<EvidenceConfirmationReceiptV37>(resolve(prefix, "confirmation.json"), "Recovery confirmation");
-	const request = ordinaryJson<RecoveryEvidenceSubmissionRequestV37>(resolve(prefix, "request.json"), "Recovery submission request");
+	const comparison = readFormalRecoveryJson<RegisteredRecoveryComparisonV37>(root, options.workflowId, "comparison.json", "registered Comparison");
+	const evidence = readFormalRecoveryJson<RegisteredRecoveryEvidenceBodyV37>(root, options.workflowId, "evidence.json", "Recovery Evidence Body");
+	const confirmation = readFormalRecoveryJson<EvidenceConfirmationReceiptV37>(root, options.workflowId, "confirmation.json", "Recovery confirmation");
+	const request = readFormalRecoveryJson<RecoveryEvidenceSubmissionRequestV37>(root, options.workflowId, "request.json", "Recovery submission request");
 	if (stableJson({ comparison, evidence, confirmation, request }) !== stableJson(expected)) throw new Error("Recovery package recomputation mismatch");
 	if (digestObject(without(comparison as unknown as Record<string, unknown>, "comparison_decision_digest")) !== comparison.comparison_decision_digest || digestObject(without(evidence as unknown as Record<string, unknown>, "evidence_body_digest")) !== evidence.evidence_body_digest || digestObject(without(confirmation as unknown as Record<string, unknown>, "confirmation_receipt_digest")) !== confirmation.confirmation_receipt_digest || digestObject(without(request as unknown as Record<string, unknown>, "submission_request_digest")) !== request.submission_request_digest) throw new Error("Recovery package digest invalid");
 	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId });
@@ -268,18 +305,17 @@ export function admitRegisteredRecoveryV37(options: { projectRoot: string; dataR
 		opportunity,
 	};
 	const admission = { ...body, admission_digest: digestObject(body) };
-	persistIdentical(root, `workflows/${options.workflowId}/recovery/admission.json`, admission);
+	persistFormalRecoveryJson(root, options.workflowId, "admission.json", admission);
 	return admission;
 }
 
 export function recomputeRegisteredRecoveryAdmissionV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string }): RegisteredRecoveryAdmissionV37 {
 	const root = v37DataRootPath(options.projectRoot, options.dataRoot);
-	const recoveryRoot = resolve(root, "workflows", options.workflowId, "recovery");
-	const storedComparison = ordinaryJson<RegisteredRecoveryComparisonV37>(resolve(recoveryRoot, "comparison.json"), "registered Comparison");
-	const storedEvidence = ordinaryJson<RegisteredRecoveryEvidenceBodyV37>(resolve(recoveryRoot, "evidence.json"), "Recovery Evidence Body");
-	const storedConfirmation = ordinaryJson<EvidenceConfirmationReceiptV37>(resolve(recoveryRoot, "confirmation.json"), "Recovery confirmation");
-	const storedRequest = ordinaryJson<RecoveryEvidenceSubmissionRequestV37>(resolve(recoveryRoot, "request.json"), "Recovery submission request");
-	const stored = ordinaryJson<RegisteredRecoveryAdmissionV37>(resolve(recoveryRoot, "admission.json"), "Recovery admission");
+	const storedComparison = readFormalRecoveryJson<RegisteredRecoveryComparisonV37>(root, options.workflowId, "comparison.json", "registered Comparison");
+	const storedEvidence = readFormalRecoveryJson<RegisteredRecoveryEvidenceBodyV37>(root, options.workflowId, "evidence.json", "Recovery Evidence Body");
+	const storedConfirmation = readFormalRecoveryJson<EvidenceConfirmationReceiptV37>(root, options.workflowId, "confirmation.json", "Recovery confirmation");
+	const storedRequest = readFormalRecoveryJson<RecoveryEvidenceSubmissionRequestV37>(root, options.workflowId, "request.json", "Recovery submission request");
+	const stored = readFormalRecoveryJson<RegisteredRecoveryAdmissionV37>(root, options.workflowId, "admission.json", "Recovery admission");
 	const expectedPackage = deriveRegisteredRecoveryPackageCoreV37(options, true);
 	if (stableJson({ comparison: storedComparison, evidence: storedEvidence, confirmation: storedConfirmation, request: storedRequest }) !== stableJson(expectedPackage)) throw new Error("Recovery package recomputation mismatch");
 	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly: true });

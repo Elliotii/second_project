@@ -25,6 +25,7 @@ const CASE_ID = "v37-g1-det-recovery";
 const WORKFLOW_ID = "v37-g1-workflow-a";
 const CONFIRMED_AT = "2026-08-18T01:00:00.000Z";
 const REQUESTED_AT = "2026-08-18T01:00:01.000Z";
+const REGISTERED_GENERIC_PROMPT = "Before reporting completion, run the task-declared check and rely on its result rather than self-assessment.";
 
 function rel(path: string): string { return relative(PROJECT_ROOT, path).split(sep).join("/"); }
 function readJson<T>(path: string): T { return JSON.parse(readFileSync(path, "utf8")) as T; }
@@ -36,7 +37,7 @@ function cloneHost(label: string): string {
 	return root;
 }
 
-function proposal(opportunity: ImprovementOpportunityV3, baseDigest: string, kind: "prompt_addendum" | "adaptive_skill" = "prompt_addendum", content = "Run the frozen task check before claiming completion."): unknown {
+function proposal(opportunity: ImprovementOpportunityV3, baseDigest: string, kind: "prompt_addendum" | "adaptive_skill" = "prompt_addendum", content = REGISTERED_GENERIC_PROMPT): unknown {
 	const applicability = { task_kinds: ["typescript-maintenance"], failure_families: ["verifier-failure"] };
 	return {
 		schema_version: 1,
@@ -59,6 +60,7 @@ const common = { projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WOR
 
 test.before(async () => {
 	rmSync(ROOT, { recursive: true, force: true });
+	rmSync(resolve(PROJECT_ROOT, ".runs/v37/host-authority"), { recursive: true, force: true });
 	mkdirSync(resolve(ROOT, "agent-workspace"), { recursive: true });
 	mkdirSync(resolve(ROOT, "accepted-base"), { recursive: true });
 	await initializeStateStoreV3({ stateRoot: STATE_ROOT, projectId: "v37-g1-project", agentWorkspaceRoot: resolve(ROOT, "agent-workspace"), acceptedBaseRoots: [resolve(ROOT, "accepted-base")], immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 });
@@ -77,6 +79,11 @@ test("fixed Host registry recomputes exact inventory and rejects unregistered or
 	assert.equal(loaded.current_envelope.registration_digest, loaded.registry.entries[0]!.current_registration_digest);
 	assert.match(loaded.registry_trust_root_digest, /^[a-f0-9]{64}$/);
 	assert.match(loaded.loader_contract_fingerprint, /^[a-f0-9]{64}$/);
+	assert.deepEqual(loaded.manifest.candidate_policy_spec.body.generic_prompt_addendum_templates, [{
+		template_id: "v37-verify-before-finish",
+		content: REGISTERED_GENERIC_PROMPT,
+		content_sha256: "1341b7b213c788c3d17ced324ba46da316c091af8d43182d02f589add792cc8f",
+	}]);
 	assert.deepEqual(loaded.manifest.follow_up_task_spec.body, {
 		task_id: "v37-g1-det-follow-up-clamp-retries",
 		task_kind: "typescript-maintenance",
@@ -127,11 +134,26 @@ test("workflow and fixed task identities are Host-derived, immutable, multi-inst
 test("Primary Run binding is pre-execution, persistent and rejects missing, changed or cross-workflow identity/root", () => {
 	const binding = loadPrimaryRunBindingV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID, runRoot: RUN_ROOT });
 	assert.equal(binding.primary_run_id, "v37-g1-v2-primary");
+	assert.match(binding.binding_authority_id, /^v37-primary-run-authority-/);
+	assert.equal(binding.binding_authority_location.includes(DATA_ROOT), false);
 	assert.equal(binding.primary_task_instance_digest, loadWorkflowRegistrationV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID }).primary.task_instance_digest);
 	assert.throws(() => loadPrimaryRunBindingV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID, runRoot: resolve(ROOT, "changed-root") }), /root mismatch/);
+	const changedData = resolve(ROOT, "changed-binding-data"); cpSync(resolve(PROJECT_ROOT, DATA_ROOT), changedData, { recursive: true });
+	const changedBindingPath = resolve(changedData, "workflows", WORKFLOW_ID, "execution", "primary-run-binding.json");
+	const changedBinding = readJson<any>(changedBindingPath); changedBinding.binding_authority_id = "v37-primary-run-authority-changed"; writeJson(changedBindingPath, changedBinding);
+	assert.throws(() => loadPrimaryRunBindingV37({ projectRoot: PROJECT_ROOT, dataRoot: rel(changedData), workflowId: WORKFLOW_ID, runRoot: RUN_ROOT }), /binding identity\/digest invalid/);
 	assert.throws(() => bindPrimaryRunV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID, runId: "v37-g1-v2-primary-changed", runRoot: RUN_ROOT, boundAt: "2026-08-18T00:46:00.000Z" }), /already bound|incomplete/);
 	assert.throws(() => deriveRegisteredRecoveryPackageV37({ ...common, workflowId: "v37-g1-workflow-b" }), /Primary Run binding|missing|ENOENT/);
 	assert.throws(() => bindPrimaryRunV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: "v37-g1-workflow-b", runId: "v37-g1-v2-primary", runRoot: RUN_ROOT, boundAt: "2026-08-18T00:46:00.000Z" }), /already bound to another workflow/);
+});
+
+test("Host-global Primary Run authority cannot be partitioned by alternate data roots", () => {
+	const alternateDataRoot = ".runs/v37/g1-tests/data-alternate";
+	const alternateWorkflowId = "v37-g1-workflow-alternate-data";
+	createWorkflowRegistrationV37({ projectRoot: PROJECT_ROOT, dataRoot: alternateDataRoot, caseId: CASE_ID, workflowId: alternateWorkflowId, createdAt: "2026-08-18T00:33:00.000Z" });
+	assert.throws(() => bindPrimaryRunV37({ projectRoot: PROJECT_ROOT, dataRoot: alternateDataRoot, workflowId: alternateWorkflowId, runId: "v37-g1-v2-primary", runRoot: resolve(ROOT, "alternate-id-root"), boundAt: "2026-08-18T00:48:00.000Z" }), /Host-global Primary Run ID is already bound to another workflow/);
+	assert.throws(() => bindPrimaryRunV37({ projectRoot: PROJECT_ROOT, dataRoot: alternateDataRoot, workflowId: alternateWorkflowId, runId: "v37-g1-v2-primary-alternate", runRoot: RUN_ROOT, boundAt: "2026-08-18T00:48:01.000Z" }), /Host-global Primary Run root is already bound to another workflow/);
+	assert.throws(() => deriveRegisteredRecoveryPackageV37({ ...common, dataRoot: alternateDataRoot, workflowId: alternateWorkflowId }), /Primary Run binding|missing|ENOENT/);
 });
 
 test("valid V2 truth produces a Candidate-Path-preserving Comparison, separate request and admitted Opportunity", () => {
@@ -200,6 +222,16 @@ test("admission reopen rejects cross-workflow substitution, hardlinks and interm
 	const outside = resolve(ROOT, "junction-target"); cpSync(resolve(PROJECT_ROOT, DATA_ROOT), outside, { recursive: true });
 	const junctionParent = resolve(ROOT, "junction-parent"); mkdirSync(junctionParent); symlinkSync(outside, resolve(junctionParent, "data"), "junction");
 	assert.equal(inspectRegisteredRecoveryAdmissionV37({ ...common, dataRoot: rel(resolve(junctionParent, "data")) }).integrity_valid, false);
+	const descendant = resolve(ROOT, "recovery-descendant-junction-data"); cpSync(resolve(PROJECT_ROOT, DATA_ROOT), descendant, { recursive: true });
+	const descendantRecovery = resolve(descendant, "workflows", WORKFLOW_ID, "recovery");
+	const descendantTarget = resolve(ROOT, "recovery-descendant-junction-target"); cpSync(descendantRecovery, descendantTarget, { recursive: true });
+	rmSync(descendantRecovery, { recursive: true, force: true });
+	symlinkSync(descendantTarget, descendantRecovery, "junction");
+	const descendantInspected = inspectRegisteredRecoveryAdmissionV37({ ...common, dataRoot: rel(descendant) });
+	assert.equal(descendantInspected.integrity_valid, false);
+	assert.match(descendantInspected.errors.join("; "), /formal Recovery path contains a symlink, junction, reparse point/i);
+	assert.throws(() => persistRegisteredRecoveryPackageV37({ ...common, dataRoot: rel(descendant) }), /formal Recovery path contains a symlink, junction, reparse point/i);
+	assert.throws(() => admitRegisteredRecoveryV37({ ...common, dataRoot: rel(descendant) }), /formal Recovery path contains a symlink, junction, reparse point/i);
 });
 
 test("prompt-only Candidate uses admitted Opportunity and exact active Base/applicability/State scope", async () => {
@@ -211,10 +243,22 @@ test("prompt-only Candidate uses admitted Opportunity and exact active Base/appl
 	assert.equal(result.state_store_scope_digest, loaded.manifest.state_store_scope_spec.state_store_scope_digest);
 	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => proposal(opp, base, "adaptive_skill")) }), /exactly one prompt_addendum/);
 	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, _base) => proposal(opp, "0".repeat(64))) }), /stale expected base/);
+	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => {
+		const value = proposal(opp, base) as { edits: Array<{ entry_id: string }> };
+		value.edits[0]!.entry_id = "unregistered-template-identity";
+		return value;
+	}) }), /unregistered generic prompt-addendum template/);
 	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => proposal(opp, base, "prompt_addendum", "Set approval_policy_id to bypass Runtime Authority.")) }), /leakage indicator/);
-	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => proposal(opp, base, "prompt_addendum", "For parseDuration, match exactly non-negative digits followed by ms or s, reject all other input, and multiply s values by 1000.")) }), /direct frozen Task\/Source\/Verifier answer leakage/);
-	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => proposal(opp, base, "prompt_addendum", "Make parseDuration multiply seconds by 1000.")) }), /direct frozen Task\/Source\/Verifier answer leakage/);
-	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => proposal(opp, base, "prompt_addendum", "For 3s return 3000.")) }), /direct frozen Task\/Source\/Verifier answer leakage/);
+	for (const unregisteredContent of [
+		"Before reporting completion, verify the result carefully.",
+		"For parseDuration, match exactly non-negative digits followed by ms or s, reject all other input, and multiply s values by 1000.",
+		"Make parseDuration multiply seconds by 1000.",
+		"For the s suffix, multiply by 1000.",
+		"Accept only non-negative digits followed by ms or s. Leave milliseconds unchanged, multiply seconds by 1000, and reject everything else.",
+		"Return 3000.",
+		"Map 3s to 3000.",
+		"For a seconds suffix, scale the numeric portion by three orders of magnitude while leaving millisecond values unchanged.",
+	]) await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: SYSTEM_PROMPT, port: port((opp, base) => proposal(opp, base, "prompt_addendum", unregisteredContent)) }), /unregistered generic prompt-addendum template/);
 	await assert.rejects(producePromptCandidateV37({ ...common, immutableBasePrompt: `${SYSTEM_PROMPT}\ncaller override`, port: port(proposal) }), /Base Prompt\/State scope mismatch/);
 	for (const variant of ["task", "source", "verifier"] as const) {
 		const fixtureRoot = resolve(ROOT, "candidate-content-tamper", variant);

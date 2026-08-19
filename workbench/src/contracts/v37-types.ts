@@ -15,6 +15,19 @@ export interface StateStoreScopeSpecV37 {
 	state_store_scope_digest: string;
 }
 
+export interface RegisteredPromptAddendumTemplateV37 {
+	template_id: string;
+	content: string;
+	content_sha256: string;
+}
+
+export interface CandidatePolicyBodyV37 {
+	candidate_type: "prompt_addendum";
+	max_prompt_bytes: number;
+	leakage_indicators: string[];
+	generic_prompt_addendum_templates: RegisteredPromptAddendumTemplateV37[];
+}
+
 export interface RegisteredCaseManifestBodyV37 {
 	schema_version: 1;
 	kind: "v37_registered_case_manifest_body";
@@ -28,7 +41,7 @@ export interface RegisteredCaseManifestBodyV37 {
 	recovery_a_strategy_spec: ContentSpecV37;
 	recovery_b_strategy_spec: ContentSpecV37;
 	comparison_profile_spec: ContentSpecV37;
-	candidate_policy_spec: ContentSpecV37<{ candidate_type: "prompt_addendum"; max_prompt_bytes: number; leakage_indicators: string[] }>;
+	candidate_policy_spec: ContentSpecV37<CandidatePolicyBodyV37>;
 	regression_pack_spec: ContentSpecV37;
 	state_applicability: ApplicabilityV3;
 	state_store_scope_spec: StateStoreScopeSpecV37;
@@ -125,6 +138,8 @@ export interface TaskInstanceV37 {
 export interface PrimaryRunBindingV37 {
 	schema_version: 1;
 	kind: "v37_primary_run_binding";
+	binding_authority_id: string;
+	binding_authority_location: string;
 	workflow_id: string;
 	workflow_registration_digest: string;
 	primary_task_instance_digest: string;

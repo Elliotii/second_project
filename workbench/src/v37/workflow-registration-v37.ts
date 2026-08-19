@@ -3,7 +3,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import type { LoadedRegisteredCaseV37, PrimaryRunBindingV37, TaskInstanceV37, WorkflowRegistrationV37 } from "../contracts/v37-types.ts";
 import { writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, stableJson } from "../hash.ts";
-import { deriveRegistryTrustRootDigestV37, loadRegisteredCaseFromHostRegistryV37 } from "./host-registry-v37.ts";
+import { V37_CONFIGURATION_BASELINE_ID, V37_LOADER_CONTRACT_ID, deriveRegistryTrustRootDigestV37, loadRegisteredCaseFromHostRegistryV37 } from "./host-registry-v37.ts";
 
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -40,6 +40,18 @@ function ordinaryJson<T>(path: string, label: string): T {
 	const stats = lstatSync(path);
 	if (!stats.isFile() || stats.isSymbolicLink() || stats.nlink !== 1) throw new Error(`${label} must be an ordinary singly linked file`);
 	return JSON.parse(readFileSync(path, "utf8")) as T;
+}
+
+function ordinaryJsonUnder<T>(root: string, path: string, label: string): T {
+	if (!contained(root, path)) throw new Error(`${label} escapes its Host-owned authority root`);
+	let cursor = root;
+	for (const segment of relative(root, path).split(sep).filter(Boolean)) {
+		cursor = resolve(cursor, segment);
+		const stats = lstatSync(cursor);
+		if (stats.isSymbolicLink()) throw new Error(`${label} contains a symlink or junction`);
+		if (cursor !== path && !stats.isDirectory()) throw new Error(`${label} ancestor is not an ordinary directory`);
+	}
+	return ordinaryJson<T>(path, label);
 }
 
 function workflowBody(value: WorkflowRegistrationV37): Omit<WorkflowRegistrationV37, "workflow_registration_digest"> {
@@ -92,10 +104,24 @@ function validateTask(value: TaskInstanceV37, workflow: WorkflowRegistrationV37,
 	return structuredClone(value);
 }
 
-function validatePrimaryRunBinding(value: PrimaryRunBindingV37, workflow: WorkflowRegistrationV37, primary: TaskInstanceV37): PrimaryRunBindingV37 {
-	const keys = ["schema_version", "kind", "workflow_id", "workflow_registration_digest", "primary_task_instance_digest", "primary_run_id", "primary_run_root_location", "bound_at", "primary_run_binding_digest"];
+function primaryRunAuthority(projectRoot: string, loaded: LoadedRegisteredCaseV37, create: boolean): { authorityId: string; authorityLocation: string; authorityRoot: string } {
+	const identity = {
+		configuration_baseline_id: V37_CONFIGURATION_BASELINE_ID,
+		loader_contract_id: V37_LOADER_CONTRACT_ID,
+		loader_contract_fingerprint: loaded.loader_contract_fingerprint,
+		case_id: loaded.manifest.case_id,
+		manifest_version: loaded.manifest.manifest_version,
+		manifest_body_digest: loaded.manifest.manifest_body_digest,
+	};
+	const authorityId = `v37-primary-run-authority-${digestObject(identity).slice(0, 32)}`;
+	const authorityLocation = `.runs/v37/host-authority/${V37_CONFIGURATION_BASELINE_ID}/${loaded.manifest.case_id}/${loaded.manifest.manifest_body_digest}/${loaded.loader_contract_fingerprint}`;
+	return { authorityId, authorityLocation, authorityRoot: projectRelativeRoot(projectRoot, authorityLocation, create) };
+}
+
+function validatePrimaryRunBinding(value: PrimaryRunBindingV37, workflow: WorkflowRegistrationV37, primary: TaskInstanceV37, authority: ReturnType<typeof primaryRunAuthority>): PrimaryRunBindingV37 {
+	const keys = ["schema_version", "kind", "binding_authority_id", "binding_authority_location", "workflow_id", "workflow_registration_digest", "primary_task_instance_digest", "primary_run_id", "primary_run_root_location", "bound_at", "primary_run_binding_digest"];
 	if (!value || typeof value !== "object" || Array.isArray(value) || stableJson(Object.keys(value).sort()) !== stableJson(keys.sort())) throw new Error("Primary Run binding exact-key validation failed");
-	if (value.schema_version !== 1 || value.kind !== "v37_primary_run_binding" || value.workflow_id !== workflow.workflow_id || value.workflow_registration_digest !== workflow.workflow_registration_digest || value.primary_task_instance_digest !== primary.task_instance_digest || !ID.test(value.primary_run_id) || typeof value.primary_run_root_location !== "string" || value.primary_run_root_location.length === 0 || isAbsolute(value.primary_run_root_location) || value.primary_run_root_location.replaceAll("\\", "/").split("/").includes("..") || Number.isNaN(Date.parse(value.bound_at)) || !SHA256.test(value.primary_run_binding_digest) || digestObject(primaryRunBindingBody(value)) !== value.primary_run_binding_digest) throw new Error("Primary Run binding identity/digest invalid");
+	if (value.schema_version !== 1 || value.kind !== "v37_primary_run_binding" || value.binding_authority_id !== authority.authorityId || value.binding_authority_location !== authority.authorityLocation || value.workflow_id !== workflow.workflow_id || value.workflow_registration_digest !== workflow.workflow_registration_digest || value.primary_task_instance_digest !== primary.task_instance_digest || !ID.test(value.primary_run_id) || typeof value.primary_run_root_location !== "string" || value.primary_run_root_location.length === 0 || isAbsolute(value.primary_run_root_location) || value.primary_run_root_location.replaceAll("\\", "/").split("/").includes("..") || Number.isNaN(Date.parse(value.bound_at)) || !SHA256.test(value.primary_run_binding_digest) || digestObject(primaryRunBindingBody(value)) !== value.primary_run_binding_digest) throw new Error("Primary Run binding identity/digest invalid");
 	return structuredClone(value);
 }
 
@@ -172,9 +198,12 @@ export function loadWorkflowRegistrationV37(options: { projectRoot: string; data
 export function bindPrimaryRunV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runId: string; runRoot: string; boundAt: string }): PrimaryRunBindingV37 {
 	if (!ID.test(options.runId) || Number.isNaN(Date.parse(options.boundAt))) throw new Error("Primary Run binding ID/timestamp invalid");
 	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId });
+	const authority = primaryRunAuthority(options.projectRoot, registered.loadedCase, true);
 	const body: Omit<PrimaryRunBindingV37, "primary_run_binding_digest"> = {
 		schema_version: 1,
 		kind: "v37_primary_run_binding",
+		binding_authority_id: authority.authorityId,
+		binding_authority_location: authority.authorityLocation,
 		workflow_id: registered.workflow.workflow_id,
 		workflow_registration_digest: registered.workflow.workflow_registration_digest,
 		primary_task_instance_digest: registered.primary.task_instance_digest,
@@ -186,33 +215,32 @@ export function bindPrimaryRunV37(options: { projectRoot: string; dataRoot: stri
 	const root = projectRelativeRoot(options.projectRoot, options.dataRoot, false);
 	const rootIdentity = digestObject({ primary_run_root_location: binding.primary_run_root_location });
 	const targets = [
-		[resolve(root, "primary-run-bindings", "by-run-id", `${binding.primary_run_id}.json`), "Primary Run ID"],
-		[resolve(root, "primary-run-bindings", "by-run-root", `${rootIdentity}.json`), "Primary Run root"],
-		[resolve(root, "workflows", options.workflowId, "execution", "primary-run-binding.json"), "workflow Primary Run"],
+		{ root: authority.authorityRoot, relativePath: `by-run-id/${binding.primary_run_id}.json`, path: resolve(authority.authorityRoot, "by-run-id", `${binding.primary_run_id}.json`), label: "Host-global Primary Run ID" },
+		{ root: authority.authorityRoot, relativePath: `by-run-root/${rootIdentity}.json`, path: resolve(authority.authorityRoot, "by-run-root", `${rootIdentity}.json`), label: "Host-global Primary Run root" },
+		{ root, relativePath: `workflows/${options.workflowId}/execution/primary-run-binding.json`, path: resolve(root, "workflows", options.workflowId, "execution", "primary-run-binding.json"), label: "workflow Primary Run" },
 	] as const;
-	for (const [path, label] of targets) {
-		if (existsSync(path) && stableJson(ordinaryJson<PrimaryRunBindingV37>(path, `${label} binding`)) !== stableJson(binding)) throw new Error(`${label} is already bound to another workflow`);
+	for (const target of targets) {
+		if (existsSync(target.path) && stableJson(ordinaryJsonUnder<PrimaryRunBindingV37>(target.root, target.path, `${target.label} binding`)) !== stableJson(binding)) throw new Error(`${target.label} is already bound to another workflow`);
 	}
-	const existingCount = targets.filter(([path]) => existsSync(path)).length;
+	const existingCount = targets.filter((target) => existsSync(target.path)).length;
 	if (existingCount === targets.length) return binding;
 	if (existingCount !== 0) throw new Error("Primary Run binding persistence is incomplete");
 	if (existsSync(resolve(options.projectRoot, binding.primary_run_root_location))) throw new Error("Primary Run must be bound before its Run root is created");
-	writeOnceJson(root, `primary-run-bindings/by-run-id/${binding.primary_run_id}.json`, binding);
-	writeOnceJson(root, `primary-run-bindings/by-run-root/${rootIdentity}.json`, binding);
-	writeOnceJson(root, `workflows/${options.workflowId}/execution/primary-run-binding.json`, binding);
+	for (const target of targets) writeOnceJson(target.root, target.relativePath, binding);
 	return binding;
 }
 
 export function loadPrimaryRunBindingV37(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; allowHistoricalReadOnly?: boolean }): PrimaryRunBindingV37 {
 	const registered = loadWorkflowRegistrationV37({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly: options.allowHistoricalReadOnly });
+	const authority = primaryRunAuthority(options.projectRoot, registered.loadedCase, false);
 	const root = projectRelativeRoot(options.projectRoot, options.dataRoot, false);
 	const path = resolve(root, "workflows", options.workflowId, "execution", "primary-run-binding.json");
-	const binding = validatePrimaryRunBinding(ordinaryJson(path, "Primary Run binding"), registered.workflow, registered.primary);
+	const binding = validatePrimaryRunBinding(ordinaryJsonUnder(root, path, "Primary Run binding"), registered.workflow, registered.primary, authority);
 	const actualLocation = normalizedProjectLocation(options.projectRoot, options.runRoot, "Primary Run root");
 	if (binding.primary_run_root_location !== actualLocation) throw new Error("Primary Run binding root mismatch");
 	const rootIdentity = digestObject({ primary_run_root_location: binding.primary_run_root_location });
-	const byId = ordinaryJson<PrimaryRunBindingV37>(resolve(root, "primary-run-bindings", "by-run-id", `${binding.primary_run_id}.json`), "global Primary Run ID binding");
-	const byRoot = ordinaryJson<PrimaryRunBindingV37>(resolve(root, "primary-run-bindings", "by-run-root", `${rootIdentity}.json`), "global Primary Run root binding");
+	const byId = ordinaryJsonUnder<PrimaryRunBindingV37>(authority.authorityRoot, resolve(authority.authorityRoot, "by-run-id", `${binding.primary_run_id}.json`), "Host-global Primary Run ID binding");
+	const byRoot = ordinaryJsonUnder<PrimaryRunBindingV37>(authority.authorityRoot, resolve(authority.authorityRoot, "by-run-root", `${rootIdentity}.json`), "Host-global Primary Run root binding");
 	if (stableJson(byId) !== stableJson(binding) || stableJson(byRoot) !== stableJson(binding)) throw new Error("Primary Run global binding mismatch");
 	return binding;
 }

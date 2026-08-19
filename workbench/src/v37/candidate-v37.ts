@@ -95,11 +95,17 @@ export async function producePromptCandidateV37(options: {
 	const candidate = await producer(inspectedAdmission.admission.opportunity, state.active.state_digest);
 	const policy = manifest.candidate_policy_spec.body;
 	if (candidate.expected_base_state_digest !== state.active.state_digest) throw new Error("Candidate expected Base is stale");
-	if (candidate.edits.length !== 1 || candidate.edits[0]?.kind !== "prompt_addendum") throw new Error("V3.7 Candidate must contain exactly one prompt_addendum");
-	if (stableJson(candidate.lesson.applicability) !== stableJson(manifest.state_applicability) || stableJson(candidate.edits[0].applicability) !== stableJson(manifest.state_applicability)) throw new Error("Candidate applicability differs from registered State scope applicability");
-	if (Buffer.byteLength(candidate.edits[0].content, "utf8") > policy.max_prompt_bytes) throw new Error("Candidate prompt exceeds registered content bound");
+	const edit = candidate.edits[0];
+	if (candidate.edits.length !== 1 || !edit || edit.kind !== "prompt_addendum") throw new Error("V3.7 Candidate must contain exactly one prompt_addendum");
+	if (stableJson(candidate.lesson.applicability) !== stableJson(manifest.state_applicability) || stableJson(edit.applicability) !== stableJson(manifest.state_applicability)) throw new Error("Candidate applicability differs from registered State scope applicability");
+	if (Buffer.byteLength(edit.content, "utf8") > policy.max_prompt_bytes) throw new Error("Candidate prompt exceeds registered content bound");
 	const normalized = stableJson(candidate).toLowerCase();
 	for (const indicator of policy.leakage_indicators) if (normalized.includes(indicator.toLowerCase())) throw new Error(`Candidate task-answer/authority leakage indicator rejected: ${indicator}`);
-	validateFrozenPrimaryCandidateContentV37(options.projectRoot, manifest, candidate.edits[0].content);
+	const registeredTemplate = policy.generic_prompt_addendum_templates.find((template) =>
+		template.template_id === edit.entry_id
+		&& template.content === edit.content
+		&& template.content_sha256 === sha256(edit.content));
+	if (!registeredTemplate) throw new Error("Candidate unregistered generic prompt-addendum template rejected");
+	validateFrozenPrimaryCandidateContentV37(options.projectRoot, manifest, edit.content);
 	return { candidate, workflow_id: registered.workflow.workflow_id, state_store_scope_digest: manifest.state_store_scope_spec.state_store_scope_digest, active_state_digest: state.active.state_digest };
 }

@@ -9,11 +9,11 @@
       "case_id": "v37-g1-det-recovery",
       "manifest_version": 1,
       "manifest_location": "workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json",
-      "manifest_body_digest": "ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90",
+      "manifest_body_digest": "98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5",
       "envelope_locations": ["workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json"],
-      "envelope_digests": ["94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724"],
-      "current_registration_digest": "94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724"
+      "envelope_digests": ["5def6e32ace9a4b432e3ebaec1715ba28effd8145db01465ce1c5e5b29e4bd0c"],
+      "current_registration_digest": "5def6e32ace9a4b432e3ebaec1715ba28effd8145db01465ce1c5e5b29e4bd0c"
     }
   ],
-  "registry_index_digest": "ce7ddba86bbdd42499ad5977a0bd687fa5b9247de824d3f59623a0085370a523"
+  "registry_index_digest": "53766376c27574a3e86b8bd89b322da64c70becc54e864f8c61af8e385d05b73"
 }

@@ -41,8 +41,19 @@
   },
   "candidate_policy_spec": {
     "spec_id": "v37-g1-prompt-only-candidate-v1",
-    "body": { "candidate_type": "prompt_addendum", "max_prompt_bytes": 4096, "leakage_indicators": ["approval_policy_id", "registration_status", "promotion_decision", "runtime authority"] },
-    "spec_digest": "d7a9285290631e5ed2f0efa03a02e671572e76881f91492d653e6e88c24d9d53"
+    "body": {
+      "candidate_type": "prompt_addendum",
+      "max_prompt_bytes": 4096,
+      "leakage_indicators": ["approval_policy_id", "registration_status", "promotion_decision", "runtime authority"],
+      "generic_prompt_addendum_templates": [
+        {
+          "template_id": "v37-verify-before-finish",
+          "content": "Before reporting completion, run the task-declared check and rely on its result rather than self-assessment.",
+          "content_sha256": "1341b7b213c788c3d17ced324ba46da316c091af8d43182d02f589add792cc8f"
+        }
+      ]
+    },
+    "spec_digest": "3a3556f1d1d6f71aab9139bf0a9e0bc50201ef843f94c06f3b239e819406b617"
   },
   "regression_pack_spec": {
     "spec_id": "v37-g1-typescript-verifier-failure-pack-v1",
@@ -120,5 +131,5 @@
     "body": { "prompt": "You are working inside one restricted temporary Workspace.\nUse only the tools provided by the host. Never access or modify anything outside the Workspace.\nDo not modify protected task, package, or test files. Change only paths explicitly allowed by the task.\nRun the task-declared check before finishing.\nTool completion and Agent settlement are execution facts, not an external task-success Outcome." },
     "spec_digest": "02802ee30a2e24895d380b28ea8cb32adcb92e8546693fb03f06181c0cd45c31"
   },
-  "manifest_body_digest": "ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90"
+  "manifest_body_digest": "98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5"
 }

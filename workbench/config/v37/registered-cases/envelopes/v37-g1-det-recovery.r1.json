@@ -3,7 +3,7 @@
   "kind": "v37_case_registration_envelope",
   "case_id": "v37-g1-det-recovery",
   "manifest_version": 1,
-  "approved_manifest_body_digest": "ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90",
+  "approved_manifest_body_digest": "98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5",
   "registration_revision": 1,
   "previous_registration_digest": null,
   "registration_status": "accepted",
@@ -11,5 +11,5 @@
   "approval_policy_id": "v37-main-reviewed-case-registration-v1",
   "approved_at": "2026-08-18T00:00:00.000Z",
   "disabled_at": null,
-  "registration_digest": "94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724"
+  "registration_digest": "5def6e32ace9a4b432e3ebaec1715ba28effd8145db01465ce1c5e5b29e4bd0c"
 }

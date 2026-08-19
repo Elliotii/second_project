@@ -119,6 +119,22 @@ function validateApplicability(value: unknown): void {
 	if ((record.task_kinds as unknown[]).length === 0) throw new Error("state applicability needs a task kind");
 }
 
+function validateCandidatePolicy(value: ContentSpecV37): void {
+	const policy = exact(value.body, ["candidate_type", "max_prompt_bytes", "leakage_indicators", "generic_prompt_addendum_templates"], "Candidate policy body");
+	if (policy.candidate_type !== "prompt_addendum" || !Number.isSafeInteger(policy.max_prompt_bytes) || Number(policy.max_prompt_bytes) < 1 || Number(policy.max_prompt_bytes) > 16_384) throw new Error("Candidate policy identity/content bound invalid");
+	if (!Array.isArray(policy.leakage_indicators) || policy.leakage_indicators.length === 0 || policy.leakage_indicators.some((indicator) => typeof indicator !== "string" || indicator.length === 0) || new Set(policy.leakage_indicators).size !== policy.leakage_indicators.length) throw new Error("Candidate policy leakage indicators invalid");
+	if (!Array.isArray(policy.generic_prompt_addendum_templates) || policy.generic_prompt_addendum_templates.length === 0 || policy.generic_prompt_addendum_templates.length > 16) throw new Error("Candidate policy generic template inventory invalid");
+	const templateIds = new Set<string>();
+	const contentDigests = new Set<string>();
+	for (const rawTemplate of policy.generic_prompt_addendum_templates) {
+		const template = exact(rawTemplate, ["template_id", "content", "content_sha256"], "Candidate generic prompt-addendum template");
+		if (!ID.test(String(template.template_id)) || typeof template.content !== "string" || template.content.length === 0 || Buffer.byteLength(template.content, "utf8") > Number(policy.max_prompt_bytes) || !SHA256.test(String(template.content_sha256)) || sha256(template.content) !== template.content_sha256) throw new Error("Candidate generic prompt-addendum template identity/content invalid");
+		if (templateIds.has(String(template.template_id)) || contentDigests.has(String(template.content_sha256))) throw new Error("Candidate generic prompt-addendum template inventory contains duplicates");
+		templateIds.add(String(template.template_id));
+		contentDigests.add(String(template.content_sha256));
+	}
+}
+
 function validateStateScope(value: unknown): StateStoreScopeSpecV37 {
 	const scope = exact(value, ["configured_location", "project_id", "runtime_base_prompt_digest", "initial_state_digest", "state_store_scope_digest"], "State Store scope");
 	if (typeof scope.configured_location !== "string" || isAbsolute(scope.configured_location) || scope.configured_location.replaceAll("\\", "/").split("/").includes("..") || !ID.test(String(scope.project_id)) || !SHA256.test(String(scope.runtime_base_prompt_digest)) || !SHA256.test(String(scope.initial_state_digest)) || !SHA256.test(String(scope.state_store_scope_digest))) throw new Error("State Store scope identity invalid");
@@ -146,6 +162,7 @@ export function validateRegisteredCaseManifestV37(value: unknown): RegisteredCas
 	const manifest = exact(value, fields, "Manifest Body");
 	if (manifest.schema_version !== 1 || manifest.kind !== "v37_registered_case_manifest_body" || !ID.test(String(manifest.case_id)) || !Number.isSafeInteger(manifest.manifest_version) || Number(manifest.manifest_version) < 1 || !ID.test(String(manifest.project_id)) || !SHA256.test(String(manifest.manifest_body_digest))) throw new Error("Manifest identity invalid");
 	for (const field of fields.filter((field) => field.endsWith("_spec") && field !== "state_store_scope_spec")) validateSpec(manifest[field], `Manifest ${field}`);
+	validateCandidatePolicy(manifest.candidate_policy_spec as ContentSpecV37);
 	validateApplicability(manifest.state_applicability);
 	const scope = validateStateScope(manifest.state_store_scope_spec);
 	if (scope.project_id !== manifest.project_id) throw new Error("Manifest/State scope project mismatch");

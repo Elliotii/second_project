@@ -1,21 +1,26 @@
 # V3.7 Goal 1 Closeout Draft
 
 ```yaml
-status: CORRECTION_2_READY_FOR_MAIN_PRELIMINARY_REREVIEW
+status: AUDIT_REMEDIATION_READY_FOR_MAIN_PRELIMINARY_REVIEW
 goal_acceptance: NOT_CLAIMED
-focused_audit: PENDING
+focused_reaudit: PENDING
 original_starting_commit: 7d6b62223503309b4c39785eec767b437eee6abd
 original_starting_tree: 3adbe64faff229766a60553afa444f3569918b81
 control_amendment_integrated_commit: b477a99360bcb93128aaf23b796cc897b2cf1951
 control_amendment_integrated_tree: d5c20bb328648e168a1378c34f60ab51f527d02b
-candidate_commit: containing_commit_reported_in_session_handoff
-candidate_tree: containing_tree_reported_in_session_handoff
+candidate_commit: SELF
+candidate_tree: SELF
 initial_failed_candidate_commit: 7aca62cc5b329414873bb334ba13547eb9c98d53
 initial_failed_candidate_tree: 0f70e8b51b0a4414db42a72b3cfa4bb7cd35b70a
 correction_1_failed_candidate_commit: a62051044332d438cbc0f33ec6ccc3f74097ef2f
 correction_1_failed_candidate_tree: 7eb150cdaecb9234d62fde2bba31f1e59dd7f107
 correction_round: 2_of_2
 correction_1_implementation_owner: fresh_replacement_goal_1_correction_session
+audit_remediation_amendment: V3_7_G1_AUDIT_REMEDIATION_AMENDMENT.md
+audit_remediation_implementation_owner: fresh_dedicated_goal_1_audit_remediation_session
+audit_remediation_starting_commit: 0cf5b81976880d57a8b09bbd3f87be68853cbb3b
+audit_remediation_starting_tree: d6c59a29d1833fccd53164c295c5bf3bc90ebcba
+audit_remediation_budget: 1_of_1
 owner_deviation_authorized_by_user: true
 credential_reads: 0
 network_calls: 0
@@ -39,12 +44,19 @@ without a token-count threshold, Verifier-derived literal pairs remain rejected,
 generic transferable guidance remains accepted. No Correction 1 registry, binding,
 recovery, historical-reopen or configuration behavior changed.
 
+The later user-accepted one-time Audit Remediation corrects exactly
+`V37-G1-AUDIT-P1-001` through `003`. Run uniqueness now uses one fixed Host-global
+authority root and exact global/local binding equality; Candidate guidance accepts only
+an exact Manifest-registered generic template identity/content/hash; and every formal
+Recovery artifact operation validates the full trusted-root-to-file component chain.
+This is not ordinary Correction round 3 and grants no Goal acceptance or Goal 2 authority.
+
 ## Deliverables
 
-The candidate contains exactly the twelve files listed in
-`V3_7_G1_IMPLEMENTATION_REPORT.md`: three frozen Host configuration documents, six new
-contract/production/inspection source modules, one focused deterministic test file, and
-these two reports. No accepted business-source or test file was edited.
+The remediation candidate changes exactly the eleven files listed in the implementation
+report: three frozen Host configuration documents, five V3.7 type/production modules,
+one focused deterministic test file and these two reports. `inspect-v37g1.ts` and all
+accepted business-source/test modules remain unchanged in this remediation.
 
 Implemented Goal 1 behavior:
 
@@ -72,11 +84,12 @@ Implemented Goal 1 behavior:
 ```yaml
 configuration_baseline_id: v37-g1-host-registry-v1
 loader_contract_id: v37-host-registry-loader-v1
-registry_index_digest: ce7ddba86bbdd42499ad5977a0bd687fa5b9247de824d3f59623a0085370a523
-manifest_body_digest: ca4c3b1bd7eb9b3746031630d9e8409d9e1263e323e97d219b26211c6a748c90
-registration_digest: 94fd39a3c84171024df494552bfd4be162ccb4af006ef31dc46e9fe6f85f2724
-loader_contract_fingerprint: 0d5a8c6f5cbed31b2ae9d59362f18705a6a0f10e440cedf3fe0f1de079e3d506
-registry_trust_root_digest: ba8ecc6ea67b74f08182e7e1c09ee6f2ead8be71187a4b3e41c9451eefb822d7
+registry_index_digest: 53766376c27574a3e86b8bd89b322da64c70becc54e864f8c61af8e385d05b73
+manifest_body_digest: 98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5
+registration_digest: 5def6e32ace9a4b432e3ebaec1715ba28effd8145db01465ce1c5e5b29e4bd0c
+candidate_policy_spec: 3a3556f1d1d6f71aab9139bf0a9e0bc50201ef843f94c06f3b239e819406b617
+loader_contract_fingerprint: b59df9033b6b15a06dd6b523ea1a730bae3f62468d08b7334afa49de5e7ba671
+registry_trust_root_digest: 0e40f812dd0d91f6310dc4e256078deea42acb76a0590b594c133fac32d5e9b8
 state_store_scope_digest: ee650680b0e3bf68948125388a6148f870136a0c880778715e8f3009064577c0
 initial_state_digest: ef49e812b72b03b23deeffec51e06b9c84f6cdcdfcc9d6c0f7969e70b94b8956
 runtime_base_prompt_digest: 317f5fd3d0d2a144b71c2adde124b254c5bc61a704fd89f831738e3ecc752edf
@@ -90,7 +103,7 @@ report and is part of this Closeout evidence by that fixed report path.
 
 ## Verification summary
 
-- V3.7 Goal 1 focused suite: PASS, 13/13.
+- V3.7 Goal 1 focused suite: PASS, 14/14, including all three audit repro classes.
 - Accepted V2 recovery suite: PASS, 5/5.
 - Accepted V3 G1 suite: PASS, 13/13.
 - Accepted V3 G2 suite: PASS, 6/6.
@@ -130,6 +143,7 @@ preliminary re-review, candidate commit/tree freeze, and a fresh independent rea
 focused audit. Any source/configuration change after freeze requires a new candidate and
 fresh audit. Goal 2 must not start until audit PASS and Main Goal 1 acceptance.
 
-The pre-candidate control amendment that supplied the exact follow-up identities changed
-no Charter decision and consumed no correction budget. No Hard Stop or scope deviation
-remains open.
+The earlier pre-candidate control amendment that supplied exact follow-up identities
+changed no Charter decision and consumed no correction budget. This later exceptional
+Audit Remediation consumes its one-time `1_of_1` implementation candidate authority.
+No implementation Hard Stop or scope deviation remains open.
