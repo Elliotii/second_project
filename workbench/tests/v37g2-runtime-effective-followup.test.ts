@@ -15,7 +15,7 @@ import type { BoundedProposalPortV3 } from "../src/refinement/producer-v3.ts";
 import { executeRunV2A } from "../src/run-v2.ts";
 import { PersistentInteractiveSessionServiceV36 } from "../src/session/persistent-session-v36.ts";
 import { stageCandidateStateV3 } from "../src/state/staging-v3.ts";
-import { applyValidationDecisionV3, initializeStateStoreV3, inspectStateStoreV3 } from "../src/state/store-v3.ts";
+import { applyValidationDecisionV3, initializeStateStoreV3, inspectStateStoreV3, rollbackActiveStateV3 } from "../src/state/store-v3.ts";
 import { persistStateAssessmentG2 } from "../src/state/state-feedback-g2.ts";
 import { V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE } from "../src/v36/budget-profile-v36.ts";
 import { producePromptCandidateV37 } from "../src/v37/candidate-v37.ts";
@@ -41,20 +41,24 @@ let admissionId = "";
 function writeJson(path: string, value: unknown): void { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, `${stableJson(value)}\n`, "utf8"); }
 function readJson<T>(path: string): T { return JSON.parse(readFileSync(path, "utf8")) as T; }
 
-async function inspectAcceptedArtifactMutation(relativePath: string, mutate: ((value: any) => void) | null, expectedError: RegExp): Promise<void> {
-	const path = resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "follow-up", relativePath);
+async function inspectOriginalAuthorityMutation(path: string, mutate: ((value: any) => void) | null, expectedError: RegExp): Promise<void> {
 	const originalBytes = readFileSync(path);
 	try {
 		if (mutate === null) rmSync(path);
 		else { const value = JSON.parse(originalBytes.toString("utf8")) as any; mutate(value); writeJson(path, value); }
 		const inspected = await inspectRegisteredFollowUpAdmissionV37(options);
 		const errors = inspected.errors.join("; ");
-		assert.equal(inspected.integrity_valid, false, relativePath);
-		assert.match(errors, expectedError, relativePath);
-		assert.doesNotMatch(errors, /registered Recovery admission unavailable/, relativePath);
+		assert.equal(inspected.integrity_valid, false, path);
+		assert.match(errors, expectedError, path);
+		assert.doesNotMatch(errors, /registered Recovery admission unavailable/, path);
 	} finally {
 		writeFileSync(path, originalBytes);
+		assert.deepEqual(readFileSync(path), originalBytes);
 	}
+}
+
+async function inspectAcceptedArtifactMutation(relativePath: string, mutate: ((value: any) => void) | null, expectedError: RegExp): Promise<void> {
+	return inspectOriginalAuthorityMutation(resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "follow-up", relativePath), mutate, expectedError);
 }
 
 function proposal(opportunity: ImprovementOpportunityV3, base: string): unknown {
@@ -188,6 +192,27 @@ test("new canonical adapter reaches unchanged retain decision without direct Sta
 	await assert.rejects(persistStateAssessmentG2({ projectRoot: PROJECT_ROOT, assessmentRoot: resolve(G2_ROOT, "clone-assessments"), admissionRoot: "unused-v37-admission-root", registrationPath: "unused-v37-registration", admissionId, projectId: "v37-g1-project", stateRoot: clone, expectedActive: canonical.bound_active_state_identity, promotionValidationRunRoot: promotionRoot, comparisonRunRoot: null, requestedRollbackTargetDigest: null, immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256, registeredFollowUp: options }), /State scope/);
 });
 
+test("accepted follow-up survives production rollback while frozen historical lineage still fails closed", async () => {
+	const followUpRoot = resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "follow-up");
+	const binding = readJson<any>(resolve(followUpRoot, "binding.json")); const acceptedAdmission = readJson<any>(resolve(followUpRoot, "admission.json")); const canonicalBefore = await normalizeRegisteredBoundFollowUpV37(options); const beforeTree = registeredFollowUpTreeDigestV37(options);
+	const before = await inspectStateStoreV3({ stateRoot: STATE_ROOT, expectedProjectId: "v37-g1-project", immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 }); assert.equal(before.integrity_valid, true, before.errors.join("; ")); assert.equal(before.active!.state_digest, binding.active_state_digest);
+	const boundVersion = before.versions.find((entry) => entry.state_version === binding.state_version_id && entry.state_digest === binding.active_state_digest); assert.ok(boundVersion?.parent_state_digest);
+	const rolledBack = await rollbackActiveStateV3({ stateRoot: STATE_ROOT, projectId: "v37-g1-project", targetStateDigest: boundVersion.parent_state_digest, expectedActive: { binding_revision: before.active!.binding_revision, state_version: before.active!.state_version, state_digest: before.active!.state_digest }, immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 });
+	assert.equal(rolledBack.decision.result, "rolled_back"); assert.equal(rolledBack.active.state_digest, boundVersion.parent_state_digest);
+	const inspected = await inspectRegisteredFollowUpAdmissionV37(options); assert.equal(inspected.integrity_valid, true, inspected.errors.join("; ")); assert.deepEqual(inspected.admission, acceptedAdmission);
+	const canonicalAfter = await normalizeRegisteredBoundFollowUpV37({ ...options, historicalReadOnly: true }); assert.deepEqual(canonicalAfter, canonicalBefore); assert.equal(registeredFollowUpTreeDigestV37(options), beforeTree);
+	await assert.rejects(prepareRegisteredFollowUpV37({ ...options, followUpRunId: "v37-g2-post-rollback-prepare", candidate }), /newly promoted active State/);
+	await assert.rejects(executeRegisteredFollowUpV37(options), /newly promoted active State/);
+	await assert.rejects(admitRegisteredFollowUpV37(options), /newly promoted active State/);
+	assert.equal(registeredFollowUpTreeDigestV37(options), beforeTree);
+	for (const [path, mutate, expected] of [
+		[resolve(STATE_ROOT, "versions", binding.active_state_digest, "state.json"), (value: any) => { value.state_digest = "0".repeat(64); }, /follow-up bound State inspection failed/],
+		[resolve(STATE_ROOT, "decisions", `${binding.promotion_decision_id}.json`), (value: any) => { value.decision_digest = "0".repeat(64); }, /follow-up bound State inspection failed/],
+		[resolve(registeredFollowUpPromotionValidationRootV37(options), "validation.json"), (value: any) => { value.validation_digest = "0".repeat(64); }, /follow-up promotion validation fails closed/],
+	] as const) await inspectOriginalAuthorityMutation(path, mutate, expected);
+	const restored = await inspectRegisteredFollowUpAdmissionV37(options); assert.equal(restored.integrity_valid, true, restored.errors.join("; ")); assert.deepEqual(restored.admission, acceptedAdmission); assert.equal(registeredFollowUpTreeDigestV37(options), beforeTree);
+});
+
 test("ordinary V3.6 cannot become admitted and Schema 2 remains absent", async () => {
 	const missing = await inspectRegisteredFollowUpAdmissionV37({ ...options, workflowId: "ordinary-v36-workflow" }); assert.equal(missing.integrity_valid, false);
 	for (const path of ["workbench/src/contracts/final-capstone-g3-types.ts", "workbench/src/pi/final-capstone-g3-v36-port.ts", "workbench/src/final-capstone-g3.ts", "workbench/src/inspect-final-capstone-g3.ts", "workbench/tests/final-capstone-g3-closed-loop.test.ts"]) assert.equal(existsSync(resolve(PROJECT_ROOT, path)), false, path);
@@ -198,7 +223,8 @@ test("disabled registration blocks new actions while accepted follow-up reopens 
 	const registryPath = resolve(PROJECT_ROOT, "workbench/config/v37/registered-cases/registry-v1.json"); const originalRegistryBytes = readFileSync(registryPath, "utf8"); const registry = JSON.parse(originalRegistryBytes) as any; const first = readJson<any>(resolve(PROJECT_ROOT, registry.entries[0].envelope_locations[0])); const disabledBody = { ...first, registration_revision: 2, previous_registration_digest: first.registration_digest, registration_status: "disabled", disabled_at: "2026-08-20T06:00:00.000Z" }; delete disabledBody.registration_digest; const disabled = { ...disabledBody, registration_digest: digestObject(disabledBody) }; const disabledLocation = ".runs/v37/g2-tests/disabled-envelope.json"; writeJson(resolve(PROJECT_ROOT, disabledLocation), disabled); registry.entries[0].envelope_locations.push(disabledLocation); registry.entries[0].envelope_digests.push(disabled.registration_digest); registry.entries[0].current_registration_digest = disabled.registration_digest; delete registry.registry_index_digest; registry.registry_index_digest = digestObject(registry);
 	try {
 		writeJson(registryPath, registry);
-		assert.throws(() => loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID }), /disabled/); assert.throws(() => submitRegisteredFollowUpEvidenceV37(options), /disabled/);
+		assert.throws(() => loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID }), /disabled/);
+		await assert.rejects(prepareRegisteredFollowUpV37({ ...options, followUpRunId: "v37-g2-disabled-prepare", candidate }), /disabled/); await assert.rejects(executeRegisteredFollowUpV37(options), /disabled/); assert.throws(() => submitRegisteredFollowUpEvidenceV37(options), /disabled/); await assert.rejects(admitRegisteredFollowUpV37(options), /disabled/);
 		const inspected = await inspectRegisteredFollowUpAdmissionV37(options); assert.equal(inspected.integrity_valid, true, inspected.errors.join("; ")); assert.equal(inspected.admission!.admission_id, acceptedAdmission.admission_id); assert.equal(inspected.admission!.admission_digest, acceptedAdmission.admission_digest);
 		const canonical = await normalizeRegisteredBoundFollowUpV37({ ...options, historicalReadOnly: true }); assert.equal(canonical.admission_identity.admission_digest, acceptedAdmission.admission_digest); assert.equal(registeredFollowUpTreeDigestV37(options), beforeTree);
 		const historical = loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID, allowHistoricalReadOnly: true }); assert.equal(historical.profile.follow_up_execution_profile_digest, acceptedProfile.profile.follow_up_execution_profile_digest); assert.equal(historical.authority.follow_up_execution_authority_digest, acceptedProfile.authority.follow_up_execution_authority_digest);

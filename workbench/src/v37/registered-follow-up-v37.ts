@@ -163,15 +163,13 @@ export function registeredFollowUpPromotionValidationRootV37(options: Pick<Regis
 	return root;
 }
 
-async function inspectRegisteredPromotionLineageV37(
+async function inspectRegisteredPromotionEvidenceV37(
 	options: RegisteredFollowUpOptionsV37,
 	candidate: RefinementCandidateV3,
-	state: Awaited<ReturnType<typeof inspectStateStoreV3>>,
+	activeVersion: Awaited<ReturnType<typeof inspectStateStoreV3>>["versions"][number],
+	decision: Awaited<ReturnType<typeof inspectStateStoreV3>>["decisions"][number],
+	expectedActive: { binding_revision: number; state_version: number; state_digest: string },
 ) {
-	if (!state.active) throw new Error("follow-up promoted active State is missing");
-	const activeVersion = state.versions.find((entry) => entry.state_digest === state.active!.state_digest);
-	const decision = state.decisions.find((entry) => entry.decision_id === state.active!.decision_id);
-	if (!activeVersion || !decision || state.active.state_version < 1 || decision.kind !== "promotion" || decision.result !== "promoted") throw new Error("follow-up requires a newly promoted active State");
 	const runRoot = registeredFollowUpPromotionValidationRootV37(options);
 	const validation = inspectValidationV3(runRoot);
 	if (!validation.integrity_valid || !validation.validation || !validation.seed || !validation.candidate_arm || !validation.recomputed_decision) throw new Error(`follow-up promotion validation fails closed: ${validation.errors.join("; ")}`);
@@ -181,7 +179,7 @@ async function inspectRegisteredPromotionLineageV37(
 		[decision.validation_id === validation.validation.validation_id && decision.validation_digest === validation.validation.validation_digest, "validation_identity"],
 		[decision.candidate_id === candidate.candidate_id && decision.candidate_digest === candidate.candidate_digest, "decision_candidate"],
 		[activeVersion.source_candidate_id === candidate.candidate_id && activeVersion.source_candidate_digest === candidate.candidate_digest, "version_candidate"],
-		[decision.next_active.state_digest === state.active.state_digest, "decision_active"],
+		[stableJson(decision.next_active) === stableJson(expectedActive), "decision_active"],
 		[validation.seed.candidate_id === candidate.candidate_id && validation.seed.candidate_digest === candidate.candidate_digest, "validation_candidate"],
 		[validation.seed.candidate_state_digest === activeVersion.source_staged_state_digest, "staged_state"],
 		[validation.seed.base_state_digest === activeVersion.parent_state_digest && candidate.expected_base_state_digest === validation.seed.base_state_digest, "base_state"],
@@ -191,6 +189,32 @@ async function inspectRegisteredPromotionLineageV37(
 	const failed = checks.find(([passed]) => !passed);
 	if (failed) throw new Error(`follow-up Candidate/promotion validation/State lineage mismatch: ${failed[1]}`);
 	return { activeVersion, decision, runRoot, validation };
+}
+
+async function inspectRegisteredCurrentPromotionLineageV37(
+	options: RegisteredFollowUpOptionsV37,
+	candidate: RefinementCandidateV3,
+	state: Awaited<ReturnType<typeof inspectStateStoreV3>>,
+) {
+	if (!state.active) throw new Error("follow-up promoted active State is missing");
+	const activeVersion = state.versions.find((entry) => entry.state_digest === state.active!.state_digest && entry.state_version === state.active!.state_version);
+	const decision = state.decisions.find((entry) => entry.decision_id === state.active!.decision_id);
+	if (!activeVersion || !decision || state.active.state_version < 1 || decision.kind !== "promotion" || decision.result !== "promoted") throw new Error("follow-up requires a newly promoted active State");
+	const currentActive = { binding_revision: state.active.binding_revision, state_version: state.active.state_version, state_digest: state.active.state_digest };
+	return inspectRegisteredPromotionEvidenceV37(options, candidate, activeVersion, decision, currentActive);
+}
+
+async function inspectRegisteredHistoricalPromotionLineageV37(
+	options: RegisteredFollowUpOptionsV37,
+	candidate: RefinementCandidateV3,
+	state: Awaited<ReturnType<typeof inspectStateStoreV3>>,
+	binding: RegisteredFollowUpBindingV37,
+) {
+	const boundVersion = state.versions.find((entry) => entry.state_version === binding.state_version_id && entry.state_digest === binding.active_state_digest);
+	const boundDecision = state.decisions.find((entry) => entry.decision_id === binding.promotion_decision_id && entry.decision_digest === binding.promotion_decision_digest);
+	if (!boundVersion || !boundDecision || binding.state_version_id < 1 || boundDecision.kind !== "promotion" || boundDecision.result !== "promoted") throw new Error("follow-up frozen promoted State/Decision is missing");
+	const frozenActive = { binding_revision: binding.active_binding_revision, state_version: binding.state_version_id, state_digest: binding.active_state_digest };
+	return inspectRegisteredPromotionEvidenceV37(options, candidate, boundVersion, boundDecision, frozenActive);
 }
 
 function recoveryAdmission(options: Pick<RegisteredFollowUpOptionsV37, "projectRoot" | "dataRoot" | "workflowId">) {
@@ -223,7 +247,7 @@ async function deriveBinding(options: RegisteredFollowUpOptionsV37, candidate: R
 	const state = await inspectStateStoreV3({ stateRoot, expectedProjectId: manifest.project_id, immutableBasePrompt: runtimeBase, immutableBasePromptSha256: manifest.state_store_scope_spec.runtime_base_prompt_digest });
 	if (!state.integrity_valid || !state.active) throw new Error(`follow-up State Store inspection failed: ${state.errors.join("; ")}`);
 	if (state.versions.find((entry) => entry.state_version === 0)?.state_digest !== manifest.state_store_scope_spec.initial_state_digest) throw new Error("follow-up State Store initial lineage mismatch");
-	const { activeVersion, decision } = await inspectRegisteredPromotionLineageV37(options, candidate, state);
+	const { activeVersion, decision } = await inspectRegisteredCurrentPromotionLineageV37(options, candidate, state);
 	const task = manifest.follow_up_task_spec.body as { task_kind: string; failure_family: string };
 	const matching = activeVersion.entries.filter((entry) => entry.applicability.task_kinds.includes(task.task_kind) && entry.applicability.failure_families.includes(task.failure_family));
 	if (matching.length === 0 || matching.some((entry) => entry.kind !== "prompt_addendum") || matching.length !== activeVersion.entries.length) throw new Error("follow-up State applicability is zero, ambiguous or contains adaptive Skills");
@@ -391,7 +415,9 @@ async function recompute(options: RegisteredFollowUpOptionsV37, historical: bool
 	const stateRoot = stateRootFromManifest(options.projectRoot, manifest.state_store_scope_spec.configured_location);
 	const state = await inspectStateStoreV3({ stateRoot, expectedProjectId: manifest.project_id, immutableBasePrompt: manifest.runtime_base_prompt_spec.body.prompt, immutableBasePromptSha256: manifest.state_store_scope_spec.runtime_base_prompt_digest });
 	if (!state.integrity_valid) throw new Error(`follow-up bound State inspection failed: ${state.errors.join("; ")}`);
-	const inspectedPromotion = await inspectRegisteredPromotionLineageV37(options, prepared.candidate, state);
+	const inspectedPromotion = historical
+		? await inspectRegisteredHistoricalPromotionLineageV37(options, prepared.candidate, state, binding)
+		: await inspectRegisteredCurrentPromotionLineageV37(options, prepared.candidate, state);
 	const boundVersion = inspectedPromotion.activeVersion;
 	const boundDecision = inspectedPromotion.decision;
 	if (boundVersion.state_digest !== binding.active_state_digest || boundVersion.state_version !== binding.state_version_id || boundDecision.decision_id !== binding.promotion_decision_id || boundDecision.decision_digest !== binding.promotion_decision_digest) throw new Error("follow-up bound Candidate/promotion/State lineage mismatch");

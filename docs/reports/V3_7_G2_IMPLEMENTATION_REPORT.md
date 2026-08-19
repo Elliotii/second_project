@@ -1,7 +1,7 @@
 # V3.7 Goal 2 Implementation Report
 
 ```yaml
-status: CORRECTION_2_CANDIDATE_READY_FOR_MAIN_REREVIEW
+status: AUDIT_REMEDIATION_CANDIDATE_READY_FOR_MAIN_REVIEW
 goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 implementation_owner: fresh_dedicated_Goal_2_Implementation_Session
 starting_commit: 55f8caf17a7b118e68f2f2a18961da351c8b6990
@@ -12,9 +12,14 @@ correction_1_candidate_commit: ab0157f9bfab7e714489687fdfb9ec3c45f49c85
 correction_1_candidate_tree: dc7ca3366ac15d1da230167fc46fb5a3b932b920
 correction_round: 2
 correction_authority_commit: e546acc7bda7360a92aa6eab7c7f289721ed2a97
+failed_audit_candidate_commit: 3adb5654a24633375d3171f115e8b73d86c023ed
+failed_audit_candidate_tree: 333d265bab61ec81c0a84bbc2e24bca02253be89
+audit_remediation_finding: V37-G2-AUDIT-P1-001
+audit_remediation_authority_commit: 9396dcc08880b77c2decb03d1d620aaa34d5a6f3
+exceptional_remediation_budget: 1_of_1
 candidate_commit: SELF
 candidate_tree: SELF
-correction_candidate_commits_used: 1_of_1
+audit_remediation_candidate_commits_used: 1_of_1
 goal_2_accepted: false
 goal_3_started: false
 credential_reads: 0
@@ -35,8 +40,9 @@ in its own identity.
 
 ## Changed paths
 
-Correction round 2 changes exactly the three authorized paths:
+Audit Remediation changes exactly the four authorized paths:
 
+- `workbench/src/v37/registered-follow-up-v37.ts`
 - `workbench/tests/v37g2-runtime-effective-followup.test.ts`
 - `docs/reports/V3_7_G2_IMPLEMENTATION_REPORT.md`
 - `docs/reports/V3_7_G2_CLOSEOUT_DRAFT.md`
@@ -44,7 +50,26 @@ Correction round 2 changes exactly the three authorized paths:
 `CURRENT_STATE.md`, the Charter, Amendment, Prompt, Goal 1 configuration/loader,
 all production source/contracts, registered profile/config/loader, State Store/CAS, old
 G1 admission, regression gate, Pi, references and rejected Schema 2 paths were not
-changed in Correction round 2.
+changed in Audit Remediation.
+
+## Audit Remediation
+
+- The shared promotion-evidence validator now receives an explicitly resolved State
+  version, promotion Decision and expected three-field active identity. It still proves
+  the validation reference, Candidate, staged-State, base-State and promote-result
+  lineage.
+- Live derive/prepare/dispatch/admit resolve only the current active promoted State and
+  its current Decision. Rollback therefore continues to block new live follow-up action.
+- Historical inspection/normalization instead resolve the frozen State version by both
+  version number and digest, and the promotion Decision by both ID and digest. The
+  Decision's complete `next_active` identity must equal the frozen binding; the valid
+  Store's later current pointer is not substituted as historical authority.
+- The focused gate creates and admits the follow-up, performs production rollback to the
+  exact immediate parent, and reopens the identical admission, canonical identity and
+  accepted artifact tree. Frozen version, Decision and validation tamper still fail
+  closed after pointer movement.
+- After rollback and registration disable, prepare, execute, submit and admit are all
+  rejected while read-only inspection/normalization preserve the accepted identities.
 
 ## Correction round 2
 
@@ -141,13 +166,17 @@ All commands below were run literally from `workbench/`.
 node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g2-runtime-effective-followup.test.ts
 ```
 
-Result: PASS, 10/10.
+Result: PASS, 11/11.
 
 ```powershell
 node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g1-registered-recovery.test.ts
 ```
 
-Result: PASS, 14/14.
+Result: environment stop before every Goal 1 assertion (0/14 executed). The unchanged
+V2-A setup rejected a rounded duplicate Number identity for `test/public.test.mjs`.
+Direct `lstatSync(..., { bigint: true })` inspection showed distinct NTFS file IDs with
+`nlink=1`; default Number conversion exceeded the safe-integer range and rounded distinct
+IDs together. Goal 1 source/test is frozen and outside this remediation allowlist.
 
 ```powershell
 node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2a-recovery.test.ts tests/v2a-cli.test.ts tests/v2a-post-audit.test.ts
@@ -185,7 +214,9 @@ $env:NODE_OPTIONS='--experimental-loader file:///C:/Users/HUAWEI/.codex/worktree
 node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/final-capstone-g2-regression-state-feedback.test.ts
 ```
 
-Result: PASS, 10/10. The environment-equivalent deterministic aggregate is 64/64.
+Result: PASS, 10/10. The current remediation assertions total 51/51 across the focused,
+V2-A inherited-loader, V3 and Final Capstone suites; Goal 1 is separately qualified by
+the pre-assertion NTFS/Number identity stop above.
 
 The three distinct TypeScript checks were:
 
@@ -215,14 +246,16 @@ The correction boundary checks were run from the repository root:
 
 ```powershell
 git diff --check
-git diff --name-only ab0157f9bfab7e714489687fdfb9ec3c45f49c85
-git diff --quiet ab0157f9bfab7e714489687fdfb9ec3c45f49c85 -- workbench/src workbench/config workbench/scripts/v35g2-public-pi-loader.mjs
+git diff --name-only 3adb5654a24633375d3171f115e8b73d86c023ed
+git diff --quiet 3adb5654a24633375d3171f115e8b73d86c023ed -- workbench/config workbench/src/state workbench/src/refinement workbench/scripts/v35g2-public-pi-loader.mjs
+git diff --quiet 3adb5654a24633375d3171f115e8b73d86c023ed -- .upstream/pi reference
 rg --files workbench | rg 'schema.?2|schema_2'
 ```
 
-Results: `git diff --check` passed; the allowlist diff contained exactly the focused test
-and two reports; the production source, all configuration including Goal 1, and the
-loader were byte-unchanged; the final `rg` returned no rejected Schema 2 paths.
+Results: `git diff --check` passed; the allowlist diff contained exactly the registered
+follow-up service, focused test and two reports; configuration, Store/CAS, rollback,
+older families, loader, Pi and references were byte-unchanged; the final `rg` returned no
+rejected Schema 2 paths.
 
 No product assertion failed when the already-authorized public loader was visible to
 spawned child processes. No dependency was installed to alter the isolated environment.
@@ -234,5 +267,7 @@ spawned child processes. No dependency was installed to alter the isolated envir
 - The repository package-script compiler path is absent; the available compiler reaches
   the full config but remains blocked by absent ignored Node declarations. The strict
   changed-surface/transitive-dependency check passed.
-- Main rereview, immutable audit-candidate freeze, fresh independent focused
-  audit and Main Goal acceptance remain pending and are not claimed.
+- The literal Goal 1 command is currently blocked before assertions by the NTFS/Number
+  file-identity precision stop described above; no Goal 1 product failure was observed.
+- Main review, new immutable audit-candidate freeze, fresh independent affected-finding
+  re-audit and Main Goal acceptance remain pending and are not claimed.
