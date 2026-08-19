@@ -187,4 +187,3 @@ declarations. It is ignored audit-local evidence; no dependency was installed.
   environment stops above; the strict affected surface passed.
 - Goal 2 final acceptance, control-state integration and Goal 3 unlock remain Main-only
   actions and were not performed by this audit.
-

@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3a_preparation
-  status: V3_7_G2_CLOSED_ACCEPTED_G3A_UNLOCKED
+  status: V3_7_G3A_PREIMPLEMENTATION_HARD_STOP_DECISION_REQUIRED
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: unlocked_prompt_freeze_pending
+  status: blocked_preimplementation_authority_extension_decision
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: unlocked_prompt_freeze_pending
-  note: Goal_1_and_Goal_2_final_acceptance_complete_Goal_3A_may_prepare_exact_implementation_prompt
+  status: decision_required_before_prompt_freeze
+  note: accepted_singleton_G1_G2_authority_cannot_load_two_Charter_frozen_G3A_cases_without_versioned_extension
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goals_1_2_closed_accepted_goal_3a_unlocked
+  implementation_status: goals_1_2_closed_accepted_goal_3a_preimplementation_decision_required
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -364,7 +364,13 @@ next_version:
   goal_2_closeout: docs/reports/V3_7_G2_CLOSEOUT.md
   goal_2_integrated_main_commit: ab74573f6a3b7103b3cb6e8be77a671c0abd4143
   goal_2_integrated_main_tree: 86d5ef236c3e9eb0772a2e18cfe8a0dc0cb0fa15
-  goal_3a_status: unlocked_prompt_freeze_pending
+  goal_3a_status: blocked_preimplementation_authority_extension_decision
+  goal_3a_implementation_started: false
+  goal_3a_correction_budget: 0_of_2_consumed
+  goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
+  goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
+  goal_3a_recommended_decision: AUTHORIZE_VERSIONED_G3A_MULTI_CASE_AUTHORITY_EXTENSION
+  goal_3a_user_decision: pending
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
