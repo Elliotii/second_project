@@ -1,0 +1,1 @@
+Repair `src/subject.ts` so `parseDuration` accepts non-negative integer values suffixed by `ms` or `s`, returns milliseconds, and rejects malformed input. Preserve the export and run the declared public check.

@@ -32,6 +32,31 @@ const displayValue = (value) => {
 let activeSession = null;
 let activeV36Session = null;
 let v36Projects = [];
+let activeV37Workflow = null;
+
+async function renderV37Workflow(workflow) {
+  activeV37Workflow = workflow.workflow_id;
+  const detail = $("#v37-workflow-detail");
+  detail.replaceChildren(text("h3", workflow.case_id), metric("Stage / 阶段", workflow.stage), metric("Workflow / 工作流", workflow.workflow_id));
+  for (const action of workflow.available_actions) {
+    const button = text("button", action);
+    button.addEventListener("click", async () => { try { await api(`/api/v1/v37/workflows/${workflow.workflow_id}/actions/${action}`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); await loadV37(); } catch (error) { failure(error); } });
+    detail.append(button);
+  }
+  if (workflow.historical_read_only) detail.append(text("p", "Read-only historical workflow / 只读历史工作流", "muted"));
+}
+
+async function loadV37() {
+  try {
+    const [cases, workflows] = await Promise.all([api("/api/v1/v37/cases"), api("/api/v1/v37/workflows")]);
+    $("#v37-workflows").hidden = false;
+    const caseList = $("#v37-cases"); caseList.replaceChildren();
+    for (const item of cases.cases) { const button = text("button", `New / 新建 · ${item.case_id}`); button.disabled = !item.available_for_new_workflow; button.addEventListener("click", async () => { try { const value = await api("/api/v1/v37/workflows", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ case_id: item.case_id }) }); activeV37Workflow = value.workflow_id; await loadV37(); } catch (error) { failure(error); } }); caseList.append(button); }
+    const list = $("#v37-workflow-list"); list.replaceChildren();
+    for (const workflow of workflows.workflows) { const button = text("button", `${workflow.case_id} · ${workflow.stage}`); button.append(text("small", workflow.workflow_id)); button.addEventListener("click", () => renderV37Workflow(workflow)); list.append(button); }
+    const selected = workflows.workflows.find((item) => item.workflow_id === activeV37Workflow) ?? workflows.workflows.at(-1); if (selected) await renderV37Workflow(selected);
+  } catch (error) { if (!(error instanceof ApiError)) throw error; }
+}
 
 function applyStaticTranslations() {
   document.documentElement.lang = i18n.locale;
@@ -490,4 +515,4 @@ $("#v36-task-form").addEventListener("submit", async (event) => {
 });
 
 applyStaticTranslations();
-Promise.all([loadOverview(), loadSessions(), loadV36()]).catch(failure);
+Promise.all([loadOverview(), loadSessions(), loadV36(), loadV37()]).catch(failure);

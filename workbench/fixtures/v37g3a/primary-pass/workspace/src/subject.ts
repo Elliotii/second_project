@@ -1,0 +1,1 @@
+export function parseDuration(value: string): number { const match = /^(\d+)(ms|s)$/.exec(value); if (!match) throw new Error("invalid duration"); return Number(match[1]) * (match[2] === "s" ? 1000 : 1); }

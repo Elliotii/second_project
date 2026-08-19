@@ -17,6 +17,8 @@ import {
 import { inspectStateStoreV3, rollbackActiveStateV3 } from "./store-v3.ts";
 import { normalizeRegisteredBoundFollowUpV37, registeredFollowUpPromotionValidationRootV37, type RegisteredFollowUpOptionsV37 } from "../v37/registered-follow-up-v37.ts";
 import { loadWorkflowRegistrationV37 } from "../v37/workflow-registration-v37.ts";
+import { normalizeRegisteredBoundFollowUpV37G3A, registeredFollowUpPromotionValidationRootV37G3A, type RegisteredFollowUpOptionsV37G3A } from "../v37/registered-follow-up-v37g3a.ts";
+import { loadWorkflowRegistrationV37G3A } from "../v37/workflow-registration-v37g3a.ts";
 
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -36,6 +38,7 @@ export interface StateAssessmentContextG2 {
 	immutableBasePrompt: string;
 	immutableBasePromptSha256: string;
 	registeredFollowUp?: RegisteredFollowUpOptionsV37;
+	registeredFollowUpG3A?: RegisteredFollowUpOptionsV37G3A;
 }
 
 function contained(root: string, target: string): boolean {
@@ -167,8 +170,10 @@ async function deriveAssessment(options: StateAssessmentContextG2, enforceCurren
 	const stateRoot = safeProjectPath(options.projectRoot, options.stateRoot, "State root", true);
 	const promotionValidationRoot = safeProjectPath(options.projectRoot, options.promotionValidationRunRoot, "promotion validation root", true);
 	if (options.comparisonRunRoot) safeProjectPath(options.projectRoot, options.comparisonRunRoot, "accepted-State comparison root", true);
-	const legacyAdmission = options.registeredFollowUp ? null : await loadValidatedAdmissionG2({ projectRoot: options.projectRoot, admissionRoot: options.admissionRoot, registrationPath: options.registrationPath, admissionId: options.admissionId, projectId: options.projectId });
-	const canonical = options.registeredFollowUp ? await normalizeRegisteredBoundFollowUpV37(options.registeredFollowUp) : normalizeLegacyBoundFollowUp(legacyAdmission!);
+	if (options.registeredFollowUp && options.registeredFollowUpG3A) throw new Error("assessment source is ambiguous");
+	const hasRegistered = Boolean(options.registeredFollowUp || options.registeredFollowUpG3A);
+	const legacyAdmission = hasRegistered ? null : await loadValidatedAdmissionG2({ projectRoot: options.projectRoot, admissionRoot: options.admissionRoot, registrationPath: options.registrationPath, admissionId: options.admissionId, projectId: options.projectId });
+	const canonical = options.registeredFollowUpG3A ? await normalizeRegisteredBoundFollowUpV37G3A(options.registeredFollowUpG3A) : options.registeredFollowUp ? await normalizeRegisteredBoundFollowUpV37(options.registeredFollowUp) : normalizeLegacyBoundFollowUp(legacyAdmission!);
 	if (canonical.admission_identity.admission_id !== options.admissionId || canonical.trusted_task_context.task_kind.length === 0) throw new Error("canonical bound-State admission identity mismatch");
 	if (options.registeredFollowUp) {
 		const registered = loadWorkflowRegistrationV37({ projectRoot: options.registeredFollowUp.projectRoot, dataRoot: options.registeredFollowUp.dataRoot, workflowId: options.registeredFollowUp.workflowId });
@@ -176,6 +181,14 @@ async function deriveAssessment(options: StateAssessmentContextG2, enforceCurren
 		const { state_store_scope_digest: _scopeDigest, ...scopeBody } = scope;
 		const configuredRoot = safeProjectPath(options.projectRoot, resolve(options.projectRoot, scope.configured_location), "Manifest-configured State root", true);
 		const expectedPromotionRoot = safeProjectPath(options.projectRoot, registeredFollowUpPromotionValidationRootV37(options.registeredFollowUp), "registered promotion validation root", true);
+		if (realpathSync.native(configuredRoot) !== realpathSync.native(stateRoot) || realpathSync.native(expectedPromotionRoot) !== realpathSync.native(promotionValidationRoot) || scope.project_id !== options.projectId || digestObject(scopeBody) !== scope.state_store_scope_digest || canonical.state_store_scope_digest !== scope.state_store_scope_digest) throw new Error("registered assessment State scope or promotion root mismatch");
+	}
+	if (options.registeredFollowUpG3A) {
+		const registered = loadWorkflowRegistrationV37G3A({ projectRoot: options.registeredFollowUpG3A.projectRoot, dataRoot: options.registeredFollowUpG3A.dataRoot, workflowId: options.registeredFollowUpG3A.workflowId });
+		const scope = registered.loadedCase.manifest.state_store_scope_spec;
+		const { state_store_scope_digest: _scopeDigest, ...scopeBody } = scope;
+		const configuredRoot = safeProjectPath(options.projectRoot, resolve(options.projectRoot, scope.configured_location), "Manifest-configured State root", true);
+		const expectedPromotionRoot = safeProjectPath(options.projectRoot, registeredFollowUpPromotionValidationRootV37G3A(options.registeredFollowUpG3A), "registered promotion validation root", true);
 		if (realpathSync.native(configuredRoot) !== realpathSync.native(stateRoot) || realpathSync.native(expectedPromotionRoot) !== realpathSync.native(promotionValidationRoot) || scope.project_id !== options.projectId || digestObject(scopeBody) !== scope.state_store_scope_digest || canonical.state_store_scope_digest !== scope.state_store_scope_digest) throw new Error("registered assessment State scope or promotion root mismatch");
 	}
 	const bound = { boundState: canonical.bound_active_state_identity, boundDecisionId: canonical.bound_promotion_decision_identity.decision_id, boundDecisionDigest: canonical.bound_promotion_decision_identity.decision_digest, bindingDigest: canonical.binding_digest };

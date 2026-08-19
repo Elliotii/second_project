@@ -2,6 +2,7 @@ import { lstatSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
 import { WorkbenchApplicationV36G1 } from "./application-v36g1.ts";
+import { WorkbenchApplicationV37G3A } from "./application-v37g3a.ts";
 
 const MAX_BODY_BYTES = 20_000;
 const ID = "[A-Za-z0-9][A-Za-z0-9._-]{0,127}";
@@ -10,6 +11,8 @@ const LEGACY_TURN = new RegExp(`^/api/v1/sessions/(${ID})/turns$`);
 const V36_SESSION = new RegExp(`^/api/v1/v36/sessions/(${ID})$`);
 const V36_TREE = new RegExp(`^/api/v1/v36/sessions/(${ID})/workspace$`);
 const V36_FILE = new RegExp(`^/api/v1/v36/sessions/(${ID})/workspace/files/(.+)$`);
+const V37_WORKFLOW = new RegExp(`^/api/v1/v37/workflows/(${ID})$`);
+const V37_ACTION = new RegExp(`^/api/v1/v37/workflows/(${ID})/actions/(${ID})$`);
 type StaticAsset = "index.html" | "app.js" | "styles.css" | "i18n.js" | "i18n.css";
 
 class HttpError extends Error {
@@ -66,7 +69,10 @@ function exactObject(value: unknown, allowed: readonly string[], required: reado
 	return record;
 }
 
-async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: ServerResponse): Promise<void> {
+type WorkbenchServerApplication = WorkbenchApplicationV36G1 | WorkbenchApplicationV37G3A;
+function v37(app:WorkbenchServerApplication):WorkbenchApplicationV37G3A|null{return app instanceof WorkbenchApplicationV37G3A?app:null;}
+function legacy(app:WorkbenchServerApplication):WorkbenchApplicationV36G1["legacy"]{return app instanceof WorkbenchApplicationV37G3A?app.legacy.legacy:app.legacy;}
+async function route(app: WorkbenchServerApplication, req: IncomingMessage, res: ServerResponse): Promise<void> {
 	const path = requestPath(req);
 	const method = req.method ?? "";
 	if (method === "GET") {
@@ -75,6 +81,9 @@ async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: 
 		if (path === "/styles.css") return sendStatic(res, "styles.css");
 		if (path === "/i18n.js") return sendStatic(res, "i18n.js");
 		if (path === "/i18n.css") return sendStatic(res, "i18n.css");
+		if(path==="/api/v1/v37/cases"&&v37(app))return send(res,200,v37(app)!.cases());
+		if(path==="/api/v1/v37/workflows"&&v37(app))return send(res,200,v37(app)!.workflows());
+		const v37Workflow=path.match(V37_WORKFLOW);if(v37Workflow&&v37(app))return send(res,200,v37(app)!.workflow(v37Workflow[1]!));
 		if (path === "/api/v1/v36/projects") return send(res, 200, app.projects());
 		if (path === "/api/v1/v36/sessions") return send(res, 200, await app.interactiveSessions());
 		const v36File = path.match(V36_FILE);
@@ -83,17 +92,19 @@ async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: 
 		if (v36Tree) return send(res, 200, app.workspaceTree(v36Tree[1]!));
 		const v36Session = path.match(V36_SESSION);
 		if (v36Session) return send(res, 200, await app.interactiveSession(v36Session[1]!));
-		if (path === "/api/v1/overview") return send(res, 200, app.legacy.overview());
-		if (path === "/api/v1/sessions") return send(res, 200, await app.legacy.sessions());
+		if (path === "/api/v1/overview") return send(res, 200, legacy(app).overview());
+		if (path === "/api/v1/sessions") return send(res, 200, await legacy(app).sessions());
 		const session = path.match(LEGACY_SESSION);
-		if (session) return send(res, 200, await app.legacy.session(session[1]!));
-		if (path === "/api/v1/comparisons/v2") return send(res, 200, app.legacy.v2Recovery());
-		if (path === "/api/v1/comparisons/goal25") return send(res, 200, app.legacy.goal25Comparison());
-		if (path === "/api/v1/adaptation") return send(res, 200, app.legacy.adaptation());
-		if (path === "/api/v1/state-history") return send(res, 200, app.legacy.stateHistory());
+		if (session) return send(res, 200, await legacy(app).session(session[1]!));
+		if (path === "/api/v1/comparisons/v2") return send(res, 200, legacy(app).v2Recovery());
+		if (path === "/api/v1/comparisons/goal25") return send(res, 200, legacy(app).goal25Comparison());
+		if (path === "/api/v1/adaptation") return send(res, 200, legacy(app).adaptation());
+		if (path === "/api/v1/state-history") return send(res, 200, legacy(app).stateHistory());
 		throw new HttpError(404, "route not found");
 	}
 	if (method === "POST") {
+		if(path==="/api/v1/v37/workflows"&&v37(app)){const input=exactObject(await body(req),["case_id"],["case_id"]);if(typeof input.case_id!=="string")throw new HttpError(400,"JSON body fields are invalid");return send(res,201,await v37(app)!.createWorkflow(input.case_id));}
+		const v37Action=path.match(V37_ACTION);if(v37Action&&v37(app)){exactObject(await body(req),[],[]);return send(res,200,await v37(app)!.action(v37Action[1]!,v37Action[2]!));}
 		if (path === "/api/v1/v36/tasks") {
 			const input = exactObject(await body(req), ["project_id", "requested_mode", "task_text", "title", "session_id"], ["project_id", "requested_mode", "task_text"]);
 			return send(res, 201, await app.submitTask(input));
@@ -110,20 +121,20 @@ async function route(app: WorkbenchApplicationV36G1, req: IncomingMessage, res: 
 		if (path === "/api/v1/sessions") {
 			const input = exactObject(await body(req), ["session_id", "title", "parent_session_id"], ["session_id", "title"]);
 			if (typeof input.session_id !== "string" || typeof input.title !== "string" || (input.parent_session_id !== undefined && input.parent_session_id !== null && typeof input.parent_session_id !== "string")) throw new HttpError(400, "JSON body fields are invalid");
-			return send(res, 201, await app.legacy.createSession({ session_id: input.session_id, title: input.title, ...(input.parent_session_id === undefined ? {} : { parent_session_id: input.parent_session_id }) }));
+			return send(res, 201, await legacy(app).createSession({ session_id: input.session_id, title: input.title, ...(input.parent_session_id === undefined ? {} : { parent_session_id: input.parent_session_id }) }));
 		}
 		const turn = path.match(LEGACY_TURN);
 		if (turn) {
 			const input = exactObject(await body(req), ["run_id", "prompt"], ["run_id", "prompt"]);
 			if (typeof input.run_id !== "string" || typeof input.prompt !== "string") throw new HttpError(400, "JSON body fields are invalid");
-			return send(res, 201, await app.legacy.continueSession(turn[1]!, { run_id: input.run_id, prompt: input.prompt }));
+			return send(res, 201, await legacy(app).continueSession(turn[1]!, { run_id: input.run_id, prompt: input.prompt }));
 		}
 		throw new HttpError(404, "route not found");
 	}
 	throw new HttpError(405, "method not allowed");
 }
 
-export function createWorkbenchLoopbackServerV36G1(app: WorkbenchApplicationV36G1): { server: Server; start(port?: number): Promise<{ host: "127.0.0.1"; port: number; url: string }>; stop(): Promise<void> } {
+export function createWorkbenchLoopbackServerV36G1(app: WorkbenchServerApplication): { server: Server; start(port?: number): Promise<{ host: "127.0.0.1"; port: number; url: string }>; stop(): Promise<void> } {
 	const server = createServer((req, res) => { void route(app, req, res).catch((error: unknown) => {
 		if (res.headersSent) return res.end();
 		const status = error instanceof HttpError ? error.status : 400;
