@@ -48,7 +48,7 @@ Provider/model or Docker product authority has been granted.
 
 ## Next action
 
-User/Main must accept, narrow or reject the accompanying
-`V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md`. No Goal 3A implementation Session
-may start until the decision is frozen in a Charter-subordinate amendment and an exact
-implementation Prompt.
+User/Main must accept, narrow or reject the optimized
+`V3_7_G3A_PLANNING_OPTIMIZATION_PROPOSAL.md`. The original authority proposal is preserved
+as superseded history. No Goal 3A implementation Session may start until the decision is
+frozen in a Charter-subordinate amendment and an exact implementation Prompt.

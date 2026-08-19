@@ -369,7 +369,10 @@ next_version:
   goal_3a_correction_budget: 0_of_2_consumed
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
-  goal_3a_recommended_decision: AUTHORIZE_VERSIONED_G3A_MULTI_CASE_AUTHORITY_EXTENSION
+  goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
+  goal_3a_planning_optimization_proposal: docs/reports/V3_7_G3A_PLANNING_OPTIMIZATION_PROPOSAL.md
+  goal_3a_planning_optimization_status: completed_pending_user_decision
+  goal_3a_recommended_decision: AUTHORIZE_OPTIMIZED_VERSIONED_G3A_AUTHORITY_EXTENSION
   goal_3a_user_decision: pending
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
@@ -2816,10 +2819,13 @@ next_checkpoint:
   - rejected_schema_2_delta_not_accepted
   - Candidate_false_audit_false_unique_real_Run_permanently_unconsumed
   - V3_7_Charter_accepted_at_58f3f1aace8b0eafa153082dc34dd0a41bfe2922
-  - V3_7_Goal_1_active_zero_real_access
-  - Goal_2_locked_until_Goal_1_Main_acceptance_after_audit_PASS
+  - V3_7_Goal_1_closed_accepted
+  - V3_7_Goal_2_closed_accepted
+  - V3_7_Goal_3A_preimplementation_Hard_Stop_pending_optimized_authority_decision
+  - V3_7_Goal_3B_locked_pending_Goal_3A_acceptance_and_separate_real_freeze
 
-open_user_decisions: []
+open_user_decisions:
+  - AUTHORIZE_OPTIMIZED_VERSIONED_G3A_AUTHORITY_EXTENSION_or_close_Goal_3A_incomplete
 ```
 
 ## Current Constraints

@@ -1,13 +1,18 @@
 # V3.7 Goal 3A Authority Extension Decision Proposal
 
 ```yaml
-status: PROPOSED_FOR_USER_DECISION
+status: SUPERSEDED_BY_OPTIMIZED_PROPOSAL
 proposal_id: V3_7_G3A_VERSIONED_MULTI_CASE_AUTHORITY_EXTENSION
 recommended_option: A
 implementation_started: false
 goal_3a_correction_budget_consumed: 0_of_2
 goal_3b_authority: false
 ```
+
+This proposal is preserved as the initial decision record. Its recommended direction is
+refined and superseded by
+`docs/reports/V3_7_G3A_PLANNING_OPTIMIZATION_PROPOSAL.md`. No implementation authority
+was granted from this earlier text.
 
 ## Decision
 
