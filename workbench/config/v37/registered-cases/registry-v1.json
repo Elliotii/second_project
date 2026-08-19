@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "v37_host_registry_index",
+  "configuration_baseline_id": "v37-g1-host-registry-v1",
+  "loader_contract_id": "v37-host-registry-loader-v1",
+  "digest_algorithm": "sha256_over_canonical_utf8_json_v1",
+  "entries": [
+    {
+      "case_id": "v37-g1-det-recovery",
+      "manifest_version": 1,
+      "manifest_location": "workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json",
+      "manifest_body_digest": "98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5",
+      "envelope_locations": ["workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json"],
+      "envelope_digests": ["5def6e32ace9a4b432e3ebaec1715ba28effd8145db01465ce1c5e5b29e4bd0c"],
+      "current_registration_digest": "5def6e32ace9a4b432e3ebaec1715ba28effd8145db01465ce1c5e5b29e4bd0c"
+    }
+  ],
+  "registry_index_digest": "53766376c27574a3e86b8bd89b322da64c70becc54e864f8c61af8e385d05b73"
+}
