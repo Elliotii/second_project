@@ -1,6 +1,6 @@
 # Current State
 
-> Updated: 2026-08-18
+> Updated: 2026-08-20
 
 ```yaml
 project:
@@ -263,7 +263,11 @@ next_version:
   goal_1_audit_initial_session: /root/v37_g1_focused_audit
   goal_1_audit_initial_session_status: platform_content_classification_error_before_tests_or_conclusion
   goal_1_audit_replacement_session: /root/v37_g1_focused_audit_retry
+  goal_1_audit_replacement_session_status: usage_limit_error_before_tests_or_conclusion
   goal_1_audit_replacement_reason: initial_session_platform_error_with_zero_candidate_delta
+  goal_1_audit_resumed_session: /root/v37_g1_local_consistency_review
+  goal_1_audit_resumed_on: 2026-08-20
+  goal_1_audit_resumed_by_user: true
   goal_1_audit_status: in_progress_read_only
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
