@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_audit_remediation
-  status: V3_7_G1_AUDIT_REMEDIATION_AMENDMENT_ACCEPTED
+  phase: v3_7_goal_1_independent_reaudit
+  status: V3_7_G1_AUDIT_REMEDIATION_MAIN_REVIEW_PASSED
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: audit_remediation_implementation_in_progress
+  status: independent_reaudit_authorized_pending_start
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: active
-  note: user_approved_one_time_root_cause_audit_remediation_for_three_P1_findings
+  note: remediation_candidate_frozen_pending_fresh_independent_read_only_reaudit
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_audit_remediation_in_progress
+  implementation_status: goal_1_audit_remediation_candidate_frozen
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -281,9 +281,14 @@ next_version:
   goal_1_audit_remediation_prompt: V3_7_G1_AUDIT_REMEDIATION_IMPLEMENTATION_PROMPT.md
   goal_1_audit_remediation_budget: 1_of_1_authorized
   goal_1_audit_remediation_session: /root/v37_g1_audit_remediation_impl
-  goal_1_audit_remediation_session_status: started
-  goal_1_audit_remediation_candidate_commit: null
-  goal_1_reaudit_status: not_started
+  goal_1_audit_remediation_session_status: completed_candidate_Main_review_passed
+  goal_1_audit_remediation_candidate_commit: 7261226904a1c7c1414b0aed7927fc5ebd92c86a
+  goal_1_audit_remediation_candidate_tree: bcb6dfc77bef4b9330b10a4ab6dc3b13de095180
+  goal_1_audit_remediation_main_review: docs/reports/V3_7_G1_AUDIT_REMEDIATION_MAIN_REVIEW.md
+  goal_1_audit_remediation_main_review_result: passed
+  goal_1_reaudit_candidate_commit: 7261226904a1c7c1414b0aed7927fc5ebd92c86a
+  goal_1_reaudit_candidate_tree: bcb6dfc77bef4b9330b10a4ab6dc3b13de095180
+  goal_1_reaudit_status: authorized_pending_start
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
