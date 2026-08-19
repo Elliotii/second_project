@@ -5,36 +5,36 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_2_implementation
-  status: V3_7_G2_AUDIT_REMEDIATION_REAUDIT
+  phase: v3_7_goal_3a_preparation
+  status: V3_7_G2_CLOSED_ACCEPTED_G3A_UNLOCKED
 
-active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
-  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: remediation_audit_candidate_frozen
+  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  status: unlocked_prompt_freeze_pending
 
 last_executed_goal:
-  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
   status: closed_accepted
-  disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  closeout: docs/reports/V3_7_G1_CLOSEOUT.md
+  disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  closeout: docs/reports/V3_7_G2_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
   status: closed_accepted
-  disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  closeout: docs/reports/V3_7_G1_CLOSEOUT.md
+  disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  closeout: docs/reports/V3_7_G2_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
   status: closed_accepted
-  disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 
 next_goal:
-  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: fresh_affected_finding_reaudit_running
-  note: remediation_candidate_passed_Main_review_and_is_under_fresh_read_only_reaudit
+  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  status: unlocked_prompt_freeze_pending
+  note: Goal_1_and_Goal_2_final_acceptance_complete_Goal_3A_may_prepare_exact_implementation_prompt
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,11 +228,11 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_closed_accepted_goal_2_remediation_reaudit_running
+  implementation_status: goals_1_2_closed_accepted_goal_3a_unlocked
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -297,7 +297,7 @@ next_version:
   goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
   goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
   goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
-  goal_2_status: audit_remediation_candidate_under_fresh_reaudit
+  goal_2_status: closed_accepted
   goal_2_preimplementation_hard_stop: docs/reports/V3_7_G2_PREIMPLEMENTATION_HARD_STOP.md
   goal_2_blocker: accepted_Manifest_execution_tuple_lacks_complete_Goal_2_runtime_limits_and_names_Goal_1_profiles
   goal_2_execution_profile_authority_amendment: V3_7_G2_EXECUTION_PROFILE_AUTHORITY_AMENDMENT.md
@@ -356,8 +356,15 @@ next_version:
   goal_2_reaudit_candidate_tree: 37fd1cd2df6a8f7536c644e958f22dc92e16a344
   goal_2_reaudit_session: /root/v37_g2_remediation_reaudit
   goal_2_reaudit_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g2-remediation-reaudit/project2
-  goal_2_reaudit_status: running_fresh_independent_read_only_session
-  goal_3a_status: locked_pending_goals_1_2_acceptance
+  goal_2_reaudit_status: completed_pass
+  goal_2_reaudit_report: docs/reports/V3_7_G2_AUDIT_REMEDIATION_REAUDIT.md
+  goal_2_reaudit_disposition: PASS_V3_7_G2_AUDIT_REMEDIATION_REAUDIT
+  goal_2_acceptance_status: closed_accepted
+  goal_2_disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  goal_2_closeout: docs/reports/V3_7_G2_CLOSEOUT.md
+  goal_2_integrated_main_commit: ab74573f6a3b7103b3cb6e8be77a671c0abd4143
+  goal_2_integrated_main_tree: 86d5ef236c3e9eb0772a2e18cfe8a0dc0cb0fa15
+  goal_3a_status: unlocked_prompt_freeze_pending
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
