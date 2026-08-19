@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_hard_stop
-  status: V3_7_G1_FOCUSED_AUDIT_FAILED_CORRECTION_BUDGET_EXHAUSTED
+  phase: v3_7_goal_1_audit_remediation
+  status: V3_7_G1_AUDIT_REMEDIATION_AMENDMENT_ACCEPTED
 
 active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: hard_stop_user_decision_required
+  status: audit_remediation_authorized_pending_implementation_session
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: hard_stop
-  note: independent_audit_failed_three_P1_findings_after_correction_budget_exhaustion
+  status: active
+  note: user_approved_one_time_root_cause_audit_remediation_for_three_P1_findings
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_unaccepted_hard_stop
+  implementation_status: goal_1_audit_remediation_authorized
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -276,6 +276,12 @@ next_version:
   goal_1_audit_finding_3: recovery_artifact_subtree_junction_accepted_on_reopen
   goal_1_hard_stop: docs/reports/V3_7_G1_AUDIT_HARD_STOP.md
   goal_1_acceptance_status: not_accepted
+  goal_1_audit_remediation_amendment: V3_7_G1_AUDIT_REMEDIATION_AMENDMENT.md
+  goal_1_audit_remediation_amendment_status: accepted_by_user
+  goal_1_audit_remediation_prompt: V3_7_G1_AUDIT_REMEDIATION_IMPLEMENTATION_PROMPT.md
+  goal_1_audit_remediation_budget: 1_of_1_authorized
+  goal_1_audit_remediation_candidate_commit: null
+  goal_1_reaudit_status: not_started
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
