@@ -12,7 +12,7 @@ active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: independent_reaudit_authorized_pending_start
+  status: independent_reaudit_in_progress
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -288,7 +288,8 @@ next_version:
   goal_1_audit_remediation_main_review_result: passed
   goal_1_reaudit_candidate_commit: 7261226904a1c7c1414b0aed7927fc5ebd92c86a
   goal_1_reaudit_candidate_tree: bcb6dfc77bef4b9330b10a4ab6dc3b13de095180
-  goal_1_reaudit_status: authorized_pending_start
+  goal_1_reaudit_session: /root/v37_g1_remediation_reaudit
+  goal_1_reaudit_status: in_progress_read_only
   goal_2_status: locked_pending_goal_1_acceptance
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
