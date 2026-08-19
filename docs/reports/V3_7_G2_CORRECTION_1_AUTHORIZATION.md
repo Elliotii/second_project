@@ -1,7 +1,7 @@
 # V3.7 Goal 2 Correction 1 Authorization
 
 ```yaml
-status: AUTHORIZED
+status: AUTHORIZED_RECALIBRATED
 goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 finding_set: V37-G2-MAIN-P1-001_V37-G2-MAIN-P1-002_V37-G2-MAIN-P1-003_V37-G2-MAIN-P2-004
 starting_commit: 584d233e31485d1bd87a7392ddc361200477ecf6
@@ -12,6 +12,8 @@ candidate_commits_authorized: 1
 audit_authority: false
 goal_3_authority: false
 real_access_authorized: false
+registered_profile_expansion_authorized: false
+negative_coverage_interpretation: category_coverage_not_registered_end_to_end_cross_product
 ```
 
 ## Exact correction scope
@@ -47,9 +49,13 @@ Prompt, Pi or Schema 2 paths.
    Preserve the same fresh symmetric immediate-parent/current, admission, task/source,
    State and attribution requirements; no Evidence direct supersede.
 5. Add deterministic rejection of alternate State scope and profile/input mismatch.
-   Exercise honest V3.7 negative/reassessment plus strict rollback where the accepted
-   production fixtures permit it; otherwise stop with the exact Charter conflict rather
-   than manufacturing artifacts.
+   Cover formal Verifier/Outcome fail, missing and invalid behavior with the actual
+   production Verifier/Inspector boundary and deterministic non-registered negative
+   material. Cover reassessment and strict rollback through the unchanged source-neutral
+   canonical decision path and accepted existing negative comparison fixtures. The sole
+   V3.7 registered profile remains the positive PASS-to-retain path. The coverage list is
+   not a requirement to create a registered end-to-end cross-product, and no caller-built
+   canonical value may enter persistence or rollback.
 6. Disable only after a complete accepted follow-up exists, then prove new action is
    blocked and full admission/inspection reopens read-only with unchanged identities.
    Add missing/invalid Verifier/Outcome rejection checks.
@@ -57,3 +63,10 @@ Prompt, Pi or Schema 2 paths.
 Rerun the Prompt verification list and strict TypeScript check, update both reports,
 create exactly one correction candidate commit, and stop for Main rereview. Zero
 Credential/network/external Provider/model/Docker/install/Pi access remains mandatory.
+
+## Main authority recalibration
+
+The user accepted `docs/reports/V3_7_G2_NEGATIVE_COVERAGE_AUTHORITY_DECISION.md` after
+Main rechecked the Charter, frozen Prompt and one-profile Amendment. The earlier
+zero-delta Hard Stop did not consume Correction 1. Resume the original implementation
+owner from the unchanged candidate and unchanged seven-path allowlist.

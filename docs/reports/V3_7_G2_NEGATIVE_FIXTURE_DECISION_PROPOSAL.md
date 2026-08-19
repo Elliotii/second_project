@@ -2,6 +2,7 @@
 
 ```yaml
 recommended_decision: AUTHORIZE_BOUNDED_REGISTERED_NEGATIVE_FOLLOW_UP_SCENARIO
+proposal_status: SUPERSEDED_BY_NEGATIVE_COVERAGE_AUTHORITY_DECISION
 changes_goal_1: false
 changes_state_store_or_g2_decision_table: false
 real_access: false
@@ -26,3 +27,12 @@ Approve a narrow addendum to the Goal 2 execution-profile Amendment and Correcti
 On approval, Main will formalize the addendum, update the Correction authorization and
 resume the original implementation Session. It will not start a new implementation or
 Goal 3.
+
+## Final disposition
+
+This proposal was not adopted. Main's authority-order recheck found that it converted
+parallel deterministic coverage categories into an unrequired registered end-to-end
+cross-product. The user accepted the corrected interpretation recorded in
+`docs/reports/V3_7_G2_NEGATIVE_COVERAGE_AUTHORITY_DECISION.md`. The sole registered
+follow-up profile, configuration/loader and seven-path Correction allowlist remain
+unchanged.
