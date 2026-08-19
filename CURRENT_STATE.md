@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_2_implementation
-  status: V3_7_G2_FOCUSED_AUDIT_IN_PROGRESS
+  status: V3_7_G2_AUDIT_FAILED_CORRECTION_BUDGET_EXHAUSTED_DECISION_REQUIRED
 
 active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 
 current_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: audit_candidate_frozen
+  status: blocked_pending_audit_remediation_decision
 
 last_executed_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
@@ -33,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: focused_audit_in_progress
-  note: correction_2_passed_Main_rereview_and_exact_candidate_is_frozen_read_only
+  status: audit_failed_hard_stop
+  note: user_must_authorize_or_reject_one_bounded_audit_remediation_round
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_closed_accepted_goal_2_focused_audit_in_progress
+  implementation_status: goal_1_closed_accepted_goal_2_audit_failed_decision_required
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -297,7 +297,7 @@ next_version:
   goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
   goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
   goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
-  goal_2_status: focused_audit_in_progress
+  goal_2_status: audit_failed_correction_budget_exhausted_decision_required
   goal_2_preimplementation_hard_stop: docs/reports/V3_7_G2_PREIMPLEMENTATION_HARD_STOP.md
   goal_2_blocker: accepted_Manifest_execution_tuple_lacks_complete_Goal_2_runtime_limits_and_names_Goal_1_profiles
   goal_2_execution_profile_authority_amendment: V3_7_G2_EXECUTION_PROFILE_AUTHORITY_AMENDMENT.md
@@ -332,7 +332,14 @@ next_version:
   goal_2_correction_budget: 2_of_2_consumed
   goal_2_audit_candidate_commit: 3adb5654a24633375d3171f115e8b73d86c023ed
   goal_2_audit_candidate_tree: 333d265bab61ec81c0a84bbc2e24bca02253be89
-  goal_2_audit_status: focused_audit_in_progress
+  goal_2_audit_session: /root/v37_g2_focused_audit
+  goal_2_audit_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g2-audit/project2
+  goal_2_audit_status: completed_failed_one_P1
+  goal_2_audit_report: docs/reports/V3_7_G2_FOCUSED_AUDIT.md
+  goal_2_audit_disposition: FAIL_V3_7_G2_FOCUSED_AUDIT
+  goal_2_audit_finding: V37-G2-AUDIT-P1-001_historical_admission_coupled_to_current_active_State
+  goal_2_audit_hard_stop: docs/reports/V3_7_G2_AUDIT_HARD_STOP.md
+  goal_2_audit_remediation_authorized: false
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
