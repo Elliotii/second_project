@@ -12,7 +12,7 @@ active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 current_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: audit_remediation_authorized_pending_implementation_session
+  status: audit_remediation_implementation_in_progress
 
 last_executed_goal:
   id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_audit_remediation_authorized
+  implementation_status: goal_1_audit_remediation_in_progress
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -280,6 +280,8 @@ next_version:
   goal_1_audit_remediation_amendment_status: accepted_by_user
   goal_1_audit_remediation_prompt: V3_7_G1_AUDIT_REMEDIATION_IMPLEMENTATION_PROMPT.md
   goal_1_audit_remediation_budget: 1_of_1_authorized
+  goal_1_audit_remediation_session: /root/v37_g1_audit_remediation_impl
+  goal_1_audit_remediation_session_status: started
   goal_1_audit_remediation_candidate_commit: null
   goal_1_reaudit_status: not_started
   goal_2_status: locked_pending_goal_1_acceptance
