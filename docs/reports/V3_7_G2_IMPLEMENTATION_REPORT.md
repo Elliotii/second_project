@@ -1,15 +1,17 @@
 # V3.7 Goal 2 Implementation Report
 
 ```yaml
-status: CORRECTION_1_CANDIDATE_READY_FOR_MAIN_REREVIEW
+status: CORRECTION_2_CANDIDATE_READY_FOR_MAIN_REREVIEW
 goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 implementation_owner: fresh_dedicated_Goal_2_Implementation_Session
 starting_commit: 55f8caf17a7b118e68f2f2a18961da351c8b6990
 starting_tree: 167c855408e253a7941b6a9579201b753f75c562
 preserved_preliminary_review_candidate_commit: 584d233e31485d1bd87a7392ddc361200477ecf6
 preserved_preliminary_review_candidate_tree: 3177f7303e82c0f774e4078773ed1669d65853f6
-correction_round: 1
-correction_authority_commit: 4a9a4f7f47e6be1ab9093365ef2f4d8dd00a49b0
+correction_1_candidate_commit: ab0157f9bfab7e714489687fdfb9ec3c45f49c85
+correction_1_candidate_tree: dc7ca3366ac15d1da230167fc46fb5a3b932b920
+correction_round: 2
+correction_authority_commit: e546acc7bda7360a92aa6eab7c7f289721ed2a97
 candidate_commit: SELF
 candidate_tree: SELF
 correction_candidate_commits_used: 1_of_1
@@ -33,19 +35,31 @@ in its own identity.
 
 ## Changed paths
 
-Correction round 1 changes exactly the seven recalibrated allowlisted paths:
+Correction round 2 changes exactly the three authorized paths:
 
-- `workbench/src/contracts/v37-types.ts`
-- `workbench/src/session/persistent-session-v36.ts`
-- `workbench/src/state/state-feedback-g2.ts`
-- `workbench/src/v37/registered-follow-up-v37.ts`
 - `workbench/tests/v37g2-runtime-effective-followup.test.ts`
 - `docs/reports/V3_7_G2_IMPLEMENTATION_REPORT.md`
 - `docs/reports/V3_7_G2_CLOSEOUT_DRAFT.md`
 
 `CURRENT_STATE.md`, the Charter, Amendment, Prompt, Goal 1 configuration/loader,
-State Store/CAS, old G1 admission, regression gate, Pi, references and rejected Schema 2
-paths were not changed.
+all production source/contracts, registered profile/config/loader, State Store/CAS, old
+G1 admission, regression gate, Pi, references and rejected Schema 2 paths were not
+changed in Correction round 2.
+
+## Correction round 2
+
+- The honest frozen Verifier still executes against deterministic non-registered negative
+  material and exits `1` with its real failing check.
+- Each accepted formal-artifact negative now mutates or removes exactly one artifact under
+  the original registered authority path, invokes the production Inspector, and restores
+  the exact original bytes in `finally`.
+- Target-specific results are asserted: missing Outcome, Verifier digest mismatch,
+  observation digest mismatch, Outcome digest mismatch and cross-workflow formal lineage
+  mismatch. Every case explicitly excludes the former copied-root
+  `registered Recovery admission unavailable` false positive.
+- The literal Prompt commands and distinct loader/compiler environment qualifications are
+  recorded below. No negative registered profile, admitted negative Outcome or
+  caller-built canonical value was added.
 
 ## Correction round 1
 
@@ -121,19 +135,94 @@ envelope_file_sha256: 621efc8de7747d2d7ce8c2f780b45c271bb0b0b4dc3bbb449cf80447d1
 
 ## Verification
 
-| Command | Result |
-|---|---|
-| exact Goal 2 focused command | PASS, 10/10 |
-| exact Goal 1 focused command | PASS, 14/14 |
-| exact V2-A three-file command | environment-qualified 10/11; only spawned CLI child lacked inherited public loader |
-| same V2-A command with the identical absolute public loader inherited by child Node processes | PASS, 11/11 |
-| exact V3 G1/G2 command | PASS, 19/19 |
-| exact Final Capstone G2 command | environment-qualified 8/10; only two spawned-child loader-resolution checks failed before product inspection |
-| same Final Capstone G2 command with the identical absolute public loader inherited by child Node processes | PASS, 10/10 |
-| exact repository `tsc -p tsconfig.json --noEmit` | environment stop `TS2688`; isolated worktree lacks ignored Node declarations |
-| strict seven-entry environment-equivalent TypeScript command | PASS, 0 diagnostics |
-| aggregate deterministic assertions using the environment-equivalent loader where required | PASS, 64/64 |
-| `git diff --check`, seven-path correction allowlist, frozen config/loader diff and Schema 2 absence | PASS |
+All commands below were run literally from `workbench/`.
+
+```powershell
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g2-runtime-effective-followup.test.ts
+```
+
+Result: PASS, 10/10.
+
+```powershell
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g1-registered-recovery.test.ts
+```
+
+Result: PASS, 14/14.
+
+```powershell
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2a-recovery.test.ts tests/v2a-cli.test.ts tests/v2a-post-audit.test.ts
+```
+
+Result: environment-qualified 10/11. The sole spawned CLI child stopped before product
+inspection with `ERR_MODULE_NOT_FOUND` for `@earendil-works/pi-agent-core` because the
+parent-only loader was not inherited.
+
+```powershell
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v3g1-evidence-to-candidate.test.ts tests/v3g2-validate-promote-reject-rollback.test.ts
+```
+
+Result: PASS, 19/19.
+
+```powershell
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/final-capstone-g2-regression-state-feedback.test.ts
+```
+
+Result: environment-qualified 8/10. Both spawned children stopped before product
+inspection with `ERR_MODULE_NOT_FOUND` for `@earendil-works/pi-agent-core` because the
+parent-only loader was not inherited.
+
+The exact inherited absolute-loader equivalents were:
+
+```powershell
+$env:NODE_OPTIONS='--experimental-loader file:///C:/Users/HUAWEI/.codex/worktrees/v37g2-impl/project2/workbench/scripts/v35g2-public-pi-loader.mjs'
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2a-recovery.test.ts tests/v2a-cli.test.ts tests/v2a-post-audit.test.ts
+```
+
+Result: PASS, 11/11.
+
+```powershell
+$env:NODE_OPTIONS='--experimental-loader file:///C:/Users/HUAWEI/.codex/worktrees/v37g2-impl/project2/workbench/scripts/v35g2-public-pi-loader.mjs'
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/final-capstone-g2-regression-state-feedback.test.ts
+```
+
+Result: PASS, 10/10. The environment-equivalent deterministic aggregate is 64/64.
+
+The three distinct TypeScript checks were:
+
+```powershell
+npm run typecheck
+```
+
+Result: environment stop `MODULE_NOT_FOUND`; the repository package script points to the
+absent isolated-worktree path
+`.runs/v0-a/pi/node_modules/typescript/bin/tsc`. No package compiler ran.
+
+```powershell
+node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit
+```
+
+Result: the available compiler reached the full repository config and stopped with
+`TS2688` because the isolated worktree lacks the ignored Node type declarations.
+
+```powershell
+node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p ../.runs/v37/g2-types/tsconfig.json --noEmit
+```
+
+Result: PASS, zero diagnostics, with the seven changed/transitive TypeScript entries and
+already configured external Node declarations.
+
+The correction boundary checks were run from the repository root:
+
+```powershell
+git diff --check
+git diff --name-only ab0157f9bfab7e714489687fdfb9ec3c45f49c85
+git diff --quiet ab0157f9bfab7e714489687fdfb9ec3c45f49c85 -- workbench/src workbench/config workbench/scripts/v35g2-public-pi-loader.mjs
+rg --files workbench | rg 'schema.?2|schema_2'
+```
+
+Results: `git diff --check` passed; the allowlist diff contained exactly the focused test
+and two reports; the production source, all configuration including Goal 1, and the
+loader were byte-unchanged; the final `rg` returned no rejected Schema 2 paths.
 
 No product assertion failed when the already-authorized public loader was visible to
 spawned child processes. No dependency was installed to alter the isolated environment.
@@ -142,7 +231,8 @@ spawned child processes. No dependency was installed to alter the isolated envir
 
 - No real Provider/model, Credential, network, cost or Docker behavior was exercised;
   the Goal 2 contract explicitly requires deterministic zero-access implementation.
-- The literal repository-wide TypeScript command remains blocked by absent ignored Node
-  declarations; the strict changed-surface/transitive-dependency check passed.
+- The repository package-script compiler path is absent; the available compiler reaches
+  the full config but remains blocked by absent ignored Node declarations. The strict
+  changed-surface/transitive-dependency check passed.
 - Main rereview, immutable audit-candidate freeze, fresh independent focused
   audit and Main Goal acceptance remain pending and are not claimed.

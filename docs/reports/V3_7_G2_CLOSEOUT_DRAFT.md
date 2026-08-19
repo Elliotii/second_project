@@ -2,12 +2,14 @@
 
 ```yaml
 goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-status: CORRECTION_1_DRAFT_PENDING_MAIN_REREVIEW_AND_FOCUSED_AUDIT
+status: CORRECTION_2_DRAFT_PENDING_MAIN_REREVIEW_AND_FOCUSED_AUDIT
 candidate_commit: SELF
 candidate_tree: SELF
 preserved_preliminary_review_candidate_commit: 584d233e31485d1bd87a7392ddc361200477ecf6
 preserved_preliminary_review_candidate_tree: 3177f7303e82c0f774e4078773ed1669d65853f6
-correction_round: 1
+correction_1_candidate_commit: ab0157f9bfab7e714489687fdfb9ec3c45f49c85
+correction_1_candidate_tree: dc7ca3366ac15d1da230167fc46fb5a3b932b920
+correction_round: 2
 bridge_2a: implemented_deterministic_candidate
 bridge_2b: implemented_deterministic_candidate
 focused_audit: not_started
@@ -29,6 +31,12 @@ plus the actual task-policy/budget projections, makes comparison logic source-ne
 and proves frozen negative-content and disabled historical-read-only boundaries through
 production inspectors. It does not add another registered profile or manufacture formal
 artifacts.
+
+Correction round 2 replaces copied-data-root false positives with same-authority,
+single-artifact mutation/restoration checks and target-specific Inspector assertions.
+It also records every literal Prompt, inherited-loader and TypeScript command with the
+distinct observed environment qualifications. All production source/config/loader bytes
+remain frozen at the Correction 1 candidate.
 
 Deterministic verification is 64/64 with zero credentials, network, external Provider,
 real model, observed cost, Docker product run, dependency installation or Pi/reference

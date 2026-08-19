@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, relative, resolve, sep } from "node:path";
+import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { createModels, fauxAssistantMessage, fauxProvider } from "@earendil-works/pi-ai";
 import type { TaskSpecV0B } from "../src/contracts/v0b-types.ts";
@@ -38,9 +38,24 @@ const recoveryOptions = { projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workfl
 let candidate: RefinementCandidateV3;
 let admissionId = "";
 
-function rel(path: string): string { return relative(PROJECT_ROOT, path).split(sep).join("/"); }
 function writeJson(path: string, value: unknown): void { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, `${stableJson(value)}\n`, "utf8"); }
 function readJson<T>(path: string): T { return JSON.parse(readFileSync(path, "utf8")) as T; }
+
+async function inspectAcceptedArtifactMutation(relativePath: string, mutate: ((value: any) => void) | null, expectedError: RegExp): Promise<void> {
+	const path = resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "follow-up", relativePath);
+	const originalBytes = readFileSync(path);
+	try {
+		if (mutate === null) rmSync(path);
+		else { const value = JSON.parse(originalBytes.toString("utf8")) as any; mutate(value); writeJson(path, value); }
+		const inspected = await inspectRegisteredFollowUpAdmissionV37(options);
+		const errors = inspected.errors.join("; ");
+		assert.equal(inspected.integrity_valid, false, relativePath);
+		assert.match(errors, expectedError, relativePath);
+		assert.doesNotMatch(errors, /registered Recovery admission unavailable/, relativePath);
+	} finally {
+		writeFileSync(path, originalBytes);
+	}
+}
 
 function proposal(opportunity: ImprovementOpportunityV3, base: string): unknown {
 	const applicability = { task_kinds: ["typescript-maintenance"], failure_families: ["verifier-failure"] };
@@ -132,24 +147,17 @@ test("actual frozen Verifier fails on deterministic negative material and missin
 	writeFileSync(resolve(negative, source.source_path), source.source_bytes, { encoding: "utf8", flag: "wx" }); writeFileSync(resolve(negative, verifier.verifier_path), verifier.verifier_bytes, { encoding: "utf8", flag: "wx" });
 	const descriptor = profile.command_profile.descriptors[0]; const failed = spawnSync(process.execPath, descriptor.argv, { cwd: negative, shell: false, windowsHide: true, timeout: descriptor.timeout_seconds * 1000, maxBuffer: descriptor.max_combined_output_bytes, env: { V0B_WORKSPACE: negative }, encoding: "utf8" });
 	assert.equal(failed.status, 1); assert.match(`${failed.stdout}${failed.stderr}`, /fail 1/);
-	for (const [label, file, mutate] of [
-		["missing-outcome", "outcome.json", null],
-		["invalid-verifier", "verifier.json", (value: any) => { value.status = "invalid"; }],
-	] as const) {
-		const copied = resolve(G2_ROOT, label); cpSync(resolve(PROJECT_ROOT, DATA_ROOT), copied, { recursive: true }); const path = resolve(copied, "workflows", WORKFLOW_ID, "follow-up", file); if (mutate) { const value = readJson<any>(path); mutate(value); writeJson(path, value); } else rmSync(path);
-		const result = await inspectRegisteredFollowUpAdmissionV37({ ...options, dataRoot: rel(copied) }); assert.equal(result.integrity_valid, false, label);
-	}
+	await inspectAcceptedArtifactMutation("outcome.json", null, /follow-up Outcome is missing/);
+	await inspectAcceptedArtifactMutation("verifier.json", (value) => { value.status = "invalid"; }, /follow-up Verifier digest mismatch/);
 });
 
 test("tampered observation, Outcome and cross-workflow package fail closed", async () => {
-	for (const [label, file, mutate] of [
-		["observation", `runtime/runs/${options.followUpRunId}/registered-observation.json`, (value: any) => { value.system_prompt_digest = "0".repeat(64); }],
-		["outcome", "outcome.json", (value: any) => { value.formal_outcome = "failed"; }],
-		["workflow", "evidence.json", (value: any) => { value.workflow_id = "foreign-workflow"; }],
-	] as const) {
-		const copied = resolve(G2_ROOT, `tamper-${label}`); cpSync(resolve(PROJECT_ROOT, DATA_ROOT), copied, { recursive: true }); const path = resolve(copied, "workflows", WORKFLOW_ID, "follow-up", file); const value = readJson<any>(path); mutate(value); writeJson(path, value);
-		const result = await inspectRegisteredFollowUpAdmissionV37({ ...options, dataRoot: rel(copied) }); assert.equal(result.integrity_valid, false, label);
-	}
+	await inspectAcceptedArtifactMutation(`runtime/runs/${options.followUpRunId}/registered-observation.json`, (value) => { value.system_prompt_digest = "0".repeat(64); }, /follow-up observation digest mismatch/);
+	await inspectAcceptedArtifactMutation("outcome.json", (value) => { value.formal_outcome = "failed"; }, /follow-up Outcome digest mismatch/);
+	await inspectAcceptedArtifactMutation("evidence.json", (value) => {
+		value.workflow_id = "foreign-workflow";
+		const body = { ...value }; delete body.evidence_body_digest; value.evidence_body_digest = digestObject(body);
+	}, /follow-up formal artifact lineage mismatch/);
 });
 
 test("active-pointer drift at the production pre-request hook prevents Provider dispatch", async () => {
