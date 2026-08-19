@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_2_implementation
-  status: V3_7_G2_IMPLEMENTATION_DISPATCHED
+  status: V3_7_G2_MAIN_PRELIMINARY_REVIEW_FAILED_CORRECTION_1_AUTHORIZED
 
 active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 
 current_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  status: dedicated_implementation_in_progress
+  status: correction_1_in_progress
 
 last_executed_goal:
   id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
@@ -34,7 +34,7 @@ last_completed_goal:
 next_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
   status: active
-  note: dedicated_session_must_return_one_candidate_commit_then_stop_for_Main_preliminary_review
+  note: original_implementation_session_must_return_one_bounded_correction_candidate_then_stop_for_Main_rereview
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_closed_accepted_goal_2_dedicated_implementation_in_progress
+  implementation_status: goal_1_closed_accepted_goal_2_correction_1_in_progress
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -297,7 +297,7 @@ next_version:
   goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
   goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
   goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
-  goal_2_status: dedicated_implementation_in_progress
+  goal_2_status: main_preliminary_review_failed_correction_1_in_progress
   goal_2_preimplementation_hard_stop: docs/reports/V3_7_G2_PREIMPLEMENTATION_HARD_STOP.md
   goal_2_blocker: accepted_Manifest_execution_tuple_lacks_complete_Goal_2_runtime_limits_and_names_Goal_1_profiles
   goal_2_execution_profile_authority_amendment: V3_7_G2_EXECUTION_PROFILE_AUTHORITY_AMENDMENT.md
@@ -310,6 +310,12 @@ next_version:
   goal_2_control_baseline_tree: 167c855408e253a7941b6a9579201b753f75c562
   goal_2_recommended_decision: accepted_narrow_Host_registered_follow_up_execution_profile_authority_amendment
   goal_2_implementation_started: true
+  goal_2_initial_candidate_commit: 584d233e31485d1bd87a7392ddc361200477ecf6
+  goal_2_initial_candidate_tree: 3177f7303e82c0f774e4078773ed1669d65853f6
+  goal_2_main_preliminary_review: docs/reports/V3_7_G2_MAIN_PRELIMINARY_REVIEW.md
+  goal_2_main_preliminary_review_result: failed_three_P1_one_P2
+  goal_2_correction_1_authorization: docs/reports/V3_7_G2_CORRECTION_1_AUTHORIZATION.md
+  goal_2_correction_budget: 1_of_2_authorized
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
