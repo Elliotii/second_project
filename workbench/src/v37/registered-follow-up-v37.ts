@@ -15,11 +15,13 @@ import type {
 	RegisteredFollowUpBindingV37,
 } from "../contracts/v37-types.ts";
 import type { RefinementCandidateV3 } from "../contracts/v3-types.ts";
+import { artifactRef } from "../evidence/artifacts.ts";
 import type { RuntimeManifestG2V36 } from "../session/persistent-session-v36.ts";
 import { PersistentInteractiveSessionServiceV36 } from "../session/persistent-session-v36.ts";
 import { digestObject, fileSha256, sha256, stableJson, treeDigest } from "../hash.ts";
 import { composePromptAddendaV3 } from "../prompts/adapter-v3.ts";
 import { inspectRegisteredRecoveryAdmissionV37 } from "../inspect-v37g1.ts";
+import { inspectValidationV3 } from "../refinement/comparator-v3.ts";
 import { inspectStateStoreV3 } from "../state/store-v3.ts";
 import { managedWorkspaceIdentityV36 } from "../workspace/managed-copy-v36.ts";
 import { loadRegisteredFollowUpExecutionProfileV37 } from "./follow-up-execution-profile-v37.ts";
@@ -153,6 +155,44 @@ function stateRootFromManifest(projectRoot: string, configuredLocation: string):
 	return state;
 }
 
+export function registeredFollowUpPromotionValidationRootV37(options: Pick<RegisteredFollowUpOptionsV37, "projectRoot" | "dataRoot" | "workflowId">): string {
+	if (!ID.test(options.workflowId)) throw new Error("follow-up workflow identity invalid");
+	const dataRoot = v37DataRootPath(options.projectRoot, options.dataRoot);
+	const root = resolve(dataRoot, "workflows", options.workflowId, "promotion-validation");
+	if (!contained(dataRoot, root)) throw new Error("promotion validation root escapes V3.7 data root");
+	return root;
+}
+
+async function inspectRegisteredPromotionLineageV37(
+	options: RegisteredFollowUpOptionsV37,
+	candidate: RefinementCandidateV3,
+	state: Awaited<ReturnType<typeof inspectStateStoreV3>>,
+) {
+	if (!state.active) throw new Error("follow-up promoted active State is missing");
+	const activeVersion = state.versions.find((entry) => entry.state_digest === state.active!.state_digest);
+	const decision = state.decisions.find((entry) => entry.decision_id === state.active!.decision_id);
+	if (!activeVersion || !decision || state.active.state_version < 1 || decision.kind !== "promotion" || decision.result !== "promoted") throw new Error("follow-up requires a newly promoted active State");
+	const runRoot = registeredFollowUpPromotionValidationRootV37(options);
+	const validation = inspectValidationV3(runRoot);
+	if (!validation.integrity_valid || !validation.validation || !validation.seed || !validation.candidate_arm || !validation.recomputed_decision) throw new Error(`follow-up promotion validation fails closed: ${validation.errors.join("; ")}`);
+	const validationRef = artifactRef(runRoot, decision.validation_ref!.path, decision.validation_ref!.media_type, decision.validation_ref!.truncated);
+	const checks: Array<[boolean, string]> = [
+		[stableJson(validationRef) === stableJson(decision.validation_ref), "validation_ref"],
+		[decision.validation_id === validation.validation.validation_id && decision.validation_digest === validation.validation.validation_digest, "validation_identity"],
+		[decision.candidate_id === candidate.candidate_id && decision.candidate_digest === candidate.candidate_digest, "decision_candidate"],
+		[activeVersion.source_candidate_id === candidate.candidate_id && activeVersion.source_candidate_digest === candidate.candidate_digest, "version_candidate"],
+		[decision.next_active.state_digest === state.active.state_digest, "decision_active"],
+		[validation.seed.candidate_id === candidate.candidate_id && validation.seed.candidate_digest === candidate.candidate_digest, "validation_candidate"],
+		[validation.seed.candidate_state_digest === activeVersion.source_staged_state_digest, "staged_state"],
+		[validation.seed.base_state_digest === activeVersion.parent_state_digest && candidate.expected_base_state_digest === validation.seed.base_state_digest, "base_state"],
+		[validation.candidate_arm.verifier_status === "passed" && validation.candidate_arm.regression_passed, "candidate_result"],
+		[validation.recomputed_decision.result === "promote", "validation_decision"],
+	];
+	const failed = checks.find(([passed]) => !passed);
+	if (failed) throw new Error(`follow-up Candidate/promotion validation/State lineage mismatch: ${failed[1]}`);
+	return { activeVersion, decision, runRoot, validation };
+}
+
 function recoveryAdmission(options: Pick<RegisteredFollowUpOptionsV37, "projectRoot" | "dataRoot" | "workflowId">) {
 	const data = v37DataRootPath(options.projectRoot, options.dataRoot);
 	const recovery = resolve(data, "workflows", options.workflowId, "recovery");
@@ -183,10 +223,7 @@ async function deriveBinding(options: RegisteredFollowUpOptionsV37, candidate: R
 	const state = await inspectStateStoreV3({ stateRoot, expectedProjectId: manifest.project_id, immutableBasePrompt: runtimeBase, immutableBasePromptSha256: manifest.state_store_scope_spec.runtime_base_prompt_digest });
 	if (!state.integrity_valid || !state.active) throw new Error(`follow-up State Store inspection failed: ${state.errors.join("; ")}`);
 	if (state.versions.find((entry) => entry.state_version === 0)?.state_digest !== manifest.state_store_scope_spec.initial_state_digest) throw new Error("follow-up State Store initial lineage mismatch");
-	const activeVersion = state.versions.find((entry) => entry.state_digest === state.active!.state_digest);
-	const decision = state.decisions.find((entry) => entry.decision_id === state.active!.decision_id);
-	if (!activeVersion || !decision || state.active.state_version < 1 || decision.kind !== "promotion" || decision.result !== "promoted") throw new Error("follow-up requires a newly promoted active State");
-	if (decision.candidate_id !== candidate.candidate_id || decision.candidate_digest !== candidate.candidate_digest || activeVersion.source_candidate_id !== candidate.candidate_id || activeVersion.source_candidate_digest !== candidate.candidate_digest || decision.next_active.state_digest !== state.active.state_digest) throw new Error("follow-up Candidate/promotion/State lineage mismatch");
+	const { activeVersion, decision } = await inspectRegisteredPromotionLineageV37(options, candidate, state);
 	const task = manifest.follow_up_task_spec.body as { task_kind: string; failure_family: string };
 	const matching = activeVersion.entries.filter((entry) => entry.applicability.task_kinds.includes(task.task_kind) && entry.applicability.failure_families.includes(task.failure_family));
 	if (matching.length === 0 || matching.some((entry) => entry.kind !== "prompt_addendum") || matching.length !== activeVersion.entries.length) throw new Error("follow-up State applicability is zero, ambiguous or contains adaptive Skills");
@@ -242,6 +279,22 @@ function sameActive(binding: RegisteredFollowUpBindingV37, active: { binding_rev
 	return binding.active_binding_revision === active.binding_revision && binding.state_version_id === active.state_version && binding.active_state_digest === active.state_digest;
 }
 
+function runtimeTaskPolicy(profile: ReturnType<typeof loadRegisteredFollowUpExecutionProfileV37>["profile"]) {
+	return { writable_paths: [...profile.tool_profile.writable_paths], protected_paths: [...profile.tool_profile.protected_paths], command_descriptors: structuredClone(profile.command_profile.descriptors) as never };
+}
+
+function runtimeBudgetProfile(profile: ReturnType<typeof loadRegisteredFollowUpExecutionProfileV37>["profile"]): BoundedEditBudgetProfileV36 {
+	return {
+		profile_id: profile.budget_profile.v36_runtime_budget_profile_id,
+		provider_requests_observation_threshold: profile.budget_profile.provider_requests_observation_threshold,
+		provider_requests_hard_max: profile.budget_profile.provider_requests_hard_max,
+		tool_calls_hard_max: profile.budget_profile.tool_calls_hard_max,
+		combined_tokens_hard_max: profile.budget_profile.combined_tokens_hard_max,
+		cost_usd_hard_max: profile.budget_profile.cost_usd_hard_max,
+		wall_time_ms_hard_max: profile.budget_profile.wall_time_ms_hard_max,
+	};
+}
+
 export async function executeRegisteredFollowUpV37(options: RegisteredFollowUpOptionsV37): Promise<{ evidence: RegisteredBoundFollowUpEvidenceBodyV37; outcome: FollowUpFormalOutcomeV37; verifier: FollowUpVerifierArtifactV37 }> {
 	const prepared = loadPrepared(options);
 	const derived = await deriveBinding(options, prepared.candidate);
@@ -259,21 +312,15 @@ export async function executeRegisteredFollowUpV37(options: RegisteredFollowUpOp
 		() => fauxAssistantMessage("The registered follow-up edit is complete and awaits the Host verifier.", { timestamp: 2 }),
 	]);
 	const profile = derived.loadedProfile.profile;
-	const runtimeBudget: BoundedEditBudgetProfileV36 = {
-		profile_id: profile.budget_profile.v36_runtime_budget_profile_id,
-		provider_requests_observation_threshold: profile.budget_profile.provider_requests_observation_threshold,
-		provider_requests_hard_max: profile.budget_profile.provider_requests_hard_max,
-		tool_calls_hard_max: profile.budget_profile.tool_calls_hard_max,
-		combined_tokens_hard_max: profile.budget_profile.combined_tokens_hard_max,
-		cost_usd_hard_max: profile.budget_profile.cost_usd_hard_max,
-		wall_time_ms_hard_max: profile.budget_profile.wall_time_ms_hard_max,
-	};
+	const taskPolicy = runtimeTaskPolicy(profile);
+	const runtimeBudget = runtimeBudgetProfile(profile);
 	const result = await service.executeBoundedTurn({
 		sessionId: options.sessionId, runId: options.followUpRunId, prompt: (derived.registered.loadedCase.manifest.follow_up_task_spec.body as { task_body: string }).task_body,
-		taskPolicy: { writable_paths: [...profile.tool_profile.writable_paths], protected_paths: [...profile.tool_profile.protected_paths], command_descriptors: structuredClone(profile.command_profile.descriptors) as never },
+		taskPolicy,
 		commandExecutor: async () => { throw new Error("registered follow-up command execution is Host-owned after settled runtime"); }, budgetProfile: runtimeBudget, models, model: provider.getModel(), systemPrompt: derived.composedPrompt, authorityDigest: derived.binding.follow_up_execution_authority_digest,
 		registeredRuntimeObservation: {
-			workflow_id: options.workflowId, workflow_registration_digest: derived.registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId, system_prompt_digest: derived.binding.composed_prompt_digest, frozen_binding_digest: derived.binding.frozen_binding_digest, follow_up_execution_authority_digest: derived.binding.follow_up_execution_authority_digest, command_profile_digest: profile.command_profile_digest,
+			workflow_id: options.workflowId, workflow_registration_digest: derived.registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId, system_prompt_digest: derived.binding.composed_prompt_digest, frozen_binding_digest: derived.binding.frozen_binding_digest, follow_up_execution_authority_digest: derived.binding.follow_up_execution_authority_digest,
+			provider_profile_digest: profile.provider_profile_digest, tool_profile_digest: profile.tool_profile_digest, command_profile_digest: profile.command_profile_digest, budget_profile_digest: profile.budget_profile_digest, stop_condition_profile_digest: profile.stop_condition_profile_digest, task_policy_input_digest: digestObject(taskPolicy), runtime_budget_input_digest: digestObject(runtimeBudget),
 			before_first_provider_request: () => {
 				const current = readJson<{ binding_revision: number; state_version: number; state_digest: string }>(derived.stateRoot, "active.json", "active State pointer");
 				if (!sameActive(derived.binding, current)) throw new Error("active State pointer drifted before first Provider request");
@@ -284,7 +331,7 @@ export async function executeRegisteredFollowUpV37(options: RegisteredFollowUpOp
 	const runtimeManifest = result.manifest as RuntimeManifestG2V36;
 	const observationRoot = resolve(runtimeRoot, "runs", options.followUpRunId);
 	const observation = readJson<FollowUpRuntimeObservationV37>(observationRoot, "registered-observation.json", "follow-up Runtime observation");
-	if (observation.system_prompt_digest !== derived.binding.composed_prompt_digest || observation.frozen_binding_digest !== derived.binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== derived.binding.follow_up_execution_authority_digest || observation.follow_up_run_id !== options.followUpRunId || bodyDigest(observation as unknown as Record<string, unknown>, "runtime_observed_binding_digest") !== observation.runtime_observed_binding_digest) throw new Error("follow-up Runtime observation mismatch");
+	if (observation.system_prompt_digest !== derived.binding.composed_prompt_digest || observation.frozen_binding_digest !== derived.binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== derived.binding.follow_up_execution_authority_digest || observation.follow_up_run_id !== options.followUpRunId || observation.provider_profile_digest !== profile.provider_profile_digest || observation.tool_profile_digest !== profile.tool_profile_digest || observation.command_profile_digest !== profile.command_profile_digest || observation.budget_profile_digest !== profile.budget_profile_digest || observation.stop_condition_profile_digest !== profile.stop_condition_profile_digest || observation.task_policy_input_digest !== digestObject(taskPolicy) || observation.runtime_budget_input_digest !== digestObject(runtimeBudget) || bodyDigest(observation as unknown as Record<string, unknown>, "runtime_observed_binding_digest") !== observation.runtime_observed_binding_digest) throw new Error("follow-up Runtime observation mismatch");
 	const descriptor = profile.command_profile.descriptors[0];
 	const verifierResult = spawnSync(process.execPath, descriptor.argv, { cwd: workspace, shell: false, windowsHide: true, timeout: descriptor.timeout_seconds * 1000, maxBuffer: descriptor.max_combined_output_bytes, env: { V0B_WORKSPACE: workspace }, encoding: "utf8" });
 	const output = `${verifierResult.stdout ?? ""}${verifierResult.stderr ?? ""}`;
@@ -344,9 +391,10 @@ async function recompute(options: RegisteredFollowUpOptionsV37, historical: bool
 	const stateRoot = stateRootFromManifest(options.projectRoot, manifest.state_store_scope_spec.configured_location);
 	const state = await inspectStateStoreV3({ stateRoot, expectedProjectId: manifest.project_id, immutableBasePrompt: manifest.runtime_base_prompt_spec.body.prompt, immutableBasePromptSha256: manifest.state_store_scope_spec.runtime_base_prompt_digest });
 	if (!state.integrity_valid) throw new Error(`follow-up bound State inspection failed: ${state.errors.join("; ")}`);
-	const boundVersion = state.versions.find((entry) => entry.state_digest === binding.active_state_digest && entry.state_version === binding.state_version_id);
-	const boundDecision = state.decisions.find((entry) => entry.decision_id === binding.promotion_decision_id);
-	if (!boundVersion || !boundDecision || boundDecision.kind !== "promotion" || boundDecision.result !== "promoted" || boundDecision.decision_digest !== binding.promotion_decision_digest || boundDecision.candidate_id !== prepared.candidate.candidate_id || boundDecision.candidate_digest !== prepared.candidate.candidate_digest || boundVersion.source_candidate_id !== prepared.candidate.candidate_id || boundVersion.source_candidate_digest !== prepared.candidate.candidate_digest || boundDecision.next_active.state_digest !== boundVersion.state_digest) throw new Error("follow-up bound Candidate/promotion/State lineage mismatch");
+	const inspectedPromotion = await inspectRegisteredPromotionLineageV37(options, prepared.candidate, state);
+	const boundVersion = inspectedPromotion.activeVersion;
+	const boundDecision = inspectedPromotion.decision;
+	if (boundVersion.state_digest !== binding.active_state_digest || boundVersion.state_version !== binding.state_version_id || boundDecision.decision_id !== binding.promotion_decision_id || boundDecision.decision_digest !== binding.promotion_decision_digest) throw new Error("follow-up bound Candidate/promotion/State lineage mismatch");
 	const taskContext = manifest.follow_up_task_spec.body as { task_kind: string; failure_family: string };
 	const boundEntries = boundVersion.entries.filter((entry) => entry.applicability.task_kinds.includes(taskContext.task_kind) && entry.applicability.failure_families.includes(taskContext.failure_family));
 	if (boundEntries.length === 0 || boundEntries.length !== boundVersion.entries.length || boundEntries.some((entry) => entry.kind !== "prompt_addendum")) throw new Error("follow-up bound State applicability/entry kind mismatch");
@@ -359,7 +407,7 @@ async function recompute(options: RegisteredFollowUpOptionsV37, historical: bool
 	const evidence = readJson<RegisteredBoundFollowUpEvidenceBodyV37>(prepared.root, "evidence.json", "follow-up Evidence");
 	const confirmation = readJson<FollowUpEvidenceConfirmationReceiptV37>(prepared.root, "confirmation.json", "follow-up confirmation");
 	const request = readJson<FollowUpEvidenceSubmissionRequestV37>(prepared.root, "request.json", "follow-up request");
-	exact(observation, ["schema_version", "kind", "workflow_id", "workflow_registration_digest", "follow_up_run_id", "session_id", "workspace_id", "system_prompt_digest", "frozen_binding_digest", "follow_up_execution_authority_digest", "observed_before_first_provider_request", "runtime_observed_binding_digest"], "follow-up observation");
+	exact(observation, ["schema_version", "kind", "workflow_id", "workflow_registration_digest", "follow_up_run_id", "session_id", "workspace_id", "system_prompt_digest", "frozen_binding_digest", "follow_up_execution_authority_digest", "provider_profile_digest", "tool_profile_digest", "command_profile_digest", "budget_profile_digest", "stop_condition_profile_digest", "task_policy_input_digest", "runtime_budget_input_digest", "observed_before_first_provider_request", "runtime_observed_binding_digest"], "follow-up observation");
 	exact(verifier, ["schema_version", "kind", "verifier_id", "verifier_source_sha256", "command_profile_digest", "follow_up_run_id", "exit_code", "timed_out", "output_truncated", "output_sha256", "status", "verifier_artifact_digest"], "follow-up Verifier");
 	exact(outcome, ["schema_version", "kind", "follow_up_run_id", "runtime_manifest_digest", "runtime_observed_binding_digest", "verifier_artifact_digest", "formal_outcome", "terminal_status", "formal_outcome_artifact_digest"], "follow-up Outcome");
 	exact(evidence, ["schema_version", "family", "case_id", "manifest_body_digest", "case_registration_digest", "workflow_id", "workflow_registration_digest", "follow_up_run_id", "follow_up_task_instance_digest", "follow_up_source_workspace_digest", "state_store_scope_digest", "state_version_id", "active_state_digest", "promotion_decision_id", "promotion_decision_digest", "candidate_id", "candidate_digest", "frozen_binding_digest", "runtime_base_prompt_digest", "composed_prompt_digest", "runtime_observed_binding_digest", "parent_provider_profile_digest", "parent_tool_profile_digest", "parent_command_profile_digest", "parent_budget_profile_digest", "parent_stop_condition_profile_digest", "provider_profile_digest", "tool_profile_digest", "command_profile_digest", "budget_profile_digest", "stop_condition_profile_digest", "follow_up_execution_profile_digest", "follow_up_execution_authority_digest", "verifier_artifact_digest", "formal_outcome_artifact_digest", "formal_outcome", "terminal_status", "evidence_body_digest"], "follow-up Evidence");
@@ -369,7 +417,9 @@ async function recompute(options: RegisteredFollowUpOptionsV37, historical: bool
 		[observation, "runtime_observed_binding_digest", observation.runtime_observed_binding_digest, "observation"], [verifier, "verifier_artifact_digest", verifier.verifier_artifact_digest, "Verifier"], [outcome, "formal_outcome_artifact_digest", outcome.formal_outcome_artifact_digest, "Outcome"], [evidence, "evidence_body_digest", evidence.evidence_body_digest, "Evidence"], [confirmation, "confirmation_receipt_digest", confirmation.confirmation_receipt_digest, "confirmation"], [request, "submission_request_digest", request.submission_request_digest, "request"],
 	] as const) if (bodyDigest(value as unknown as Record<string, unknown>, key) !== declared) throw new Error(`follow-up ${label} digest mismatch`);
 	const { manifest_digest: _runtimeDigest, ...runtimeBody } = runtimeManifest;
-	if (runtimeManifest.schema_version !== 3 || digestObject(runtimeBody) !== runtimeManifest.manifest_digest || runtimeManifest.registered_runtime_observation_digest !== observation.runtime_observed_binding_digest || runtimeManifest.prompt_sha256 !== sha256((manifest.follow_up_task_spec.body as { task_body: string }).task_body) || runtimeManifest.workspace_identity_after !== managedWorkspaceIdentityV36(resolve(prepared.root, "workspace")) || runtimeManifest.external_provider_calls !== 0 || runtimeManifest.real_model_calls !== 0 || runtimeManifest.network_calls !== 0 || runtimeManifest.credential_reads !== 0 || observation.workflow_id !== options.workflowId || observation.workflow_registration_digest !== registered.workflow.workflow_registration_digest || observation.follow_up_run_id !== options.followUpRunId || observation.session_id !== options.sessionId || observation.workspace_id !== options.workspaceId || observation.system_prompt_digest !== binding.composed_prompt_digest || observation.frozen_binding_digest !== binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== binding.follow_up_execution_authority_digest || observation.observed_before_first_provider_request !== true) throw new Error("follow-up Runtime Manifest recomputation mismatch");
+	const expectedTaskPolicyDigest = digestObject(runtimeTaskPolicy(profile));
+	const expectedRuntimeBudgetDigest = digestObject(runtimeBudgetProfile(profile));
+	if (runtimeManifest.schema_version !== 3 || digestObject(runtimeBody) !== runtimeManifest.manifest_digest || runtimeManifest.registered_runtime_observation_digest !== observation.runtime_observed_binding_digest || runtimeManifest.prompt_sha256 !== sha256((manifest.follow_up_task_spec.body as { task_body: string }).task_body) || runtimeManifest.workspace_identity_after !== managedWorkspaceIdentityV36(resolve(prepared.root, "workspace")) || runtimeManifest.external_provider_calls !== 0 || runtimeManifest.real_model_calls !== 0 || runtimeManifest.network_calls !== 0 || runtimeManifest.credential_reads !== 0 || observation.workflow_id !== options.workflowId || observation.workflow_registration_digest !== registered.workflow.workflow_registration_digest || observation.follow_up_run_id !== options.followUpRunId || observation.session_id !== options.sessionId || observation.workspace_id !== options.workspaceId || observation.system_prompt_digest !== binding.composed_prompt_digest || observation.frozen_binding_digest !== binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== binding.follow_up_execution_authority_digest || observation.provider_profile_digest !== profile.provider_profile_digest || observation.tool_profile_digest !== profile.tool_profile_digest || observation.command_profile_digest !== profile.command_profile_digest || observation.budget_profile_digest !== profile.budget_profile_digest || observation.stop_condition_profile_digest !== profile.stop_condition_profile_digest || observation.task_policy_input_digest !== expectedTaskPolicyDigest || observation.runtime_budget_input_digest !== expectedRuntimeBudgetDigest || observation.observed_before_first_provider_request !== true) throw new Error("follow-up Runtime Manifest recomputation mismatch");
 	const runtimeService = new PersistentInteractiveSessionServiceV36({ runtimeRoot: resolve(prepared.root, "runtime"), workspaceRoot: resolve(prepared.root, "workspace"), projectId: registered.workflow.project_id, workspaceId: options.workspaceId, sessionId: options.sessionId, title: "V3.7 registered bound-State follow-up", sessionPinDigest: digestObject({ workflow_registration_digest: registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId }) });
 	const runtimeView = await runtimeService.inspect();
 	if (!runtimeView.runs.some((run) => run.run_id === options.followUpRunId && run.settled && run.context_reconstructed)) throw new Error("follow-up V3.6 Session/Run reopen mismatch");
@@ -393,7 +443,7 @@ export async function admitRegisteredFollowUpV37(options: RegisteredFollowUpOpti
 }
 
 export async function recomputeRegisteredFollowUpAdmissionV37(options: RegisteredFollowUpOptionsV37 & { historicalReadOnly?: true }): Promise<RegisteredBoundFollowUpAdmissionV37> {
-	const checked = await recompute(options, options.historicalReadOnly === true);
+	const checked = await recompute(options, true);
 	const stored = readJson<RegisteredBoundFollowUpAdmissionV37>(checked.prepared.root, "admission.json", "follow-up admission");
 	exact(stored, ["schema_version", "kind", "admission_id", "workflow_id", "workflow_registration_digest", "manifest_body_digest", "case_registration_digest", "registry_trust_root_digest", "evidence_body_digest", "submission_request_digest", "inspector_id", "inspector_fingerprint", "result", "reasons", "source_inventory_digest", "admission_digest"], "follow-up admission");
 	const admissionSeed = { workflow_id: options.workflowId, evidence_body_digest: checked.evidence.evidence_body_digest, submission_request_digest: checked.request.submission_request_digest };

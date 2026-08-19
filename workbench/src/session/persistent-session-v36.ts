@@ -145,7 +145,13 @@ export interface RegisteredRuntimeObservationInputV37 {
 	system_prompt_digest: string;
 	frozen_binding_digest: string;
 	follow_up_execution_authority_digest: string;
+	provider_profile_digest: string;
+	tool_profile_digest: string;
 	command_profile_digest: string;
+	budget_profile_digest: string;
+	stop_condition_profile_digest: string;
+	task_policy_input_digest: string;
+	runtime_budget_input_digest: string;
 	before_first_provider_request: () => void;
 }
 
@@ -722,7 +728,9 @@ export class PersistentInteractiveSessionServiceV36 {
 		const session = await this.open();
 		if (options.registeredRuntimeObservation) {
 			const observed = options.registeredRuntimeObservation;
-			if (observed.follow_up_run_id !== options.runId || !SHA256.test(observed.workflow_registration_digest) || !SHA256.test(observed.system_prompt_digest) || observed.system_prompt_digest !== sha256(options.systemPrompt) || !SHA256.test(observed.frozen_binding_digest) || !SHA256.test(observed.follow_up_execution_authority_digest) || !SHA256.test(observed.command_profile_digest) || typeof observed.before_first_provider_request !== "function") throw new Error("V3.7 registered Runtime observation input is invalid");
+			const actualTaskPolicyDigest = digestObject(options.taskPolicy);
+			const actualRuntimeBudgetDigest = digestObject(options.budgetProfile);
+			if (observed.follow_up_run_id !== options.runId || !SHA256.test(observed.workflow_registration_digest) || !SHA256.test(observed.system_prompt_digest) || observed.system_prompt_digest !== sha256(options.systemPrompt) || !SHA256.test(observed.frozen_binding_digest) || !SHA256.test(observed.follow_up_execution_authority_digest) || [observed.provider_profile_digest, observed.tool_profile_digest, observed.command_profile_digest, observed.budget_profile_digest, observed.stop_condition_profile_digest, observed.task_policy_input_digest, observed.runtime_budget_input_digest].some((digest) => !SHA256.test(digest)) || observed.task_policy_input_digest !== actualTaskPolicyDigest || observed.runtime_budget_input_digest !== actualRuntimeBudgetDigest || typeof observed.before_first_provider_request !== "function") throw new Error("V3.7 registered Runtime observation input is invalid");
 		}
 		let testUsageOrdinal = 0;
 		if (options.testOnlyAssistantUsageByResponse !== undefined) {
@@ -845,6 +853,13 @@ export class PersistentInteractiveSessionServiceV36 {
 					system_prompt_digest: options.registeredRuntimeObservation.system_prompt_digest,
 					frozen_binding_digest: options.registeredRuntimeObservation.frozen_binding_digest,
 					follow_up_execution_authority_digest: options.registeredRuntimeObservation.follow_up_execution_authority_digest,
+					provider_profile_digest: options.registeredRuntimeObservation.provider_profile_digest,
+					tool_profile_digest: options.registeredRuntimeObservation.tool_profile_digest,
+					command_profile_digest: options.registeredRuntimeObservation.command_profile_digest,
+					budget_profile_digest: options.registeredRuntimeObservation.budget_profile_digest,
+					stop_condition_profile_digest: options.registeredRuntimeObservation.stop_condition_profile_digest,
+					task_policy_input_digest: digestObject(options.taskPolicy),
+					runtime_budget_input_digest: digestObject(options.budgetProfile),
 					observed_before_first_provider_request: true as const,
 				};
 				registeredObservationDigest = digestObject(observationBody);

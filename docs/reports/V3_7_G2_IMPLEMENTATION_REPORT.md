@@ -1,14 +1,18 @@
 # V3.7 Goal 2 Implementation Report
 
 ```yaml
-status: CANDIDATE_READY_FOR_MAIN_PRELIMINARY_REVIEW
+status: CORRECTION_1_CANDIDATE_READY_FOR_MAIN_REREVIEW
 goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 implementation_owner: fresh_dedicated_Goal_2_Implementation_Session
 starting_commit: 55f8caf17a7b118e68f2f2a18961da351c8b6990
 starting_tree: 167c855408e253a7941b6a9579201b753f75c562
+preserved_preliminary_review_candidate_commit: 584d233e31485d1bd87a7392ddc361200477ecf6
+preserved_preliminary_review_candidate_tree: 3177f7303e82c0f774e4078773ed1669d65853f6
+correction_round: 1
+correction_authority_commit: 4a9a4f7f47e6be1ab9093365ef2f4d8dd00a49b0
 candidate_commit: SELF
 candidate_tree: SELF
-candidate_commits_used: 1_of_1
+correction_candidate_commits_used: 1_of_1
 goal_2_accepted: false
 goal_3_started: false
 credential_reads: 0
@@ -29,15 +33,12 @@ in its own identity.
 
 ## Changed paths
 
-Exactly the ten Prompt-allowlisted paths changed:
+Correction round 1 changes exactly the seven recalibrated allowlisted paths:
 
-- `workbench/config/v37/follow-up-execution-profiles/v37-g1-det-recovery.g2.v1.json`
 - `workbench/src/contracts/v37-types.ts`
-- `workbench/src/v37/follow-up-execution-profile-v37.ts`
-- `workbench/src/v37/registered-follow-up-v37.ts`
 - `workbench/src/session/persistent-session-v36.ts`
 - `workbench/src/state/state-feedback-g2.ts`
-- `workbench/src/inspect-v37g2.ts`
+- `workbench/src/v37/registered-follow-up-v37.ts`
 - `workbench/tests/v37g2-runtime-effective-followup.test.ts`
 - `docs/reports/V3_7_G2_IMPLEMENTATION_REPORT.md`
 - `docs/reports/V3_7_G2_CLOSEOUT_DRAFT.md`
@@ -45,6 +46,28 @@ Exactly the ten Prompt-allowlisted paths changed:
 `CURRENT_STATE.md`, the Charter, Amendment, Prompt, Goal 1 configuration/loader,
 State Store/CAS, old G1 admission, regression gate, Pi, references and rejected Schema 2
 paths were not changed.
+
+## Correction round 1
+
+- The assessment now derives the canonical State Store and promotion-validation roots
+  from the registered Manifest/Host workflow, verifies `state_store_scope_digest`, and
+  rejects a byte-identical alternate State root.
+- Registered binding and admission now inspect the actual symmetric validation artifact,
+  Candidate, staged-State, promotion Decision and accepted State lineage. The focused
+  fixture creates that lineage through production validation/publication APIs rather
+  than direct Decision, version or active-pointer writes.
+- The pre-request V3.6 observation now records all five effective profile digests plus
+  independently computed digests of the actual task-policy and runtime-budget inputs.
+  Mismatch is rejected before Provider dispatch and independently during admission.
+- Assessment comparison and rollback use the same canonical admission/task/source,
+  promotion, State and verifier-attribution inputs for old and registered V3.7 sources;
+  no caller-built canonical object or Evidence-driven direct supersede was added.
+- The frozen Verifier is executed against deterministic non-registered negative material;
+  missing Outcome and invalid Verifier artifacts fail the production Inspector. The sole
+  registered V3.7 profile remains the frozen PASS-to-retain path as authorized.
+- After a complete accepted follow-up is disabled, new actions are blocked while the
+  full historical admission and normalized evidence reopen read-only with unchanged
+  identities and artifact tree.
 
 ## Implemented bridge
 
@@ -100,7 +123,7 @@ envelope_file_sha256: 621efc8de7747d2d7ce8c2f780b45c271bb0b0b4dc3bbb449cf80447d1
 
 | Command | Result |
 |---|---|
-| exact Goal 2 focused command | PASS, 8/8 |
+| exact Goal 2 focused command | PASS, 10/10 |
 | exact Goal 1 focused command | PASS, 14/14 |
 | exact V2-A three-file command | environment-qualified 10/11; only spawned CLI child lacked inherited public loader |
 | same V2-A command with the identical absolute public loader inherited by child Node processes | PASS, 11/11 |
@@ -109,8 +132,8 @@ envelope_file_sha256: 621efc8de7747d2d7ce8c2f780b45c271bb0b0b4dc3bbb449cf80447d1
 | same Final Capstone G2 command with the identical absolute public loader inherited by child Node processes | PASS, 10/10 |
 | exact repository `tsc -p tsconfig.json --noEmit` | environment stop `TS2688`; isolated worktree lacks ignored Node declarations |
 | strict seven-entry environment-equivalent TypeScript command | PASS, 0 diagnostics |
-| aggregate deterministic assertions using the environment-equivalent loader where required | PASS, 62/62 |
-| `git diff --check`, ten-path allowlist, Goal 1 config diff and Schema 2 absence | PASS |
+| aggregate deterministic assertions using the environment-equivalent loader where required | PASS, 64/64 |
+| `git diff --check`, seven-path correction allowlist, frozen config/loader diff and Schema 2 absence | PASS |
 
 No product assertion failed when the already-authorized public loader was visible to
 spawned child processes. No dependency was installed to alter the isolated environment.
@@ -121,5 +144,5 @@ spawned child processes. No dependency was installed to alter the isolated envir
   the Goal 2 contract explicitly requires deterministic zero-access implementation.
 - The literal repository-wide TypeScript command remains blocked by absent ignored Node
   declarations; the strict changed-surface/transitive-dependency check passed.
-- Main preliminary review, immutable audit-candidate freeze, fresh independent focused
+- Main rereview, immutable audit-candidate freeze, fresh independent focused
   audit and Main Goal acceptance remain pending and are not claimed.

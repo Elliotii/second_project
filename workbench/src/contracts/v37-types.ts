@@ -408,6 +408,13 @@ export interface FollowUpRuntimeObservationV37 {
 	system_prompt_digest: string;
 	frozen_binding_digest: string;
 	follow_up_execution_authority_digest: string;
+	provider_profile_digest: string;
+	tool_profile_digest: string;
+	command_profile_digest: string;
+	budget_profile_digest: string;
+	stop_condition_profile_digest: string;
+	task_policy_input_digest: string;
+	runtime_budget_input_digest: string;
 	observed_before_first_provider_request: true;
 	runtime_observed_binding_digest: string;
 }

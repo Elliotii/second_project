@@ -1,27 +1,28 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
 import test from "node:test";
-import { pathToFileURL } from "node:url";
 import { createModels, fauxAssistantMessage, fauxProvider } from "@earendil-works/pi-ai";
+import type { TaskSpecV0B } from "../src/contracts/v0b-types.ts";
+import type { FauxExecutionEventV3 } from "../src/contracts/v3g2-types.ts";
 import type { ImprovementOpportunityV3, RefinementCandidateV3 } from "../src/contracts/v3-types.ts";
-import { artifactRef } from "../src/evidence/artifacts.ts";
-import { digestObject, sha256, stableJson } from "../src/hash.ts";
+import { digestObject, fileSha256, sha256, stableJson, treeDigest } from "../src/hash.ts";
 import { inspectRegisteredFollowUpAdmissionV37 } from "../src/inspect-v37g2.ts";
 import { SYSTEM_PROMPT, SYSTEM_PROMPT_SHA256 } from "../src/prompts/base.ts";
+import { executeSymmetricValidationV3, type FauxValidationPortV3, type LocalCheckV3 } from "../src/refinement/comparator-v3.ts";
 import type { BoundedProposalPortV3 } from "../src/refinement/producer-v3.ts";
 import { executeRunV2A } from "../src/run-v2.ts";
 import { PersistentInteractiveSessionServiceV36 } from "../src/session/persistent-session-v36.ts";
-import { acceptedStateVersionDigestV3 } from "../src/state/identity-v3.ts";
 import { stageCandidateStateV3 } from "../src/state/staging-v3.ts";
-import { initializeStateStoreV3, inspectStateStoreV3 } from "../src/state/store-v3.ts";
+import { applyValidationDecisionV3, initializeStateStoreV3, inspectStateStoreV3 } from "../src/state/store-v3.ts";
 import { persistStateAssessmentG2 } from "../src/state/state-feedback-g2.ts";
 import { V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE } from "../src/v36/budget-profile-v36.ts";
 import { producePromptCandidateV37 } from "../src/v37/candidate-v37.ts";
 import { loadRegisteredFollowUpExecutionProfileV37 } from "../src/v37/follow-up-execution-profile-v37.ts";
 import { admitRegisteredRecoveryV37, persistRegisteredRecoveryPackageV37 } from "../src/v37/registered-recovery-v37.ts";
-import { admitRegisteredFollowUpV37, executeRegisteredFollowUpV37, normalizeRegisteredBoundFollowUpV37, prepareRegisteredFollowUpV37, submitRegisteredFollowUpEvidenceV37, type RegisteredFollowUpOptionsV37 } from "../src/v37/registered-follow-up-v37.ts";
-import { bindPrimaryRunV37, createWorkflowRegistrationV37 } from "../src/v37/workflow-registration-v37.ts";
+import { admitRegisteredFollowUpV37, executeRegisteredFollowUpV37, normalizeRegisteredBoundFollowUpV37, prepareRegisteredFollowUpV37, registeredFollowUpPromotionValidationRootV37, registeredFollowUpTreeDigestV37, submitRegisteredFollowUpEvidenceV37, type RegisteredFollowUpOptionsV37 } from "../src/v37/registered-follow-up-v37.ts";
+import { bindPrimaryRunV37, createWorkflowRegistrationV37, loadWorkflowRegistrationV37 } from "../src/v37/workflow-registration-v37.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 
 const ROOT = resolve(PROJECT_ROOT, ".runs/v37/g1-tests");
@@ -48,6 +49,17 @@ function proposal(opportunity: ImprovementOpportunityV3, base: string): unknown 
 
 const port: BoundedProposalPortV3 = { propose: async (input) => proposal(input.opportunity, input.expected_base_state_digest) };
 
+function publicationVerifier(workspace: string, verifierId = "v37-g2-publication-verifier", file = "subject.txt", expected = "fixed\n"): LocalCheckV3 {
+	const source = `import { readFileSync } from "node:fs";\nimport { resolve } from "node:path";\nconst root=process.env.V0B_WORKSPACE;\nlet passed=false;\ntry{passed=typeof root==="string"&&readFileSync(resolve(root,${JSON.stringify(file)}),"utf8")===${JSON.stringify(expected)};}catch{}\nconsole.log(JSON.stringify({schema_version:1,verifier_id:${JSON.stringify(verifierId)},status:passed?"passed":"failed",summary:passed?"passed":"failed",...(passed?{}:{failed_checks:[${JSON.stringify(file)}]})}));\nprocess.exit(passed?0:1);\n`;
+	const sourcePath = resolve(G2_ROOT, `${verifierId}.mjs`); writeFileSync(sourcePath, source);
+	const task: TaskSpecV0B = { schema_version: 1, task_id: "v37-g2-publication-task", instruction_ref: "v37-g2-production-publication", instruction_sha256: sha256("v37-g2-production-publication"), workspace_source_ref: workspace, workspace_source_digest: treeDigest(workspace), writable_paths: ["subject.txt"], protected_paths: ["protected.txt"], verifier_id: verifierId, verifier_ref: sourcePath, verifier_sha256: fileSha256(sourcePath), acceptance_visibility: "hidden_external", tool_profile_id: "v3g3_bounded_local", command_descriptors: [], verifier_command: { executable: "current_node_executable", argv: [sourcePath], cwd: "project", timeout_ms: 5_000, output_limit_bytes: 8_192 } };
+	return { task, sourcePath };
+}
+
+function executionEvents(prefix: string, count: number): FauxExecutionEventV3[] {
+	return Array.from({ length: count }, (_, index) => ({ seq: index + 1, type: "provider_call" as const, call_id: `${prefix}-${index}` }));
+}
+
 async function promoteCandidate(value: RefinementCandidateV3): Promise<void> {
 	const agentWorkspace = resolve(G2_ROOT, "staging-agent"); const acceptedBase = resolve(G2_ROOT, "accepted-base");
 	mkdirSync(agentWorkspace, { recursive: true }); mkdirSync(acceptedBase, { recursive: true });
@@ -55,17 +67,16 @@ async function promoteCandidate(value: RefinementCandidateV3): Promise<void> {
 	const staged = await stageCandidateStateV3({ candidate: value, stateRoot: stagedRoot, agentWorkspaceRoot: agentWorkspace, acceptedBaseRoots: [acceptedBase], immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 });
 	const initialized = await inspectStateStoreV3({ stateRoot: STATE_ROOT, expectedProjectId: "v37-g1-project", immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 });
 	assert.equal(initialized.integrity_valid, true, initialized.errors.join("; "));
-	const prior = initialized.active!;
-	const versionBody = { schema_version: 1 as const, status: "accepted" as const, project_id: "v37-g1-project", state_version: 1, parent_state_digest: prior.state_digest, source_candidate_id: value.candidate_id, source_candidate_digest: value.candidate_digest, source_staged_state_digest: staged.state.state_digest, entries: structuredClone(staged.state.entries) };
-	const version = { ...versionBody, state_digest: acceptedStateVersionDigestV3(versionBody) };
-	writeJson(resolve(STATE_ROOT, "versions", version.state_digest, "state.json"), version);
-	const validationRoot = resolve(G2_ROOT, "promotion-marker"); mkdirSync(validationRoot, { recursive: true }); writeJson(resolve(validationRoot, "validation.json"), { schema_version: 1, marker: "registered-v37-g2-promotion" });
-	const nextActive = { binding_revision: prior.binding_revision + 1, state_version: 1, state_digest: version.state_digest };
-	const decisionBody = { schema_version: 1 as const, decision_sequence: 1, kind: "promotion" as const, project_id: "v37-g1-project", result: "promoted" as const, reason: "base_failed_candidate_passed" as const, candidate_id: value.candidate_id, candidate_digest: value.candidate_digest, staged_state_digest: staged.state.state_digest, validation_id: "v37-g2-promotion-validation", validation_digest: sha256("v37-g2-promotion-validation"), validation_ref: artifactRef(validationRoot, "validation.json", "application/json", false), prior_active: { binding_revision: prior.binding_revision, state_version: prior.state_version, state_digest: prior.state_digest }, next_active: nextActive, rollback_target_digest: null };
-	const decisionDigest = digestObject(decisionBody); const decision = { ...decisionBody, decision_id: `decision-${decisionDigest.slice(0, 32)}`, decision_digest: decisionDigest };
-	writeJson(resolve(STATE_ROOT, "decisions", `${decision.decision_id}.json`), decision);
-	const pointerBody = { schema_version: 1 as const, project_id: "v37-g1-project", ...nextActive, decision_id: decision.decision_id };
-	writeJson(resolve(STATE_ROOT, "active.json"), { ...pointerBody, pointer_digest: digestObject(pointerBody) });
+	const prior = { binding_revision: initialized.active!.binding_revision, state_version: initialized.active!.state_version, state_digest: initialized.active!.state_digest };
+	const workspace = resolve(G2_ROOT, "publication-workspace"); mkdirSync(workspace, { recursive: true }); writeFileSync(resolve(workspace, "subject.txt"), "broken\n"); writeFileSync(resolve(workspace, "protected.txt"), "protected-stable\n");
+	const verifier = publicationVerifier(workspace);
+	const regression = publicationVerifier(workspace, "v37-g2-publication-protected", "protected.txt", "protected-stable\n");
+	const validationRoot = registeredFollowUpPromotionValidationRootV37(options);
+	const publicationPort: FauxValidationPortV3 = { execute: async ({ state, workspaceRoot }) => { if (state.status === "staged_inactive") writeFileSync(resolve(workspaceRoot, "subject.txt"), "fixed\n"); return { settled: true, events: executionEvents(state.status, state.status === "accepted" ? 3 : 2) }; } };
+	const baseState = initialized.versions.find((entry) => entry.state_digest === prior.state_digest)!;
+	const validated = await executeSymmetricValidationV3({ projectRoot: PROJECT_ROOT, runRoot: validationRoot, validationId: "v37-g2-production-publication", projectId: "v37-g1-project", sourceWorkspaceRoot: workspace, task: verifier.task, verifier, regressions: [regression], baseState, candidateState: staged.state, providerModelProfileDigest: sha256("v37-g2-publication-provider"), toolProfileDigest: sha256("v37-g2-publication-tools"), budgetDigest: sha256("v37-g2-publication-budget"), hardConstraintsDigest: sha256("v37-g2-publication-constraints"), port: publicationPort });
+	const applied = await applyValidationDecisionV3({ stateRoot: STATE_ROOT, projectId: "v37-g1-project", runRoot: validationRoot, validationRef: validated.validationRef, stagedStateRoot: stagedRoot, candidateStateDigest: staged.state.state_digest, expectedActive: prior, immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 });
+	assert.equal(applied.decision.result, "promoted");
 	const checked = await inspectStateStoreV3({ stateRoot: STATE_ROOT, expectedProjectId: "v37-g1-project", immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256 });
 	assert.equal(checked.integrity_valid, true, checked.errors.join("; "));
 }
@@ -99,7 +110,8 @@ test("fixed profile loads exact effective and parent execution identities and re
 test("binding uses promoted applicable prompt State and production V3.6 observes exact composed prompt", async () => {
 	const root = resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "follow-up");
 	const binding = readJson<any>(resolve(root, "binding.json")); const observation = readJson<any>(resolve(root, "runtime/runs", options.followUpRunId, "registered-observation.json")); const manifest = readJson<any>(resolve(root, "runtime/runs", options.followUpRunId, "manifest.json"));
-	assert.equal(binding.state_version_id, 1); assert.equal(binding.candidate_digest, candidate.candidate_digest); assert.equal(observation.system_prompt_digest, binding.composed_prompt_digest); assert.equal(observation.frozen_binding_digest, binding.frozen_binding_digest); assert.equal(manifest.real_model_calls, 0); assert.equal(manifest.external_provider_calls, 0); assert.equal(manifest.project_command_executions, 0);
+	const loaded = loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID });
+	assert.equal(binding.state_version_id, 1); assert.equal(binding.candidate_digest, candidate.candidate_digest); assert.equal(observation.system_prompt_digest, binding.composed_prompt_digest); assert.equal(observation.frozen_binding_digest, binding.frozen_binding_digest); assert.deepEqual([observation.provider_profile_digest, observation.tool_profile_digest, observation.command_profile_digest, observation.budget_profile_digest, observation.stop_condition_profile_digest], [loaded.profile.provider_profile_digest, loaded.profile.tool_profile_digest, loaded.profile.command_profile_digest, loaded.profile.budget_profile_digest, loaded.profile.stop_condition_profile_digest]); assert.match(observation.task_policy_input_digest, /^[a-f0-9]{64}$/); assert.match(observation.runtime_budget_input_digest, /^[a-f0-9]{64}$/); assert.equal(manifest.real_model_calls, 0); assert.equal(manifest.external_provider_calls, 0); assert.equal(manifest.project_command_executions, 0);
 	await assert.rejects(prepareRegisteredFollowUpV37({ ...options, followUpRunId: "v37-g2-mismatch", candidate: { ...candidate, candidate_digest: "0".repeat(64) } }), /Candidate identity invalid/);
 });
 
@@ -110,6 +122,23 @@ test("formal Verifier, Outcome, second confirmation and independent admission re
 	const verifier = readJson<any>(resolve(root, "verifier.json")); const outcome = readJson<any>(resolve(root, "outcome.json")); const confirmation = readJson<any>(resolve(root, "confirmation.json")); const recoveryConfirmation = readJson<any>(resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "recovery/confirmation.json"));
 	assert.equal(verifier.status, "passed"); assert.equal(outcome.formal_outcome, "passed"); assert.equal(outcome.terminal_status, "settled"); assert.equal(confirmation.kind, "v37_follow_up_evidence_confirmation_receipt"); assert.notEqual(confirmation.confirmation_receipt_digest, recoveryConfirmation.confirmation_receipt_digest);
 	assert.deepEqual(submitRegisteredFollowUpEvidenceV37(options), { confirmation, request: readJson(resolve(root, "request.json")) });
+});
+
+test("actual frozen Verifier fails on deterministic negative material and missing/invalid formal artifacts fail closed", async () => {
+	const registered = loadWorkflowRegistrationV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID });
+	const profile = loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID }).profile;
+	const negative = resolve(G2_ROOT, "non-registered-verifier-negative"); const source = registered.loadedCase.manifest.follow_up_source_baseline_spec.body as any; const verifier = registered.loadedCase.manifest.follow_up_verifier_spec.body as any;
+	mkdirSync(dirname(resolve(negative, source.source_path)), { recursive: true }); mkdirSync(dirname(resolve(negative, verifier.verifier_path)), { recursive: true });
+	writeFileSync(resolve(negative, source.source_path), source.source_bytes, { encoding: "utf8", flag: "wx" }); writeFileSync(resolve(negative, verifier.verifier_path), verifier.verifier_bytes, { encoding: "utf8", flag: "wx" });
+	const descriptor = profile.command_profile.descriptors[0]; const failed = spawnSync(process.execPath, descriptor.argv, { cwd: negative, shell: false, windowsHide: true, timeout: descriptor.timeout_seconds * 1000, maxBuffer: descriptor.max_combined_output_bytes, env: { V0B_WORKSPACE: negative }, encoding: "utf8" });
+	assert.equal(failed.status, 1); assert.match(`${failed.stdout}${failed.stderr}`, /fail 1/);
+	for (const [label, file, mutate] of [
+		["missing-outcome", "outcome.json", null],
+		["invalid-verifier", "verifier.json", (value: any) => { value.status = "invalid"; }],
+	] as const) {
+		const copied = resolve(G2_ROOT, label); cpSync(resolve(PROJECT_ROOT, DATA_ROOT), copied, { recursive: true }); const path = resolve(copied, "workflows", WORKFLOW_ID, "follow-up", file); if (mutate) { const value = readJson<any>(path); mutate(value); writeJson(path, value); } else rmSync(path);
+		const result = await inspectRegisteredFollowUpAdmissionV37({ ...options, dataRoot: rel(copied) }); assert.equal(result.integrity_valid, false, label);
+	}
 });
 
 test("tampered observation, Outcome and cross-workflow package fail closed", async () => {
@@ -127,16 +156,28 @@ test("active-pointer drift at the production pre-request hook prevents Provider 
 	const root = resolve(G2_ROOT, "pointer-drift-seam"); const workspace = resolve(root, "workspace"); mkdirSync(workspace, { recursive: true }); writeFileSync(resolve(workspace, "subject.txt"), "stable\n");
 	const service = new PersistentInteractiveSessionServiceV36({ runtimeRoot: resolve(root, "runtime"), workspaceRoot: workspace, projectId: "v37-g2-project", workspaceId: "v37-g2-drift-workspace", sessionId: "v37-g2-drift-session", title: "drift", sessionPinDigest: sha256("v37-g2-drift-pin") }); await service.create();
 	const models = createModels(); const provider = fauxProvider({ provider: "v37-g2-drift-faux" }); models.setProvider(provider.provider); provider.setResponses([() => fauxAssistantMessage("must not dispatch", { timestamp: 1 })]);
-	await assert.rejects(service.executeBoundedTurn({ sessionId: "v37-g2-drift-session", runId: "v37-g2-drift-run", prompt: "bounded task", taskPolicy: { writable_paths: [], protected_paths: [], command_descriptors: [] }, commandExecutor: async () => { throw new Error("unused"); }, budgetProfile: V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE, models, model: provider.getModel(), systemPrompt: "registered composed prompt", authorityDigest: sha256("v37-g2-drift-authority"), registeredRuntimeObservation: { workflow_id: "v37-g2-drift-workflow", workflow_registration_digest: sha256("v37-g2-drift-workflow-registration"), follow_up_run_id: "v37-g2-drift-run", system_prompt_digest: sha256("registered composed prompt"), frozen_binding_digest: sha256("v37-g2-drift-binding"), follow_up_execution_authority_digest: sha256("v37-g2-drift-authority"), command_profile_digest: sha256("v37-g2-drift-command"), before_first_provider_request: () => { throw new Error("active State pointer drifted before first Provider request"); } } }), /pointer drifted/);
+	const taskPolicy = { writable_paths: [], protected_paths: [], command_descriptors: [] };
+	await assert.rejects(service.executeBoundedTurn({ sessionId: "v37-g2-drift-session", runId: "v37-g2-drift-run", prompt: "bounded task", taskPolicy, commandExecutor: async () => { throw new Error("unused"); }, budgetProfile: V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE, models, model: provider.getModel(), systemPrompt: "registered composed prompt", authorityDigest: sha256("v37-g2-drift-authority"), registeredRuntimeObservation: { workflow_id: "v37-g2-drift-workflow", workflow_registration_digest: sha256("v37-g2-drift-workflow-registration"), follow_up_run_id: "v37-g2-drift-run", system_prompt_digest: sha256("registered composed prompt"), frozen_binding_digest: sha256("v37-g2-drift-binding"), follow_up_execution_authority_digest: sha256("v37-g2-drift-authority"), provider_profile_digest: sha256("v37-g2-drift-provider"), tool_profile_digest: sha256("v37-g2-drift-tool"), command_profile_digest: sha256("v37-g2-drift-command"), budget_profile_digest: sha256("v37-g2-drift-budget"), stop_condition_profile_digest: sha256("v37-g2-drift-stop"), task_policy_input_digest: digestObject(taskPolicy), runtime_budget_input_digest: digestObject(V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE), before_first_provider_request: () => { throw new Error("active State pointer drifted before first Provider request"); } } }), /pointer drifted/);
 	assert.equal(provider.state.callCount, 0); assert.equal(existsSync(resolve(root, "runtime/runs/v37-g2-drift-run/registered-observation.json")), false);
+});
+
+test("registered observation rejects actual task-policy or runtime-budget input mismatch before dispatch", async () => {
+	const root = resolve(G2_ROOT, "profile-input-mismatch"); const workspace = resolve(root, "workspace"); mkdirSync(workspace, { recursive: true });
+	const service = new PersistentInteractiveSessionServiceV36({ runtimeRoot: resolve(root, "runtime"), workspaceRoot: workspace, projectId: "v37-g2-project", workspaceId: "v37-g2-input-workspace", sessionId: "v37-g2-input-session", title: "input mismatch", sessionPinDigest: sha256("v37-g2-input-pin") }); await service.create();
+	const models = createModels(); const provider = fauxProvider({ provider: "v37-g2-input-faux" }); models.setProvider(provider.provider); provider.setResponses([() => fauxAssistantMessage("must not dispatch", { timestamp: 1 })]);
+	const taskPolicy = { writable_paths: [], protected_paths: [], command_descriptors: [] };
+	await assert.rejects(service.executeBoundedTurn({ sessionId: "v37-g2-input-session", runId: "v37-g2-input-run", prompt: "bounded task", taskPolicy, commandExecutor: async () => { throw new Error("unused"); }, budgetProfile: V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE, models, model: provider.getModel(), systemPrompt: "registered composed prompt", authorityDigest: sha256("v37-g2-input-authority"), registeredRuntimeObservation: { workflow_id: "v37-g2-input-workflow", workflow_registration_digest: sha256("v37-g2-input-registration"), follow_up_run_id: "v37-g2-input-run", system_prompt_digest: sha256("registered composed prompt"), frozen_binding_digest: sha256("v37-g2-input-binding"), follow_up_execution_authority_digest: sha256("v37-g2-input-authority"), provider_profile_digest: sha256("v37-g2-input-provider"), tool_profile_digest: sha256("v37-g2-input-tool"), command_profile_digest: sha256("v37-g2-input-command"), budget_profile_digest: sha256("v37-g2-input-budget"), stop_condition_profile_digest: sha256("v37-g2-input-stop"), task_policy_input_digest: sha256("wrong-task-policy"), runtime_budget_input_digest: digestObject(V36G2_FROZEN_BOUNDED_EDIT_BUDGET_PROFILE), before_first_provider_request: () => {} } }), /observation input is invalid/);
+	assert.equal(provider.state.callCount, 0);
 });
 
 test("new canonical adapter reaches unchanged retain decision without direct State supersede", async () => {
 	const canonical = await normalizeRegisteredBoundFollowUpV37(options);
 	assert.equal(canonical.outcome_status, "passed"); assert.equal(canonical.verifier_status, "passed"); assert.equal(canonical.admission_identity.admission_id, admissionId);
-	const assessmentRoot = resolve(G2_ROOT, "assessments"); const promotionRoot = resolve(G2_ROOT, "promotion-marker");
+	const assessmentRoot = resolve(G2_ROOT, "assessments"); const promotionRoot = registeredFollowUpPromotionValidationRootV37(options);
 	const result = await persistStateAssessmentG2({ projectRoot: PROJECT_ROOT, assessmentRoot, admissionRoot: "unused-v37-admission-root", registrationPath: "unused-v37-registration", admissionId, projectId: "v37-g1-project", stateRoot: STATE_ROOT, expectedActive: canonical.bound_active_state_identity, promotionValidationRunRoot: promotionRoot, comparisonRunRoot: null, requestedRollbackTargetDigest: null, immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256, registeredFollowUp: options });
 	assert.equal(result.assessment.assessment_result, "retain"); assert.equal(result.assessment.assessment_reason, "bound_followup_passed"); assert.equal(result.assessment.bound_state.state_digest, canonical.bound_active_state_identity.state_digest);
+	const clone = resolve(G2_ROOT, "state-clone"); cpSync(STATE_ROOT, clone, { recursive: true });
+	await assert.rejects(persistStateAssessmentG2({ projectRoot: PROJECT_ROOT, assessmentRoot: resolve(G2_ROOT, "clone-assessments"), admissionRoot: "unused-v37-admission-root", registrationPath: "unused-v37-registration", admissionId, projectId: "v37-g1-project", stateRoot: clone, expectedActive: canonical.bound_active_state_identity, promotionValidationRunRoot: promotionRoot, comparisonRunRoot: null, requestedRollbackTargetDigest: null, immutableBasePrompt: SYSTEM_PROMPT, immutableBasePromptSha256: SYSTEM_PROMPT_SHA256, registeredFollowUp: options }), /State scope/);
 });
 
 test("ordinary V3.6 cannot become admitted and Schema 2 remains absent", async () => {
@@ -145,14 +186,13 @@ test("ordinary V3.6 cannot become admitted and Schema 2 remains absent", async (
 });
 
 test("disabled registration blocks new actions while accepted follow-up reopens read-only", async () => {
-	const host = resolve(G2_ROOT, "disabled-host"); cpSync(resolve(PROJECT_ROOT, "workbench/src"), resolve(host, "workbench/src"), { recursive: true }); cpSync(resolve(PROJECT_ROOT, "workbench/config/v37"), resolve(host, "workbench/config/v37"), { recursive: true }); cpSync(resolve(PROJECT_ROOT, "fixtures"), resolve(host, "fixtures"), { recursive: true });
-	const workflowModule = await import(`${pathToFileURL(resolve(host, "workbench/src/v37/workflow-registration-v37.ts")).href}?before-disable=${Date.now()}`);
-	const profileModule = await import(`${pathToFileURL(resolve(host, "workbench/src/v37/follow-up-execution-profile-v37.ts")).href}?before-disable=${Date.now()}`);
-	const disabledDataRoot = ".runs/v37/g2-disabled-data"; const disabledWorkflowId = "v37-g2-disabled-workflow";
-	workflowModule.createWorkflowRegistrationV37({ projectRoot: host, dataRoot: disabledDataRoot, caseId: CASE_ID, workflowId: disabledWorkflowId, createdAt: "2026-08-20T05:00:00.000Z" });
-	const acceptedProfile = profileModule.loadRegisteredFollowUpExecutionProfileV37({ projectRoot: host, dataRoot: disabledDataRoot, workflowId: disabledWorkflowId });
-	const registryPath = resolve(host, "workbench/config/v37/registered-cases/registry-v1.json"); const registry = readJson<any>(registryPath); const first = readJson<any>(resolve(host, registry.entries[0].envelope_locations[0])); const disabledBody = { ...first, registration_revision: 2, previous_registration_digest: first.registration_digest, registration_status: "disabled", disabled_at: "2026-08-20T06:00:00.000Z" }; delete disabledBody.registration_digest; const disabled = { ...disabledBody, registration_digest: digestObject(disabledBody) }; const disabledLocation = ".runs/v37/g2-disabled-envelope.json"; writeJson(resolve(host, disabledLocation), disabled); registry.entries[0].envelope_locations.push(disabledLocation); registry.entries[0].envelope_digests.push(disabled.registration_digest); registry.entries[0].current_registration_digest = disabled.registration_digest; delete registry.registry_index_digest; registry.registry_index_digest = digestObject(registry); writeJson(registryPath, registry);
-	assert.throws(() => profileModule.loadRegisteredFollowUpExecutionProfileV37({ projectRoot: host, dataRoot: disabledDataRoot, workflowId: disabledWorkflowId }), /disabled/);
-	const historical = profileModule.loadRegisteredFollowUpExecutionProfileV37({ projectRoot: host, dataRoot: disabledDataRoot, workflowId: disabledWorkflowId, allowHistoricalReadOnly: true });
-	assert.equal(historical.profile.follow_up_execution_profile_digest, acceptedProfile.profile.follow_up_execution_profile_digest); assert.equal(historical.authority.follow_up_execution_authority_digest, acceptedProfile.authority.follow_up_execution_authority_digest);
+	const acceptedProfile = loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID }); const acceptedAdmission = readJson<any>(resolve(PROJECT_ROOT, DATA_ROOT, "workflows", WORKFLOW_ID, "follow-up/admission.json")); const beforeTree = registeredFollowUpTreeDigestV37(options);
+	const registryPath = resolve(PROJECT_ROOT, "workbench/config/v37/registered-cases/registry-v1.json"); const originalRegistryBytes = readFileSync(registryPath, "utf8"); const registry = JSON.parse(originalRegistryBytes) as any; const first = readJson<any>(resolve(PROJECT_ROOT, registry.entries[0].envelope_locations[0])); const disabledBody = { ...first, registration_revision: 2, previous_registration_digest: first.registration_digest, registration_status: "disabled", disabled_at: "2026-08-20T06:00:00.000Z" }; delete disabledBody.registration_digest; const disabled = { ...disabledBody, registration_digest: digestObject(disabledBody) }; const disabledLocation = ".runs/v37/g2-tests/disabled-envelope.json"; writeJson(resolve(PROJECT_ROOT, disabledLocation), disabled); registry.entries[0].envelope_locations.push(disabledLocation); registry.entries[0].envelope_digests.push(disabled.registration_digest); registry.entries[0].current_registration_digest = disabled.registration_digest; delete registry.registry_index_digest; registry.registry_index_digest = digestObject(registry);
+	try {
+		writeJson(registryPath, registry);
+		assert.throws(() => loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID }), /disabled/); assert.throws(() => submitRegisteredFollowUpEvidenceV37(options), /disabled/);
+		const inspected = await inspectRegisteredFollowUpAdmissionV37(options); assert.equal(inspected.integrity_valid, true, inspected.errors.join("; ")); assert.equal(inspected.admission!.admission_id, acceptedAdmission.admission_id); assert.equal(inspected.admission!.admission_digest, acceptedAdmission.admission_digest);
+		const canonical = await normalizeRegisteredBoundFollowUpV37({ ...options, historicalReadOnly: true }); assert.equal(canonical.admission_identity.admission_digest, acceptedAdmission.admission_digest); assert.equal(registeredFollowUpTreeDigestV37(options), beforeTree);
+		const historical = loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID, allowHistoricalReadOnly: true }); assert.equal(historical.profile.follow_up_execution_profile_digest, acceptedProfile.profile.follow_up_execution_profile_digest); assert.equal(historical.authority.follow_up_execution_authority_digest, acceptedProfile.authority.follow_up_execution_authority_digest);
+	} finally { writeFileSync(registryPath, originalRegistryBytes, "utf8"); }
 });
