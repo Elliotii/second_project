@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3a_preparation
-  status: V3_7_G3A_AUTHORITY_ACCEPTED_PROMPT_FREEZE
+  status: V3_7_G3A_CONTROL_BASELINE_READY_FOR_DEDICATED_IMPLEMENTATION
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: authority_extension_accepted_prompt_freeze
+  status: control_baseline_ready_for_dedicated_zero_access_implementation
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -33,7 +33,7 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: authorized_prompt_ready_for_control_baseline
+  status: authorized_ready_for_dedicated_implementation_dispatch
   note: optimized_versioned_Schema_1_two_Case_authority_extension_accepted
 
 final_capstone:
@@ -228,7 +228,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goals_1_2_closed_accepted_goal_3a_authority_accepted_prompt_freeze
+  implementation_status: goals_1_2_closed_accepted_goal_3a_control_baseline_ready
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -364,7 +364,7 @@ next_version:
   goal_2_closeout: docs/reports/V3_7_G2_CLOSEOUT.md
   goal_2_integrated_main_commit: ab74573f6a3b7103b3cb6e8be77a671c0abd4143
   goal_2_integrated_main_tree: 86d5ef236c3e9eb0772a2e18cfe8a0dc0cb0fa15
-  goal_3a_status: authority_extension_accepted_prompt_freeze
+  goal_3a_status: control_baseline_ready_for_dedicated_zero_access_implementation
   goal_3a_implementation_started: false
   goal_3a_correction_budget: 0_of_2_consumed
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
@@ -378,8 +378,11 @@ next_version:
   goal_3a_authority_extension_freeze_commit: 425dc6752c9074dc079fa7b952cb93869080a3df
   goal_3a_authority_extension_freeze_tree: 991ed5027751d09cd2d9ea26807b884e55cb7aea
   goal_3a_implementation_prompt: V3_7_GOAL_3A_IMPLEMENTATION_PROMPT.md
+  goal_3a_prompt_freeze_commit: f5af6130b6f99ecc2a9a23f4146f71c8e82ed8ab
+  goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
+  goal_3a_control_baseline_commit: resolved_by_Main_dispatch
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_authority_freeze
+  goal_3a_long_running_goal_status: active_ready_for_dedicated_implementation
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
@@ -2827,7 +2830,7 @@ next_checkpoint:
   - V3_7_Charter_accepted_at_58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   - V3_7_Goal_1_closed_accepted
   - V3_7_Goal_2_closed_accepted
-  - V3_7_Goal_3A_optimized_authority_accepted_prompt_freeze
+  - V3_7_Goal_3A_Control_Baseline_ready_for_dedicated_zero_access_implementation
   - V3_7_Goal_3B_locked_pending_Goal_3A_acceptance_and_separate_real_freeze
 
 open_user_decisions: []

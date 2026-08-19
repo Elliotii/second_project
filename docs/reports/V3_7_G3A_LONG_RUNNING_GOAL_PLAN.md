@@ -56,9 +56,11 @@ deferred and do not expand tests or product scope.
 ## Current checkpoint
 
 ```yaml
-stage: authority_freeze
+stage: dedicated_implementation_dispatch
 implementation_started: false
 candidate_frozen: false
 audit_started: false
 goal_3b_locked: true
+amendment_freeze_commit: 425dc6752c9074dc079fa7b952cb93869080a3df
+prompt_freeze_commit: f5af6130b6f99ecc2a9a23f4146f71c8e82ed8ab
 ```
