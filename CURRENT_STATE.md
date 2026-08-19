@@ -5,36 +5,36 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_1_independent_reaudit
-  status: V3_7_G1_AUDIT_REMEDIATION_MAIN_REVIEW_PASSED
+  phase: v3_7_goal_2_preimplementation
+  status: V3_7_G1_CLOSED_ACCEPTED_GOAL_2_UNLOCKED
 
-active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
 
 current_goal:
-  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: independent_reaudit_in_progress
+  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  status: preimplementation_prompt_pending
 
 last_executed_goal:
-  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: closed_accepted
-  disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
-  closeout: docs/reports/FINAL_CAPSTONE_G2_CLOSEOUT.md
+  disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  closeout: docs/reports/V3_7_G1_CLOSEOUT.md
 
 last_closed_goal:
-  id: FINAL_CAPSTONE_G3_ONE_REAL_CLOSED_LOOP_PRODUCT_ACCEPTANCE
-  status: closed_incomplete
-  disposition: STOPPED_UNACCEPTED
-  closeout: docs/reports/FINAL_CAPSTONE_G3_INCOMPLETE_CLOSEOUT.md
+  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  status: closed_accepted
+  disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  closeout: docs/reports/V3_7_G1_CLOSEOUT.md
 
 last_completed_goal:
-  id: FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
   status: closed_accepted
-  disposition: PASS_FINAL_CAPSTONE_G2_REGRESSION_GATED_STATE_FEEDBACK
+  disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
 
 next_goal:
-  id: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
-  status: active
-  note: remediation_candidate_frozen_pending_fresh_independent_read_only_reaudit
+  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  status: unlocked_preimplementation
+  note: fresh_dedicated_session_must_freeze_exact_allowlist_and_test_list_before_implementation
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,11 +228,11 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_1_audit_remediation_candidate_frozen
+  implementation_status: goal_1_closed_accepted_goal_2_unlocked
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  active_goal: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -275,7 +275,7 @@ next_version:
   goal_1_audit_finding_2: symbol_omitting_direct_frozen_task_answers_remain_admissible
   goal_1_audit_finding_3: recovery_artifact_subtree_junction_accepted_on_reopen
   goal_1_hard_stop: docs/reports/V3_7_G1_AUDIT_HARD_STOP.md
-  goal_1_acceptance_status: not_accepted
+  goal_1_initial_audit_acceptance_status: not_accepted
   goal_1_audit_remediation_amendment: V3_7_G1_AUDIT_REMEDIATION_AMENDMENT.md
   goal_1_audit_remediation_amendment_status: accepted_by_user
   goal_1_audit_remediation_prompt: V3_7_G1_AUDIT_REMEDIATION_IMPLEMENTATION_PROMPT.md
@@ -289,8 +289,15 @@ next_version:
   goal_1_reaudit_candidate_commit: 7261226904a1c7c1414b0aed7927fc5ebd92c86a
   goal_1_reaudit_candidate_tree: bcb6dfc77bef4b9330b10a4ab6dc3b13de095180
   goal_1_reaudit_session: /root/v37_g1_remediation_reaudit
-  goal_1_reaudit_status: in_progress_read_only
-  goal_2_status: locked_pending_goal_1_acceptance
+  goal_1_reaudit_status: completed_pass
+  goal_1_reaudit_report: docs/reports/V3_7_G1_AUDIT_REMEDIATION_REAUDIT.md
+  goal_1_reaudit_disposition: PASS_V3_7_G1_AUDIT_REMEDIATION_REAUDIT
+  goal_1_acceptance_status: closed_accepted
+  goal_1_disposition: PASS_V3_7_G1_REGISTERED_RECOVERY_EVIDENCE_BRIDGE
+  goal_1_closeout: docs/reports/V3_7_G1_CLOSEOUT.md
+  goal_1_integrated_main_commit: ad8b02f497c8468e30bce50650ed1922a401088f
+  goal_1_integrated_main_tree: e5bf8959f3cb5f283c47721b12f6d1475dffc95a
+  goal_2_status: unlocked_preimplementation_prompt_pending
   goal_3a_status: locked_pending_goals_1_2_acceptance
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
