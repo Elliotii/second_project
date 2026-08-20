@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_EXECUTION_BASELINE_FROZEN_REAL_ACCESS_LOCKED
+  status: V3_7_G3B_REAL_EXECUTION_AUTHORIZED_PENDING_DISPATCH
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_explicit_real_access_authorization
-  note: execution_baseline_and_prompt_frozen_no_real_workflow_started
+  status: authorized_pending_fresh_no_source_edit_execution_session
+  note: one_shot_real_authority_frozen_no_dispatch_yet
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -630,11 +630,13 @@ next_version:
   goal_3b_execution_baseline_commit: cad4db45421b239b61cb7b3b3052bc8d4167cd4b
   goal_3b_execution_baseline_tree: 6b80cb326969c4255ea2c0616ff20e2ca5e150dc
   goal_3b_execution_baseline_freeze: docs/reports/V3_7_G3B_EXECUTION_BASELINE_FREEZE.md
-  goal_3b_execution_session_status: not_started_real_access_locked
-  goal_3b_status: locked_execution_baseline_frozen_pending_explicit_real_access_authorization
+  goal_3b_real_execution_authorization: docs/reports/V3_7_G3B_REAL_EXECUTION_AUTHORIZATION.md
+  goal_3b_real_execution_owner: /root/v37_g3b_real_execution
+  goal_3b_execution_session_status: authorized_pending_dispatch
+  goal_3b_status: authorized_one_shot_real_execution_pending_dispatch
   goal_3b_configuration_frozen: true
   goal_3b_execution_prompt_frozen: true
-  goal_3b_real_access_authorized: false
+  goal_3b_real_access_authorized: true
   goal_3b_provider_dispatches: 0
   goal_3b_credential_reads: 0
 
