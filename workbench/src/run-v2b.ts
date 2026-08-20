@@ -132,7 +132,7 @@ function manifestFor(options: {
 	const selectedCase = V2B_FROZEN_CASES.find((candidate) => candidate.case_id === options.caseId);
 	if (!selectedCase) throw new Error("V2-B frozen Case is unavailable");
 	const body = {
-		schema_version: "v2b-run-manifest-v2" as const,
+		schema_version: "v2b-run-manifest-v3" as const,
 		run_id: options.runId,
 		case: structuredClone(selectedCase),
 		stage: options.stage,
@@ -314,7 +314,7 @@ export function buildExecutionManifestV2B(options: {
 		planned_run_id: `${options.sequenceId}-${entry.case_id}-run`,
 	})) as PlannedCaseV2B[];
 	const body = {
-		schema_version: "v2b-execution-manifest-v1" as const,
+		schema_version: "v2b-execution-manifest-v2" as const,
 		sequence_id: options.sequenceId,
 		stage: options.stage ?? "stage2_real",
 		execution_baseline_commit: options.executionBaselineCommit,
@@ -357,7 +357,7 @@ export function preflightExecutionManifestV2B(options: {
 	const { manifest_id: manifestId, ...body } = manifest;
 	const expectedCases = V2B_FROZEN_CASES.map((entry, index) => ({ ...entry, ordinal: index + 1, planned_run_id: `${manifest.sequence_id}-${entry.case_id}-run` }));
 	if (
-		manifest.schema_version !== "v2b-execution-manifest-v1" || digestObject(body) !== manifestId ||
+		manifest.schema_version !== "v2b-execution-manifest-v2" || digestObject(body) !== manifestId ||
 		!["stage2_deterministic_proof", "stage2_real"].includes(manifest.stage) || manifest.pi_commit !== V2B_PINNED_PI_COMMIT ||
 		manifest.provider_profile_id !== V2B_MODEL_PROFILE_ID || manifest.credential_profile_name !== V2B_CREDENTIAL_PROFILE ||
 		manifest.skill_id !== V2B_SKILL_ID || manifest.tool_profile_id !== V2B_TOOL_PROFILE_ID || manifest.policy_id !== V2B_POLICY_ID ||

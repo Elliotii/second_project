@@ -119,7 +119,7 @@ export interface ReconciledRegisteredCommandTerminalV36 extends RegisteredComman
  */
 export interface ProviderRequestBudgetTerminalV36 {
 	schema_version: 1 | 2;
-	budget_profile_id?: "v36_daily_bounded_edit_v2";
+	budget_profile_id?: "v36_daily_bounded_edit_v2" | "v36_64_request_bounded_edit_v3";
 	terminal_kind: "v36_pre_dispatch_provider_request_budget_terminal";
 	trajectory_outcome: "pre_dispatch_budget_terminal";
 	terminal_reason: "provider_request_budget_exhausted";
@@ -165,7 +165,7 @@ export interface ProviderRequestBudgetTerminalV36 {
  */
 export interface ReconciledFiniteBudgetTerminalV36 {
 	schema_version: 3 | 4;
-	budget_profile_id: "v36g2_frozen_acceptance_v1" | "v36_daily_bounded_edit_v2";
+	budget_profile_id: "v36g2_frozen_acceptance_v1" | "v36_daily_bounded_edit_v2" | "v36_64_request_bounded_edit_v3";
 	terminal_kind: "v36_reconciled_finite_budget_terminal";
 	trajectory_outcome: "finite_budget_terminal";
 	terminal_reason: "accounted_usage_budget_exhausted" | "tool_call_budget_exhausted" | "wall_time_budget_exhausted";

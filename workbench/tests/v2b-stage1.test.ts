@@ -4,8 +4,9 @@ import { resolve } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import test from "node:test";
 import type { ArtifactRefV0B } from "../src/contracts/v0b-types.ts";
-import { V2B_ATTEMPT_CAPS, V2B_GROUP_CAPS, V2B_SEQUENCE_CAPS, type AttemptRuntimeEvidenceV2B, type RunTerminalV2B, type UsageV2B } from "../src/contracts/v2b-types.ts";
-import { sha256, stableJson } from "../src/hash.ts";
+import { V2A_LEGACY_ATTEMPT_BUDGET_CAPS, V2A_LEGACY_GROUP_BUDGET_CAPS, type RunManifestV2A, type RunTerminalV2A } from "../src/contracts/v2-types.ts";
+import { V2B_ATTEMPT_CAPS, V2B_GROUP_CAPS, V2B_LEGACY_ATTEMPT_CAPS, V2B_LEGACY_GROUP_CAPS, V2B_LEGACY_SEQUENCE_CAPS, V2B_SEQUENCE_CAPS, type AttemptRuntimeEvidenceV2B, type RunManifestV2B, type RunTerminalV2B, type UsageV2B } from "../src/contracts/v2b-types.ts";
+import { digestObject, sha256, stableJson } from "../src/hash.ts";
 import { inspectSequenceV2B, inspectStage1RunV2B, inspectionFingerprintV2B } from "../src/inspect-v2b.ts";
 import {
 	createRealExecutionPortV2B,
@@ -21,18 +22,18 @@ import { PROJECT_ROOT } from "./helpers.ts";
 
 const ZERO = Object.freeze({ credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
 
-test("V2-B Provider request caps are aligned at 16 per Attempt", () => {
+test("V2-B Provider request caps are aligned at 64 per Attempt", () => {
 	assert.deepEqual(
 		[V2B_ATTEMPT_CAPS.provider_requests, V2B_ATTEMPT_CAPS.tool_calls, V2B_ATTEMPT_CAPS.tokens, V2B_ATTEMPT_CAPS.active_execution_time_ms],
-		[16, 24, 131_072, 900_000],
+		[64, 96, 524_288, 3_600_000],
 	);
 	assert.deepEqual(
 		[V2B_GROUP_CAPS.provider_requests, V2B_GROUP_CAPS.tool_calls, V2B_GROUP_CAPS.tokens, V2B_GROUP_CAPS.active_execution_time_ms],
-		[48, 72, 393_216, 2_700_000],
+		[192, 288, 1_572_864, 10_800_000],
 	);
 	assert.deepEqual(
 		[V2B_SEQUENCE_CAPS.provider_requests, V2B_SEQUENCE_CAPS.tool_calls, V2B_SEQUENCE_CAPS.tokens, V2B_SEQUENCE_CAPS.active_execution_time_ms],
-		[112, 168, 917_504, 6_300_000],
+		[448, 672, 3_670_016, 25_200_000],
 	);
 });
 
@@ -89,6 +90,56 @@ test("V2-B Gate B/G initial pass uses the real-shaped port with no branch and ze
 	for (const path of ["substrate/seed", "substrate/candidates", "substrate/selection.json"]) {
 		assert.equal(readFileSync(resolve(root, "terminal.json"), "utf8").includes(path), false);
 	}
+});
+
+test("legacy V2A/V2B Manifest versions retain their frozen 8-request budget semantics", async () => {
+	const root = await makeRun("legacy-budget-reopen", "negative_initial_pass");
+	const substrateRoot = resolve(root, "substrate");
+	const substrateManifestPath = resolve(substrateRoot, "config/manifest.json");
+	const substrateManifest = readJson<RunManifestV2A>(substrateManifestPath);
+	substrateManifest.schema_version = "v2a-run-manifest-v2";
+	substrateManifest.per_attempt_budget = structuredClone(V2A_LEGACY_ATTEMPT_BUDGET_CAPS);
+	substrateManifest.per_group_budget = structuredClone(V2A_LEGACY_GROUP_BUDGET_CAPS);
+	const { manifest_id: _substrateManifestId, ...substrateBody } = substrateManifest;
+	substrateManifest.manifest_id = digestObject(substrateBody);
+	writeJson(substrateManifestPath, substrateManifest);
+
+	const journalPath = resolve(substrateRoot, "journal.jsonl");
+	const journal = readFileSync(journalPath, "utf8").trim().split("\n").map((line) => JSON.parse(line) as { type: string; data?: { manifest_ref?: ArtifactRefV0B } });
+	const runStarted = journal.find((event) => event.type === "run_started")!;
+	runStarted.data!.manifest_ref = refreshedRef(runStarted.data!.manifest_ref!, substrateManifestPath);
+	writeFileSync(journalPath, `${journal.map(stableJson).join("\n")}\n`, "utf8");
+
+	const substrateTerminalPath = resolve(substrateRoot, "terminal.json");
+	const substrateTerminal = readJson<RunTerminalV2A>(substrateTerminalPath);
+	substrateTerminal.manifest_id = substrateManifest.manifest_id;
+	writeJson(substrateTerminalPath, substrateTerminal);
+
+	const manifestPath = resolve(root, "config/manifest.json");
+	const manifest = readJson<RunManifestV2B>(manifestPath);
+	manifest.schema_version = "v2b-run-manifest-v2";
+	manifest.budgets = { attempt: structuredClone(V2B_LEGACY_ATTEMPT_CAPS), group: structuredClone(V2B_LEGACY_GROUP_CAPS), sequence: structuredClone(V2B_LEGACY_SEQUENCE_CAPS) };
+	const { manifest_id: _manifestId, ...body } = manifest;
+	manifest.manifest_id = digestObject(body);
+	writeJson(manifestPath, manifest);
+
+	const terminalPath = resolve(root, "terminal.json");
+	const terminal = readJson<RunTerminalV2B>(terminalPath);
+	terminal.manifest_id = manifest.manifest_id;
+	terminal.substrate_terminal_ref = refreshedRef(terminal.substrate_terminal_ref, substrateTerminalPath);
+	writeJson(terminalPath, terminal);
+	const accepted = inspectStage1RunV2B({ projectRoot: PROJECT_ROOT, runRoot: root });
+	assert.equal(accepted.integrity_valid, true, accepted.errors.join("; "));
+
+	manifest.budgets = { attempt: structuredClone(V2B_ATTEMPT_CAPS), group: structuredClone(V2B_GROUP_CAPS), sequence: structuredClone(V2B_SEQUENCE_CAPS) };
+	const { manifest_id: _mismatchedManifestId, ...mismatchedBody } = manifest;
+	manifest.manifest_id = digestObject(mismatchedBody);
+	writeJson(manifestPath, manifest);
+	terminal.manifest_id = manifest.manifest_id;
+	writeJson(terminalPath, terminal);
+	const rejected = inspectStage1RunV2B({ projectRoot: PROJECT_ROOT, runRoot: root });
+	assert.equal(rejected.integrity_valid, false);
+	assert.match(rejected.errors.join("; "), /Manifest frozen contract mismatch/);
 });
 
 test("V2-B Gates B-D exercise both winners, selector none, budget stop, and conservative usage failure", async () => {

@@ -11,10 +11,19 @@ export const V2B_POLICY_ID = "v2b_two_path_real_recovery" as const;
 export const V2B_CREDENTIAL_PROFILE = "DEEPSEEK_API_KEY" as const;
 
 export const V2B_ATTEMPT_CAPS = Object.freeze({
-	provider_requests: 16,
-	tool_calls: 24,
-	tokens: 131_072,
-	active_execution_time_ms: 900_000,
+	provider_requests: 64,
+	tool_calls: 96,
+	tokens: 524_288,
+	active_execution_time_ms: 3_600_000,
+	verifier_runs: 1,
+	real_cost_usd: 0.20,
+} as const);
+
+export const V2B_LEGACY_ATTEMPT_CAPS = Object.freeze({
+	provider_requests: 8,
+	tool_calls: 12,
+	tokens: 65_536,
+	active_execution_time_ms: 300_000,
 	verifier_runs: 1,
 	real_cost_usd: 0.20,
 } as const);
@@ -22,24 +31,50 @@ export const V2B_ATTEMPT_CAPS = Object.freeze({
 export const V2B_GROUP_CAPS = Object.freeze({
 	attempts_exact_on_valid_failure: 3,
 	candidate_paths_exact: 2,
-	provider_requests: 48,
-	tool_calls: 72,
-	tokens: 393_216,
-	active_execution_time_ms: 2_700_000,
+	provider_requests: 192,
+	tool_calls: 288,
+	tokens: 1_572_864,
+	active_execution_time_ms: 10_800_000,
+	verifier_runs: 3,
+	real_cost_usd: 0.60,
+} as const);
+
+export const V2B_LEGACY_GROUP_CAPS = Object.freeze({
+	attempts_exact_on_valid_failure: 3,
+	candidate_paths_exact: 2,
+	provider_requests: 24,
+	tool_calls: 36,
+	tokens: 196_608,
+	active_execution_time_ms: 900_000,
 	verifier_runs: 3,
 	real_cost_usd: 0.60,
 } as const);
 
 export const V2B_SEQUENCE_CAPS = Object.freeze({
 	started_attempts: 7,
-	provider_requests: 112,
-	tool_calls: 168,
-	tokens: 917_504,
-	active_execution_time_ms: 6_300_000,
+	provider_requests: 448,
+	tool_calls: 672,
+	tokens: 3_670_016,
+	active_execution_time_ms: 25_200_000,
 	verifier_runs: 7,
 	credential_reads: 3,
 	real_cost_usd: 1.40,
 } as const);
+
+export const V2B_LEGACY_SEQUENCE_CAPS = Object.freeze({
+	started_attempts: 7,
+	provider_requests: 56,
+	tool_calls: 84,
+	tokens: 458_752,
+	active_execution_time_ms: 2_100_000,
+	verifier_runs: 7,
+	credential_reads: 3,
+	real_cost_usd: 1.40,
+} as const);
+
+export type AttemptCapsV2B = typeof V2B_ATTEMPT_CAPS | typeof V2B_LEGACY_ATTEMPT_CAPS;
+export type GroupCapsV2B = typeof V2B_GROUP_CAPS | typeof V2B_LEGACY_GROUP_CAPS;
+export type SequenceCapsV2B = typeof V2B_SEQUENCE_CAPS | typeof V2B_LEGACY_SEQUENCE_CAPS;
 
 export type CaseIdV2B = "primary_positive" | "contingency_positive" | "negative";
 export type ExpectedBehaviorV2B = "valid_initial_failure_then_two_candidates" | "valid_initial_pass_no_branch";
@@ -158,7 +193,7 @@ export interface AttemptRuntimeEvidenceV2B {
 }
 
 export interface RunManifestV2B {
-	schema_version: "v2b-run-manifest-v2";
+	schema_version: "v2b-run-manifest-v2" | "v2b-run-manifest-v3";
 	manifest_id: string;
 	run_id: string;
 	case: CaseDefinitionV2B;
@@ -178,9 +213,9 @@ export interface RunManifestV2B {
 	execution_baseline_tree: string | null;
 	all_cases: readonly CaseDefinitionV2B[];
 	budgets: {
-		attempt: typeof V2B_ATTEMPT_CAPS;
-		group: typeof V2B_GROUP_CAPS;
-		sequence: typeof V2B_SEQUENCE_CAPS;
+		attempt: AttemptCapsV2B;
+		group: GroupCapsV2B;
+		sequence: SequenceCapsV2B;
 	};
 	real_execution_authorized: boolean;
 	deterministic_stub_required: boolean;
@@ -221,7 +256,7 @@ export interface PlannedCaseV2B extends CaseDefinitionV2B {
 }
 
 export interface ExecutionManifestV2B {
-	schema_version: "v2b-execution-manifest-v1";
+	schema_version: "v2b-execution-manifest-v1" | "v2b-execution-manifest-v2";
 	manifest_id: string;
 	sequence_id: string;
 	stage: "stage2_deterministic_proof" | "stage2_real";
@@ -237,9 +272,9 @@ export interface ExecutionManifestV2B {
 	workbench_source_inventory: unknown[];
 	planned_cases: readonly PlannedCaseV2B[];
 	budgets: {
-		attempt: typeof V2B_ATTEMPT_CAPS;
-		group: typeof V2B_GROUP_CAPS;
-		sequence: typeof V2B_SEQUENCE_CAPS;
+		attempt: AttemptCapsV2B;
+		group: GroupCapsV2B;
+		sequence: SequenceCapsV2B;
 	};
 	real_execution_authorized: boolean;
 	retry: false;

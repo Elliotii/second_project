@@ -4,6 +4,8 @@ import type { ArtifactRefV0B, VerifierResultV0B } from "./contracts/v0b-types.ts
 import {
 	V2A_ATTEMPT_BUDGET_CAPS,
 	V2A_GROUP_BUDGET_CAPS,
+	V2A_LEGACY_ATTEMPT_BUDGET_CAPS,
+	V2A_LEGACY_GROUP_BUDGET_CAPS,
 	V2A_MODEL_ID,
 	V2A_PINNED_PI_COMMIT,
 	V2A_POLICY_ID,
@@ -22,6 +24,8 @@ import {
 	type InspectResultV2A,
 	type RecoverySeedV2A,
 	type RunManifestV2A,
+	type RunAttemptBudgetCapsV2A,
+	type RunGroupBudgetCapsV2A,
 	type RunTerminalV2A,
 	type SelectionDecisionV2A,
 	type SourceInventoryV2A,
@@ -33,6 +37,12 @@ import { digestObject, fileSha256, sha256, stableJson, treeDigest, treeInventory
 import { SYSTEM_PROMPT } from "./prompts/base.ts";
 import { selectCandidateV2A } from "./recovery/selector-v2.ts";
 import { expectedSkillIdentityV1 } from "./skill/runtime-v1.ts";
+
+function expectedBudgetsV2A(schemaVersion: RunManifestV2A["schema_version"]): { attempt: RunAttemptBudgetCapsV2A; group: RunGroupBudgetCapsV2A } | null {
+	if (schemaVersion === "v2a-run-manifest-v2") return { attempt: V2A_LEGACY_ATTEMPT_BUDGET_CAPS, group: V2A_LEGACY_GROUP_BUDGET_CAPS };
+	if (schemaVersion === "v2a-run-manifest-v3") return { attempt: V2A_ATTEMPT_BUDGET_CAPS, group: V2A_GROUP_BUDGET_CAPS };
+	return null;
+}
 
 const FORBIDDEN_SECRET_TEXT = /(?:(?:bearer|authorization)\s*[:=]?\s*[A-Za-z0-9._-]{8,}|(?:api[_-]?key|credential)\s*[:=]\s*[A-Za-z0-9._-]{8,})/i;
 const SENSITIVE_JSON_KEY = new Set(["authorization", "proxyauthorization", "apikey", "credential", "credentials", "secret", "accesstoken", "refreshtoken", "idtoken", "reasoningcontent", "thinking", "thinkingsignature", "thoughtsignature", "signature"]);
@@ -282,17 +292,18 @@ function validateManifest(
 	expectedExecutionPortKind: "internal_deterministic" | "injected",
 ): void {
 	const { manifest_id: declaredManifestId, ...manifestBody } = manifest;
+	const expectedBudgets = expectedBudgetsV2A(manifest.schema_version);
 	if (digestObject(manifestBody) !== declaredManifestId || terminal.manifest_id !== declaredManifestId) errors.push("Manifest identity mismatch");
 	if (
-		manifest.schema_version !== "v2a-run-manifest-v2" ||
+		!expectedBudgets ||
 		manifest.task_id !== expectedTaskId || manifest.policy_id !== V2A_POLICY_ID || manifest.model_id !== V2A_MODEL_ID ||
 		manifest.thinking_level !== "off" || manifest.tool_profile_id !== V2A_TOOL_PROFILE_ID || manifest.skill_id !== V2A_SKILL_ID ||
 		manifest.pi_commit !== V2A_PINNED_PI_COMMIT ||
 		manifest.workbench_revision !== V2A_WORKBENCH_REVISION || manifest.workbench_source_scope !== V2A_WORKBENCH_SOURCE_SCOPE ||
 		manifest.real_execution_authorized !== expectedRealExecutionAuthorized || manifest.execution_port_kind !== expectedExecutionPortKind || manifest.recovery_candidate_count_on_valid_failure !== 2 ||
 		stableJson(manifest.strategy_ids) !== stableJson(V2A_STRATEGY_ORDER) ||
-		stableJson(manifest.per_attempt_budget) !== stableJson(V2A_ATTEMPT_BUDGET_CAPS) ||
-		stableJson(manifest.per_group_budget) !== stableJson(V2A_GROUP_BUDGET_CAPS)
+		stableJson(manifest.per_attempt_budget) !== stableJson(expectedBudgets.attempt) ||
+		stableJson(manifest.per_group_budget) !== stableJson(expectedBudgets.group)
 	) {
 		errors.push("Manifest frozen constants mismatch");
 	}
@@ -446,8 +457,9 @@ function deriveReservationLedgerV2(
 	reservations: readonly ProviderReservationEvidenceV2[],
 	responses: readonly RawProviderResponseUsageV2[],
 	attemptId: string,
+	attemptCaps: RunAttemptBudgetCapsV2A,
 ): { priorUsageKnown: boolean; reservationsReconciled: boolean; tokens: number; cost: number } {
-	const priorUsageKnown = reservations.length === responses.length && reservations.length === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max && reservations.every((reservation) =>
+	const priorUsageKnown = reservations.length === responses.length && reservations.length === attemptCaps.faux_provider_dispatches_max && reservations.every((reservation) =>
 		reservation.phase === "known_usage_committed" && typeof reservation.actual_tokens === "number" && Number.isFinite(reservation.actual_tokens) && reservation.actual_tokens >= 0 &&
 		typeof reservation.actual_cost_usd === "number" && Number.isFinite(reservation.actual_cost_usd) && reservation.actual_cost_usd >= 0,
 	);
@@ -629,20 +641,20 @@ function protectedWorkspaceValid(runRoot: string, suffix: "a" | "b", protectedPa
 	}
 }
 
-function terminalReasonFromRaw(usage: RawUsageV2A): CandidatePathV2A["terminal_reason"] {
+function terminalReasonFromRaw(usage: RawUsageV2A, attemptCaps: RunAttemptBudgetCapsV2A): CandidatePathV2A["terminal_reason"] {
 	if (usage.settled) return "settled";
-	if (usage.providerDispatches >= V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max || usage.toolCalls >= V2A_ATTEMPT_BUDGET_CAPS.tool_calls_max) return "budget_stopped";
+	if (usage.providerDispatches >= attemptCaps.faux_provider_dispatches_max || usage.toolCalls >= attemptCaps.tool_calls_max) return "budget_stopped";
 	return "runtime_invalid";
 }
 
-function compareCandidateSummary(candidate: CandidatePathV2A, derived: CandidatePathV2A, errors: string[]): void {
+function compareCandidateSummary(candidate: CandidatePathV2A, derived: CandidatePathV2A, errors: string[], attemptCaps: RunAttemptBudgetCapsV2A): void {
 	for (const key of [
 		"settled", "agent_completion", "quiescent_budget_terminal", "terminal_reason", "verifier_status", "evidence_valid", "budget_within_limits", "allowed_semantic_diff_size",
 		"parent_history_entry_count", "initial_workspace_digest", "final_workspace_digest",
 	] as const) {
 		if (candidate[key] !== derived[key]) errors.push(`${candidate.candidate_path_id}: derived ${key} mismatch`);
 	}
-	if (stableJson(candidate.budget_caps) !== stableJson(V2A_ATTEMPT_BUDGET_CAPS)) errors.push(`${candidate.candidate_path_id}: frozen Candidate budget caps mismatch`);
+	if (stableJson(candidate.budget_caps) !== stableJson(attemptCaps)) errors.push(`${candidate.candidate_path_id}: frozen Candidate budget caps mismatch`);
 	if (stableJson(candidate.budget_usage) !== stableJson(derived.budget_usage)) errors.push(`${candidate.candidate_path_id}: raw-derived budget usage mismatch`);
 	if (stableJson(candidate.hard_gates) !== stableJson(derived.hard_gates)) errors.push(`${candidate.candidate_path_id}: independently derived Hard Gates mismatch`);
 }
@@ -658,9 +670,10 @@ function inspectCandidate(options: {
 	protectedPaths: readonly string[];
 	writablePaths: readonly string[];
 	seedSnapshot: ValidatedSnapshotV2A;
+	attemptCaps: RunAttemptBudgetCapsV2A;
 	errors: string[];
 }): { derived: CandidatePathV2A; initial: ValidatedSnapshotV2A; sessionId: string | null } {
-	const { runRoot, manifest, seed, candidate, suffix, parentSession, journal, protectedPaths, writablePaths, seedSnapshot, errors } = options;
+	const { runRoot, manifest, seed, candidate, suffix, parentSession, journal, protectedPaths, writablePaths, seedSnapshot, attemptCaps, errors } = options;
 	const expectedStrategy = suffix === "a" ? V2A_STRATEGY_ORDER[0] : V2A_STRATEGY_ORDER[1];
 	const candidateStartErrors = errors.length;
 	if (
@@ -738,7 +751,7 @@ function inspectCandidate(options: {
 	}
 	const attemptEntries = before && finalSession ? finalSession.entries.slice(before.entries.length) : [];
 	const usage = rawUsage(attemptEntries);
-	const terminalReason = terminalReasonFromRaw(usage);
+	const terminalReason = terminalReasonFromRaw(usage, attemptCaps);
 	const verifier = validateVerifier(runRoot, manifest, candidate.verifier_result_ref, candidate.attempt_id, `candidates/${suffix}`, errors);
 	const protectedValid = protectedWorkspaceValid(runRoot, suffix, protectedPaths, errors);
 	const startEvent = eventOf(journal, "candidate_started", candidate.candidate_path_id);
@@ -774,7 +787,7 @@ function inspectCandidate(options: {
 			const checkpointAttemptEntries = checkpointSession && before ? checkpointSession.entries.slice(before.entries.length) : null;
 			const checkpointUsage = checkpointAttemptEntries ? rawUsage(checkpointAttemptEntries) : null;
 			const rawResponses = checkpointAttemptEntries ? rawProviderResponseUsageV2(checkpointAttemptEntries, candidate.candidate_path_id, errors) : null;
-			const ledgerDerived = reservationLedger && rawResponses ? deriveReservationLedgerV2(reservationLedger.reservations, rawResponses, candidate.attempt_id) : { priorUsageKnown: false, reservationsReconciled: false, tokens: 0, cost: 0 };
+			const ledgerDerived = reservationLedger && rawResponses ? deriveReservationLedgerV2(reservationLedger.reservations, rawResponses, candidate.attempt_id, attemptCaps) : { priorUsageKnown: false, reservationsReconciled: false, tokens: 0, cost: 0 };
 			const observation = checkpoint.runtime_observation;
 			const checkpointIndex = checkpointEvent ? journal.indexOf(checkpointEvent) : -1;
 			const verifierIndex = verifierEvent ? journal.indexOf(verifierEvent) : -1;
@@ -787,7 +800,7 @@ function inspectCandidate(options: {
 				observation.pending_provider_reservation === false && observation.pending_tool_calls === 0 &&
 				ledgerDerived.priorUsageKnown && ledgerDerived.reservationsReconciled &&
 				observation.prior_usage_known === ledgerDerived.priorUsageKnown && observation.reservations_reconciled === ledgerDerived.reservationsReconciled &&
-				checkpoint.raw_provider_dispatches === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max &&
+				checkpoint.raw_provider_dispatches === attemptCaps.faux_provider_dispatches_max &&
 				checkpointSession !== null && finalSession !== null && checkpointSession.rawBytes.equals(finalSession.rawBytes) &&
 				checkpoint.session_id === checkpointSession.header.id && checkpoint.session_entry_count === checkpointSession.entries.length &&
 				checkpointWorkspace?.valid === true && checkpoint.workspace_digest === checkpointWorkspace.snapshot?.digest && checkpoint.workspace_digest === final.snapshot?.digest &&
@@ -808,8 +821,8 @@ function inspectCandidate(options: {
 	}
 	const internalDeterministicBudgetTerminal = manifest.execution_port_kind === "internal_deterministic" && terminalReason === "budget_stopped" && candidate.pre_verifier_checkpoint_ref === null;
 	const budgetValid =
-		usage.providerDispatches <= V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max &&
-		usage.toolCalls <= V2A_ATTEMPT_BUDGET_CAPS.tool_calls_max &&
+		usage.providerDispatches <= attemptCaps.faux_provider_dispatches_max &&
+		usage.toolCalls <= attemptCaps.tool_calls_max &&
 		(terminalReason !== "budget_stopped" || quiescentBudgetTerminal);
 	if (
 		!startEvent || !frozenEvent || !terminalEvent ||
@@ -855,13 +868,13 @@ function inspectCandidate(options: {
 			active_execution_time_ms: usage.activeExecutionTimeMs,
 			real_cost_usd: 0,
 		},
-		budget_caps: structuredClone(V2A_ATTEMPT_BUDGET_CAPS),
+		budget_caps: structuredClone(attemptCaps),
 		budget_within_limits: budgetValid,
 		terminal_reason: terminalReason,
 		allowed_semantic_diff_size: changedSemanticBytes(resolve(runRoot, "seed/workspace"), workspaceRoot, writablePaths),
 		hard_gates: hardGates,
 	};
-	compareCandidateSummary(candidate, derived, errors);
+	compareCandidateSummary(candidate, derived, errors, attemptCaps);
 	return { derived, initial, sessionId: before && typeof before.header.id === "string" ? before.header.id : null };
 }
 
@@ -881,6 +894,9 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 	const terminal = safeReadJson<RunTerminalV2A>(options.runRoot, "terminal.json", errors);
 	const manifest = safeReadJson<RunManifestV2A>(options.runRoot, "config/manifest.json", errors);
 	if (!terminal || !manifest) return result(terminal, null, [], null);
+	const budgetProfile = expectedBudgetsV2A(manifest.schema_version);
+	const attemptCaps = budgetProfile?.attempt ?? V2A_ATTEMPT_BUDGET_CAPS;
+	const groupCaps = budgetProfile?.group ?? V2A_GROUP_BUDGET_CAPS;
 	if (terminal.schema_version !== "v2a-run-terminal-v2" || terminal.run_id !== manifest.run_id) errors.push("Run terminal/Manifest identity mismatch");
 	if (stableJson(terminal.real_call_counters) !== stableJson(options.expectedRealCallCounters ?? { credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 })) errors.push("real-access counters mismatch");
 	validateManifest(options.projectRoot, options.runRoot, terminal, manifest, errors, options.expectedTaskId ?? V2A_TASK_ID, options.expectedRealExecutionAuthorized ?? false, options.expectedExecutionPortKind ?? "internal_deterministic");
@@ -899,10 +915,10 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 	const primaryVerifier = validateVerifier(options.runRoot, manifest, terminal.primary_verifier_result_ref, terminal.primary_attempt_id, "primary", errors);
 	const primarySettledEvent = eventOf(journal, "primary_settled");
 	const primaryVerifierEvent = eventOf(journal, "primary_verifier_completed");
-	const primaryQuiescentBudgetTerminal = terminal.primary_agent_completion === "pre_dispatch_budget_terminal" && !primaryUsage.settled && primaryUsage.providerDispatches === V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max;
+	const primaryQuiescentBudgetTerminal = terminal.primary_agent_completion === "pre_dispatch_budget_terminal" && !primaryUsage.settled && primaryUsage.providerDispatches === attemptCaps.faux_provider_dispatches_max;
 	if (
-		!primarySession || (!primaryUsage.settled && !primaryQuiescentBudgetTerminal) || primaryUsage.providerDispatches > V2A_ATTEMPT_BUDGET_CAPS.faux_provider_dispatches_max ||
-		primaryUsage.toolCalls > V2A_ATTEMPT_BUDGET_CAPS.tool_calls_max ||
+		!primarySession || (!primaryUsage.settled && !primaryQuiescentBudgetTerminal) || primaryUsage.providerDispatches > attemptCaps.faux_provider_dispatches_max ||
+		primaryUsage.toolCalls > attemptCaps.tool_calls_max ||
 		primarySettledEvent?.data?.provider_dispatches !== primaryUsage.providerDispatches || primarySettledEvent?.data?.tool_calls !== primaryUsage.toolCalls ||
 		primarySettledEvent?.data?.agent_completion !== terminal.primary_agent_completion ||
 		!sameRef(primarySettledEvent?.data?.session_ref, terminal.primary_session_ref) ||
@@ -1029,7 +1045,7 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 			policy_id: V2A_POLICY_ID,
 			pi_commit: seed.pi_commit,
 			workbench_source_sha256: seed.workbench_digest,
-			budget: V2A_ATTEMPT_BUDGET_CAPS,
+			budget: attemptCaps,
 		});
 	} catch (error) {
 		errors.push(`Recovery prompt/common Artifact derivation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -1039,8 +1055,8 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 		errors.push("parent Session is unavailable");
 		return result(terminal, seed, candidates, selection);
 	}
-	const inspectedA = inspectCandidate({ runRoot: options.runRoot, manifest, seed, candidate: candidates[0]!, suffix: "a", parentSession, journal, protectedPaths, writablePaths, seedSnapshot, errors });
-	const inspectedB = inspectCandidate({ runRoot: options.runRoot, manifest, seed, candidate: candidates[1]!, suffix: "b", parentSession, journal, protectedPaths, writablePaths, seedSnapshot, errors });
+	const inspectedA = inspectCandidate({ runRoot: options.runRoot, manifest, seed, candidate: candidates[0]!, suffix: "a", parentSession, journal, protectedPaths, writablePaths, seedSnapshot, attemptCaps, errors });
+	const inspectedB = inspectCandidate({ runRoot: options.runRoot, manifest, seed, candidate: candidates[1]!, suffix: "b", parentSession, journal, protectedPaths, writablePaths, seedSnapshot, attemptCaps, errors });
 	const parentId = typeof parentSession.header.id === "string" ? parentSession.header.id : null;
 	const sessionIds = [parentId, inspectedA.sessionId, inspectedB.sessionId];
 	if (sessionIds.some((id) => id === null) || new Set(sessionIds).size !== 3) errors.push("parent/A/B Session IDs are not unique");
@@ -1073,9 +1089,9 @@ export function inspectRunV2A(options: { projectRoot: string; runRoot: string; e
 		!group || group.recovery_group_id !== seed.recovery_group_id || group.recovery_seed_id !== seed.recovery_seed_id ||
 		stableJson([...group.candidate_path_ids].sort()) !== stableJson(candidates.map((candidate) => candidate.candidate_path_id).sort()) ||
 		group.candidate_paths_terminal !== 2 || group.common_artifact_digest !== candidates[0]!.common_artifact_digest ||
-		stableJson(group.budget_caps) !== stableJson(V2A_GROUP_BUDGET_CAPS) || stableJson(group.budget_usage) !== stableJson(derivedGroupUsage) ||
-		derivedGroupUsage.faux_provider_dispatches > V2A_GROUP_BUDGET_CAPS.faux_provider_dispatches_max ||
-		derivedGroupUsage.tool_calls > V2A_GROUP_BUDGET_CAPS.tool_calls_max || derivedGroupUsage.verifier_runs > V2A_GROUP_BUDGET_CAPS.verifier_runs_max
+		stableJson(group.budget_caps) !== stableJson(groupCaps) || stableJson(group.budget_usage) !== stableJson(derivedGroupUsage) ||
+		derivedGroupUsage.faux_provider_dispatches > groupCaps.faux_provider_dispatches_max ||
+		derivedGroupUsage.tool_calls > groupCaps.tool_calls_max || derivedGroupUsage.verifier_runs > groupCaps.verifier_runs_max
 	) {
 		errors.push("Recovery Group raw-derived membership/budget mismatch");
 	}

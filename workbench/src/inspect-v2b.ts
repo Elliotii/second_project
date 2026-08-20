@@ -9,6 +9,9 @@ import {
 	V2B_CREDENTIAL_PROFILE,
 	V2B_FROZEN_CASES,
 	V2B_GROUP_CAPS,
+	V2B_LEGACY_ATTEMPT_CAPS,
+	V2B_LEGACY_GROUP_CAPS,
+	V2B_LEGACY_SEQUENCE_CAPS,
 	V2B_MODEL_PROFILE_ID,
 	V2B_PINNED_PI_COMMIT,
 	V2B_POLICY_ID,
@@ -28,6 +31,18 @@ import {
 	type SequenceTerminalV2B,
 	type UsageV2B,
 } from "./contracts/v2b-types.ts";
+
+function expectedRunBudgetsV2B(schemaVersion: RunManifestV2B["schema_version"]): RunManifestV2B["budgets"] | null {
+	if (schemaVersion === "v2b-run-manifest-v2") return { attempt: V2B_LEGACY_ATTEMPT_CAPS, group: V2B_LEGACY_GROUP_CAPS, sequence: V2B_LEGACY_SEQUENCE_CAPS };
+	if (schemaVersion === "v2b-run-manifest-v3") return { attempt: V2B_ATTEMPT_CAPS, group: V2B_GROUP_CAPS, sequence: V2B_SEQUENCE_CAPS };
+	return null;
+}
+
+function expectedExecutionBudgetsV2B(schemaVersion: ExecutionManifestV2B["schema_version"]): ExecutionManifestV2B["budgets"] | null {
+	if (schemaVersion === "v2b-execution-manifest-v1") return { attempt: V2B_LEGACY_ATTEMPT_CAPS, group: V2B_LEGACY_GROUP_CAPS, sequence: V2B_LEGACY_SEQUENCE_CAPS };
+	if (schemaVersion === "v2b-execution-manifest-v2") return { attempt: V2B_ATTEMPT_CAPS, group: V2B_GROUP_CAPS, sequence: V2B_SEQUENCE_CAPS };
+	return null;
+}
 import {
 	readJsonArtifact,
 	resolveRunRelative,
@@ -87,16 +102,17 @@ function scanEvidence(runRoot: string, errors: string[]): void {
 
 function validateManifest(projectRoot: string, runRoot: string, manifest: RunManifestV2B, terminal: RunTerminalV2B, errors: string[], executionManifest?: ExecutionManifestV2B): void {
 	const { manifest_id: manifestId, ...body } = manifest;
+	const expectedBudgets = expectedRunBudgetsV2B(manifest.schema_version);
 	if (digestObject(body) !== manifestId || terminal.manifest_id !== manifestId) errors.push("V2-B Manifest identity mismatch");
 	if (
-		manifest.schema_version !== "v2b-run-manifest-v2" || !["stage1_zero_real_access", "stage2_deterministic_proof", "stage2_real"].includes(manifest.stage) ||
+		!expectedBudgets || !["stage1_zero_real_access", "stage2_deterministic_proof", "stage2_real"].includes(manifest.stage) ||
 		manifest.control_baseline_commit !== V2B_CONTROL_BASELINE_COMMIT || manifest.control_baseline_tree !== V2B_CONTROL_BASELINE_TREE ||
 		manifest.pi_commit !== V2B_PINNED_PI_COMMIT || manifest.provider_profile_id !== V2B_MODEL_PROFILE_ID ||
 		manifest.credential_profile_name !== V2B_CREDENTIAL_PROFILE || manifest.skill_id !== V2B_SKILL_ID ||
 		manifest.tool_profile_id !== V2B_TOOL_PROFILE_ID || manifest.policy_id !== V2B_POLICY_ID ||
 		manifest.retry !== false || manifest.fallback !== false || manifest.replacement !== false ||
 		stableJson(manifest.all_cases) !== stableJson(V2B_FROZEN_CASES) ||
-		stableJson(manifest.budgets) !== stableJson({ attempt: V2B_ATTEMPT_CAPS, group: V2B_GROUP_CAPS, sequence: V2B_SEQUENCE_CAPS }) ||
+		stableJson(manifest.budgets) !== stableJson(expectedBudgets) ||
 		!V2B_FROZEN_CASES.some((candidate) => stableJson(candidate) === stableJson(manifest.case))
 	) errors.push("V2-B Manifest frozen contract mismatch");
 	if (manifest.stage === "stage1_zero_real_access") {
@@ -120,7 +136,7 @@ function validateManifest(projectRoot: string, runRoot: string, manifest: RunMan
 	}
 }
 
-function validateAttempt(attempt: AttemptRuntimeEvidenceV2B, expectedRole: AttemptRuntimeEvidenceV2B["role"], errors: string[], requireZeroCounters: boolean): void {
+function validateAttempt(attempt: AttemptRuntimeEvidenceV2B, expectedRole: AttemptRuntimeEvidenceV2B["role"], errors: string[], requireZeroCounters: boolean, caps: RunManifestV2B["budgets"]["attempt"]): void {
 	const label = attempt.attempt_id || expectedRole;
 	if (
 		attempt.schema_version !== "v2b-attempt-runtime-evidence-v1" || attempt.role !== expectedRole ||
@@ -166,9 +182,9 @@ function validateAttempt(attempt: AttemptRuntimeEvidenceV2B, expectedRole: Attem
 	}
 	if (
 		usage.tokens !== usage.input_tokens + usage.output_tokens + usage.cache_read_tokens + usage.cache_write_tokens + usage.conservative_charged_tokens ||
-		usage.provider_requests > V2B_ATTEMPT_CAPS.provider_requests || usage.tool_calls > V2B_ATTEMPT_CAPS.tool_calls ||
-		usage.tokens > V2B_ATTEMPT_CAPS.tokens || usage.active_execution_time_ms > V2B_ATTEMPT_CAPS.active_execution_time_ms ||
-		usage.verifier_runs !== 1 || usage.real_cost_usd > V2B_ATTEMPT_CAPS.real_cost_usd
+		usage.provider_requests > caps.provider_requests || usage.tool_calls > caps.tool_calls ||
+		usage.tokens > caps.tokens || usage.active_execution_time_ms > caps.active_execution_time_ms ||
+		usage.verifier_runs !== 1 || usage.real_cost_usd > caps.real_cost_usd
 	) errors.push(`${label}: usage exceeds or disagrees with frozen Attempt budget`);
 	if (attempt.reservations.length !== usage.provider_requests) errors.push(`${label}: reservation/request count mismatch`);
 	let committedTokens = 0;
@@ -251,7 +267,7 @@ export function inspectStage1RunV2B(options: { projectRoot: string; runRoot: str
 		const attempt = safeRead<AttemptRuntimeEvidenceV2B>(options.runRoot, ref.path, errors);
 		if (!attempt) continue;
 		attempts.push(attempt);
-		validateAttempt(attempt, expectedRoles[index]!, errors, manifest.stage !== "stage2_real");
+		validateAttempt(attempt, expectedRoles[index]!, errors, manifest.stage !== "stage2_real", manifest.budgets.attempt);
 	}
 	if (attempts.length === expectedRoles.length) {
 		const primarySessionPath = resolveRunRelative(resolve(options.runRoot, "substrate"), substrate.terminal!.primary_session_ref.path);
@@ -290,7 +306,7 @@ export function inspectStage1RunV2B(options: { projectRoot: string; runRoot: str
 	const usage = emptyUsage();
 	for (const attempt of attempts) addUsage(usage, attempt.usage);
 	if (stableJson(usage) !== stableJson(terminal.usage)) errors.push("V2-B terminal usage reconciliation mismatch");
-	const cap = terminal.outcome === "initial_pass" ? V2B_ATTEMPT_CAPS : V2B_GROUP_CAPS;
+	const cap = terminal.outcome === "initial_pass" ? manifest.budgets.attempt : manifest.budgets.group;
 	if (
 		usage.provider_requests > cap.provider_requests || usage.tool_calls > cap.tool_calls || usage.tokens > cap.tokens ||
 		usage.active_execution_time_ms > cap.active_execution_time_ms || usage.verifier_runs > cap.verifier_runs || usage.real_cost_usd > cap.real_cost_usd
@@ -323,12 +339,13 @@ export function inspectSequenceV2B(options: { projectRoot: string; sequenceRoot:
 	const result = (): SequenceInspectResultV2B => ({ schema_version: "v2b-sequence-inspection-v1", sequence_id: manifest?.sequence_id ?? null, integrity_valid: errors.length === 0, terminal_valid: terminal !== null && errors.length === 0, errors, manifest, ledger, terminal });
 	if (!manifest) return result();
 	const { manifest_id: manifestId, ...body } = manifest;
+	const expectedBudgets = expectedExecutionBudgetsV2B(manifest.schema_version);
 	const expectedCases = V2B_FROZEN_CASES.map((entry, index) => ({ ...entry, ordinal: index + 1, planned_run_id: `${manifest.sequence_id}-${entry.case_id}-run` }));
 	if (
-		manifest.schema_version !== "v2b-execution-manifest-v1" || digestObject(body) !== manifestId ||
+		!expectedBudgets || digestObject(body) !== manifestId ||
 		!["stage2_deterministic_proof", "stage2_real"].includes(manifest.stage) || manifest.pi_commit !== V2B_PINNED_PI_COMMIT || manifest.provider_profile_id !== V2B_MODEL_PROFILE_ID ||
 		manifest.credential_profile_name !== V2B_CREDENTIAL_PROFILE || manifest.skill_id !== V2B_SKILL_ID || manifest.tool_profile_id !== V2B_TOOL_PROFILE_ID || manifest.policy_id !== V2B_POLICY_ID ||
-		stableJson(manifest.planned_cases) !== stableJson(expectedCases) || stableJson(manifest.budgets) !== stableJson({ attempt: V2B_ATTEMPT_CAPS, group: V2B_GROUP_CAPS, sequence: V2B_SEQUENCE_CAPS }) ||
+		stableJson(manifest.planned_cases) !== stableJson(expectedCases) || stableJson(manifest.budgets) !== stableJson(expectedBudgets) ||
 		manifest.real_execution_authorized !== (manifest.stage === "stage2_real") || manifest.retry !== false || manifest.fallback !== false || manifest.replacement !== false
 	) errors.push("V2-B Sequence Manifest frozen identity mismatch");
 	const live = treeInventory(resolve(options.projectRoot, "workbench/src"));
@@ -345,7 +362,7 @@ export function inspectSequenceV2B(options: { projectRoot: string; sequenceRoot:
 	const casePauses = new Map<CaseIdV2B, CasePauseV2B>();
 	const terminalLedgerRefs: ArtifactRefV0B[] = [];
 	const pauseLedgerRefs: ArtifactRefV0B[] = [];
-	const expectedReservation = { ...emptyUsage(), provider_requests: V2B_ATTEMPT_CAPS.provider_requests, tool_calls: V2B_ATTEMPT_CAPS.tool_calls, tokens: V2B_ATTEMPT_CAPS.tokens, active_execution_time_ms: V2B_ATTEMPT_CAPS.active_execution_time_ms, verifier_runs: V2B_ATTEMPT_CAPS.verifier_runs, real_cost_usd: V2B_ATTEMPT_CAPS.real_cost_usd };
+	const expectedReservation = { ...emptyUsage(), provider_requests: manifest.budgets.attempt.provider_requests, tool_calls: manifest.budgets.attempt.tool_calls, tokens: manifest.budgets.attempt.tokens, active_execution_time_ms: manifest.budgets.attempt.active_execution_time_ms, verifier_runs: manifest.budgets.attempt.verifier_runs, real_cost_usd: manifest.budgets.attempt.real_cost_usd };
 	for (const [index, entry] of ledger.entries()) {
 		if (entry.schema_version !== "v2b-sequence-ledger-v1" || entry.seq !== index + 1 || entry.manifest_id !== manifest.manifest_id || entry.sequence_id !== manifest.sequence_id) errors.push(`V2-B Sequence ledger identity/sequence mismatch at ${index + 1}`);
 		const declared = manifest.planned_cases.find((value) => value.case_id === entry.case_id);
@@ -430,8 +447,9 @@ export function inspectSequenceV2B(options: { projectRoot: string; sequenceRoot:
 	const reserved = sumUsageForInspection(ledger.map((entry) => entry.reserved_usage));
 	const actual = sumUsageForInspection(ledger.map((entry) => entry.actual_usage));
 	const counters = ledger.filter((entry) => entry.attempt_id === null && (entry.state === "terminal" || entry.state === "paused")).reduce((acc, entry) => { for (const key of Object.keys(acc) as Array<keyof RealCallCountersV2B>) acc[key] += entry.real_call_counters[key]; return acc; }, { ...ZERO_COUNTERS_V2B });
-	if (seenAttempts.size > V2B_SEQUENCE_CAPS.started_attempts || reserved.provider_requests > V2B_SEQUENCE_CAPS.provider_requests || reserved.tool_calls > V2B_SEQUENCE_CAPS.tool_calls || reserved.tokens > V2B_SEQUENCE_CAPS.tokens || reserved.active_execution_time_ms > V2B_SEQUENCE_CAPS.active_execution_time_ms || reserved.verifier_runs > V2B_SEQUENCE_CAPS.verifier_runs || reserved.real_cost_usd > V2B_SEQUENCE_CAPS.real_cost_usd + Number.EPSILON || counters.credential_reads > V2B_SEQUENCE_CAPS.credential_reads) errors.push("V2-B whole-sequence cap exceeded");
-	for (const caseId of V2B_FROZEN_CASES.map((entry) => entry.case_id)) if (ledger.filter((entry) => entry.case_id === caseId && entry.attempt_id).length > V2B_GROUP_CAPS.attempts_exact_on_valid_failure) errors.push(`V2-B ${caseId} Group Attempt cap exceeded`);
+	const sequenceCaps = manifest.budgets.sequence;
+	if (seenAttempts.size > sequenceCaps.started_attempts || reserved.provider_requests > sequenceCaps.provider_requests || reserved.tool_calls > sequenceCaps.tool_calls || reserved.tokens > sequenceCaps.tokens || reserved.active_execution_time_ms > sequenceCaps.active_execution_time_ms || reserved.verifier_runs > sequenceCaps.verifier_runs || reserved.real_cost_usd > sequenceCaps.real_cost_usd + Number.EPSILON || counters.credential_reads > sequenceCaps.credential_reads) errors.push("V2-B whole-sequence cap exceeded");
+	for (const caseId of V2B_FROZEN_CASES.map((entry) => entry.case_id)) if (ledger.filter((entry) => entry.case_id === caseId && entry.attempt_id).length > manifest.budgets.group.attempts_exact_on_valid_failure) errors.push(`V2-B ${caseId} Group Attempt cap exceeded`);
 	if (terminal) {
 		if (stableJson(terminal.case_terminal_refs) !== stableJson(terminalLedgerRefs) || stableJson(terminal.case_pause_refs) !== stableJson(pauseLedgerRefs)) errors.push("V2-B Sequence terminal Case refs mismatch");
 		if (seenAttempts.size !== terminal.started_attempts || stableJson(reserved) !== stableJson(terminal.reserved_usage) || stableJson(actual) !== stableJson(terminal.actual_usage) || stableJson(counters) !== stableJson(terminal.real_call_counters)) errors.push("V2-B Sequence terminal aggregate mismatch");

@@ -24,24 +24,47 @@ export interface BudgetUsageV2A {
 }
 
 export interface BudgetCapsV2A {
-	faux_provider_dispatches_max: 16;
-	tool_calls_max: 24;
+	faux_provider_dispatches_max: 64;
+	tool_calls_max: 96;
 	verifier_runs_max: 1;
 }
 
+export interface LegacyBudgetCapsV2A {
+	faux_provider_dispatches_max: 8;
+	tool_calls_max: 16;
+	verifier_runs_max: 1;
+}
+
+export const V2A_LEGACY_ATTEMPT_BUDGET_CAPS: LegacyBudgetCapsV2A = Object.freeze({
+	faux_provider_dispatches_max: 8,
+	tool_calls_max: 16,
+	verifier_runs_max: 1,
+});
+
 export const V2A_ATTEMPT_BUDGET_CAPS: BudgetCapsV2A = Object.freeze({
-	faux_provider_dispatches_max: 16,
-	tool_calls_max: 24,
+	faux_provider_dispatches_max: 64,
+	tool_calls_max: 96,
 	verifier_runs_max: 1,
 });
 
 export const V2A_GROUP_BUDGET_CAPS = Object.freeze({
 	candidate_paths_exact_on_valid_failure: 2 as const,
-	faux_provider_dispatches_max: 48 as const,
-	tool_calls_max: 72 as const,
+	faux_provider_dispatches_max: 192 as const,
+	tool_calls_max: 288 as const,
 	verifier_runs_max: 3 as const,
 	real_cost_usd: 0 as const,
 });
+
+export const V2A_LEGACY_GROUP_BUDGET_CAPS = Object.freeze({
+	candidate_paths_exact_on_valid_failure: 2 as const,
+	faux_provider_dispatches_max: 24 as const,
+	tool_calls_max: 48 as const,
+	verifier_runs_max: 3 as const,
+	real_cost_usd: 0 as const,
+});
+
+export type RunAttemptBudgetCapsV2A = BudgetCapsV2A | LegacyBudgetCapsV2A;
+export type RunGroupBudgetCapsV2A = typeof V2A_GROUP_BUDGET_CAPS | typeof V2A_LEGACY_GROUP_BUDGET_CAPS;
 
 export interface SourceInventoryV2A {
 	schema_version: "v2a-source-inventory-v1";
@@ -179,7 +202,7 @@ export interface CandidatePathV2A {
 	verifier_status: VerifierResultV0B["status"];
 	evidence_valid: boolean;
 	budget_usage: BudgetUsageV2A;
-	budget_caps: BudgetCapsV2A;
+	budget_caps: RunAttemptBudgetCapsV2A;
 	budget_within_limits: boolean;
 	terminal_reason: "settled" | "budget_stopped" | "runtime_invalid";
 	allowed_semantic_diff_size: number;
@@ -211,7 +234,7 @@ export interface SelectionDecisionV2A {
 }
 
 export interface RunManifestV2A {
-	schema_version: "v2a-run-manifest-v2";
+	schema_version: "v2a-run-manifest-v2" | "v2a-run-manifest-v3";
 	manifest_id: string;
 	run_id: string;
 	task_id: typeof V2A_TASK_ID | "v1-stable-format";
@@ -238,14 +261,8 @@ export interface RunManifestV2A {
 	real_execution_authorized: boolean;
 	execution_port_kind: "internal_deterministic" | "injected";
 	recovery_candidate_count_on_valid_failure: 2;
-	per_attempt_budget: BudgetCapsV2A;
-	per_group_budget: {
-		candidate_paths_exact_on_valid_failure: 2;
-		faux_provider_dispatches_max: 48;
-		tool_calls_max: 72;
-		verifier_runs_max: 3;
-		real_cost_usd: 0;
-	};
+	per_attempt_budget: RunAttemptBudgetCapsV2A;
+	per_group_budget: RunGroupBudgetCapsV2A;
 }
 
 export interface ExecuteRunOptionsV2A {

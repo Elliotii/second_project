@@ -73,7 +73,7 @@ test.before(async () => {
 
 test("fixed Host registry recomputes exact inventory and rejects unregistered or caller-selected authority", () => {
 	const loaded = loadRegisteredCaseFromHostRegistryV37({ projectRoot: PROJECT_ROOT, caseId: CASE_ID });
-	assert.equal(loaded.registry.configuration_baseline_id, "v37-g1-host-registry-v1");
+	assert.equal(loaded.registry.configuration_baseline_id, "v37-g1-host-registry-v2");
 	assert.equal(loaded.registry.loader_contract_id, "v37-host-registry-loader-v1");
 	assert.equal(loaded.manifest.manifest_body_digest, loaded.registry.entries[0]!.manifest_body_digest);
 	assert.equal(loaded.current_envelope.registration_digest, loaded.registry.entries[0]!.current_registration_digest);
@@ -102,7 +102,7 @@ test("loader-owned registry rejects malformed registry, Manifest, Envelope and h
 	for (const variant of ["registry-key", "manifest", "envelope", "hardlink"] as const) {
 		const root = cloneHost(variant);
 		cpSync(resolve(PROJECT_ROOT, "workbench/src"), resolve(root, "workbench/src"), { recursive: true });
-		const registryPath = resolve(root, "workbench/config/v37/registered-cases/registry-v1.json");
+		const registryPath = resolve(root, "workbench/config/v37/registered-cases/registry-v2.json");
 		const manifestPath = resolve(root, "workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json");
 		const envelopePath = resolve(root, "workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json");
 		if (variant === "registry-key") { const value = readJson<Record<string, unknown>>(registryPath); value.caller_approval = true; writeJson(registryPath, value); }
@@ -291,7 +291,7 @@ test("disabled Host registration blocks mutation while exact accepted admission 
 	const clonedOptions = { ...common, projectRoot: hostRoot, runRoot: clonedRunRoot };
 	recoveryModule.persistRegisteredRecoveryPackageV37(clonedOptions);
 	const acceptedAdmission = recoveryModule.admitRegisteredRecoveryV37(clonedOptions);
-	const registryPath = resolve(hostRoot, "workbench/config/v37/registered-cases/registry-v1.json");
+	const registryPath = resolve(hostRoot, "workbench/config/v37/registered-cases/registry-v2.json");
 	const registry = readJson<any>(registryPath);
 	const first = readJson<any>(resolve(hostRoot, registry.entries[0].envelope_locations[0]));
 	const secondBody = { ...first, registration_revision: 2, previous_registration_digest: first.registration_digest, registration_status: "disabled", disabled_at: "2026-08-18T02:00:00.000Z" };

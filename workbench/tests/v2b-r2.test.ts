@@ -269,7 +269,7 @@ test("R2-C safe pre-dispatch budget terminal is quiescent, verified once, retain
 	}
 });
 
-test("Primary safe 16-request budget terminal proceeds through Verifier and Recovery", async () => {
+test("Primary safe 64-request budget terminal proceeds through Verifier and Recovery", async () => {
 	const runId = `v2b-r2-primary-budget-${process.pid}`;
 	const runRoot = rootFor("primary-budget-terminal");
 	const attempts: AttemptRuntimeEvidenceV2B[] = [];

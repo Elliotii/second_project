@@ -34,32 +34,32 @@ import type { RegisteredFollowUpRuntimePortV37G3A } from "./registered-follow-up
 
 const CASE_ID = "v37-real-recovery-promote-retain";
 const PROJECT_ID = "v37-real-recovery-project";
-const CONFIGURATION_CANDIDATE_COMMIT = "57f419c35bdbd972bda890f45d874df35777dd72";
-const CONFIGURATION_CANDIDATE_TREE = "43dc96fa99fa31cd552863cc0b569637a682ba10";
-const MANIFEST_DIGEST = "36a4cf214c0c9e3ab05764184cb7e702304ddb80e7570fa3c5af3282de8a384f";
-const REGISTRATION_DIGEST = "05c21169123adad97723251caf0835a622a7f7de25d06ca99df6dbbb5d532b0d";
-const FOLLOW_UP_PROFILE_DIGEST = "f139a899b4304f6f403f3077ad76857a05780f824186f308489a54f15c61c8e4";
-const REGISTRY_DIGEST = "0fc93a326f4275465d285dd94fad0ac686b0c86778b8865bace5ae5ba48e9d3d";
-const CANDIDATE_AUTHORITY_DIGEST = "5356ffff6acf35fa41df96addce0e987034462d848d3cc3aeee6ac652a684054";
-const REGRESSION_AUTHORITY_DIGEST = "beb420eb73b66536501f3b242f5dc04daf5ee18c5ede5c82067a2cdbb0c9db7d";
+const CONFIGURATION_CANDIDATE_COMMIT = "ca33885f4691f00ab9ab90643f8ed5fbc0825bb8";
+const CONFIGURATION_CANDIDATE_TREE = "ae12fd560f1d6dc802648a682eb5d94f96335f80";
+const MANIFEST_DIGEST = "dcaf5ff929a5a98ae32fe42b7f1700cf4a7dd0630e2989b10b8fd5fb219a39dc";
+const REGISTRATION_DIGEST = "1315d746ccbcad5927a6163319f342cb836b2d6dc07389eb5d44f1fb28ea6245";
+const FOLLOW_UP_PROFILE_DIGEST = "89fa6b4227495ddd1d972c91f1139532858842c4e3a13529d682b99aa93b7ace";
+const REGISTRY_DIGEST = "665e911654eb811337ede1ce11281fbe167acba2e52e9b532c53270290d14ee3";
+const CANDIDATE_AUTHORITY_DIGEST = "c93ce9bb18b23990f909c24ea2fdf13d0f6b9b6b93f7401b0f8aef22bbaf6450";
+const REGRESSION_AUTHORITY_DIGEST = "91497eba6a828e2845ca22145669926e0debbe4ca0aa5f1b67a06fb12d5750ab";
 const CANDIDATE_TEMPLATE_ID = "v37-verify-before-finish";
 const CANDIDATE_TEMPLATE_CONTENT = "Before reporting completion, run the task-declared check and rely on its result rather than self-assessment.";
 const CANDIDATE_TEMPLATE_CONTENT_SHA256 = "1341b7b213c788c3d17ced324ba46da316c091af8d43182d02f589add792cc8f";
-const PRIMARY_MAXIMA = Object.freeze({ credential_reads: 1, network_calls: 48, external_provider_calls: 48, real_model_calls: 48 });
-const FOLLOW_UP_MAXIMA = Object.freeze({ credential_reads: 1, network_calls: 24, external_provider_calls: 24, real_model_calls: 24 });
+const PRIMARY_MAXIMA = Object.freeze({ credential_reads: 1, network_calls: 192, external_provider_calls: 192, real_model_calls: 192 });
+const FOLLOW_UP_MAXIMA = Object.freeze({ credential_reads: 1, network_calls: 64, external_provider_calls: 64, real_model_calls: 64 });
 const UNIT_ORDER = ["primary", "recovery_a", "recovery_b", "candidate_proposal", "regression_base", "regression_candidate", "follow_up"] as const;
 type Unit = typeof UNIT_ORDER[number];
 
 const UNIT_CAPS: Readonly<Record<Unit, { requests:number; tokens:number; tools:number; commands:number; wallMs:number; cost:number }>> = Object.freeze({
-	primary:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
-	recovery_a:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
-	recovery_b:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
+	primary:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:V2B_ATTEMPT_CAPS.tokens,tools:V2B_ATTEMPT_CAPS.tool_calls,commands:1,wallMs:V2B_ATTEMPT_CAPS.active_execution_time_ms,cost:0.2},
+	recovery_a:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:V2B_ATTEMPT_CAPS.tokens,tools:V2B_ATTEMPT_CAPS.tool_calls,commands:1,wallMs:V2B_ATTEMPT_CAPS.active_execution_time_ms,cost:0.2},
+	recovery_b:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:V2B_ATTEMPT_CAPS.tokens,tools:V2B_ATTEMPT_CAPS.tool_calls,commands:1,wallMs:V2B_ATTEMPT_CAPS.active_execution_time_ms,cost:0.2},
 	candidate_proposal:{requests:1,tokens:16384,tools:0,commands:0,wallMs:120000,cost:0.2},
-	regression_base:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
-	regression_candidate:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
-	follow_up:{requests:24,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
+	regression_base:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:V2B_ATTEMPT_CAPS.tokens,tools:V2B_ATTEMPT_CAPS.tool_calls,commands:1,wallMs:V2B_ATTEMPT_CAPS.active_execution_time_ms,cost:0.2},
+	regression_candidate:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:V2B_ATTEMPT_CAPS.tokens,tools:V2B_ATTEMPT_CAPS.tool_calls,commands:1,wallMs:V2B_ATTEMPT_CAPS.active_execution_time_ms,cost:0.2},
+	follow_up:{requests:64,tokens:524288,tools:96,commands:1,wallMs:3600000,cost:0.2},
 });
-const GLOBAL_CAP = Object.freeze({requests:105,tokens:802816,tools:144,commands:6,wallMs:5520000,cost:1.4});
+const GLOBAL_CAP = Object.freeze({requests:385,tokens:3162112,tools:576,commands:6,wallMs:21720000,cost:1.4});
 const RUNTIME_COMPOSITIONS = Object.freeze([
 	Object.freeze({composition_id:"v2b_primary_recovery",owner:"public_createRealExecutionPortV2B",provider:"deepseek",model_id:"deepseek-v4-flash",lifecycle:"primary_recovery_group_scoped"}),
 	Object.freeze({composition_id:"post_v35_later_stages",owner:"bridge_createPostV35DeepSeekModelFactory",provider:"deepseek",model_id:"deepseek-v4-flash",lifecycle:"candidate_regression_follow_up_bridge_scoped"}),
@@ -182,6 +182,6 @@ export function createRealExecutionPortBridgeV37G3B(projectRoot:string,authority
 	if(stableJson(authority)!==stableJson(expected))throw new Error("bridge authority identity mismatch");if(!opaqueCredentialResolver||typeof opaqueCredentialResolver.resolve!=="function")throw new Error("opaque Credential resolver is required");
 	const loaded=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot,caseId:CASE_ID});const declaration=primaryExecutionDeclarationV37G3A(loaded.manifest),derived=constructionAuthorityDigestsV37G3A(loaded.manifest),follow=followUpAccessExpectationV37G3A(loaded.follow_up_execution_profile);const templates=(loaded.manifest.candidate_policy_spec.body as {generic_prompt_addendum_templates?:unknown}).generic_prompt_addendum_templates;if(!Array.isArray(templates)||templates.length!==1)throw new Error("registered Candidate template inventory invalid");const template=exact(templates[0],["template_id","content","content_sha256"],"registered Candidate template");if(template.template_id!==CANDIDATE_TEMPLATE_ID||template.content!==CANDIDATE_TEMPLATE_CONTENT||template.content_sha256!==CANDIDATE_TEMPLATE_CONTENT_SHA256||sha256(String(template.content))!==CANDIDATE_TEMPLATE_CONTENT_SHA256)throw new Error("registered Candidate template identity mismatch");
 	const runtimeBudget=loaded.follow_up_execution_profile.budget_profile as unknown as Record<string,unknown>;
-	if(loaded.manifest.project_id!==PROJECT_ID||loaded.manifest.manifest_body_digest!==MANIFEST_DIGEST||loaded.current_envelope.registration_digest!==REGISTRATION_DIGEST||loaded.registry.registry_index_digest!==REGISTRY_DIGEST||loaded.follow_up_execution_profile.follow_up_execution_profile_digest!==FOLLOW_UP_PROFILE_DIGEST||derived.candidateProposalAuthorityDigest!==CANDIDATE_AUTHORITY_DIGEST||derived.regressionAuthorityDigest!==REGRESSION_AUTHORITY_DIGEST||stableJson(declaration.accessExpectation)!==stableJson(PRIMARY_MAXIMA)||stableJson(follow)!==stableJson(FOLLOW_UP_MAXIMA)||runtimeBudget.v36_runtime_budget_profile_id!=="v36_daily_bounded_edit_v2"||runtimeBudget.provider_requests_observation_threshold!==16||runtimeBudget.provider_requests_hard_max!==24)throw new Error("Host-loaded bridge configuration identity mismatch");
+	if(loaded.manifest.project_id!==PROJECT_ID||loaded.manifest.manifest_body_digest!==MANIFEST_DIGEST||loaded.current_envelope.registration_digest!==REGISTRATION_DIGEST||loaded.registry.registry_index_digest!==REGISTRY_DIGEST||loaded.follow_up_execution_profile.follow_up_execution_profile_digest!==FOLLOW_UP_PROFILE_DIGEST||derived.candidateProposalAuthorityDigest!==CANDIDATE_AUTHORITY_DIGEST||derived.regressionAuthorityDigest!==REGRESSION_AUTHORITY_DIGEST||stableJson(declaration.accessExpectation)!==stableJson(PRIMARY_MAXIMA)||stableJson(follow)!==stableJson(FOLLOW_UP_MAXIMA)||runtimeBudget.v36_runtime_budget_profile_id!=="v36_64_request_bounded_edit_v3"||runtimeBudget.provider_requests_observation_threshold!==64||runtimeBudget.provider_requests_hard_max!==64)throw new Error("Host-loaded bridge configuration identity mismatch");
 	const lease=new SharedCredentialLease(opaqueCredentialResolver),coordinator=new Coordinator(projectRoot,lease);const realAccessAuthorization:ProductRealAccessAuthorizationV37G3A={case_id:CASE_ID,manifest_body_digest:MANIFEST_DIGEST,follow_up_execution_profile_digest:FOLLOW_UP_PROFILE_DIGEST,primary_access_expectation:{...PRIMARY_MAXIMA},follow_up_access_expectation:{...FOLLOW_UP_MAXIMA},candidate_proposal_authority_digest:CANDIDATE_AUTHORITY_DIGEST,regression_authority_digest:REGRESSION_AUTHORITY_DIGEST};const caseExecutionPorts:ProductCaseExecutionPortsV37G3A=Object.freeze({primary:primaryPort(coordinator,lease),candidateProposal:candidatePort(coordinator,{template_id:String(template.template_id),content:String(template.content),content_sha256:String(template.content_sha256)}),regressionValidation:regressionPort(coordinator),followUpRuntime:followUpPort(coordinator,lease)});const service=new ClosedAwareProductService(projectRoot,caseExecutionPorts,realAccessAuthorization,coordinator);coordinator.initialize(authorityToken);return Object.freeze({caseExecutionPorts,realAccessAuthorization:Object.freeze(structuredClone(realAccessAuthorization)),service,inspect:()=>coordinator.inspection(),close:()=>coordinator.close()});
 }

@@ -147,7 +147,7 @@ function manifestFor(options: {
 		command_descriptors: options.task.command_descriptors,
 	});
 	const body = {
-		schema_version: "v2a-run-manifest-v2" as const,
+		schema_version: "v2a-run-manifest-v3" as const,
 		run_id: options.runId,
 		task_id: taskId,
 		policy_id: V2A_POLICY_ID,
