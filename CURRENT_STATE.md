@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_PORT_BRIDGE_CORRECTION_1_AUTHORIZED
+  status: V3_7_G3B_HOST_PORT_BRIDGE_DECISION_REQUIRED_TEMPLATE_PROMPT_MISSING
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_host_execution_port_bridge_correction_1
-  note: failed_candidate_preserved_candidate_completion_precedes_frozen_validation
+  status: locked_bridge_correction_budget_exhausted_user_decision_required
+  note: corrected_candidate_closes_P1_001_but_production_prompt_omits_exact_frozen_template
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -533,7 +533,7 @@ next_version:
   goal_3b_host_port_bridge_candidate_capacity: 1
   goal_3b_host_port_bridge_correction_capacity: 1
   goal_3b_host_port_bridge_real_access: false
-  goal_3b_host_port_bridge_status: candidate_failed_Main_preliminary_review_correction_1_authorized
+  goal_3b_host_port_bridge_status: corrected_candidate_Main_rereview_hard_stop_new_P1_002
   goal_3b_host_port_bridge_report: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_IMPLEMENTATION_REPORT.md
   goal_3b_host_port_bridge_finding: G3B-HOST-BRIDGE-P1-001_follow_up_profile_24_conflicts_with_v36g2_frozen_acceptance_v1_exact_16
   goal_3b_host_port_bridge_candidate_created: false
@@ -572,7 +572,15 @@ next_version:
   goal_3b_host_port_bridge_correction_1_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_CORRECTION_1_PROMPT.md
   goal_3b_host_port_bridge_correction_capacity: 1_of_1_consumed_at_dispatch
   goal_3b_host_port_bridge_audit_started: false
-  goal_3b_status: locked_zero_access_bridge_correction_in_progress_no_real_authority
+  goal_3b_host_port_bridge_corrected_candidate_commit: e154d788ec2b3def81b50215fc732709132da517
+  goal_3b_host_port_bridge_corrected_candidate_tree: c6e9ea0bd9f04d8cf76c4031e61d544f0bc3aaff
+  goal_3b_host_port_bridge_correction_1_closed_finding: G3B-HOST-BRIDGE-MAIN-P1-001
+  goal_3b_host_port_bridge_correction_1_main_rereview: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_CORRECTION_1_MAIN_REREVIEW_HARD_STOP.md
+  goal_3b_host_port_bridge_correction_1_main_rereview_result: decision_required_new_P1_002
+  goal_3b_host_port_bridge_new_finding: G3B-HOST-BRIDGE-MAIN-P1-002_candidate_prompt_omits_exact_frozen_template
+  goal_3b_host_port_bridge_ordinary_correction_capacity: exhausted_1_of_1
+  goal_3b_host_port_bridge_recommended_user_decision: AUTHORIZE_V3_7_G3B_HOST_BRIDGE_EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION
+  goal_3b_status: locked_user_decision_required_no_audit_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
