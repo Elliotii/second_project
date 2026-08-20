@@ -7,6 +7,7 @@ import { V37_G3A_LOADER_CONTRACT_ID, V37_G3A_LOADER_SOURCE_INVENTORY, V37_G3A_RE
 import { PROJECT_ROOT } from "./helpers.ts";
 import { createWorkflowRegistrationV37G3A, loadWorkflowRegistrationV37G3A } from "../src/v37/workflow-registration-v37g3a.ts";
 import { ProductServiceV37G3A } from "../src/v37/product-service-v37g3a.ts";
+import { assertBoundedEditBudgetProfileV36, type BoundedEditBudgetProfileV36 } from "../src/v36/budget-profile-v36.ts";
 
 const ids=["v37-det-primary-pass","v37-det-recovery-promote-retain","v37-real-recovery-promote-retain"];
 test("G3A registry is exact, canonical, bounded and per-entry stable",()=>{
@@ -21,7 +22,11 @@ test("G3A registry is exact, canonical, bounded and per-entry stable",()=>{
 test("G3B zero-access configuration loads exact real Case but grants no execution authority",async()=>{
 	const loaded=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[2]!});
 	assert.equal(loaded.manifest.project_id,"v37-real-recovery-project");assert.equal(loaded.manifest.manifest_body_digest,"a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d");
-	assert.equal(loaded.follow_up_execution_profile.follow_up_execution_profile_digest,"436dfa8d1f58e1a7c25e0fc4643ece1c3fd8768835c804b42c950bff9b42444c");
+	assert.equal(loaded.follow_up_execution_profile.follow_up_execution_profile_digest,"e3789fe9eeedac96164836b306c239a5ac65bff618d21a631b7d391edd10cbc9");
+	const budget=loaded.follow_up_execution_profile.budget_profile as unknown as Record<string,unknown>;
+	const runtimeBudget={profile_id:budget.v36_runtime_budget_profile_id,provider_requests_observation_threshold:budget.provider_requests_observation_threshold,provider_requests_hard_max:budget.provider_requests_hard_max,tool_calls_hard_max:budget.tool_calls_hard_max,combined_tokens_hard_max:budget.combined_tokens_hard_max,cost_usd_hard_max:budget.cost_usd_hard_max,wall_time_ms_hard_max:budget.wall_time_ms_hard_max};
+	assert.deepEqual(runtimeBudget,{profile_id:"v36_daily_bounded_edit_v2",provider_requests_observation_threshold:16,provider_requests_hard_max:24,tool_calls_hard_max:24,combined_tokens_hard_max:131072,cost_usd_hard_max:0.2,wall_time_ms_hard_max:900000});
+	assert.doesNotThrow(()=>assertBoundedEditBudgetProfileV36(runtimeBudget as unknown as BoundedEditBudgetProfileV36));
 	assert.deepEqual(primaryExecutionDeclarationV37G3A(loaded.manifest),{primaryMode:"fail",executionPortKind:"injected",realAccessDeclared:true,accessExpectation:{credential_reads:1,external_provider_calls:48,network_calls:48,real_model_calls:48}});
 	assert.deepEqual(followUpAccessExpectationV37G3A(loaded.follow_up_execution_profile),{credential_reads:1,network_calls:24,external_provider_calls:24,real_model_calls:24});
 	assert.deepEqual(constructionAuthorityDigestsV37G3A(loaded.manifest),{candidateProposalAuthorityDigest:"e3945b699b9140d374514e20faf3c14b35e778c707a4f6e47ed0b657e8f61150",regressionAuthorityDigest:"3a7e7e603d6e071922b83ba1789aa2056134163a1b3edb04a8af902613bb49da"});
