@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_PORT_BRIDGE_HARD_STOP_FOLLOW_UP_PROFILE_RUNTIME_MISMATCH
+  status: V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_AUTHORIZED
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_follow_up_profile_16_correction_decision
-  note: bridge_hard_stopped_before_dispatch_due_to_frozen_24_vs_V3_6_exact_16_budget_identity
+  status: locked_pending_follow_up_daily_24_profile_correction
+  note: preserve_24_hard_max_by_binding_existing_v36_daily_profile_with_exact_16_observation_24_hard_tuple
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -541,8 +541,13 @@ next_version:
   goal_3b_host_port_bridge_focused_result: 5_passed_1_expected_blocking_failure
   goal_3b_host_port_bridge_strict_typescript_after_revert: pass_zero_diagnostics
   goal_3b_host_port_bridge_actual_external_operations: credentials_0_network_0_provider_0_model_0
-  goal_3b_follow_up_profile_correction_recommended_decision: AUTHORIZE_V3_7_G3B_FOLLOW_UP_PROFILE_16_CORRECTION_AND_RESUME_BRIDGE
-  goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
+  goal_3b_follow_up_profile_correction_user_direction: preserve_24_hard_max_use_accepted_daily_24_runtime_profile
+  goal_3b_follow_up_profile_correction_amendment: V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_AMENDMENT.md
+  goal_3b_follow_up_profile_correction_prompt: V3_7_GOAL_3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_PROMPT.md
+  goal_3b_follow_up_profile_correction_owner: dedicated_zero_access_configuration_correction_session
+  goal_3b_follow_up_profile_correction_budget_tuple: observation_threshold_16_hard_max_24
+  goal_3b_follow_up_profile_correction_status: authorized_pending_dispatch
+  goal_3b_status: locked_configuration_correction_in_progress_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
