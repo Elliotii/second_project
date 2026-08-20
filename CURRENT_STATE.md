@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_FREEZE_PROPOSAL_READY_USER_REVIEW_REQUIRED
+  status: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_AMENDMENT_FREEZE
 
-active_goal: V3_7_G3B_FREEZE_REVIEW
+active_goal: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION
 
 current_goal:
-  id: V3_7_G3B_FREEZE_REVIEW
-  status: proposal_ready_with_one_pre_freeze_blocker_no_real_authority
+  id: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION
+  status: user_authorized_amendment_freezing_no_real_authority
 
 last_executed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
@@ -232,7 +232,7 @@ next_version:
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G3B_FREEZE_REVIEW
+  active_goal: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -471,6 +471,10 @@ next_version:
   goal_3b_freeze_proposal_status: ready_for_user_review_with_one_pre_freeze_blocker
   goal_3b_pre_freeze_blocker: G3B-PREFREEZE-P1-001_exact_observed_access_counters_cannot_be_frozen_as_budget_caps
   goal_3b_recommended_user_decision: AUTHORIZE_V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_AND_RETURN_FOR_EXACT_FREEZE_REVIEW
+  goal_3b_user_decision: approved
+  goal_3b_access_counter_maxima_correction_amendment: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_AMENDMENT.md
+  goal_3b_access_counter_maxima_correction_budget: 0_of_1_consumed
+  goal_3b_access_counter_maxima_correction_status: amendment_freezing
   goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
