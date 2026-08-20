@@ -5,17 +5,17 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_3a_final_audit_remediation_preparation
-  status: V3_7_G3A_FINAL_AUDIT_REMEDIATION_REAUDIT_IN_PROGRESS
+  phase: v3_7_goal_3b_freeze_preparation
+  status: V3_7_G3A_CLOSED_ACCEPTED_G3B_PROPOSAL_PREPARATION
 
-active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+active_goal: V3_7_G3B_FREEZE_PREPARATION
 
 current_goal:
-  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: final_audit_remediation_independent_reaudit_in_progress
+  id: V3_7_G3B_FREEZE_PREPARATION
+  status: proposal_preparation_no_real_authority
 
 last_executed_goal:
-  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
   status: closed_accepted
   disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
   closeout: docs/reports/V3_7_G2_CLOSEOUT.md
@@ -364,7 +364,7 @@ next_version:
   goal_2_closeout: docs/reports/V3_7_G2_CLOSEOUT.md
   goal_2_integrated_main_commit: ab74573f6a3b7103b3cb6e8be77a671c0abd4143
   goal_2_integrated_main_tree: 86d5ef236c3e9eb0772a2e18cfe8a0dc0cb0fa15
-  goal_3a_status: user_approved_final_audit_remediation
+  goal_3a_status: closed_accepted
   goal_3a_implementation_started: true
   goal_3a_implementation_session: /root/v37_g3a_implementation
   goal_3a_implementation_session_status: completed_final_audit_remediation_candidate_Main_rereview_passed
@@ -420,7 +420,7 @@ next_version:
   goal_3a_focused_audit_proof_gap: V37-G3A-EXAUDIT-P2-002
   goal_3a_focused_audit_main_integration: docs/reports/V3_7_G3A_EXCEPTIONAL_REMEDIATION_AUDIT_INTEGRATION_HARD_STOP.md
   goal_3a_focused_audit_main_repro: PASS_1_of_1_candidate_rejected_supplied_Regression_port_calls_0
-  goal_3a_acceptance_status: blocked_unaccepted
+  goal_3a_exceptional_audit_acceptance_status: blocked_unaccepted
   goal_3a_hard_stop_user_decision_required: false
   goal_3a_final_audit_remediation_user_decision: approved
   goal_3a_final_audit_remediation_amendment: V3_7_G3A_FINAL_AUDIT_REMEDIATION_AMENDMENT.md
@@ -439,9 +439,16 @@ next_version:
   goal_3a_final_audit_remediation_main_rereview_result: PASS_V3_7_G3A_FINAL_AUDIT_REMEDIATION_MAIN_REREVIEW
   goal_3a_final_reaudit_candidate_commit: a764749e0d7f0355cef06decdcd5541af62a8f2f
   goal_3a_final_reaudit_candidate_tree: 070ce4177ebacf0250aeedf2e0db38c842c1e8a4
-  goal_3a_final_reaudit_status: independent_read_only_in_progress
+  goal_3a_final_reaudit_status: completed_pass
   goal_3a_final_reaudit_session: /root/v37_g3a_final_remediation_reaudit
   goal_3a_final_reaudit_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g3a-final-reaudit/project2
+  goal_3a_final_reaudit_report: docs/reports/V3_7_G3A_FINAL_AUDIT_REMEDIATION_REAUDIT.md
+  goal_3a_final_reaudit_disposition: PASS_V3_7_G3A_FINAL_AUDIT_REMEDIATION_REAUDIT
+  goal_3a_acceptance_status: closed_accepted
+  goal_3a_disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  goal_3a_closeout: docs/reports/V3_7_G3A_CLOSEOUT.md
+  goal_3a_accepted_candidate_commit: a764749e0d7f0355cef06decdcd5541af62a8f2f
+  goal_3a_accepted_candidate_tree: 070ce4177ebacf0250aeedf2e0db38c842c1e8a4
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -457,8 +464,8 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_final_independent_reaudit_in_progress
-  goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
+  goal_3a_long_running_goal_status: goal_3a_closed_accepted_goal_3b_proposal_preparation
+  goal_3b_status: locked_proposal_preparation_only_no_real_authority
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
