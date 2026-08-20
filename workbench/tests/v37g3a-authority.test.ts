@@ -3,7 +3,7 @@ import { linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync }
 import { resolve } from "node:path";
 import test from "node:test";
 import { digestObject, fileSha256 } from "../src/hash.ts";
-import { V37_G3A_LOADER_CONTRACT_ID, V37_G3A_LOADER_SOURCE_INVENTORY, V37_G3A_REGISTRY_LOCATION, constructionAuthorityDigestsV37G3A, deriveRegistryTrustRootDigestV37G3A, followUpAccessExpectationV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, loaderContractFingerprintV37G3A, primaryExecutionDeclarationV37G3A, validateHostRegistryIndexV37G3A } from "../src/v37/host-registry-v37g3a.ts";
+import { V37_G3A_LOADER_CONTRACT_ID, V37_G3A_LOADER_SOURCE_INVENTORY, V37_G3A_REGISTRY_LOCATION, constructionAuthorityDigestsV37G3A, deriveRegistryTrustRootDigestV37G3A, followUpAccessExpectationV37G3A, loadHistoricalRegisteredCaseFromHostRegistryV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, loaderContractFingerprintV37G3A, primaryExecutionDeclarationV37G3A, validateHostRegistryIndexV37G3A } from "../src/v37/host-registry-v37g3a.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 import { createWorkflowRegistrationV37G3A, loadWorkflowRegistrationV37G3A } from "../src/v37/workflow-registration-v37g3a.ts";
 import { ProductServiceV37G3A } from "../src/v37/product-service-v37g3a.ts";
@@ -39,6 +39,18 @@ test("loader rejects caller authority and alternate roots",()=>{
 	assert.throws(()=>loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[0]!,registryLocation:"caller"} as never),/override/);
 });
 
+test("accepted v1 workflow registration reopens through the frozen read-only registry",()=>{
+	const caseId="v37-det-recovery-promote-retain",workflowId="v37-g3a-legacy-read-only",dataRoot=".runs/v37/g3a-authority-legacy-reopen";
+	const loaded=loadHistoricalRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId,manifestVersion:1,manifestBodyDigest:"863775b324f34993fcaf16955e69b5c1a6fc33696ab715c6b03df862326f713b",registrationDigest:"bd9ef4d147169aa598d42338d38e9d38c9af082b532ed39e72fd58bb235a2cf1"});
+	assert.equal(loaded.historical_read_only,true);assert.equal(loaded.loader_contract_fingerprint,"541fa4e7c0008e959049f6baacfd833e1a2510d1c5749fdbe21d62eef807eb30");assert.equal(loaded.registry_trust_root_digest,"4c7f1f5d1123de3b5beb94f97e8ff112a851a99b7048081a14fd9c186c812632");
+	const manifest=loaded.manifest,createdAt="2026-08-20T18:00:00.000Z";
+	const workflowBody={schema_version:1 as const,kind:"v37_workflow_registration" as const,workflow_id:workflowId,case_id:caseId,manifest_version:1,project_id:manifest.project_id,created_at:createdAt,manifest_body_digest:manifest.manifest_body_digest,registration_digest:loaded.current_envelope.registration_digest,registry_trust_root_digest:loaded.registry_trust_root_digest,source_baseline_digest:manifest.source_baseline_spec.spec_digest,state_store_scope_digest:manifest.state_store_scope_spec.state_store_scope_digest,provider_profile_digest:manifest.provider_profile_spec.spec_digest,tool_profile_digest:manifest.tool_profile_spec.spec_digest,command_profile_digest:manifest.command_profile_spec.spec_digest,budget_profile_digest:manifest.budget_profile_spec.spec_digest,stop_condition_profile_digest:manifest.stop_condition_profile_spec.spec_digest,runtime_base_prompt_digest:manifest.state_store_scope_spec.runtime_base_prompt_digest};
+	const workflow={...workflowBody,workflow_registration_digest:digestObject(workflowBody)};
+	const task=(role:"primary"|"follow_up",task_spec_digest:string)=>{const body={schema_version:1 as const,kind:"v37_task_instance" as const,workflow_id:workflowId,workflow_registration_digest:workflow.workflow_registration_digest,role,task_spec_digest};return {...body,task_instance_digest:digestObject(body)};};
+	const root=resolve(PROJECT_ROOT,dataRoot,"workflows",workflowId);rmSync(resolve(PROJECT_ROOT,dataRoot),{recursive:true,force:true});mkdirSync(resolve(root,"tasks"),{recursive:true});writeFileSync(resolve(root,"registration.json"),JSON.stringify(workflow));writeFileSync(resolve(root,"tasks/primary.json"),JSON.stringify(task("primary",manifest.primary_task_spec.spec_digest)));writeFileSync(resolve(root,"tasks/follow_up.json"),JSON.stringify(task("follow_up",manifest.follow_up_task_spec.spec_digest)));
+	try{const reopened=loadWorkflowRegistrationV37G3A({projectRoot:PROJECT_ROOT,dataRoot,workflowId,allowHistoricalReadOnly:true});assert.equal(reopened.loadedCase.historical_read_only,true);assert.equal(reopened.workflow.workflow_registration_digest,workflow.workflow_registration_digest);}finally{rmSync(resolve(PROJECT_ROOT,dataRoot),{recursive:true,force:true});}
+});
+
 test("loader requires canonical registry bytes and fingerprints every validation source",()=>{
 	const registryPath=resolve(PROJECT_ROOT,V37_G3A_REGISTRY_LOCATION),bytes=readFileSync(registryPath,"utf8"),registry=JSON.parse(bytes);
 	try{writeFileSync(registryPath,JSON.stringify(registry,null,2));assert.throws(()=>loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[0]!}),/not canonical/);}finally{writeFileSync(registryPath,bytes);}
@@ -66,8 +78,8 @@ test("accepted v1 artifacts remain exact and current v2 authority inventory is f
 		"workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v2.json":"e59a3f5997d15908728057b3677111e5b068964b6191f17e4d2c10cb5dbcbc7b",
 		"workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.v2.r1.json":"f08e9f55df21128084188d1d36e3d0dbcca1bb7fce278dbccea059d96b12d5c7",
 		"workbench/config/v37/follow-up-execution-profiles/v37-g1-det-recovery.g2.v2.json":"946b303a90b3454e1d9cd57dd2e60f43e2178cb8a20b487e71760493dee5b92a",
-		"workbench/src/contracts/v37-types.ts":"1259913990b38cf92d34cb53b066acc5fb705c43e198655af1b8099bfcff3134",
-		"workbench/src/v37/host-registry-v37.ts":"91cbdfc606bd3c1e718740511ee52cee668d25fae876f467c43ef097d6705d8a",
+		"workbench/src/contracts/v37-types.ts":"debab332e43f48dfd1740fe6c20dc6287b35988745c2d3fbb8c92dffad60a065",
+		"workbench/src/v37/host-registry-v37.ts":"95a12b11573a882b364fef453e5df19005c7c1efe5cd8fa011737605d27ef0d7",
 		"workbench/src/v37/workflow-registration-v37.ts":"615775449f6244486f40600de237e3c7ffed9b80b0e719d11ca12d2d2cceea8c",
 		"workbench/src/v37/registered-recovery-v37.ts":"4f9ca29c83cc4a6f2c787fea8fee9dc3a002ac8158635de29b404aa334db250d",
 		"workbench/src/v37/candidate-v37.ts":"2e72c05ba5e0e66dbcd64d4740dfbc836ebc4d4a8e7a51fd15f3969621888036",

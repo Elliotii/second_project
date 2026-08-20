@@ -3,7 +3,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import type { LoadedRegisteredCaseV37, PrimaryRunBindingV37, TaskInstanceV37, WorkflowRegistrationV37 } from "../contracts/v37-types.ts";
 import { writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, stableJson } from "../hash.ts";
-import { V37_CONFIGURATION_BASELINE_ID, V37_LOADER_CONTRACT_ID, deriveRegistryTrustRootDigestV37, loadRegisteredCaseFromHostRegistryV37 } from "./host-registry-v37.ts";
+import { deriveRegistryTrustRootDigestV37, loadHistoricalRegisteredCaseFromHostRegistryV37, loadRegisteredCaseFromHostRegistryV37 } from "./host-registry-v37.ts";
 
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -106,15 +106,15 @@ function validateTask(value: TaskInstanceV37, workflow: WorkflowRegistrationV37,
 
 function primaryRunAuthority(projectRoot: string, loaded: LoadedRegisteredCaseV37, create: boolean): { authorityId: string; authorityLocation: string; authorityRoot: string } {
 	const identity = {
-		configuration_baseline_id: V37_CONFIGURATION_BASELINE_ID,
-		loader_contract_id: V37_LOADER_CONTRACT_ID,
+		configuration_baseline_id: loaded.registry.configuration_baseline_id,
+		loader_contract_id: loaded.registry.loader_contract_id,
 		loader_contract_fingerprint: loaded.loader_contract_fingerprint,
 		case_id: loaded.manifest.case_id,
 		manifest_version: loaded.manifest.manifest_version,
 		manifest_body_digest: loaded.manifest.manifest_body_digest,
 	};
 	const authorityId = `v37-primary-run-authority-${digestObject(identity).slice(0, 32)}`;
-	const authorityLocation = `.runs/v37/host-authority/${V37_CONFIGURATION_BASELINE_ID}/${loaded.manifest.case_id}/${loaded.manifest.manifest_body_digest}/${loaded.loader_contract_fingerprint}`;
+	const authorityLocation = `.runs/v37/host-authority/${loaded.registry.configuration_baseline_id}/${loaded.manifest.case_id}/${loaded.manifest.manifest_body_digest}/${loaded.loader_contract_fingerprint}`;
 	return { authorityId, authorityLocation, authorityRoot: projectRelativeRoot(projectRoot, authorityLocation, create) };
 }
 
@@ -181,7 +181,9 @@ export function loadWorkflowRegistrationV37(options: { projectRoot: string; data
 	}
 	const workflow = validateWorkflow(ordinaryJson(resolve(workflowRoot, "registration.json"), "workflow registration"));
 	if (workflow.workflow_id !== options.workflowId) throw new Error("workflow path/identity mismatch");
-	const loadedCase = loadRegisteredCaseFromHostRegistryV37({ projectRoot: options.projectRoot, caseId: workflow.case_id, allowDisabledHistorical: options.allowHistoricalReadOnly });
+	const loadedCase = options.allowHistoricalReadOnly && workflow.manifest_version === 1
+		? loadHistoricalRegisteredCaseFromHostRegistryV37({ projectRoot: options.projectRoot, caseId: workflow.case_id, manifestVersion: workflow.manifest_version, manifestBodyDigest: workflow.manifest_body_digest, registrationDigest: workflow.registration_digest })
+		: loadRegisteredCaseFromHostRegistryV37({ projectRoot: options.projectRoot, caseId: workflow.case_id, allowDisabledHistorical: options.allowHistoricalReadOnly });
 	const pinnedEnvelope = loadedCase.envelopes.find((envelope) => envelope.registration_digest === workflow.registration_digest);
 	if (!pinnedEnvelope || pinnedEnvelope.registration_status !== "accepted") throw new Error("workflow pinned registration is not an accepted Host envelope");
 	if (!options.allowHistoricalReadOnly && loadedCase.current_envelope.registration_digest !== workflow.registration_digest) throw new Error("workflow registration is no longer current");

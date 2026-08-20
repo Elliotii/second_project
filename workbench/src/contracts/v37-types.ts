@@ -310,7 +310,7 @@ export interface FollowUpBudgetProfileV37V1 {
 }
 
 export interface FollowUpBudgetProfileV37V2 {
-	profile_id: "v37-g2-deterministic-budget-v2";
+	profile_id: "v37-g2-deterministic-budget-v2" | "v37-g3b-real-follow-up-budget-v2";
 	v36_runtime_budget_profile_id: "v36_64_request_bounded_edit_v3";
 	provider_requests_observation_threshold: 64;
 	provider_requests_hard_max: 64;
@@ -341,7 +341,7 @@ export interface FollowUpStopConditionProfileV37 {
 export interface RegisteredFollowUpExecutionProfileV37 {
 	schema_version: 1;
 	kind: "v37_registered_follow_up_execution_profile";
-	profile_id: "v37-g2-follow-up-profile-v1";
+	profile_id: "v37-g2-follow-up-profile-v1" | "v37-g2-follow-up-profile-v2";
 	case_id: string;
 	manifest_body_digest: string;
 	parent_provider_profile_digest: string;

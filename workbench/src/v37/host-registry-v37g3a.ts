@@ -7,6 +7,9 @@ import { validateRegisteredCaseManifestV37, validateRegistrationEnvelopeV37 } fr
 export const V37_G3A_REGISTRY_LOCATION = "workbench/config/v37/g3a/registered-cases/registry-v2.json" as const;
 export const V37_G3A_CONFIGURATION_BASELINE_ID = "v37-g3a-host-registry-v2" as const;
 export const V37_G3A_LOADER_CONTRACT_ID = "v37-g3a-host-registry-loader-v1" as const;
+const V37_G3A_LEGACY_REGISTRY_LOCATION = "workbench/config/v37/g3a/registered-cases/registry-v1.json" as const;
+const V37_G3A_LEGACY_CONFIGURATION_BASELINE_ID = "v37-g3a-host-registry-v1" as const;
+const V37_G3A_LEGACY_LOADER_CONTRACT_FINGERPRINT = "541fa4e7c0008e959049f6baacfd833e1a2510d1c5749fdbe21d62eef807eb30" as const;
 const HOST_ROOT = resolve(import.meta.dirname, "../../..");
 const SHA256 = /^[a-f0-9]{64}$/;
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
@@ -63,9 +66,9 @@ function validateEntry(value: unknown): HostRegistryEntryV37G3A {
 	return structuredClone(value) as HostRegistryEntryV37G3A;
 }
 
-export function validateHostRegistryIndexV37G3A(value: unknown): HostRegistryIndexV37G3A {
+export function validateHostRegistryIndexV37G3A(value: unknown, expectedBaselineId: HostRegistryIndexV37G3A["configuration_baseline_id"] = V37_G3A_CONFIGURATION_BASELINE_ID): HostRegistryIndexV37G3A {
 	const registry = exact(value, ["schema_version", "kind", "configuration_baseline_id", "loader_contract_id", "digest_algorithm", "entries", "registry_index_digest"], "Host registry index");
-	if (registry.schema_version !== 1 || registry.kind !== "v37_host_registry_index" || registry.configuration_baseline_id !== V37_G3A_CONFIGURATION_BASELINE_ID || registry.loader_contract_id !== V37_G3A_LOADER_CONTRACT_ID || registry.digest_algorithm !== "sha256_over_canonical_utf8_json_v1" || !Array.isArray(registry.entries) || registry.entries.length < 2 || registry.entries.length > 3 || !SHA256.test(String(registry.registry_index_digest))) throw new Error("Host registry index identity invalid");
+	if (registry.schema_version !== 1 || registry.kind !== "v37_host_registry_index" || registry.configuration_baseline_id !== expectedBaselineId || registry.loader_contract_id !== V37_G3A_LOADER_CONTRACT_ID || registry.digest_algorithm !== "sha256_over_canonical_utf8_json_v1" || !Array.isArray(registry.entries) || registry.entries.length < 2 || registry.entries.length > 3 || !SHA256.test(String(registry.registry_index_digest))) throw new Error("Host registry index identity invalid");
 	const entries = registry.entries.map(validateEntry);
 	const ids = entries.map((entry) => entry.case_id);
 	if (new Set(ids).size !== ids.length || stableJson(ids) !== stableJson([...ids].sort())) throw new Error("Host registry entries must be unique canonical ascending case_id order");
@@ -161,14 +164,15 @@ export function deriveRegistryTrustRootDigestV37G3A(loaded: Pick<LoadedRegistere
 	if (!Number.isSafeInteger(envelopeCount) || envelopeCount < 1 || envelopeCount > loaded.envelopes.length) throw new Error("registry trust-root envelope prefix invalid");
 	const entry = loaded.registry_entry;
 	const envelopes = loaded.envelopes.slice(0, envelopeCount);
-	return digestObject({ configuration_baseline_id: V37_G3A_CONFIGURATION_BASELINE_ID, registry_location: V37_G3A_REGISTRY_LOCATION, loader_contract_id: V37_G3A_LOADER_CONTRACT_ID, loader_contract_fingerprint: loaded.loader_contract_fingerprint, digest_algorithm: "sha256_over_canonical_utf8_json_v1", allowed_digest_inventory: { case_id: entry.case_id, manifest_version: entry.manifest_version, manifest_location: entry.manifest_location, manifest_body_digest: loaded.manifest.manifest_body_digest, envelope_locations: entry.envelope_locations.slice(0, envelopeCount), envelope_digests: envelopes.map((item) => item.registration_digest), current_registration_digest: envelopes.at(-1)!.registration_digest, follow_up_execution_profile_location: entry.follow_up_execution_profile_location, follow_up_execution_profile_digest: loaded.follow_up_execution_profile.follow_up_execution_profile_digest } });
+	const historical = entry.manifest_version === 1;
+	return digestObject({ configuration_baseline_id: historical ? V37_G3A_LEGACY_CONFIGURATION_BASELINE_ID : V37_G3A_CONFIGURATION_BASELINE_ID, registry_location: historical ? V37_G3A_LEGACY_REGISTRY_LOCATION : V37_G3A_REGISTRY_LOCATION, loader_contract_id: V37_G3A_LOADER_CONTRACT_ID, loader_contract_fingerprint: loaded.loader_contract_fingerprint, digest_algorithm: "sha256_over_canonical_utf8_json_v1", allowed_digest_inventory: { case_id: entry.case_id, manifest_version: entry.manifest_version, manifest_location: entry.manifest_location, manifest_body_digest: loaded.manifest.manifest_body_digest, envelope_locations: entry.envelope_locations.slice(0, envelopeCount), envelope_digests: envelopes.map((item) => item.registration_digest), current_registration_digest: envelopes.at(-1)!.registration_digest, follow_up_execution_profile_location: entry.follow_up_execution_profile_location, follow_up_execution_profile_digest: loaded.follow_up_execution_profile.follow_up_execution_profile_digest } });
 }
 
-export function loadRegisteredCaseFromHostRegistryV37G3A(options: { projectRoot: string; caseId: string; allowDisabledHistorical?: boolean }): LoadedRegisteredCaseV37G3A {
-	if (Object.keys(options).some((key) => !["projectRoot", "caseId", "allowDisabledHistorical"].includes(key))) throw new Error("caller registry/digest override rejected");
-	if (!ID.test(options.caseId)) throw new Error("case_id invalid");
+function loadRegisteredCaseAtHostRegistryV37G3A(options: { projectRoot: string; caseId: string; allowDisabledHistorical?: boolean; historical: boolean }): LoadedRegisteredCaseV37G3A {
 	const root = hostRoot(options.projectRoot);
-	const registry = validateHostRegistryIndexV37G3A(readJson(root, V37_G3A_REGISTRY_LOCATION, "Host registry index"));
+	const registryLocation = options.historical ? V37_G3A_LEGACY_REGISTRY_LOCATION : V37_G3A_REGISTRY_LOCATION;
+	const baselineId = options.historical ? V37_G3A_LEGACY_CONFIGURATION_BASELINE_ID : V37_G3A_CONFIGURATION_BASELINE_ID;
+	const registry = validateHostRegistryIndexV37G3A(readJson(root, registryLocation, "Host registry index"), baselineId);
 	const entry = registry.entries.find((item) => item.case_id === options.caseId);
 	if (!entry) throw new Error("Case is not present in fixed Host registry");
 	const manifest = validateRegisteredCaseManifestV37(readJson(root, entry.manifest_location, "Manifest Body"));
@@ -181,12 +185,26 @@ export function loadRegisteredCaseFromHostRegistryV37G3A(options: { projectRoot:
 	});
 	const current = envelopes.at(-1)!;
 	if (current.registration_digest !== entry.current_registration_digest) throw new Error("current Registration Envelope mismatch");
-	const historical = current.registration_status === "disabled";
+	const historical = options.historical || current.registration_status === "disabled";
 	if (historical && !options.allowDisabledHistorical) throw new Error("Case registration is disabled");
 	const profile = validateProfile(readJson(root, entry.follow_up_execution_profile_location, "follow-up execution profile"));
 	if (profile.case_id !== entry.case_id || profile.manifest_body_digest !== manifest.manifest_body_digest || profile.follow_up_execution_profile_digest !== entry.follow_up_execution_profile_digest || profile.parent_provider_profile_digest !== manifest.provider_profile_spec.spec_digest || profile.parent_tool_profile_digest !== manifest.tool_profile_spec.spec_digest || profile.parent_command_profile_digest !== manifest.command_profile_spec.spec_digest || profile.parent_budget_profile_digest !== manifest.budget_profile_spec.spec_digest || profile.parent_stop_condition_profile_digest !== manifest.stop_condition_profile_spec.spec_digest) throw new Error("follow-up execution profile parent identity mismatch");
-	const partial = { manifest, envelopes, current_envelope: current, follow_up_execution_profile: profile, registry, registry_entry: entry, loader_contract_fingerprint: loaderContractFingerprintV37G3A(root), historical_read_only: historical };
+	const partial = { manifest, envelopes, current_envelope: current, follow_up_execution_profile: profile, registry, registry_entry: entry, loader_contract_fingerprint: options.historical ? V37_G3A_LEGACY_LOADER_CONTRACT_FINGERPRINT : loaderContractFingerprintV37G3A(root), historical_read_only: historical };
 	return { ...partial, registry_trust_root_digest: deriveRegistryTrustRootDigestV37G3A(partial) };
+}
+
+export function loadRegisteredCaseFromHostRegistryV37G3A(options: { projectRoot: string; caseId: string; allowDisabledHistorical?: boolean }): LoadedRegisteredCaseV37G3A {
+	if (Object.keys(options).some((key) => !["projectRoot", "caseId", "allowDisabledHistorical"].includes(key))) throw new Error("caller registry/digest override rejected");
+	if (!ID.test(options.caseId)) throw new Error("case_id invalid");
+	return loadRegisteredCaseAtHostRegistryV37G3A({ ...options, historical: false });
+}
+
+export function loadHistoricalRegisteredCaseFromHostRegistryV37G3A(options: { projectRoot: string; caseId: string; manifestVersion: number; manifestBodyDigest: string; registrationDigest: string }): LoadedRegisteredCaseV37G3A {
+	if (Object.keys(options).some((key) => !["projectRoot", "caseId", "manifestVersion", "manifestBodyDigest", "registrationDigest"].includes(key))) throw new Error("caller registry/digest override rejected");
+	if (!ID.test(options.caseId) || options.manifestVersion !== 1 || !SHA256.test(options.manifestBodyDigest) || !SHA256.test(options.registrationDigest)) throw new Error("historical workflow registry identity invalid");
+	const loaded = loadRegisteredCaseAtHostRegistryV37G3A({ projectRoot: options.projectRoot, caseId: options.caseId, allowDisabledHistorical: true, historical: true });
+	if (loaded.manifest.manifest_body_digest !== options.manifestBodyDigest || !loaded.envelopes.some((envelope) => envelope.registration_digest === options.registrationDigest)) throw new Error("historical workflow is not present in the frozen Host registry");
+	return loaded;
 }
 
 export function listRegisteredCasesFromHostRegistryV37G3A(options: { projectRoot: string; allowDisabledHistorical?: boolean }): LoadedRegisteredCaseV37G3A[] {
