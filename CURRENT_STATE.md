@@ -6,13 +6,11 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_AMENDMENT_AUTHORIZED_PROMPT_FREEZE_PENDING
+  status: V3_7_G3B_HOST_PORT_BRIDGE_HARD_STOP_FOLLOW_UP_PROFILE_RUNTIME_MISMATCH
 
-active_goal: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
+active_goal: null
 
-current_goal:
-  id: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
-  status: amendment_authorized_zero_access_prompt_freeze_pending
+current_goal: null
 
 last_executed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
@@ -33,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_host_port_bridge_candidate_audit_and_execution_prompt
-  note: bridge_amendment_authorized_but_real_access_and_execution_remain_unauthorized
+  status: locked_pending_follow_up_profile_16_correction_decision
+  note: bridge_hard_stopped_before_dispatch_due_to_frozen_24_vs_V3_6_exact_16_budget_identity
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -232,7 +230,7 @@ next_version:
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
+  active_goal: null
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -535,6 +533,15 @@ next_version:
   goal_3b_host_port_bridge_candidate_capacity: 1
   goal_3b_host_port_bridge_correction_capacity: 1
   goal_3b_host_port_bridge_real_access: false
+  goal_3b_host_port_bridge_status: hard_stop_no_candidate
+  goal_3b_host_port_bridge_report: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_IMPLEMENTATION_REPORT.md
+  goal_3b_host_port_bridge_finding: G3B-HOST-BRIDGE-P1-001_follow_up_profile_24_conflicts_with_v36g2_frozen_acceptance_v1_exact_16
+  goal_3b_host_port_bridge_candidate_created: false
+  goal_3b_host_port_bridge_experimental_delta_preserved: false
+  goal_3b_host_port_bridge_focused_result: 5_passed_1_expected_blocking_failure
+  goal_3b_host_port_bridge_strict_typescript_after_revert: pass_zero_diagnostics
+  goal_3b_host_port_bridge_actual_external_operations: credentials_0_network_0_provider_0_model_0
+  goal_3b_follow_up_profile_correction_recommended_decision: AUTHORIZE_V3_7_G3B_FOLLOW_UP_PROFILE_16_CORRECTION_AND_RESUME_BRIDGE
   goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
