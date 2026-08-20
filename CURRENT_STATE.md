@@ -6,13 +6,11 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_ZERO_ACCESS_CONFIGURATION_CANDIDATE_READY_FOR_FOCUSED_AUDIT
+  status: V3_7_G3B_EXECUTION_PROMPT_PREPARATION_HARD_STOP_MISSING_HOST_PORT_COMPOSITION
 
-active_goal: V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION
+active_goal: null
 
-current_goal:
-  id: V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION
-  status: zero_access_candidate_ready_for_focused_audit_no_real_authority
+current_goal: null
 
 last_executed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
@@ -33,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_configuration_audit_execution_prompt_and_user_review
-  note: zero_access_configuration_candidate_prepared_but_real_access_and_execution_remain_unauthorized
+  status: locked_pending_pre_execution_host_port_bridge_decision
+  note: configuration_candidate_audit_passed_but_no_source_edit_execution_prompt_cannot_construct_four_real_ports
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -232,7 +230,7 @@ next_version:
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION
+  active_goal: null
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -506,8 +504,13 @@ next_version:
   goal_3b_access_counter_maxima_correction_closeout: docs/reports/V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_CLOSEOUT.md
   goal_3b_access_counter_maxima_correction_acceptance_control_commit: 09483b1cb2aa7865a9ab8154eeda6ed67160bb18
   goal_3b_access_counter_maxima_correction_acceptance_control_tree: 57c38b03de14633d6810a4fa3fc953d95bcded35
-  goal_3b_configuration_candidate_status: ready_for_focused_read_only_audit
+  goal_3b_configuration_candidate_status: focused_audit_pass_provisional_baseline_not_final_frozen
   goal_3b_configuration_candidate_report: docs/reports/V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION_REPORT.md
+  goal_3b_configuration_candidate_commit: f30914378dc90390afce7240b9755d7d24da0850
+  goal_3b_configuration_candidate_tree: 667504572064c00fa170ac5952d8ef0af4a595ad
+  goal_3b_configuration_candidate_parent: e05f261f967cb51da4bec2c2ef2408899d539acf
+  goal_3b_configuration_focused_audit: docs/reports/V3_7_G3B_CONFIGURATION_FREEZE_FOCUSED_AUDIT.md
+  goal_3b_configuration_focused_audit_status: PASS_V3_7_G3B_CONFIGURATION_FREEZE_FOCUSED_AUDIT
   goal_3b_real_case_id: v37-real-recovery-promote-retain
   goal_3b_real_project_id: v37-real-recovery-project
   goal_3b_real_manifest_digest: a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d
@@ -519,6 +522,10 @@ next_version:
   goal_3b_configuration_focused_tests: 7_passed_0_failed
   goal_3b_configuration_strict_typescript: pass_zero_diagnostics
   goal_3b_configuration_actual_external_operations: credentials_0_external_network_0_provider_0_model_0
+  goal_3b_execution_prompt_hard_stop: docs/reports/V3_7_G3B_EXECUTION_PROMPT_PREPARATION_HARD_STOP.md
+  goal_3b_execution_prompt_blocker: G3B-PREEXEC-P1-001_missing_Host_constructed_real_ports_for_candidate_regression_follow_up
+  goal_3b_execution_prompt_status: not_created_hard_stop
+  goal_3b_recommended_user_decision: AUTHORIZE_BOUNDED_ZERO_ACCESS_G3B_HOST_EXECUTION_PORT_BRIDGE_AMENDMENT
   goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
