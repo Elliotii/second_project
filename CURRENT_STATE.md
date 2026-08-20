@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3a_exceptional_remediation
-  status: V3_7_G3A_EXCEPTIONAL_REMEDIATION_MAIN_REREVIEW_PASS
+  status: V3_7_G3A_EXCEPTIONAL_REMEDIATION_FOCUSED_AUDIT_IN_PROGRESS
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: exceptional_remediation_Main_rereview_passed_audit_candidate_frozen
+  status: exceptional_remediation_focused_audit_in_progress
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -375,7 +375,7 @@ next_version:
   goal_3a_closeout_draft: docs/reports/V3_7_G3A_CLOSEOUT_DRAFT.md
   goal_3a_main_preliminary_review: docs/reports/V3_7_G3A_MAIN_PRELIMINARY_REVIEW.md
   goal_3a_main_preliminary_review_result: failed_eight_bounded_contract_findings
-  goal_3a_focused_audit_started: false
+  goal_3a_focused_audit_started: true
   goal_3a_correction_budget: 2_of_2_consumed
   goal_3a_correction_1_authorization: docs/reports/V3_7_G3A_CORRECTION_1_AUTHORIZATION.md
   goal_3a_correction_1_session: /root/v37_g3a_implementation
@@ -411,7 +411,9 @@ next_version:
   goal_3a_exceptional_remediation_main_rereview_result: PASS_V3_7_G3A_EXCEPTIONAL_REMEDIATION_MAIN_REREVIEW
   goal_3a_focused_audit_candidate_commit: f82a65612ef66b21f65c110fcdc4feee91907c74
   goal_3a_focused_audit_candidate_tree: 04d73a7714f007a07ad7c9825dad02ca90267c51
-  goal_3a_focused_audit_status: frozen_pending_fresh_read_only_dispatch
+  goal_3a_focused_audit_status: independent_read_only_in_progress
+  goal_3a_focused_audit_session: /root/v37_g3a_exceptional_focused_audit
+  goal_3a_focused_audit_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g3a-exceptional-audit/project2
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -427,7 +429,7 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_focused_audit_candidate_frozen_pending_dispatch
+  goal_3a_long_running_goal_status: active_independent_focused_audit_in_progress
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
