@@ -5,34 +5,31 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_GATE_H_PAUSED_DOCKER_ENGINE_UNAVAILABLE_ZERO_CALL
+  phase: v3_7_closed
+  status: REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
 
 active_goal: null
 
 current_goal: null
 
 last_executed_goal:
-  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: closed_accepted
-  disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  closeout: docs/reports/V3_7_G3A_CLOSEOUT.md
+  id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
+  status: rejected
+  disposition: REJECTED_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
+  closeout: V3_7_FINAL_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: closed_accepted
-  disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  closeout: docs/reports/V3_7_G3A_CLOSEOUT.md
+  id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
+  status: rejected
+  disposition: REJECTED_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
+  closeout: V3_7_FINAL_CLOSEOUT.md
 
 last_completed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
   status: closed_accepted
   disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
-next_goal:
-  id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: paused_gate_h_docker_engine_unavailable
-  note: zero_call_stop_unique_real_execution_unconsumed_waiting_for_user_to_start_Docker_Desktop_Linux_Engine
+next_goal: null
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -226,7 +223,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goals_1_2_3a_closed_accepted_goal_3b_freeze_review
+  implementation_status: goals_1_2_3a_closed_accepted_goal_3b_rejected_v3_7_closed
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -633,17 +630,35 @@ next_version:
   goal_3b_real_execution_authorization: docs/reports/V3_7_G3B_REAL_EXECUTION_AUTHORIZATION.md
   goal_3b_real_execution_owner: /root/v37_g3b_real_execution
   goal_3b_real_execution_report: docs/reports/V3_7_G3B_REAL_EXECUTION_REPORT.md
-  goal_3b_execution_session_status: stopped_gate_h_Docker_Engine_unavailable_zero_call
-  goal_3b_execution_capacity: 0_of_1_consumed
+  goal_3b_real_execution_replacement_owner: /root/v37_g3b_real_execution_replacement
+  goal_3b_execution_session_status: completed_rejected
+  goal_3b_execution_capacity: 1_of_1_consumed
   goal_3b_gate_h_prompt_hash_clarification: frozen_Git_blob_sha256_authoritative_checkout_CRLF_non_authoritative
   goal_3b_gate_h_docker_client: 29.6.2_desktop-linux
-  goal_3b_gate_h_docker_server: unavailable_null
-  goal_3b_status: paused_gate_h_platform_prerequisite_zero_call_real_authority_unconsumed
+  goal_3b_gate_h_docker_server: Docker_Desktop_4_85_0_235549_29_6_2_linux_amd64_passed
+  goal_3b_main_review: docs/reports/V3_7_G3B_REAL_EXECUTION_MAIN_REVIEW.md
+  goal_3b_main_review_result: REJECTED_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
+  goal_3b_status: rejected_one_shot_consumed_primary_budget_contract_mismatch
   goal_3b_configuration_frozen: true
   goal_3b_execution_prompt_frozen: true
   goal_3b_real_access_authorized: true
-  goal_3b_provider_dispatches: 0
-  goal_3b_credential_reads: 0
+  goal_3b_provider_dispatches: 8
+  goal_3b_credential_reads: 1
+  goal_3b_network_calls: 8
+  goal_3b_external_provider_calls: 8
+  goal_3b_real_model_calls: 8
+  goal_3b_combined_tokens: 12634
+  goal_3b_tool_calls: 10
+  goal_3b_run_command_calls: 2
+  goal_3b_cost_usd: 0.0005084352
+  goal_3b_workflow_id: v37-g3a-workflow-6f3a118b-53c5-4e65-9343-0e8ccb8ce4a4
+  goal_3b_terminal_stage: ready_for_primary
+  goal_3b_receipts: 0
+  goal_3b_completed_units: 0
+  goal_3b_failure: accepted_bridge_primary_16_request_envelope_delegated_to_public_V2B_8_request_attempt_cap
+  goal_3b_persisted_aggregate_usage: invalid_zero_projection_after_atomic_group_failure
+  v3_7_final_closeout: V3_7_FINAL_CLOSEOUT.md
+  v3_7_final_disposition: REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
@@ -3217,13 +3232,11 @@ open_user_decisions: []
 
 ## Expected Next Handoff
 
-V3.7 is active under the user-accepted `V3_7_CHARTER.md`. Goal 1 and Goal 2 are closed and
-accepted. The user accepted the optimized versioned Goal 3A Authority Extension and
-started the first successor long-running Goal. Main must freeze the exact Goal 3A Prompt
-and Control Baseline, then dispatch one fresh dedicated zero-access Implementation
-Session. That Session must create one allowlist-clean Candidate and stop for Main
-preliminary review. Goal 3B remains locked pending Goal 3A focused-audit PASS, Main final
-acceptance and a separate exact real-Case/budget/access freeze.
+V3.7 is closed with `REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH`.
+Goals 1, 2 and 3A remain closed and accepted; Goal 3B consumed its one-shot execution and
+was rejected after the accepted 16-request Primary bridge delegated to the public V2B
+8-request Attempt cap. No retry, repair, second execution, user WebUI check or new version
+is authorized. Preserve the ignored execution evidence and `V3_7_FINAL_CLOSEOUT.md`.
 
 V0-A, V0-B and V0-C are closed and accepted. V0 now provides the minimal real
 Coding Agent Workbench foundation: controlled Workspace, Direct Pi
