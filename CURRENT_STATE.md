@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3a_exceptional_remediation
-  status: V3_7_G3A_EXCEPTIONAL_REMEDIATION_PROMPT_READY
+  status: V3_7_G3A_EXCEPTIONAL_REMEDIATION_DISPATCH_AUTHORIZED
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: exceptional_remediation_prompt_ready_pending_dispatch
+  status: exceptional_remediation_authorized_for_original_session
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -367,7 +367,7 @@ next_version:
   goal_3a_status: user_approved_one_exceptional_P1_001_remediation
   goal_3a_implementation_started: true
   goal_3a_implementation_session: /root/v37_g3a_implementation
-  goal_3a_implementation_session_status: completed_correction_2_candidate_Main_rereview_failed
+  goal_3a_implementation_session_status: exceptional_remediation_authorized_for_resume
   goal_3a_initial_candidate_commit: 71dd205e5fea6610d855ababb16dd17d265d83e7
   goal_3a_initial_candidate_tree: e1a71cc0858b9f1b23fb54b49e0467e6702f94ed
   goal_3a_initial_candidate_parent: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
@@ -397,10 +397,13 @@ next_version:
   goal_3a_exceptional_remediation_user_decision: approved
   goal_3a_exceptional_remediation_amendment: V3_7_G3A_EXCEPTIONAL_REMEDIATION_AMENDMENT.md
   goal_3a_exceptional_remediation_budget: 1_of_1_consumed
-  goal_3a_exceptional_remediation_status: prompt_ready_pending_dispatch
+  goal_3a_exceptional_remediation_status: authorized_for_original_implementation_session
   goal_3a_exceptional_remediation_prompt: V3_7_GOAL_3A_EXCEPTIONAL_REMEDIATION_PROMPT.md
   goal_3a_exceptional_remediation_amendment_freeze_commit: 8b951112faac4903ff4ba08f9a242902f6d597e7
   goal_3a_exceptional_remediation_amendment_freeze_tree: 046705a0ccf274031baca3d28545eef9bfef219c
+  goal_3a_exceptional_remediation_prompt_freeze_commit: e5526bd4c197d02821d05062e7d209c24a6741b1
+  goal_3a_exceptional_remediation_prompt_freeze_tree: fb09267052a0acbdd54e6b94a00c8784865cc19f
+  goal_3a_exceptional_remediation_starting_commit: resolved_by_Main_dispatch
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -416,7 +419,7 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_exceptional_remediation_ready_for_dispatch
+  goal_3a_long_running_goal_status: active_exceptional_remediation_dispatch_authorized
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
