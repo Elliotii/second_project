@@ -1,7 +1,7 @@
 # V3.7 Goal 3B Freeze Proposal
 
 ```yaml
-status: READY_FOR_USER_REVIEW_WITH_ONE_PRE_FREEZE_BLOCKER
+status: READY_FOR_EXACT_USER_REVIEW_BLOCKER_CLOSED
 recorded_on: 2026-08-21
 authority: V3_7_CHARTER.md_section_8
 goal_3a_disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
@@ -25,11 +25,9 @@ Goal 3A production path and the already frozen `parse-duration` / `clampRetries`
 not introduce a new task family, Candidate type, State decision, Regression family,
 workflow stage, UI route or product service.
 
-The package is otherwise ready for user review, but must not be frozen yet because
-`G3B-PREFREEZE-P1-001` below has no honest exact value under the current contract. Main
-recommends one narrow pre-freeze correction of the access-counter validation semantics,
-followed by the affected deterministic tests and focused re-audit. That recommendation
-does not itself authorize the correction or any real access.
+The package is ready for exact user review. `G3B-PREFREEZE-P1-001` is closed by the
+accepted access-counter maxima correction. The proposal still grants no configuration
+freeze, Credential access, network access, Provider/model call or real execution.
 
 ## Proposed exact Case identity
 
@@ -127,30 +125,19 @@ The USD limits are safety ceilings independent of any assumed current Provider p
 The execution report must reconcile exact observed usage and cost from local formal
 evidence; unknown cost fails closed against the remaining global cap.
 
-## G3B-PREFREEZE-P1-001 — exact observed counters cannot be predicted honestly
+## G3B-PREFREEZE-P1-001 — closed
 
-**Fact.** `primaryExecutionDeclarationV37G3A()` currently binds one exact
-`access_expectation` tuple into the Manifest. `inspectRunV2A()` then requires the final
-observed `real_call_counters` tuple to equal it exactly. The accepted real-shaped tests
-use fixed simulated tuples, while a real Agent can legally settle after different
-numbers of Provider requests.
+**Fact.** The accepted Candidate
+`d509d259fc0ea88ffe488a96993641ec19ee6dd0` / tree
+`1f705b1402f486b786d4567d1eb2d40b4ec3542b` interprets the registered tuples as hard
+maxima while independently deriving actual counters from the already validated usage
+evidence. It preserves exact Case/Manifest/profile/construction-authority binding.
 
-**Inference.** A hard maximum can be frozen before execution; the exact observed request
-count cannot. Guessing a tuple would make a valid under-budget execution invalid merely
-because it settled earlier, or would invite false counter reporting. This threatens the
-sole frozen Goal 3B route and the truthfulness of its usage record.
-
-**Recommendation.** Before configuration freeze, authorize one narrow correction:
-
-1. rename/interpret the registered tuple as non-negative hard maxima;
-2. require every independently derived observed counter to be less than or equal to its
-   registered maximum and equal to the raw immutable usage ledger;
-3. retain exact Case/Manifest/profile/construction-authority binding;
-4. add only the deterministic lower-than-cap, at-cap, over-cap, mismatched-ledger and
-   zero-access regression cases;
-5. make no other source, schema, task, Provider, State, UI or workflow change;
-6. freeze a corrected Candidate, rerun affected regressions and obtain a fresh focused
-   read-only re-audit before Goal 3B configuration freeze.
+**Fact.** Main review and a fresh independent focused re-audit both passed. The focused
+matrix covered under-cap, at-cap, over-cap, mismatched-ledger, zero-real and deterministic
+zero-access routes; strict TypeScript and the exact five-path/configuration boundary also
+passed. No broad suite was rerun because the focused command produced no evidence of a
+shared regression.
 
 The proposed maximum for the Primary/Recovery group is one Credential read and 48 each
 for network, external-Provider and real-model calls, subject to the stricter per-unit and
@@ -204,8 +191,8 @@ changes no product source or test; the accepted Candidate's independently establ
 
 ## Proposed freeze sequence after user decision
 
-1. If the blocker correction is authorized, freeze its exact correction contract and
-   bounded implementation prompt; correct, test, Main-review and independently re-audit.
+1. Completed: the bounded counter-maxima correction passed Main review and fresh focused
+   re-audit and is accepted without real access.
 2. Create only the third Case Manifest, Envelope, follow-up profile and canonical registry
    append; do not change either accepted deterministic entry.
 3. Run zero-access loader, registry, workflow reopen, affected regression and strict
@@ -219,9 +206,10 @@ changes no product source or test; the accepted Candidate's independently establ
 
 ## User review decision
 
-The recommended decision is:
+The recommended next decision is:
 
-`AUTHORIZE_V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_AND_RETURN_FOR_EXACT_FREEZE_REVIEW`
+`AUTHORIZE_V3_7_G3B_ZERO_ACCESS_CONFIGURATION_FREEZE_PREPARATION`
 
-Rejecting that recommendation leaves Goal 3B locked; Main will not guess exact observed
-counts or consume the unique real Case.
+This authorizes only creation and deterministic validation of the exact third Manifest,
+Envelope, follow-up profile, registry append and no-source-edit Execution Prompt. It does
+not authorize Credential resolution, network, Provider/model dispatch or the real Case.
