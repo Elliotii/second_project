@@ -36,7 +36,12 @@ Changed paths:
 
 Verification:
 
-- Narrow Primary-PASS bridge regression: 1 passed, 0 failed.
+- First narrow invocation without the required experimental module-mock flag: harness
+  setup failed at `mock.module`; no product assertion ran.
+- First correctly flagged narrow invocation: reproduced the additional Inspector
+  contradiction for a valid real `initial_pass`; the correction was expanded only to
+  that same confirmed terminalization class.
+- Final correctly flagged narrow Primary-PASS bridge regression: 1 passed, 0 failed.
 - Exact `npm run typecheck`: unavailable because the worktree-local ignored
   `.runs/v0-a` compiler path is absent.
 - Project-authorized existing compiler:
