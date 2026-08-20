@@ -42,6 +42,12 @@ which independently matches the fixed bridge error text for the exact-three-atte
 assumption. The bridge therefore emitted no Product receipt and its completed-unit total
 remained empty even though the underlying terminal and Verifier are valid.
 
+Narrow deterministic reproduction also confirmed that the Product Inspector treated the
+real Case's expected failure trigger as a guaranteed outcome and rejected the same valid
+real `initial_pass` terminal. For real execution, this expectation cannot override the
+independently inspected terminal; otherwise the Charter's explicit Primary-PASS terminal
+route is unreachable.
+
 Safe local reconciliation of the persisted public Pi Session found 56 known-usage
 assistant responses, 246,819 combined tokens, 57 Tool calls, 38 registered
 `run_command` calls and USD `0.0030990008`. No unknown usage was present. The one-unit

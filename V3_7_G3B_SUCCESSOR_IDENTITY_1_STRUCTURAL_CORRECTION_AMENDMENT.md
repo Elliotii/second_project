@@ -16,13 +16,16 @@ The failed execution and ignored evidence are immutable. Correction is limited t
 1. let the Host bridge accept the formal V2 `initial_pass` terminal as exactly one
    completed Primary unit, return it to Product, append the normal `run_primary` receipt
    and terminate at `no_recovery_needed` without creating Recovery units;
-2. preserve the exact-three-attempt requirement for a verifier-failed Primary that
+2. let the Inspector derive the route from independently inspected real terminal truth;
+   a real-declared Case's frozen expected failure trigger must not reject an actual valid
+   Primary PASS, while deterministic registered modes remain exact;
+3. preserve the exact-three-attempt requirement for a verifier-failed Primary that
    enters Recovery;
-3. version the Primary, Recovery A and Recovery B registered-command maxima from one to
+4. version the Primary, Recovery A and Recovery B registered-command maxima from one to
    64, with a global bridge command maximum of 195, without changing request, token,
    Tool, wall-time or USD ceilings; this restores the already user-authorized 64-capacity
    successor intent while leaving Regression and follow-up command maxima at one;
-4. add only the narrow deterministic Primary-PASS bridge regression and the minimum
+5. add only the narrow deterministic Primary-PASS bridge regression and the minimum
    contract/report synchronization required for a new Candidate and execution identity.
 
 The capacity correction is prospective only. It does not make Identity 1 valid and does

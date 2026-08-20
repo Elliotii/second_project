@@ -72,7 +72,7 @@ export function validatePrimaryTerminalV37G3A(options: { projectRoot: string; da
 		const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot, expectedTaskId: taskSpec.task_id, expectedRealExecutionAuthorized: declaration.realAccessDeclared, expectedExecutionPortKind: declaration.executionPortKind, expectedRealCallCounters: declaration.realAccessDeclared ? actualCounters : declaration.accessExpectation });
 		if (!inspected.integrity_valid || !inspected.terminal_valid || !inspected.terminal || stableJson(inspected.terminal) !== stableJson(stored)) throw new Error(`Primary V2 terminal inspection failed: ${inspected.errors.join("; ")}`);
 		if (declaration.realAccessDeclared) validateRealCounters(actualCounters, declaration.accessExpectation, inspectedProviderDispatches(options.runRoot, inspected));
-		if (declaration.primaryMode === "pass") {
+		if (declaration.primaryMode === "pass" || declaration.realAccessDeclared && inspected.terminal.outcome === "initial_pass") {
 			if (inspected.terminal.outcome !== "initial_pass" || inspected.terminal.primary_verifier_status !== "passed") throw new Error("Primary V2 terminal contradicts the registered pass mode");
 			return { terminal: stored, route: "no_recovery_needed" };
 		}
