@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3a_final_audit_remediation_preparation
-  status: V3_7_G3A_FINAL_AUDIT_REMEDIATION_MAIN_REREVIEW_PASS
+  status: V3_7_G3A_FINAL_AUDIT_REMEDIATION_REAUDIT_IN_PROGRESS
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: final_audit_remediation_Main_rereview_passed_reaudit_candidate_frozen
+  status: final_audit_remediation_independent_reaudit_in_progress
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -439,7 +439,9 @@ next_version:
   goal_3a_final_audit_remediation_main_rereview_result: PASS_V3_7_G3A_FINAL_AUDIT_REMEDIATION_MAIN_REREVIEW
   goal_3a_final_reaudit_candidate_commit: a764749e0d7f0355cef06decdcd5541af62a8f2f
   goal_3a_final_reaudit_candidate_tree: 070ce4177ebacf0250aeedf2e0db38c842c1e8a4
-  goal_3a_final_reaudit_status: frozen_pending_fresh_read_only_dispatch
+  goal_3a_final_reaudit_status: independent_read_only_in_progress
+  goal_3a_final_reaudit_session: /root/v37_g3a_final_remediation_reaudit
+  goal_3a_final_reaudit_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g3a-final-reaudit/project2
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -455,7 +457,7 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_final_reaudit_candidate_frozen_pending_dispatch
+  goal_3a_long_running_goal_status: active_final_independent_reaudit_in_progress
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
