@@ -6,7 +6,7 @@ import type { TaskSpecV0B } from "../contracts/v0b-types.ts";
 import type { FauxExecutionEventV3 } from "../contracts/v3g2-types.ts";
 import type { RefinementCandidateV3 } from "../contracts/v3-types.ts";
 import type { RegisteredCaseManifestBodyV37 } from "../contracts/v37-types.ts";
-import type { LoadedRegisteredCaseV37G3A, WorkflowActionIdV37G3A, WorkflowReadModelV37G3A } from "../contracts/v37g3a-types.ts";
+import type { ExecutionAccessExpectationV37G3A, LoadedRegisteredCaseV37G3A, WorkflowActionIdV37G3A, WorkflowReadModelV37G3A } from "../contracts/v37g3a-types.ts";
 import { writeOnceJson } from "../evidence/artifacts.ts";
 import { digestObject, fileSha256, sha256, stableJson, treeDigest } from "../hash.ts";
 import { SYSTEM_PROMPT, SYSTEM_PROMPT_SHA256 } from "../prompts/base.ts";
@@ -17,12 +17,13 @@ import { stageCandidateStateV3 } from "../state/staging-v3.ts";
 import { applyValidationDecisionV3, initializeStateStoreV3, inspectStateStoreV3 } from "../state/store-v3.ts";
 import { persistStateAssessmentG2 } from "../state/state-feedback-g2.ts";
 import { producePromptCandidateV37G3A } from "./candidate-v37g3a.ts";
-import { listRegisteredCasesFromHostRegistryV37G3A, loadRegisteredCaseFromHostRegistryV37G3A } from "./host-registry-v37g3a.ts";
+import { followUpAccessExpectationV37G3A, listRegisteredCasesFromHostRegistryV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, primaryExecutionDeclarationV37G3A } from "./host-registry-v37g3a.ts";
 import { admitRegisteredRecoveryV37G3A, deriveRegisteredRecoveryPackageV37G3A } from "./registered-recovery-v37g3a.ts";
 import { admitRegisteredFollowUpV37G3A, deterministicFauxFollowUpRuntimePortV37G3A, executeRegisteredFollowUpV37G3A, normalizeRegisteredBoundFollowUpV37G3A, prepareRegisteredFollowUpV37G3A, registeredFollowUpPromotionValidationRootV37G3A, submitRegisteredFollowUpEvidenceV37G3A, type RegisteredFollowUpOptionsV37G3A, type RegisteredFollowUpRuntimePortV37G3A } from "./registered-follow-up-v37g3a.ts";
 import { bindPrimaryRunV37G3A, createWorkflowRegistrationV37G3A, loadWorkflowRegistrationV37G3A, v37G3ADataRootPath } from "./workflow-registration-v37g3a.ts";
 import { appendWorkflowReceiptV37G3A, createWorkflowJournalV37G3A } from "./workflow-journal-v37g3a.ts";
 import { readWorkflowV37G3A } from "../read-model/workflow-v37g3a.ts";
+import { validatePrimaryTerminalV37G3A } from "../inspect-v37g3a.ts";
 
 export const V37_G3A_PRODUCT_DATA_ROOT = ".runs/v37/g3a-product/data" as const;
 const PRODUCT_ROOT = ".runs/v37/g3a-product" as const;
@@ -33,7 +34,8 @@ const GENERIC = "Before reporting completion, run the task-declared check and re
 export interface ProductPrimaryExecutionRequestV37G3A { projectRoot:string; workflowId:string; runId:string; runRoot:string; loadedCase:LoadedRegisteredCaseV37G3A; }
 export interface ProductPrimaryExecutionPortV37G3A { execute(request:ProductPrimaryExecutionRequestV37G3A):Promise<Record<string,unknown>>; }
 export interface ProductCaseExecutionPortsV37G3A { primary:ProductPrimaryExecutionPortV37G3A; followUpRuntime?:RegisteredFollowUpRuntimePortV37G3A; }
-export interface ProductPortsV37G3A { now?: () => string; mintId?: (kind: "workflow"|"run"|"session"|"workspace") => string; regressionCandidatePass?: boolean; caseExecutionPorts?:Readonly<Record<string,ProductCaseExecutionPortsV37G3A>>; }
+export interface ProductRealAccessAuthorizationV37G3A { case_id:string; manifest_body_digest:string; follow_up_execution_profile_digest:string; primary_access_expectation:ExecutionAccessExpectationV37G3A; follow_up_access_expectation:ExecutionAccessExpectationV37G3A; }
+export interface ProductPortsV37G3A { now?: () => string; mintId?: (kind: "workflow"|"run"|"session"|"workspace") => string; regressionCandidatePass?: boolean; caseExecutionPorts?:Readonly<Record<string,ProductCaseExecutionPortsV37G3A>>; realAccessAuthorization?:ProductRealAccessAuthorizationV37G3A; }
 
 function readJson<T>(path:string):T { return JSON.parse(readFileSync(path,"utf8")) as T; }
 function artifact(kind:string,id:string,value:unknown){return {kind,id,digest:digestObject(value)};}
@@ -80,18 +82,27 @@ export class ProductServiceV37G3A {
 	private readonly mint:(kind:"workflow"|"run"|"session"|"workspace")=>string;
 	private readonly candidatePass:boolean;
 	private readonly executionPorts:Readonly<Record<string,ProductCaseExecutionPortsV37G3A>>;
+	private readonly realAccessCaseId:string|null;
 	constructor(projectRoot:string,ports:ProductPortsV37G3A={}){
-		this.projectRoot=resolve(projectRoot); this.now=ports.now??(()=>new Date().toISOString()); this.mint=ports.mintId??((kind)=>`v37-g3a-${kind}-${randomUUID()}`); this.candidatePass=ports.regressionCandidatePass??true;this.executionPorts={...DEFAULT_CASE_PORTS,...ports.caseExecutionPorts};
-		listRegisteredCasesFromHostRegistryV37G3A({projectRoot:this.projectRoot,allowDisabledHistorical:true});
+		this.projectRoot=resolve(projectRoot); this.now=ports.now??(()=>new Date().toISOString()); this.mint=ports.mintId??((kind)=>`v37-g3a-${kind}-${randomUUID()}`); this.candidatePass=ports.regressionCandidatePass??true;
+		if(Object.keys(ports.caseExecutionPorts??{}).some((caseId)=>caseId===RECOVERY_CASE||caseId===PRIMARY_PASS_CASE))throw new Error("frozen G3A Case execution ports cannot be overridden");
+		this.executionPorts={...DEFAULT_CASE_PORTS,...ports.caseExecutionPorts};
+		const loaded=listRegisteredCasesFromHostRegistryV37G3A({projectRoot:this.projectRoot,allowDisabledHistorical:true}),authorization=ports.realAccessAuthorization;
+		if(authorization&&stableJson(Object.keys(authorization).sort())!==stableJson(["case_id","follow_up_access_expectation","follow_up_execution_profile_digest","manifest_body_digest","primary_access_expectation"].sort()))throw new Error("real-access Host construction authorization exact-key validation failed");
+		const authorized=authorization?loaded.find((item)=>item.manifest.case_id===authorization.case_id):undefined;
+		if(authorization&&!authorized)throw new Error("real-access Host construction authorization does not identify a registered Case");
+		if(authorization&&authorized){const primary=primaryExecutionDeclarationV37G3A(authorized.manifest),follow=followUpAccessExpectationV37G3A(authorized.follow_up_execution_profile);if(!primary.realAccessDeclared||authorized.historical_read_only||authorization.manifest_body_digest!==authorized.manifest.manifest_body_digest||authorization.follow_up_execution_profile_digest!==authorized.follow_up_execution_profile.follow_up_execution_profile_digest||stableJson(authorization.primary_access_expectation)!==stableJson(primary.accessExpectation)||stableJson(authorization.follow_up_access_expectation)!==stableJson(follow))throw new Error("real-access Host construction authorization does not match the Host-loaded Case profile");const exactPorts=this.executionPorts[authorization.case_id];if(!exactPorts?.primary||!exactPorts.followUpRuntime)throw new Error("real-access Case requires exact Primary and follow-up Host execution ports");}
+		this.realAccessCaseId=authorization?.case_id??null;
 	}
-	listCases(){return listRegisteredCasesFromHostRegistryV37G3A({projectRoot:this.projectRoot,allowDisabledHistorical:true}).map((loaded)=>({case_id:loaded.manifest.case_id,manifest_version:loaded.manifest.manifest_version,registration_status:loaded.current_envelope.registration_status,available_for_new_workflow:!loaded.historical_read_only&&Boolean(this.executionPorts[loaded.manifest.case_id])}));}
+	private caseAvailable(loaded:LoadedRegisteredCaseV37G3A):boolean{const declaration=primaryExecutionDeclarationV37G3A(loaded.manifest),ports=this.executionPorts[loaded.manifest.case_id];return !loaded.historical_read_only&&Boolean(ports)&&(!declaration.realAccessDeclared||(this.realAccessCaseId===loaded.manifest.case_id&&Boolean(ports?.followUpRuntime)));}
+	listCases(){return listRegisteredCasesFromHostRegistryV37G3A({projectRoot:this.projectRoot,allowDisabledHistorical:true}).map((loaded)=>({case_id:loaded.manifest.case_id,manifest_version:loaded.manifest.manifest_version,registration_status:loaded.current_envelope.registration_status,available_for_new_workflow:this.caseAvailable(loaded)}));}
 	listWorkflows():WorkflowReadModelV37G3A[]{
 		const root=resolve(this.projectRoot,this.dataRoot,"workflows"); if(!existsSync(root))return[];
 		return readdirSync(root,{withFileTypes:true}).filter((entry)=>entry.isDirectory()&&!entry.isSymbolicLink()).map((entry)=>entry.name).sort().map((workflowId)=>this.getWorkflow(workflowId));
 	}
 	async createWorkflow(caseId:string):Promise<WorkflowReadModelV37G3A>{
 		const loaded=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:this.projectRoot,caseId});
-		if(!this.executionPorts[caseId])throw new Error("registered Case has no Host-constructed execution port");
+		if(!this.caseAvailable(loaded))throw new Error("registered Case lacks matching Host-constructed execution authority and ports");
 		const workflowId=this.mint("workflow"),createdAt=this.now();
 		const created=createWorkflowRegistrationV37G3A({projectRoot:this.projectRoot,dataRoot:this.dataRoot,caseId,workflowId,createdAt});
 		createWorkflowJournalV37G3A({projectRoot:this.projectRoot,dataRoot:this.dataRoot,workflow:created.workflow,createdAt});
@@ -146,7 +157,7 @@ export class ProductServiceV37G3A {
 		const canonical=await normalizeRegisteredBoundFollowUpV37G3A(this.followOptions(workflowId));const registered=loadWorkflowRegistrationV37G3A({projectRoot:this.projectRoot,dataRoot:this.dataRoot,workflowId});const scope=registered.loadedCase.manifest.state_store_scope_spec;const assessmentRoot=resolve(this.projectRoot,PRODUCT_ROOT,"assessments",workflowId);const result=await persistStateAssessmentG2({projectRoot:this.projectRoot,assessmentRoot,admissionRoot:assessmentRoot,registrationPath:resolve(assessmentRoot,"unused.json"),admissionId:canonical.admission_identity.admission_id,projectId:registered.workflow.project_id,stateRoot:resolve(this.projectRoot,scope.configured_location),expectedActive:canonical.bound_active_state_identity,promotionValidationRunRoot:registeredFollowUpPromotionValidationRootV37G3A(this.followOptions(workflowId)),comparisonRunRoot:null,requestedRollbackTargetDigest:null,immutableBasePrompt:SYSTEM_PROMPT,immutableBasePromptSha256:SYSTEM_PROMPT_SHA256,registeredFollowUpG3A:this.followOptions(workflowId)});return [artifact("state_assessment",result.assessment.assessment_id,result.assessment)];
 	}
 	private async runPrimary(caseId:string,workflowId:string){
-		const runRoot=this.runRoot(workflowId),runId=`${workflowId}-primary`,loadedCase=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:this.projectRoot,caseId}),execution=this.executionPorts[caseId];if(!execution)throw new Error("registered Case has no Host-constructed execution port");validateFrozenPrimaryContent(this.projectRoot,loadedCase.manifest);bindPrimaryRunV37G3A({projectRoot:this.projectRoot,dataRoot:this.dataRoot,workflowId,runId,runRoot,boundAt:this.now()});const terminal=await execution.primary.execute({projectRoot:this.projectRoot,workflowId,runId,runRoot,loadedCase});if(terminal.run_id!==runId)throw new Error("Primary terminal/run binding mismatch");const counters=(terminal.real_call_counters??terminal) as Record<string,unknown>;if(["credential_reads","network_calls","external_provider_calls","real_model_calls"].some((key)=>counters[key]!==0))throw new Error("Primary terminal violates zero-access execution contract");return [artifact("primary_terminal",runId,terminal)];
+		const runRoot=this.runRoot(workflowId),runId=`${workflowId}-primary`,loadedCase=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:this.projectRoot,caseId}),execution=this.executionPorts[caseId];if(!execution)throw new Error("registered Case has no Host-constructed execution port");validateFrozenPrimaryContent(this.projectRoot,loadedCase.manifest);const declaration=primaryExecutionDeclarationV37G3A(loadedCase.manifest);if(declaration.realAccessDeclared&&this.realAccessCaseId!==caseId)throw new Error("Primary real access lacks explicit Host construction authorization");bindPrimaryRunV37G3A({projectRoot:this.projectRoot,dataRoot:this.dataRoot,workflowId,runId,runRoot,boundAt:this.now()});const returned=await execution.primary.execute({projectRoot:this.projectRoot,workflowId,runId,runRoot,loadedCase});const validated=validatePrimaryTerminalV37G3A({projectRoot:this.projectRoot,dataRoot:this.dataRoot,workflowId,runRoot,returnedTerminal:returned,realAccessAuthorized:declaration.realAccessDeclared});return [artifact("primary_terminal",runId,validated.terminal)];
 	}
 	private candidate(workflowId:string):RefinementCandidateV3{return readJson<{candidate:RefinementCandidateV3}>(resolve(this.workflowRoot(workflowId),"candidate.json")).candidate;}
 	private async runRegression(workflowId:string){

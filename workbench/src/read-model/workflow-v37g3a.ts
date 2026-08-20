@@ -4,23 +4,17 @@ import { loadWorkflowJournalV37G3A } from "../v37/workflow-journal-v37g3a.ts";
 import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { digestObject } from "../hash.ts";
+import { validatePrimaryTerminalV37G3A } from "../inspect-v37g3a.ts";
 
 const routes: Record<WorkflowStageV37G3A, WorkflowActionIdV37G3A[]>={ready_for_primary:["run_primary"],ready_for_recovery:["run_recovery"],no_recovery_needed:[],ready_for_recovery_confirmation:["confirm_recovery_evidence"],ready_for_recovery_admission:["request_recovery_admission"],ready_for_candidate:["produce_candidate"],ready_for_regression:["run_regression"],candidate_rejected:[],ready_for_follow_up:["run_follow_up"],ready_for_follow_up_confirmation:["confirm_follow_up_evidence"],ready_for_follow_up_admission:["request_follow_up_admission"],ready_for_assessment:["assess_state"],complete:[]};
-function primaryNeedsRecovery(value:unknown):boolean{
-	if(!value||typeof value!=="object"||Array.isArray(value))throw new Error("Primary terminal is not an object");
-	const terminal=value as Record<string,unknown>;
-	if((terminal.outcome==="passed"&&terminal.verifier_status==="passed")||(terminal.outcome==="initial_pass"&&terminal.primary_verifier_status==="passed"))return false;
-	if(terminal.outcome==="recovery_selected"&&terminal.primary_verifier_status==="failed")return true;
-	throw new Error("Primary terminal has no accepted workflow transition outcome");
-}
-function deriveStage(receipts:WorkflowTransitionReceiptV37G3A[], resolveArtifact:(ref:{kind:string;id:string;digest:string})=>unknown):WorkflowStageV37G3A {
+function deriveStage(receipts:WorkflowTransitionReceiptV37G3A[], validatePrimary:(ref:{kind:string;id:string;digest:string})=>boolean):WorkflowStageV37G3A {
 	let stage:WorkflowStageV37G3A="ready_for_primary";
 	for(const receipt of receipts){
 		if(!routes[stage].includes(receipt.action_id)) throw new Error("workflow receipt action is premature or repeated");
 		if(receipt.action_id==="run_primary"){
 			const refs=receipt.artifact_refs.filter((ref)=>ref.kind==="primary_terminal");
 			if(refs.length!==1)throw new Error("Primary transition must cite exactly one formal terminal");
-			stage=primaryNeedsRecovery(resolveArtifact(refs[0]!))?"ready_for_recovery":"no_recovery_needed";
+			stage=validatePrimary(refs[0]!)?"ready_for_recovery":"no_recovery_needed";
 		}
 		else if(receipt.action_id==="run_recovery") stage="ready_for_recovery_confirmation";
 		else if(receipt.action_id==="confirm_recovery_evidence") stage="ready_for_recovery_admission";
@@ -69,7 +63,7 @@ export function readWorkflowV37G3A(options:{projectRoot:string;dataRoot:string;w
 	if(registered.workflow.workflow_registration_digest!==journal.header.workflow.workflow_registration_digest) throw new Error("journal/workflow registration drift");
 	const roots=formalRoots(options.projectRoot,options.dataRoot,options.workflowId,resolve(options.projectRoot,registered.loadedCase.manifest.state_store_scope_spec.configured_location));
 	verifyFormalRefs(roots,journal.receipts);
-	const stage=deriveStage(journal.receipts,(ref)=>{for(const root of roots){const found=findArtifact(root,ref);if(found!==null)return found;}throw new Error(`formal artifact reference drift: ${ref.kind}`);});
+	const stage=deriveStage(journal.receipts,(ref)=>{const runRoot=resolve(options.projectRoot,".runs/v37/g3a-product/runs",options.workflowId,"primary"),validated=validatePrimaryTerminalV37G3A({projectRoot:options.projectRoot,dataRoot:options.dataRoot,workflowId:options.workflowId,runRoot});if(ref.id!==validated.terminal.run_id||ref.digest!==digestObject(validated.terminal))throw new Error("Primary formal artifact reference/validated terminal mismatch");return validated.needsRecovery;});
 	const historical=registered.loadedCase.historical_read_only;
 	return {workflow_id:options.workflowId,case_id:registered.workflow.case_id,stage,available_actions:historical?[]:structuredClone(routes[stage]),historical_read_only:historical,artifacts:journal.receipts.flatMap((receipt)=>structuredClone(receipt.artifact_refs)),receipt_count:journal.receipts.length};
 }

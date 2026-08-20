@@ -1,4 +1,5 @@
-import type { FollowUpExecutionAuthorityV37, RegisteredFollowUpExecutionProfileV37 } from "../contracts/v37-types.ts";
+import type { FollowUpExecutionAuthorityV37 } from "../contracts/v37-types.ts";
+import type { RegisteredFollowUpExecutionProfileV37G3A } from "../contracts/v37g3a-types.ts";
 import { digestObject, fileSha256, stableJson } from "../hash.ts";
 import { fileURLToPath } from "node:url";
 import { loadWorkflowRegistrationV37G3A } from "./workflow-registration-v37g3a.ts";
@@ -15,7 +16,7 @@ export function followUpProfileLoaderFingerprintV37G3A(projectRoot: string, conf
 	});
 }
 
-export function loadRegisteredFollowUpExecutionProfileV37G3A(options: { projectRoot: string; dataRoot: string; workflowId: string; allowHistoricalReadOnly?: true }): { profile: RegisteredFollowUpExecutionProfileV37; authority: FollowUpExecutionAuthorityV37 } {
+export function loadRegisteredFollowUpExecutionProfileV37G3A(options: { projectRoot: string; dataRoot: string; workflowId: string; allowHistoricalReadOnly?: true }): { profile: RegisteredFollowUpExecutionProfileV37G3A; authority: FollowUpExecutionAuthorityV37 } {
 	const keys = Object.keys(options).sort();
 	if (stableJson(keys) !== stableJson(["dataRoot", "projectRoot", "workflowId"]) && stableJson(keys) !== stableJson(["allowHistoricalReadOnly", "dataRoot", "projectRoot", "workflowId"])) throw new Error("follow-up profile loader caller override rejected");
 	const registered = loadWorkflowRegistrationV37G3A({ ...options, allowHistoricalReadOnly: options.allowHistoricalReadOnly });
