@@ -670,11 +670,15 @@ next_version:
   goal_3b_64_reaudit: docs/reports/V3_7_G3B_64_REQUEST_AFFECTED_FINDING_REAUDIT.md
   goal_3b_64_reaudit_result: PASS_V3_7_G3B_64_REQUEST_AFFECTED_FINDING_REAUDIT
   goal_3b_64_execution_prompt: V3_7_GOAL_3B_64_REQUEST_SUCCESSOR_EXECUTION_PROMPT.md
-  goal_3b_64_execution_baseline: pending_Main_freeze_commit
+  goal_3b_64_execution_prompt_git_blob: 5577fa91bc450132e35c84a76ddbdcc8ce6f20c2
+  goal_3b_64_execution_prompt_sha256: e4f0c57629a8c82e1b2dbd0badcd85a904e5d59096e131a6ee060f322498f9ba
+  goal_3b_64_execution_baseline_commit: 1a542e081420b1c0037a54bbcd641c329cfe70e2
+  goal_3b_64_execution_baseline_tree: 5280a9cca668ef7b81376e5f092aea3b31b75f88
+  goal_3b_64_execution_baseline_freeze: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_EXECUTION_BASELINE_FREEZE.md
   goal_3b_64_real_access_authorized: false
   goal_3b_64_execution_started: false
   goal_3b_64_prior_workflow_reuse: forbidden
-  goal_3b_64_status: successor_contract_ready_for_execution_baseline_freeze
+  goal_3b_64_status: execution_baseline_frozen_real_access_locked
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
