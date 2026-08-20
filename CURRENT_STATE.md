@@ -8,28 +8,28 @@ project:
   phase: v3_7_g3b_64_request_successor
   status: V3_7_G3B_64_REQUEST_SUCCESSOR_PENDING_REAL_ACCESS
 
-active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
+active_goal: null
 
-current_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
+current_goal: null
 
 last_executed_goal:
-  id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: rejected
-  disposition: REJECTED_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
-  closeout: V3_7_FINAL_CLOSEOUT.md
+  id: V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
+  status: closed_accepted
+  disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
+  closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: rejected
-  disposition: REJECTED_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
-  closeout: V3_7_FINAL_CLOSEOUT.md
+  id: V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
+  status: closed_accepted
+  disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
+  closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  id: V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
   status: closed_accepted
-  disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
 
-next_goal: null
+next_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -227,7 +227,7 @@ next_version:
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
+  active_goal: null
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -679,6 +679,10 @@ next_version:
   goal_3b_64_execution_started: false
   goal_3b_64_prior_workflow_reuse: forbidden
   goal_3b_64_status: execution_baseline_frozen_real_access_locked
+  goal_3b_64_correction_acceptance_status: closed_accepted
+  goal_3b_64_correction_disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
+  goal_3b_64_correction_closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
+  goal_3b_64_next_control_point: separate_explicit_real_access_authorization
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
@@ -2866,6 +2870,7 @@ required_reading:
   - V3_7_GOAL_3B_64_REQUEST_SUCCESSOR_EXECUTION_PROMPT.md
   - docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_MAIN_REVIEW.md
   - docs/reports/V3_7_G3B_64_REQUEST_AFFECTED_FINDING_REAUDIT.md
+  - docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
   - docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_EXECUTION_BASELINE_FREEZE.md
   - V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   - V3_7_PREIMPLEMENTATION_REVIEW.md
