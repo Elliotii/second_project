@@ -15,6 +15,7 @@ import { digestObject, fileSha256, stableJson } from "../hash.ts";
 import { inspectRunV2A } from "../inspect-v2.ts";
 import { V2A_STRATEGY_ORDER } from "../contracts/v2-types.ts";
 import { v37G3ADataRootPath, loadPrimaryRunBindingV37G3A, loadWorkflowRegistrationV37G3A } from "./workflow-registration-v37g3a.ts";
+import { primaryExecutionDeclarationV37G3A } from "./host-registry-v37g3a.ts";
 
 const ID = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
 
@@ -115,9 +116,10 @@ function requireRegisteredV2Execution(manifest: RunManifestV2A, registered: Retu
 	const budget = registeredManifest.budget_profile_spec.body as Record<string, unknown>;
 	const recoveryA = registeredManifest.recovery_a_strategy_spec.body as Record<string, unknown>;
 	const recoveryB = registeredManifest.recovery_b_strategy_spec.body as Record<string, unknown>;
+	const declaration = primaryExecutionDeclarationV37G3A(registeredManifest);
 	if (manifest.task_id !== task.task_id || manifest.task_instruction_sha256 !== task.instruction_sha256) throw new Error("V2 Primary task does not match registered task identity");
 	if (manifest.verifier_id !== verifier.verifier_id || manifest.verifier_sha256 !== verifier.source_sha256) throw new Error("V2 Primary Verifier does not match registered Verifier identity");
-	if (manifest.model_id !== provider.model_id || manifest.execution_port_kind !== "internal_deterministic" || manifest.real_execution_authorized !== false || provider.real_access !== false) throw new Error("V2 Provider profile does not match registered deterministic profile");
+	if (manifest.execution_port_kind !== declaration.executionPortKind || manifest.real_execution_authorized !== declaration.realAccessDeclared || provider.real_access !== declaration.realAccessDeclared || (!declaration.realAccessDeclared && manifest.model_id !== provider.model_id)) throw new Error("V2 execution declaration does not match registered Provider authority");
 	if (manifest.tool_profile_id !== tool.tool_profile_id || manifest.tool_profile_digest !== tool.v2_tool_profile_digest) throw new Error("V2 Tool profile does not match registered profile");
 	if (stableJson(manifest.strategy_ids) !== stableJson([recoveryA.strategy_id, recoveryB.strategy_id]) || manifest.recovery_candidate_count_on_valid_failure !== 2) throw new Error("V2 Recovery strategies do not match registered Comparison membership");
 	const expectedGroupBudget = { candidate_paths_exact_on_valid_failure: budget.candidate_paths_exact, faux_provider_dispatches_max: budget.provider_dispatches_max, tool_calls_max: budget.tool_calls_max, verifier_runs_max: budget.verifier_runs_max, real_cost_usd: budget.real_cost_usd };
@@ -136,7 +138,8 @@ function deriveRegisteredRecoveryPackageCoreV37G3A(options: RecoveryPackageOptio
 	if (!ID.test(options.workflowId) || Number.isNaN(Date.parse(options.confirmedAt)) || Number.isNaN(Date.parse(options.requestedAt))) throw new Error("Recovery package workflow/timestamp invalid");
 	const registered = loadWorkflowRegistrationV37G3A({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly });
 	const primaryRunBinding = loadPrimaryRunBindingV37G3A({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, runRoot: options.runRoot, allowHistoricalReadOnly });
-	const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot });
+	const declaration = primaryExecutionDeclarationV37G3A(registered.loadedCase.manifest);
+	const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot, expectedTaskId: (registered.loadedCase.manifest.primary_task_spec.body as { task_id: string }).task_id, expectedRealExecutionAuthorized: declaration.realAccessDeclared, expectedExecutionPortKind: declaration.executionPortKind, expectedRealCallCounters: declaration.accessExpectation });
 	if (!inspected.integrity_valid || !inspected.terminal_valid || !inspected.terminal || !inspected.recovery_seed || inspected.candidates.length !== 2 || !inspected.selection) throw new Error(`V2 Recovery truth rejected: ${inspected.errors.join("; ") || "incomplete recovery episode"}`);
 	if (!(["recovery_selected", "recovery_none"] as const).includes(inspected.terminal.outcome as "recovery_selected" | "recovery_none") || inspected.terminal.primary_verifier_status !== "failed") throw new Error("registered recovery evidence requires a terminal comparison after Primary verifier failure");
 	const v2Manifest = ordinaryJson<RunManifestV2A>(resolve(options.runRoot, "config/manifest.json"), "V2 Run Manifest");

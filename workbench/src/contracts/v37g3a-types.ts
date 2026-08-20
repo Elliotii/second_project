@@ -105,7 +105,7 @@ export const V37_G3A_ACTION_IDS = [
 export type WorkflowActionIdV37G3A = typeof V37_G3A_ACTION_IDS[number];
 
 export type WorkflowStageV37G3A =
-	| "ready_for_primary" | "ready_for_recovery" | "no_recovery_needed"
+	| "ready_for_primary" | "ready_for_recovery" | "no_recovery_needed" | "recovery_inconclusive"
 	| "ready_for_recovery_confirmation" | "ready_for_recovery_admission"
 	| "ready_for_candidate" | "ready_for_regression" | "candidate_rejected"
 	| "ready_for_follow_up" | "ready_for_follow_up_confirmation"

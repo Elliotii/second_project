@@ -90,10 +90,25 @@ export function primaryExecutionDeclarationV37G3A(manifest: LoadedRegisteredCase
 		return { primaryMode: body.primary_mode, executionPortKind: "internal_deterministic", realAccessDeclared: false, accessExpectation: structuredClone(ZERO_ACCESS) };
 	}
 	const body = exact(record, ["access_expectation", "candidate_modes", "execution_port_kind", "model_id", "primary_mode", "provider_id", "real_access"], "real-access Primary provider profile");
-	if (body.real_access !== true || !Array.isArray(body.candidate_modes) || !body.candidate_modes.every((item) => item === "pass" || item === "fail") || (body.primary_mode !== "pass" && body.primary_mode !== "fail") || (body.execution_port_kind !== "internal_deterministic" && body.execution_port_kind !== "injected") || typeof body.provider_id !== "string" || typeof body.model_id !== "string") throw new Error("real-access Primary provider profile invalid");
+	if (body.real_access !== true || !Array.isArray(body.candidate_modes) || !body.candidate_modes.every((item) => item === "pass" || item === "fail") || (body.primary_mode !== "pass" && body.primary_mode !== "fail") || body.execution_port_kind !== "injected" || typeof body.provider_id !== "string" || typeof body.model_id !== "string") throw new Error("real-access Primary provider profile invalid");
 	const expectation = validateAccessExpectation(body.access_expectation, "Primary access expectation");
 	if (Object.values(expectation).every((count) => count === 0)) throw new Error("real-access Primary provider profile must declare a nonzero observation");
 	return { primaryMode: body.primary_mode, executionPortKind: body.execution_port_kind, realAccessDeclared: true, accessExpectation: expectation };
+}
+
+export function constructionAuthorityDigestsV37G3A(manifest: LoadedRegisteredCaseV37G3A["manifest"]): { candidateProposalAuthorityDigest: string; regressionAuthorityDigest: string } {
+	const shared = {
+		manifest_body_digest: manifest.manifest_body_digest,
+		provider_profile_digest: manifest.provider_profile_spec.spec_digest,
+		tool_profile_digest: manifest.tool_profile_spec.spec_digest,
+		command_profile_digest: manifest.command_profile_spec.spec_digest,
+		budget_profile_digest: manifest.budget_profile_spec.spec_digest,
+		stop_condition_profile_digest: manifest.stop_condition_profile_spec.spec_digest,
+	};
+	return {
+		candidateProposalAuthorityDigest: digestObject({ ...shared, candidate_policy_digest: manifest.candidate_policy_spec.spec_digest }),
+		regressionAuthorityDigest: digestObject({ ...shared, candidate_policy_digest: manifest.candidate_policy_spec.spec_digest, regression_pack_digest: manifest.regression_pack_spec.spec_digest }),
+	};
 }
 
 export function followUpAccessExpectationV37G3A(profile: RegisteredFollowUpExecutionProfileV37G3A): ExecutionAccessExpectationV37G3A {

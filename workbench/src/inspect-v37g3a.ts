@@ -30,7 +30,9 @@ function exactCounters(value: unknown, expected: ExecutionAccessExpectationV37G3
 	for (const key of Object.keys(expected) as Array<keyof ExecutionAccessExpectationV37G3A>) if (!Number.isSafeInteger(counters[key]) || Number(counters[key]) < 0 || counters[key] !== expected[key]) throw new Error(`${label} does not match the Host-loaded execution profile`);
 }
 
-export function validatePrimaryTerminalV37G3A(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; returnedTerminal?: Record<string, unknown>; realAccessAuthorized?: boolean }): { terminal: Record<string, unknown>; needsRecovery: boolean } {
+export type PrimaryRouteV37G3A = "no_recovery_needed" | "ready_for_recovery" | "recovery_inconclusive";
+
+export function validatePrimaryTerminalV37G3A(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; returnedTerminal?: Record<string, unknown>; realAccessAuthorized?: boolean }): { terminal: Record<string, unknown>; route: PrimaryRouteV37G3A } {
 	const registered = loadWorkflowRegistrationV37G3A({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly: true });
 	const binding = loadPrimaryRunBindingV37G3A({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, runRoot: options.runRoot, allowHistoricalReadOnly: true });
 	const declaration = primaryExecutionDeclarationV37G3A(registered.loadedCase.manifest);
@@ -44,17 +46,20 @@ export function validatePrimaryTerminalV37G3A(options: { projectRoot: string; da
 		if (!inspected.integrity_valid || !inspected.terminal_valid || !inspected.terminal || stableJson(inspected.terminal) !== stableJson(stored)) throw new Error(`Primary V2 terminal inspection failed: ${inspected.errors.join("; ")}`);
 		if (declaration.primaryMode === "pass") {
 			if (inspected.terminal.outcome !== "initial_pass" || inspected.terminal.primary_verifier_status !== "passed") throw new Error("Primary V2 terminal contradicts the registered pass mode");
-			return { terminal: stored, needsRecovery: false };
+			return { terminal: stored, route: "no_recovery_needed" };
 		}
-		if (inspected.terminal.outcome !== "recovery_selected" || inspected.terminal.primary_verifier_status !== "failed") throw new Error("Primary V2 terminal contradicts the registered failure/recovery mode");
-		return { terminal: stored, needsRecovery: true };
+		if (inspected.terminal.primary_verifier_status !== "failed") throw new Error("Primary V2 terminal contradicts the registered failure/recovery mode");
+		if (inspected.terminal.outcome === "recovery_selected" && inspected.selection?.selected_candidate_id && inspected.candidates.length === 2) return { terminal: stored, route: "ready_for_recovery" };
+		if (inspected.terminal.outcome === "recovery_none" && inspected.selection?.selected_candidate_id === null && inspected.selection.eligible_candidate_ids.length === 0 && inspected.candidates.length === 2) return { terminal: stored, route: "recovery_inconclusive" };
+		throw new Error("Primary V2 terminal has no accepted registered route");
 	}
+	if (declaration.realAccessDeclared) throw new Error("real-declared Primary must use an independently inspected V2 terminal");
 	const terminal = exact(stored, ["schema_version", "kind", "run_id", "task_id", "workspace_digest", "verifier_source_sha256", "verifier_status", "outcome", "credential_reads", "network_calls", "external_provider_calls", "real_model_calls", "terminal_digest"], "G3A Primary terminal");
 	if (terminal.schema_version !== 1 || terminal.kind !== "v37_g3a_primary_terminal" || declaration.primaryMode !== "pass" || terminal.task_id !== taskSpec.task_id || terminal.workspace_digest !== treeDigest(resolve(options.runRoot, "primary/workspace")) || terminal.verifier_source_sha256 !== (registered.loadedCase.manifest.primary_verifier_spec.body as { source_sha256: string }).source_sha256 || terminal.verifier_status !== "passed" || terminal.outcome !== "passed") throw new Error("G3A Primary terminal identity/Task/Source/Verifier/Outcome mismatch");
 	exactCounters({ credential_reads: terminal.credential_reads, network_calls: terminal.network_calls, external_provider_calls: terminal.external_provider_calls, real_model_calls: terminal.real_model_calls }, declaration.accessExpectation, "G3A Primary access counters");
 	const { terminal_digest: declaredDigest, ...body } = terminal;
 	if (typeof declaredDigest !== "string" || digestObject(body) !== declaredDigest) throw new Error("G3A Primary terminal digest mismatch");
-	return { terminal: stored, needsRecovery: false };
+	return { terminal: stored, route: "no_recovery_needed" };
 }
 
 export function inspectRegisteredRecoveryAdmissionV37G3A(options: { projectRoot: string; dataRoot: string; workflowId: string; runRoot: string; confirmedAt: string; requestedAt: string }): RegisteredRecoveryInspectionV37 {
