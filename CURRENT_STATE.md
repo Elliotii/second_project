@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_g3b_64_request_successor_real_full_loop
-  status: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_EXECUTION_AUTHORIZED
+  status: V3_7_G3B_CLOSED_INCOMPLETE_USER_WEBUI_CHECK_PENDING
 
 active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
 
@@ -223,7 +223,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: original_goal_3b_rejected_64_request_successor_pending_real_access
+  implementation_status: goal_3b_successor_identity_2_closed_incomplete_user_webui_check_pending
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -729,11 +729,16 @@ next_version:
   goal_3b_64_successor_v2_focused_execution_audit: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_IDENTITY_2_FOCUSED_EXECUTION_AUDIT.md
   goal_3b_64_successor_v2_focused_execution_audit_result: PASS_FOCUSED_AUDIT_CLOSE_IDENTITY_2_INCOMPLETE_EXECUTION_INVALIDITY
   goal_3b_64_successor_v2_launch_evidence_limitation: first_loader_stderr_overwritten_sanitized_after_event_zero_boundary_observation_only
-  goal_3b_64_status: successor_v2_closed_incomplete_read_only_reopen_pending
+  goal_3b_64_successor_v2_read_only_reopen_bridge_id: v37-g3b-bridge-127acf36-0912-4ec7-a5b5-dfc71f795907
+  goal_3b_64_successor_v2_read_only_reopen: passed_same_workflow_stage_ready_for_primary_receipts_0_artifacts_0_resolver_calls_0_real_access_0
+  goal_3b_64_successor_v2_loopback_webui: running_127_0_0_1_port_15366_pid_11004_closed_read_only
+  goal_3b_64_successor_v2_pre_user_check_status: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_PRE_USER_CHECK_STATUS.md
+  goal_3b_64_successor_v2_user_unguided_check: pending_not_started_by_Main
+  goal_3b_64_status: successor_v2_closed_incomplete_user_webui_check_pending
   goal_3b_64_correction_acceptance_status: closed_accepted
   goal_3b_64_correction_disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
   goal_3b_64_correction_closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
-  goal_3b_64_next_control_point: successor_v2_read_only_reopen_then_loopback_webui_ready_before_user_check
+  goal_3b_64_next_control_point: user_unguided_webui_check_then_final_closeout
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
