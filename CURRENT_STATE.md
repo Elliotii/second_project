@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_ACCEPTED_BRIDGE_RESUME_READY
+  status: V3_7_G3B_HOST_PORT_BRIDGE_CORRECTION_1_AUTHORIZED
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_host_execution_port_bridge_resuming_zero_access
-  note: daily_24_profile_correction_accepted_real_access_still_locked
+  status: locked_host_execution_port_bridge_correction_1
+  note: failed_candidate_preserved_candidate_completion_precedes_frozen_validation
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -533,7 +533,7 @@ next_version:
   goal_3b_host_port_bridge_candidate_capacity: 1
   goal_3b_host_port_bridge_correction_capacity: 1
   goal_3b_host_port_bridge_real_access: false
-  goal_3b_host_port_bridge_status: authorized_to_resume_after_daily_24_correction
+  goal_3b_host_port_bridge_status: candidate_failed_Main_preliminary_review_correction_1_authorized
   goal_3b_host_port_bridge_report: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_IMPLEMENTATION_REPORT.md
   goal_3b_host_port_bridge_finding: G3B-HOST-BRIDGE-P1-001_follow_up_profile_24_conflicts_with_v36g2_frozen_acceptance_v1_exact_16
   goal_3b_host_port_bridge_candidate_created: false
@@ -564,7 +564,15 @@ next_version:
   goal_3b_follow_up_profile_correction_disposition: PASS_V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION
   goal_3b_host_port_bridge_resumption_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_RESUMPTION_PROMPT.md
   goal_3b_host_port_bridge_resumption_candidate_capacity: preserved_1_of_1_no_prior_candidate
-  goal_3b_status: locked_zero_access_bridge_resumption_in_progress_no_real_authority
+  goal_3b_host_port_bridge_failed_candidate_commit: 73b8b9787dea1ec2cb4d43be547aef711f74fbb3
+  goal_3b_host_port_bridge_failed_candidate_tree: c44862389bccd54c9911deb7127fcc72660dbc60
+  goal_3b_host_port_bridge_main_preliminary_review: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_MAIN_PRELIMINARY_REVIEW.md
+  goal_3b_host_port_bridge_main_preliminary_review_result: failed_one_P1_finding
+  goal_3b_host_port_bridge_correction_1_finding: G3B-HOST-BRIDGE-MAIN-P1-001_candidate_completion_precedes_frozen_validation
+  goal_3b_host_port_bridge_correction_1_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_CORRECTION_1_PROMPT.md
+  goal_3b_host_port_bridge_correction_capacity: 1_of_1_consumed_at_dispatch
+  goal_3b_host_port_bridge_audit_started: false
+  goal_3b_status: locked_zero_access_bridge_correction_in_progress_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
