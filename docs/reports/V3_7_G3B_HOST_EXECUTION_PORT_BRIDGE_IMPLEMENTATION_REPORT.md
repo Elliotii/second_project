@@ -1,13 +1,15 @@
 # V3.7 Goal 3B Host Execution-Port Bridge Implementation Report
 
 ```yaml
-status: HARD_STOP_NO_CANDIDATE
-finding: G3B-HOST-BRIDGE-P1-001
-control_baseline_commit: 4a2e02039b5b70f3f5ca76e4eb8a47e00b77407e
-control_baseline_tree: 34bbc8cbb1f0945590ca1432d1055a37b8a36f32
-configuration_candidate_commit: f30914378dc90390afce7240b9755d7d24da0850
-configuration_candidate_tree: 667504572064c00fa170ac5952d8ef0af4a595ad
-candidate_created: false
+status: CANDIDATE_READY_FOR_MAIN_PRELIMINARY_REVIEW
+prepared_on: 2026-08-21
+control_baseline_commit: a20a3115596ad41ec77de0607357deb492c57f08
+control_baseline_tree: 306193b69a0b19bf5188fc0217decfe0d3384e0c
+configuration_candidate_commit: cd380652dc332b875c41055c95d53fb687368732
+configuration_candidate_tree: 72318985ad0f016c5a1f227cbabc052eb0906256
+candidate_commit: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
+candidate_tree: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
+parent_commit: a20a3115596ad41ec77de0607357deb492c57f08
 credential_reads: 0
 external_network_calls: 0
 external_provider_calls: 0
@@ -16,60 +18,58 @@ real_model_calls: 0
 
 ## Result
 
-The three-path Amendment cannot be completed honestly without changing an existing
-frozen configuration or an existing Runtime contract. The experimental source and test
-deltas were removed. This report is the only Implementation Session delta.
+The Host-owned bridge is implemented for the single registered Case
+`v37-real-recovery-promote-retain`. It binds the corrected configuration Candidate and
+the accepted daily Runtime tuple `v36_daily_bounded_edit_v2` / `16/24`, constructs the
+exact Primary, Candidate-proposal, symmetric Regression and registered follow-up ports,
+and supplies their exact construction authorization to `ProductServiceV37G3A`.
 
-## Blocking finding
+Construction, Case listing and pre-dispatch validation remain lazy: they do not resolve
+the opaque Credential or construct the fixed DeepSeek Runtime. One shared Credential
+lease and one fixed `deepseek-v4-flash` Runtime serve the ordered seven-unit envelope.
+The production module exports no deterministic execution alternative.
 
-`G3B-HOST-BRIDGE-P1-001`: the frozen real follow-up execution profile is not accepted by
-the required existing `PersistentInteractiveSessionServiceV36` bounded-turn API.
+The bridge persists only sanitized construction, per-unit usage/lifecycle, failure-hash
+and close evidence. It enforces per-unit and global request, token, Tool, command,
+wall-time and cost caps; exact Primary/Recovery and Regression arm order; once-only
+Candidate/follow-up stages; no retry/fallback/replacement; known usage; exact Candidate
+JSON; and post-close unavailability. Full model text, Provider payloads, Credential,
+headers and environment contents are not persisted.
 
-The profile binds:
+## Changed files
 
-- `v36_runtime_budget_profile_id: v36g2_frozen_acceptance_v1`;
-- `provider_requests_observation_threshold: 24`;
-- `provider_requests_hard_max: 24`.
+1. `workbench/src/v37/real-execution-ports-v37g3b.ts`
+2. `workbench/tests/v37g3b-real-execution-ports.test.ts`
+3. `docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_IMPLEMENTATION_REPORT.md`
 
-The existing public V3.6 validator binds `v36g2_frozen_acceptance_v1` to the exact
-accepted `16/16` Provider-request observation/hard-max tuple. The required production
-composition therefore stops before Provider dispatch with:
+No configuration, existing source/test, fixture, Pi, planning or control-state file was
+changed. The user-owned untracked evidence-audit report was neither read nor modified.
 
-```text
-V3.6 bounded-edit budget profile is invalid
-```
+## Deterministic verification
 
-This is a configuration/Runtime identity conflict, not a Provider availability or test
-infrastructure fault. Substituting the V3.6 daily `24` profile, mutating the request in
-the bridge, or hand-writing a Runtime Manifest would change frozen authority/digests or
-create a demo-only Runtime path. Editing the existing follow-up profile or the existing
-V3.6 validator is outside the exact three-path allowlist. Each route is an Amendment
-Hard Stop.
+- New Bridge focused test: `7/7 PASS`, `0` failures.
+- Directly affected G3A/G3B authority test: `6/6 PASS`, `0` failures.
+- Strict TypeScript: `PASS`, zero diagnostics.
+- The complete local fake route exercised all seven units, one shared test-local opaque
+  Credential resolution, one model-factory construction, ordered Regression and the
+  corrected daily-24 follow-up Runtime path. Its sanitized simulated Provider counters
+  reconciled at `13/13/13`; these are local fake observations, not real calls.
+- Actual Credential/network/Provider/model operations: `0/0/0/0`.
+- No broad G3A, G1/G2, V2, V3, V3.6 or demo suite was run.
 
-## Local deterministic evidence
-
-The experimental bridge used only public local APIs, a test-file ESM module mock and
-Faux model responses. It reached the accepted production follow-up call after Primary,
-Recovery A/B, Candidate proposal and the ordered Regression Pair. The final focused run
-reported **5 passed, 1 failed**; the sole failure was the exact pre-dispatch V3.6 budget-
-profile rejection above. Credential resolution was test-local and did not read a real
-Credential. No external network, Provider/model or Docker product operation occurred.
-
-Strict TypeScript passed with zero diagnostics before the experimental delta was
-removed. Earlier focused iterations found and corrected only implementation-local test
-issues; they did not change the blocking configuration/Runtime conflict.
-
-Commands used:
+Commands:
 
 ```text
-node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit
 node --experimental-test-module-mocks --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g3b-real-execution-ports.test.ts
+node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g3a-authority.test.ts
+node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit
 ```
 
-No broad G3A, G1/G2, V2, V3, V3.6 or demo suite was run.
+## Unverified real behavior and handoff
 
-## Required Main decision
-
-No Candidate commit/tree exists. Main must review whether to authorize a new bounded
-Amendment that reconciles the frozen follow-up execution profile with one already
-accepted V3.6 budget profile identity. Real access and Goal 3B execution remain locked.
+No real Credential, external network, Provider/model, Docker command or Pi execution was
+authorized or performed. Provider availability, actual model behavior, actual cost and
+Docker Host readiness remain unverified and require a later separately authorized
+Execution Prompt. This Candidate does not freeze audit authority, accept Goal 3B or
+authorize real access. It returns to Main for preliminary review and, only after PASS,
+one fresh focused independent read-only audit.
