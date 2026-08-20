@@ -15,6 +15,7 @@ import type {
 	RegisteredFollowUpBindingV37,
 } from "../contracts/v37-types.ts";
 import type { RefinementCandidateV3 } from "../contracts/v3-types.ts";
+import type { ExecutionAccessExpectationV37G3A } from "../contracts/v37g3a-types.ts";
 import { artifactRef } from "../evidence/artifacts.ts";
 import type { RuntimeManifestG2V36 } from "../session/persistent-session-v36.ts";
 import { PersistentInteractiveSessionServiceV36 } from "../session/persistent-session-v36.ts";
@@ -129,6 +130,25 @@ function writeBytes(root: string, relativePath: string, bytes: string): void {
 
 function bodyDigest<T extends Record<string, unknown>>(value: T, digestKey: keyof T): string {
 	const body = { ...value }; delete body[digestKey]; return digestObject(body);
+}
+
+function validateRuntimeAccessCounters(record: Record<string, unknown>, maxima: ExecutionAccessExpectationV37G3A, realDeclared: boolean): void {
+	const actual = {} as ExecutionAccessExpectationV37G3A;
+	for (const key of ["credential_reads", "network_calls", "external_provider_calls", "real_model_calls"] as const) {
+		const value = record[key];
+		if (!Number.isSafeInteger(value) || Number(value) < 0) throw new Error("follow-up Runtime access counter is invalid");
+		actual[key] = Number(value);
+		if (!Number.isSafeInteger(maxima[key]) || maxima[key] < 0) throw new Error("registered follow-up access maximum is invalid");
+	}
+	if (!realDeclared) {
+		if (stableJson(actual) !== stableJson(maxima)) throw new Error("deterministic follow-up Runtime access counters must remain exact");
+		return;
+	}
+	for (const key of Object.keys(maxima) as Array<keyof ExecutionAccessExpectationV37G3A>) if (actual[key] > maxima[key]) throw new Error("follow-up actual access exceeds the registered maximum");
+	const providerRequests = record.provider_requests;
+	if (!Number.isSafeInteger(providerRequests) || Number(providerRequests) <= 0) throw new Error("real-declared follow-up requires a positive Provider request count");
+	if (actual.credential_reads <= 0) throw new Error("real-declared follow-up requires a positive Credential read count");
+	if (actual.network_calls !== providerRequests || actual.external_provider_calls !== providerRequests || actual.real_model_calls !== providerRequests) throw new Error("follow-up actual access does not match Provider requests");
 }
 
 function candidateBody(candidate: RefinementCandidateV3): Record<string, unknown> {
@@ -397,10 +417,11 @@ export async function executeRegisteredFollowUpV37G3A(options: RegisteredFollowU
 			},
 		},
 	});
-	const expectedAccess = followUpAccessExpectationV37G3A(profile);
 	const returnedManifest = result.manifest as unknown as Record<string, unknown>;
-	if (!("manifest_digest" in returnedManifest) || "terminal_kind" in returnedManifest || returnedManifest.settled !== true || Object.entries(expectedAccess).some(([key, count]) => !Number.isSafeInteger(returnedManifest[key]) || returnedManifest[key] !== count)) throw new Error("registered follow-up Runtime did not settle under the Host-loaded access profile");
-	const runtimeManifest = result.manifest as RuntimeManifestG2V36;
+	const runtimeManifest = readJson<RuntimeManifestG2V36>(resolve(runtimeRoot, "runs", options.followUpRunId), "manifest.json", "follow-up Runtime Manifest");
+	const { manifest_digest: _runtimeDigest, ...runtimeBody } = runtimeManifest;
+	if (!("manifest_digest" in returnedManifest) || stableJson(returnedManifest) !== stableJson(runtimeManifest) || "terminal_kind" in returnedManifest || returnedManifest.settled !== true || digestObject(runtimeBody) !== runtimeManifest.manifest_digest) throw new Error("registered follow-up Runtime did not settle with a digest-valid persisted Manifest");
+	validateRuntimeAccessCounters(runtimeManifest as unknown as Record<string, unknown>, followUpAccessExpectationV37G3A(profile), profile.provider_profile.external);
 	const observationRoot = resolve(runtimeRoot, "runs", options.followUpRunId);
 	const observation = readJson<FollowUpRuntimeObservationV37>(observationRoot, "registered-observation.json", "follow-up Runtime observation");
 	if (observation.system_prompt_digest !== derived.binding.composed_prompt_digest || observation.frozen_binding_digest !== derived.binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== derived.binding.follow_up_execution_authority_digest || observation.follow_up_run_id !== options.followUpRunId || observation.provider_profile_digest !== profile.provider_profile_digest || observation.tool_profile_digest !== profile.tool_profile_digest || observation.command_profile_digest !== profile.command_profile_digest || observation.budget_profile_digest !== profile.budget_profile_digest || observation.stop_condition_profile_digest !== profile.stop_condition_profile_digest || observation.task_policy_input_digest !== digestObject(taskPolicy) || observation.runtime_budget_input_digest !== digestObject(runtimeBudget) || bodyDigest(observation as unknown as Record<string, unknown>, "runtime_observed_binding_digest") !== observation.runtime_observed_binding_digest) throw new Error("follow-up Runtime observation mismatch");
@@ -493,8 +514,8 @@ async function recompute(options: RegisteredFollowUpOptionsV37G3A, historical: b
 	const { manifest_digest: _runtimeDigest, ...runtimeBody } = runtimeManifest;
 	const expectedTaskPolicyDigest = digestObject(runtimeTaskPolicy(profile));
 	const expectedRuntimeBudgetDigest = digestObject(runtimeBudgetProfile(profile));
-	const expectedAccess = followUpAccessExpectationV37G3A(profile);
-	if (runtimeManifest.schema_version !== 3 || digestObject(runtimeBody) !== runtimeManifest.manifest_digest || runtimeManifest.registered_runtime_observation_digest !== observation.runtime_observed_binding_digest || runtimeManifest.prompt_sha256 !== sha256((manifest.follow_up_task_spec.body as { task_body: string }).task_body) || runtimeManifest.workspace_identity_after !== managedWorkspaceIdentityV36(resolve(prepared.root, "workspace")) || Object.entries(expectedAccess).some(([key, count]) => !Number.isSafeInteger(runtimeManifest[key as keyof RuntimeManifestG2V36]) || runtimeManifest[key as keyof RuntimeManifestG2V36] !== count) || observation.workflow_id !== options.workflowId || observation.workflow_registration_digest !== registered.workflow.workflow_registration_digest || observation.follow_up_run_id !== options.followUpRunId || observation.session_id !== options.sessionId || observation.workspace_id !== options.workspaceId || observation.system_prompt_digest !== binding.composed_prompt_digest || observation.frozen_binding_digest !== binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== binding.follow_up_execution_authority_digest || observation.provider_profile_digest !== profile.provider_profile_digest || observation.tool_profile_digest !== profile.tool_profile_digest || observation.command_profile_digest !== profile.command_profile_digest || observation.budget_profile_digest !== profile.budget_profile_digest || observation.stop_condition_profile_digest !== profile.stop_condition_profile_digest || observation.task_policy_input_digest !== expectedTaskPolicyDigest || observation.runtime_budget_input_digest !== expectedRuntimeBudgetDigest || observation.observed_before_first_provider_request !== true) throw new Error("follow-up Runtime Manifest recomputation mismatch");
+	if (runtimeManifest.schema_version !== 3 || digestObject(runtimeBody) !== runtimeManifest.manifest_digest || runtimeManifest.registered_runtime_observation_digest !== observation.runtime_observed_binding_digest || runtimeManifest.prompt_sha256 !== sha256((manifest.follow_up_task_spec.body as { task_body: string }).task_body) || runtimeManifest.workspace_identity_after !== managedWorkspaceIdentityV36(resolve(prepared.root, "workspace")) || observation.workflow_id !== options.workflowId || observation.workflow_registration_digest !== registered.workflow.workflow_registration_digest || observation.follow_up_run_id !== options.followUpRunId || observation.session_id !== options.sessionId || observation.workspace_id !== options.workspaceId || observation.system_prompt_digest !== binding.composed_prompt_digest || observation.frozen_binding_digest !== binding.frozen_binding_digest || observation.follow_up_execution_authority_digest !== binding.follow_up_execution_authority_digest || observation.provider_profile_digest !== profile.provider_profile_digest || observation.tool_profile_digest !== profile.tool_profile_digest || observation.command_profile_digest !== profile.command_profile_digest || observation.budget_profile_digest !== profile.budget_profile_digest || observation.stop_condition_profile_digest !== profile.stop_condition_profile_digest || observation.task_policy_input_digest !== expectedTaskPolicyDigest || observation.runtime_budget_input_digest !== expectedRuntimeBudgetDigest || observation.observed_before_first_provider_request !== true) throw new Error("follow-up Runtime Manifest recomputation mismatch");
+	validateRuntimeAccessCounters(runtimeManifest as unknown as Record<string, unknown>, followUpAccessExpectationV37G3A(profile), profile.provider_profile.external);
 	const runtimeService = new PersistentInteractiveSessionServiceV36({ runtimeRoot: resolve(prepared.root, "runtime"), workspaceRoot: resolve(prepared.root, "workspace"), projectId: registered.workflow.project_id, workspaceId: options.workspaceId, sessionId: options.sessionId, title: "V3.7 registered bound-State follow-up", sessionPinDigest: digestObject({ workflow_registration_digest: registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId }) });
 	const runtimeView = await runtimeService.inspect();
 	if (!runtimeView.runs.some((run) => run.run_id === options.followUpRunId && run.settled && run.context_reconstructed)) throw new Error("follow-up V3.6 Session/Run reopen mismatch");

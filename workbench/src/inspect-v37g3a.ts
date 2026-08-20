@@ -26,8 +26,34 @@ function readCanonicalTerminal(runRoot: string): Record<string, unknown> {
 }
 
 function exactCounters(value: unknown, expected: ExecutionAccessExpectationV37G3A, label: string): void {
+	const counters = accessCounters(value, label);
+	for (const key of Object.keys(expected) as Array<keyof ExecutionAccessExpectationV37G3A>) if (counters[key] !== expected[key]) throw new Error(`${label} does not match the Host-loaded execution profile`);
+}
+
+function accessCounters(value: unknown, label: string): ExecutionAccessExpectationV37G3A {
 	const counters = exact(value, ["credential_reads", "network_calls", "external_provider_calls", "real_model_calls"], label);
-	for (const key of Object.keys(expected) as Array<keyof ExecutionAccessExpectationV37G3A>) if (!Number.isSafeInteger(counters[key]) || Number(counters[key]) < 0 || counters[key] !== expected[key]) throw new Error(`${label} does not match the Host-loaded execution profile`);
+	for (const key of ["credential_reads", "network_calls", "external_provider_calls", "real_model_calls"] as const) if (!Number.isSafeInteger(counters[key]) || Number(counters[key]) < 0) throw new Error(`${label} contains an invalid counter`);
+	return counters as unknown as ExecutionAccessExpectationV37G3A;
+}
+
+function inspectedProviderDispatches(runRoot: string, inspected: ReturnType<typeof inspectRunV2A>): number {
+	const events = readFileSync(resolve(runRoot, "journal.jsonl"), "utf8").trim().split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as { type?: unknown; data?: Record<string, unknown> });
+	const settled = events.filter((event) => event.type === "primary_settled");
+	const primaryDispatches = settled[0]?.data?.provider_dispatches;
+	const candidateDispatches = inspected.candidates.reduce((total, candidate) => total + candidate.budget_usage.faux_provider_dispatches, 0);
+	if (settled.length !== 1 || !Number.isSafeInteger(primaryDispatches) || Number(primaryDispatches) < 0 || !Number.isSafeInteger(candidateDispatches) || candidateDispatches < 0) throw new Error("Primary Provider dispatch ledger is invalid");
+	const total = Number(primaryDispatches) + candidateDispatches;
+	if (!Number.isSafeInteger(total)) throw new Error("Primary Provider dispatch ledger is invalid");
+	return total;
+}
+
+function validateRealCounters(actual: ExecutionAccessExpectationV37G3A, maxima: ExecutionAccessExpectationV37G3A, providerDispatches: number): void {
+	for (const key of Object.keys(maxima) as Array<keyof ExecutionAccessExpectationV37G3A>) {
+		if (!Number.isSafeInteger(maxima[key]) || maxima[key] < 0) throw new Error("registered Primary access maximum is invalid");
+		if (actual[key] > maxima[key]) throw new Error("Primary actual access exceeds the registered maximum");
+	}
+	if (actual.credential_reads <= 0) throw new Error("real-declared Primary requires a positive Credential read count");
+	if (actual.network_calls !== providerDispatches || actual.external_provider_calls !== providerDispatches || actual.real_model_calls !== providerDispatches) throw new Error("Primary actual access does not match the inspected Provider dispatch ledger");
 }
 
 export type PrimaryRouteV37G3A = "no_recovery_needed" | "ready_for_recovery" | "recovery_inconclusive";
@@ -42,8 +68,10 @@ export function validatePrimaryTerminalV37G3A(options: { projectRoot: string; da
 	if (stored.run_id !== binding.primary_run_id || binding.workflow_id !== registered.workflow.workflow_id || binding.workflow_registration_digest !== registered.workflow.workflow_registration_digest || binding.primary_task_instance_digest !== registered.primary.task_instance_digest) throw new Error("Primary terminal/Run/workflow/Task binding mismatch");
 	const taskSpec = registered.loadedCase.manifest.primary_task_spec.body as { task_id: string };
 	if (stored.schema_version === "v2a-run-terminal-v2") {
-		const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot, expectedTaskId: taskSpec.task_id, expectedRealExecutionAuthorized: declaration.realAccessDeclared, expectedExecutionPortKind: declaration.executionPortKind, expectedRealCallCounters: declaration.accessExpectation });
+		const actualCounters = accessCounters(stored.real_call_counters, "Primary actual access counters");
+		const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot, expectedTaskId: taskSpec.task_id, expectedRealExecutionAuthorized: declaration.realAccessDeclared, expectedExecutionPortKind: declaration.executionPortKind, expectedRealCallCounters: declaration.realAccessDeclared ? actualCounters : declaration.accessExpectation });
 		if (!inspected.integrity_valid || !inspected.terminal_valid || !inspected.terminal || stableJson(inspected.terminal) !== stableJson(stored)) throw new Error(`Primary V2 terminal inspection failed: ${inspected.errors.join("; ")}`);
+		if (declaration.realAccessDeclared) validateRealCounters(actualCounters, declaration.accessExpectation, inspectedProviderDispatches(options.runRoot, inspected));
 		if (declaration.primaryMode === "pass") {
 			if (inspected.terminal.outcome !== "initial_pass" || inspected.terminal.primary_verifier_status !== "passed") throw new Error("Primary V2 terminal contradicts the registered pass mode");
 			return { terminal: stored, route: "no_recovery_needed" };

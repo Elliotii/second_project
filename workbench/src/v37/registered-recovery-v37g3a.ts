@@ -1,7 +1,7 @@
 import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { ArtifactRefV0B } from "../contracts/v0b-types.ts";
-import type { RunManifestV2A } from "../contracts/v2-types.ts";
+import type { RunManifestV2A, RunTerminalV2A } from "../contracts/v2-types.ts";
 import type {
 	EvidenceConfirmationReceiptV37,
 	RecoveryComparisonArmV37,
@@ -139,7 +139,8 @@ function deriveRegisteredRecoveryPackageCoreV37G3A(options: RecoveryPackageOptio
 	const registered = loadWorkflowRegistrationV37G3A({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, allowHistoricalReadOnly });
 	const primaryRunBinding = loadPrimaryRunBindingV37G3A({ projectRoot: options.projectRoot, dataRoot: options.dataRoot, workflowId: options.workflowId, runRoot: options.runRoot, allowHistoricalReadOnly });
 	const declaration = primaryExecutionDeclarationV37G3A(registered.loadedCase.manifest);
-	const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot, expectedTaskId: (registered.loadedCase.manifest.primary_task_spec.body as { task_id: string }).task_id, expectedRealExecutionAuthorized: declaration.realAccessDeclared, expectedExecutionPortKind: declaration.executionPortKind, expectedRealCallCounters: declaration.accessExpectation });
+	const primaryTerminal = ordinaryJson<RunTerminalV2A>(resolve(options.runRoot, "terminal.json"), "V2 Primary terminal");
+	const inspected = inspectRunV2A({ projectRoot: options.projectRoot, runRoot: options.runRoot, expectedTaskId: (registered.loadedCase.manifest.primary_task_spec.body as { task_id: string }).task_id, expectedRealExecutionAuthorized: declaration.realAccessDeclared, expectedExecutionPortKind: declaration.executionPortKind, expectedRealCallCounters: primaryTerminal.real_call_counters });
 	if (!inspected.integrity_valid || !inspected.terminal_valid || !inspected.terminal || !inspected.recovery_seed || inspected.candidates.length !== 2 || !inspected.selection) throw new Error(`V2 Recovery truth rejected: ${inspected.errors.join("; ") || "incomplete recovery episode"}`);
 	if (!(["recovery_selected", "recovery_none"] as const).includes(inspected.terminal.outcome as "recovery_selected" | "recovery_none") || inspected.terminal.primary_verifier_status !== "failed") throw new Error("registered recovery evidence requires a terminal comparison after Primary verifier failure");
 	const v2Manifest = ordinaryJson<RunManifestV2A>(resolve(options.runRoot, "config/manifest.json"), "V2 Run Manifest");
