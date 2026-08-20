@@ -209,6 +209,20 @@ out-of-prompt path, real access, manufactured Outcome or failure to close the re
 class restores this Hard Stop and returns to Main/user. Focused Audit remains mandatory
 and may begin only after Main rereview passes.
 
+**Accepted final Goal 3A audit-remediation exception (2026-08-21).** After the independent
+Focused Audit recorded `V37-G3A-EXAUDIT-P1-001` and `V37-G3A-EXAUDIT-P2-002`, and Main
+independently reproduced the P1, the user explicitly authorized one final narrow
+audit-remediation. This does not reset the ordinary Correction budget or the consumed
+exceptional-remediation budget. It authorizes exactly one further Candidate, owned by the
+original Goal 3A Implementation Session, only for: (1) preventing the Host-only
+deterministic Regression-result switch from substituting the exact supplied Regression
+port for a real-declared Case; and (2) connecting the zero-actual-operation proof to all
+four local mocks. The exact paths and tests are frozen in
+`V3_7_G3A_FINAL_AUDIT_REMEDIATION_AMENDMENT.md` and
+`V3_7_GOAL_3A_FINAL_AUDIT_REMEDIATION_PROMPT.md`. Main rereview and a fresh independent
+read-only re-audit remain mandatory. Any second Candidate under this exception,
+out-of-prompt change, real access or audit failure restores the Hard Stop.
+
 ### 3.9 Common implementation and audit sequence
 
 Goal 1 and Goal 2 each use exactly this sequence:
