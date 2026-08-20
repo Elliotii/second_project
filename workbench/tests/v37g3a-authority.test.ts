@@ -3,20 +3,29 @@ import { linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync }
 import { resolve } from "node:path";
 import test from "node:test";
 import { digestObject, fileSha256 } from "../src/hash.ts";
-import { V37_G3A_LOADER_CONTRACT_ID, V37_G3A_LOADER_SOURCE_INVENTORY, V37_G3A_REGISTRY_LOCATION, deriveRegistryTrustRootDigestV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, loaderContractFingerprintV37G3A, validateHostRegistryIndexV37G3A } from "../src/v37/host-registry-v37g3a.ts";
+import { V37_G3A_LOADER_CONTRACT_ID, V37_G3A_LOADER_SOURCE_INVENTORY, V37_G3A_REGISTRY_LOCATION, constructionAuthorityDigestsV37G3A, deriveRegistryTrustRootDigestV37G3A, followUpAccessExpectationV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, loaderContractFingerprintV37G3A, primaryExecutionDeclarationV37G3A, validateHostRegistryIndexV37G3A } from "../src/v37/host-registry-v37g3a.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 import { createWorkflowRegistrationV37G3A, loadWorkflowRegistrationV37G3A } from "../src/v37/workflow-registration-v37g3a.ts";
+import { ProductServiceV37G3A } from "../src/v37/product-service-v37g3a.ts";
 
-const ids=["v37-det-primary-pass","v37-det-recovery-promote-retain"];
+const ids=["v37-det-primary-pass","v37-det-recovery-promote-retain","v37-real-recovery-promote-retain"];
 test("G3A registry is exact, canonical, bounded and per-entry stable",()=>{
 	const registry=JSON.parse(readFileSync(resolve(PROJECT_ROOT,"workbench/config/v37/g3a/registered-cases/registry-v1.json"),"utf8"));
-	assert.deepEqual(registry.entries.map((entry:any)=>entry.case_id),ids);assert.equal(registry.entries.length,2);validateHostRegistryIndexV37G3A(registry);
+	assert.deepEqual(registry.entries.map((entry:any)=>entry.case_id),ids);assert.equal(registry.entries.length,3);validateHostRegistryIndexV37G3A(registry);
 	const loaded=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[0]!});const prior=loaded.registry_trust_root_digest;
-	const extra={...structuredClone(registry.entries[1]),case_id:"v37-real-later-reviewed",manifest_location:"workbench/config/v37/g3a/registered-cases/manifests/later.json"};
-	const body={...registry,entries:[...registry.entries,extra]};delete body.registry_index_digest;const appended={...body,registry_index_digest:digestObject(body)};validateHostRegistryIndexV37G3A(appended);
 	assert.equal(deriveRegistryTrustRootDigestV37G3A(loaded),prior);
 	assert.throws(()=>validateHostRegistryIndexV37G3A({...registry,caller_authority:true}),/exact-key/);
-	const four={...body,entries:[...body.entries,{...extra,case_id:"v37-real-z"}],registry_index_digest:"0".repeat(64)};assert.throws(()=>validateHostRegistryIndexV37G3A(four),/identity/);
+	const body={...registry,entries:[...registry.entries,{...structuredClone(registry.entries[2]),case_id:"v37-real-z"}]};delete body.registry_index_digest;const four={...body,registry_index_digest:digestObject(body)};assert.throws(()=>validateHostRegistryIndexV37G3A(four),/identity/);
+});
+
+test("G3B zero-access configuration loads exact real Case but grants no execution authority",async()=>{
+	const loaded=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[2]!});
+	assert.equal(loaded.manifest.project_id,"v37-real-recovery-project");assert.equal(loaded.manifest.manifest_body_digest,"a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d");
+	assert.equal(loaded.follow_up_execution_profile.follow_up_execution_profile_digest,"436dfa8d1f58e1a7c25e0fc4643ece1c3fd8768835c804b42c950bff9b42444c");
+	assert.deepEqual(primaryExecutionDeclarationV37G3A(loaded.manifest),{primaryMode:"fail",executionPortKind:"injected",realAccessDeclared:true,accessExpectation:{credential_reads:1,external_provider_calls:48,network_calls:48,real_model_calls:48}});
+	assert.deepEqual(followUpAccessExpectationV37G3A(loaded.follow_up_execution_profile),{credential_reads:1,network_calls:24,external_provider_calls:24,real_model_calls:24});
+	assert.deepEqual(constructionAuthorityDigestsV37G3A(loaded.manifest),{candidateProposalAuthorityDigest:"e3945b699b9140d374514e20faf3c14b35e778c707a4f6e47ed0b657e8f61150",regressionAuthorityDigest:"3a7e7e603d6e071922b83ba1789aa2056134163a1b3edb04a8af902613bb49da"});
+	const product=new ProductServiceV37G3A(PROJECT_ROOT);const real=product.listCases().find((item)=>item.case_id===ids[2]);assert.equal(real?.available_for_new_workflow,false);await assert.rejects(product.createWorkflow(ids[2]!),/lacks matching Host-constructed execution authority/);
 });
 
 test("loader rejects caller authority and alternate roots",()=>{

@@ -6,11 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_EXACT_FREEZE_REVIEW_READY_NO_REAL_AUTHORITY
+  status: V3_7_G3B_ZERO_ACCESS_CONFIGURATION_CANDIDATE_READY_FOR_FOCUSED_AUDIT
 
-active_goal: null
+active_goal: V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION
 
-current_goal: null
+current_goal:
+  id: V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION
+  status: zero_access_candidate_ready_for_focused_audit_no_real_authority
 
 last_executed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
@@ -31,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_exact_freeze_user_review
-  note: blocker_closed_but_configuration_real_access_and_execution_remain_unauthorized
+  status: locked_pending_configuration_audit_execution_prompt_and_user_review
+  note: zero_access_configuration_candidate_prepared_but_real_access_and_execution_remain_unauthorized
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -230,7 +232,7 @@ next_version:
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION
+  active_goal: V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -469,7 +471,7 @@ next_version:
   goal_3b_freeze_proposal_status: ready_for_exact_user_review_blocker_closed
   goal_3b_pre_freeze_blocker: closed_by_accepted_G3B_access_counter_maxima_correction
   goal_3b_recommended_user_decision: AUTHORIZE_V3_7_G3B_ZERO_ACCESS_CONFIGURATION_FREEZE_PREPARATION
-  goal_3b_user_decision: pending_exact_freeze_review
+  goal_3b_user_decision: approved_zero_access_configuration_freeze_preparation
   goal_3b_access_counter_maxima_correction_amendment: V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_AMENDMENT.md
   goal_3b_access_counter_maxima_correction_amendment_freeze_commit: 4b995da23fc2c9e4833ce3c0941d88ef403e5083
   goal_3b_access_counter_maxima_correction_amendment_freeze_tree: 7068b5a2f4c192359cb529e235afe27ece693f8e
@@ -504,6 +506,19 @@ next_version:
   goal_3b_access_counter_maxima_correction_closeout: docs/reports/V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_CLOSEOUT.md
   goal_3b_access_counter_maxima_correction_acceptance_control_commit: 09483b1cb2aa7865a9ab8154eeda6ed67160bb18
   goal_3b_access_counter_maxima_correction_acceptance_control_tree: 57c38b03de14633d6810a4fa3fc953d95bcded35
+  goal_3b_configuration_candidate_status: ready_for_focused_read_only_audit
+  goal_3b_configuration_candidate_report: docs/reports/V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION_REPORT.md
+  goal_3b_real_case_id: v37-real-recovery-promote-retain
+  goal_3b_real_project_id: v37-real-recovery-project
+  goal_3b_real_manifest_digest: a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d
+  goal_3b_real_registration_digest: 1e6a74edc68954e044815322ec65c2e163e2258c00b63527d29b0ea12a6dd52a
+  goal_3b_real_follow_up_profile_digest: 436dfa8d1f58e1a7c25e0fc4643ece1c3fd8768835c804b42c950bff9b42444c
+  goal_3b_registry_index_digest: 78fef3c0354afaca0983af2fb636e82ed22e691f2fefb2d29f309b8792fbdc10
+  goal_3b_candidate_proposal_authority_digest: e3945b699b9140d374514e20faf3c14b35e778c707a4f6e47ed0b657e8f61150
+  goal_3b_regression_authority_digest: 3a7e7e603d6e071922b83ba1789aa2056134163a1b3edb04a8af902613bb49da
+  goal_3b_configuration_focused_tests: 7_passed_0_failed
+  goal_3b_configuration_strict_typescript: pass_zero_diagnostics
+  goal_3b_configuration_actual_external_operations: credentials_0_external_network_0_provider_0_model_0
   goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false

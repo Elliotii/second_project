@@ -13,7 +13,7 @@ test("loopback API exposes exact browser-non-authoritative G3A actions",async()=
 	let serial=0;const product=new ProductServiceV37G3A(PROJECT_ROOT,{mintId:(kind)=>`v37-g3a-http-${kind}-${++serial}`});
 	const app=new WorkbenchApplicationV37G3A({legacy:{} as WorkbenchApplicationV36G1,product});const loopback=createWorkbenchLoopbackServerV36G1(app);const address=await loopback.start(0);
 	try{
-		const cases=await json(`${address.url}/api/v1/v37/cases`);assert.equal(cases.response.status,200);assert.equal(cases.value.cases.length,2);
+		const cases=await json(`${address.url}/api/v1/v37/cases`);assert.equal(cases.response.status,200);assert.equal(cases.value.cases.length,3);assert.equal(cases.value.cases.find((item:any)=>item.case_id==="v37-real-recovery-promote-retain")?.available_for_new_workflow,false);
 		const created=await json(`${address.url}/api/v1/v37/workflows`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({case_id:"v37-det-primary-pass"})});assert.equal(created.response.status,201);assert.equal(created.value.stage,"ready_for_primary");
 		const injected=await json(`${address.url}/api/v1/v37/workflows`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({case_id:"v37-det-primary-pass",provider:"caller"})});assert.equal(injected.response.status,400);
 		const action=await json(`${address.url}/api/v1/v37/workflows/${created.value.workflow_id}/actions/run_primary`,{method:"POST",headers:{"content-type":"application/json"},body:"{}"});assert.equal(action.response.status,200);assert.equal(action.value.stage,"no_recovery_needed");
