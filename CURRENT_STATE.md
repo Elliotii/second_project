@@ -682,13 +682,17 @@ next_version:
   goal_3b_64_versioned_structural_corrections_authorized: true
   goal_3b_64_internal_correction_commit_identity_count_hard_limit: none
   goal_3b_64_continuous_execution_boundary: stop_before_user_unguided_webui_check
+  goal_3b_64_execution_worktree: C:/Users/HUAWEI/.codex/worktrees/v37g3b64-real/project2
+  goal_3b_64_gate_h_status: passed_zero_call
+  goal_3b_64_gate_h_git_identity: exact_commit_tree_prompt_blob_and_five_frozen_blobs_passed
+  goal_3b_64_gate_h_docker_identity: Docker_Desktop_4_85_0_client_server_29_6_2_desktop_linux_linux_amd64_pinned_image_passed_zero_leftovers
   goal_3b_64_execution_started: false
   goal_3b_64_prior_workflow_reuse: forbidden
-  goal_3b_64_status: real_execution_authorized_gate_h_pending
+  goal_3b_64_status: gate_h_passed_dispatch_ready
   goal_3b_64_correction_acceptance_status: closed_accepted
   goal_3b_64_correction_disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
   goal_3b_64_correction_closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
-  goal_3b_64_next_control_point: gate_h_then_fresh_successor_workflow
+  goal_3b_64_next_control_point: create_fresh_successor_workflow_and_execute_one_shot_sequence
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
