@@ -86,7 +86,7 @@ export interface HostRegistryEntryV37 {
 export interface HostRegistryIndexV37 {
 	schema_version: 1;
 	kind: "v37_host_registry_index";
-	configuration_baseline_id: "v37-g1-host-registry-v1";
+	configuration_baseline_id: "v37-g1-host-registry-v1" | "v37-g1-host-registry-v2";
 	loader_contract_id: "v37-host-registry-loader-v1";
 	digest_algorithm: "sha256_over_canonical_utf8_json_v1";
 	entries: HostRegistryEntryV37[];
@@ -294,7 +294,7 @@ export interface FollowUpCommandProfileV37 {
 	}];
 }
 
-export interface FollowUpBudgetProfileV37 {
+export interface FollowUpBudgetProfileV37V1 {
 	profile_id: "v37-g2-deterministic-budget-v1";
 	v36_runtime_budget_profile_id: "v36g2_frozen_acceptance_v1";
 	provider_requests_observation_threshold: 16;
@@ -308,6 +308,23 @@ export interface FollowUpBudgetProfileV37 {
 	verifier_output_bytes_hard_max: 65536;
 	wall_time_ms_hard_max: 900000;
 }
+
+export interface FollowUpBudgetProfileV37V2 {
+	profile_id: "v37-g2-deterministic-budget-v2";
+	v36_runtime_budget_profile_id: "v36_64_request_bounded_edit_v3";
+	provider_requests_observation_threshold: 64;
+	provider_requests_hard_max: 64;
+	tool_calls_hard_max: 96;
+	combined_tokens_hard_max: 524288;
+	cost_usd_hard_max: 0.2;
+	commands_hard_max: 1;
+	verifier_runs_hard_max: 1;
+	verifier_timeout_ms_hard_max: 15000;
+	verifier_output_bytes_hard_max: 65536;
+	wall_time_ms_hard_max: 3600000;
+}
+
+export type FollowUpBudgetProfileV37 = FollowUpBudgetProfileV37V1 | FollowUpBudgetProfileV37V2;
 
 export interface FollowUpStopConditionProfileV37 {
 	profile_id: "v37-g2-no-retry-stop-v1";

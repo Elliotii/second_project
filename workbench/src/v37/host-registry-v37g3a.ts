@@ -4,8 +4,8 @@ import type { ExecutionAccessExpectationV37G3A, HostRegistryEntryV37G3A, HostReg
 import { digestObject, fileSha256, stableJson } from "../hash.ts";
 import { validateRegisteredCaseManifestV37, validateRegistrationEnvelopeV37 } from "./host-registry-v37.ts";
 
-export const V37_G3A_REGISTRY_LOCATION = "workbench/config/v37/g3a/registered-cases/registry-v1.json" as const;
-export const V37_G3A_CONFIGURATION_BASELINE_ID = "v37-g3a-host-registry-v1" as const;
+export const V37_G3A_REGISTRY_LOCATION = "workbench/config/v37/g3a/registered-cases/registry-v2.json" as const;
+export const V37_G3A_CONFIGURATION_BASELINE_ID = "v37-g3a-host-registry-v2" as const;
 export const V37_G3A_LOADER_CONTRACT_ID = "v37-g3a-host-registry-loader-v1" as const;
 const HOST_ROOT = resolve(import.meta.dirname, "../../..");
 const SHA256 = /^[a-f0-9]{64}$/;

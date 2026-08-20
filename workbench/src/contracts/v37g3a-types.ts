@@ -77,7 +77,7 @@ export interface HostRegistryEntryV37G3A {
 export interface HostRegistryIndexV37G3A {
 	schema_version: 1;
 	kind: "v37_host_registry_index";
-	configuration_baseline_id: "v37-g3a-host-registry-v1";
+	configuration_baseline_id: "v37-g3a-host-registry-v1" | "v37-g3a-host-registry-v2";
 	loader_contract_id: "v37-g3a-host-registry-loader-v1";
 	digest_algorithm: "sha256_over_canonical_utf8_json_v1";
 	entries: HostRegistryEntryV37G3A[];

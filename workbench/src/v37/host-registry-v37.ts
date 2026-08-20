@@ -10,10 +10,10 @@ import type {
 } from "../contracts/v37-types.ts";
 import { digestObject, fileSha256, sha256, stableJson } from "../hash.ts";
 
-export const V37_REGISTRY_LOCATION = "workbench/config/v37/registered-cases/registry-v1.json" as const;
+export const V37_REGISTRY_LOCATION = "workbench/config/v37/registered-cases/registry-v2.json" as const;
 export const V37_MANIFEST_LOCATION = "workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v2.json" as const;
 export const V37_ENVELOPE_LOCATION = "workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.v2.r1.json" as const;
-export const V37_CONFIGURATION_BASELINE_ID = "v37-g1-host-registry-v1" as const;
+export const V37_CONFIGURATION_BASELINE_ID = "v37-g1-host-registry-v2" as const;
 export const V37_LOADER_CONTRACT_ID = "v37-host-registry-loader-v1" as const;
 const V37_HOST_PROJECT_ROOT = resolve(import.meta.dirname, "../../..");
 
