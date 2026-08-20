@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_MAIN_REVIEW_PASS_AUDIT_PENDING
+  status: V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_ACCEPTED_BRIDGE_RESUME_READY
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_follow_up_daily_24_profile_focused_audit
-  note: corrected_candidate_Main_review_passed_real_access_still_locked
+  status: locked_host_execution_port_bridge_resuming_zero_access
+  note: daily_24_profile_correction_accepted_real_access_still_locked
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -504,7 +504,7 @@ next_version:
   goal_3b_access_counter_maxima_correction_closeout: docs/reports/V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_CLOSEOUT.md
   goal_3b_access_counter_maxima_correction_acceptance_control_commit: 09483b1cb2aa7865a9ab8154eeda6ed67160bb18
   goal_3b_access_counter_maxima_correction_acceptance_control_tree: 57c38b03de14633d6810a4fa3fc953d95bcded35
-  goal_3b_configuration_candidate_status: focused_audit_pass_provisional_baseline_not_final_frozen
+  goal_3b_configuration_candidate_status: superseded_only_for_follow_up_profile_and_registry_by_accepted_daily_24_correction
   goal_3b_configuration_candidate_report: docs/reports/V3_7_G3B_CONFIGURATION_FREEZE_PREPARATION_REPORT.md
   goal_3b_configuration_candidate_commit: f30914378dc90390afce7240b9755d7d24da0850
   goal_3b_configuration_candidate_tree: 667504572064c00fa170ac5952d8ef0af4a595ad
@@ -533,7 +533,7 @@ next_version:
   goal_3b_host_port_bridge_candidate_capacity: 1
   goal_3b_host_port_bridge_correction_capacity: 1
   goal_3b_host_port_bridge_real_access: false
-  goal_3b_host_port_bridge_status: hard_stop_no_candidate
+  goal_3b_host_port_bridge_status: authorized_to_resume_after_daily_24_correction
   goal_3b_host_port_bridge_report: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_IMPLEMENTATION_REPORT.md
   goal_3b_host_port_bridge_finding: G3B-HOST-BRIDGE-P1-001_follow_up_profile_24_conflicts_with_v36g2_frozen_acceptance_v1_exact_16
   goal_3b_host_port_bridge_candidate_created: false
@@ -558,7 +558,13 @@ next_version:
   goal_3b_follow_up_profile_correction_focused_tests: 6_passed_0_failed
   goal_3b_follow_up_profile_correction_strict_typescript: pass_zero_diagnostics
   goal_3b_follow_up_profile_correction_actual_external_operations: credentials_0_network_0_provider_0_model_0
-  goal_3b_status: locked_configuration_correction_audit_pending_no_real_authority
+  goal_3b_follow_up_profile_correction_audit: docs/reports/V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_FOCUSED_AUDIT.md
+  goal_3b_follow_up_profile_correction_audit_status: PASS_V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_FOCUSED_AUDIT
+  goal_3b_follow_up_profile_correction_closeout: docs/reports/V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION_CLOSEOUT.md
+  goal_3b_follow_up_profile_correction_disposition: PASS_V3_7_G3B_FOLLOW_UP_DAILY_24_PROFILE_CORRECTION
+  goal_3b_host_port_bridge_resumption_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_RESUMPTION_PROMPT.md
+  goal_3b_host_port_bridge_resumption_candidate_capacity: preserved_1_of_1_no_prior_candidate
+  goal_3b_status: locked_zero_access_bridge_resumption_in_progress_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
