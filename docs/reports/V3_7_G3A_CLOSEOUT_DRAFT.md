@@ -2,9 +2,9 @@
 
 ## Draft disposition
 
-- **Fact:** `EXCEPTIONAL_REMEDIATION_COMPLETE_CANDIDATE_PENDING_MAIN_REREVIEW`.
-- **Fact:** The initial, Correction-1 and Correction-2 Candidates remain preserved and unamended.
-- **Fact:** This is a draft only. Goal 3A is not accepted, no audit Candidate is frozen, no audit is started, and Goal 3B remains locked.
+- **Fact:** `FINAL_AUDIT_REMEDIATION_COMPLETE_CANDIDATE_PENDING_MAIN_REREVIEW`.
+- **Fact:** The initial, Correction-1, Correction-2 and failed exceptional-remediation Candidates remain preserved and unamended.
+- **Fact:** This is a draft only. Goal 3A is not accepted, no re-audit Candidate is frozen, no re-audit is started, and Goal 3B remains locked.
 
 ## Definition of Done evidence
 
@@ -24,13 +24,15 @@
 | Honest inconclusive terminal | Independently valid V2 `recovery_none` maps to empty-action `recovery_inconclusive` with no learning artifacts | PASS |
 | Complete future construction boundary | Primary, Candidate proposal, Regression validation and follow-up Runtime ports plus Candidate/Regression authority digests are required before every real-declared mutation | PASS |
 | Complete local selected route | Temporary ignored registration reaches retained Assessment through all ten Product actions and reopens after restart; ports-only restart rejects every mutation | PASS |
+| Exact real-declared Regression port | With the deterministic switch false, the supplied port runs both symmetric arms and controls promotion; a throwing supplied port creates no receipt and no fallback | PASS |
+| Connected zero-operation proof | One tracker shared by all four local mocks records `1/1/2/1` local invocations separately from exact `0/0/0/0` actual external operations | PASS |
 | Accepted regressions | G1/G2 25/25, V2 11/11, V3 19/19, V3.6 10/10 | PASS |
 | Strict TypeScript | Authorized equivalent compiler returns zero errors | PASS WITH ENVIRONMENT QUALIFICATION |
 | Independent audit and Main acceptance | Not authorized to this implementation Session | PENDING |
 
 ## Verification summary
 
-- G3A focused: 20/20 PASS.
+- G3A focused: 22/22 PASS.
 - Accepted G1/G2: 25/25 PASS.
 - V2: 11/11 PASS.
 - V3: 19/19 PASS.
@@ -41,7 +43,7 @@
 
 ## Allowlist and preserved baselines
 
-- **Fact:** Exceptional remediation delta is limited to the exact twelve-path allowlist; seven source/test paths and the three authorized reports changed.
+- **Fact:** Final audit remediation delta is limited to the exact five-path allowlist: two source/test paths and three reports.
 - **Fact:** `CURRENT_STATE.md`, Charter, Amendment, Prompt, configuration, fixtures, Pi, package/TypeScript configuration, accepted v1 files, V2/V3 semantic modules, and Goal 3B files are unchanged.
 - **Fact:** All thirteen accepted v1 hashes match their frozen inventory.
 - **Fact:** The pre-existing untracked Case Evidence Audit report remains outside the Candidate.
@@ -50,11 +52,11 @@
 
 - Native ordinary directory-symlink creation on this Windows Host, denied by local privileges; junction and hardlink equivalents passed.
 - Main preliminary rereview of the immutable corrected Candidate.
-- Fresh independent read-only focused audit after Main freezes the Candidate.
+- Fresh independent read-only focused re-audit after Main freezes the Candidate.
 - Main Goal 3A acceptance and any subsequent Goal 3B work.
 - All real Provider, model, Credential, network, cost, Docker, and user unguided execution behavior, intentionally outside deterministic Goal 3A.
 
 ## Scope and next action
 
 - **Fact:** The accepted G3A-owned execution/access expectation and Charter-frozen inconclusive route are implemented without changing frozen v1 contract bytes. No new Evidence family, compatibility layer, Schema 2, evaluation phase, retry, fallback, replacement, or third Recovery was introduced.
-- **Recommendation:** Main should verify the single correction Candidate commit/tree and allowlist, perform preliminary rereview, and only then freeze a passing Candidate for independent audit.
+- **Recommendation:** Main should verify the single final audit-remediation Candidate commit/tree and allowlist, perform preliminary rereview, and only then freeze a passing Candidate for independent re-audit.

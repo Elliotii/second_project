@@ -6,7 +6,8 @@
 - **Fact:** Correction round 1 Candidate `1843a683b958c06147bb17d95f4ed1cc1156ffaf` / tree `74c92581bc281a19134c606fd108f78f16d9dc29` failed Main rereview only on residual `V37-G3A-MAIN-P1-001` and remains unamended.
 - **Fact:** Authorized final ordinary Correction round 2 addresses only that residual and its necessary deterministic tests.
 - **Fact:** Correction-2 Candidate `84d8f87044eced89542e87ff35ed7176496d05b2` / tree `177921f4825d4c490b466866f10ff432320df6c6` failed Main rereview on the repeated residual and remains unamended.
-- **Fact:** The user-authorized one-time exceptional remediation closes only that repeated authority/terminalization class and is ready for one Candidate handoff. It does not freeze an audit Candidate, accept Goal 3A, start audit, update control state, or unlock Goal 3B.
+- **Fact:** Exceptional-remediation Candidate `f82a65612ef66b21f65c110fcdc4feee91907c74` / tree `04d73a7714f007a07ad7c9825dad02ca90267c51` failed focused audit on `V37-G3A-EXAUDIT-P1-001` and `V37-G3A-EXAUDIT-P2-002` and remains unamended.
+- **Fact:** The user-authorized final audit remediation closes only those two findings and is ready for its sole Candidate handoff. It does not freeze a re-audit Candidate, accept Goal 3A, start re-audit, update control state, or unlock Goal 3B.
 - **Fact:** The pre-existing user-owned untracked file `docs/reports/SECOND_PROJECT_CASE_EVIDENCE_AUDIT.md` was not read, modified, staged, or committed by this Session.
 
 ## Delivered behavior
@@ -28,6 +29,8 @@
 - **Fact:** A real-declared Case must use a V2 terminal with injected execution-port identity. Its Recovery bridge uses the same Host-loaded Task/mode/authorization/counter expectations rather than deterministic-only assumptions.
 - **Fact:** The construction boundary now contains Primary, Candidate proposal, symmetric Regression validation and bound follow-up Runtime ports. Exact Candidate/Regression authority digests are derived from the registered Manifest specs, and matching authorization plus all four ports are rechecked before every mutating action after restart.
 - **Fact:** Local deterministic proof covered V2 PASS, V2 `recovery_none`, and one selected route through Recovery admission, Candidate, Regression publication, bound follow-up, second admission and retained Assessment. Formal nonzero counters were simulated; actual external operations were zero.
+- **Fact:** For a real-declared Case, `run_regression` now always selects the exact Host-supplied Regression validation port; `regressionCandidatePass` remains effective only for the frozen deterministic Product route. The supplied symmetric port was called twice and controlled promotion even with the switch false. A throwing supplied port was called once, propagated its error, appended no receipt and used no fallback.
+- **Fact:** One shared tracker is created before the temporary real Case mocks. Primary, Candidate proposal, Regression validation and follow-up Runtime all record into that same tracker. The complete selected route observed local mock counts `1/1/2/1`, while the separate Credential/network/external-Provider/real-model operation boundary remained `0/0/0/0`.
 
 ## Frozen configuration identities
 
@@ -50,13 +53,15 @@ Correction round 2 changes are limited to the G3A contracts/registry/profile/Pro
 
 Exceptional remediation changes are limited to the exact amendment allowlist: contracts, G3A registry/Recovery/Product/Inspector/Read Model, `v37g3a-product.test.ts`, this report, the Closeout draft and `V3_7_G3A_EXCEPTIONAL_REMEDIATION_REPORT.md`.
 
+Final audit remediation changes are limited to `workbench/src/v37/product-service-v37g3a.ts`, `workbench/tests/v37g3a-product.test.ts`, this report, the Closeout draft and `V3_7_G3A_FINAL_AUDIT_REMEDIATION_REPORT.md`. No configuration, fixture, contract, registry, control-state or semantic V2/V3/V3.6 file changed.
+
 ## Verification
 
 All commands ran from `workbench/` without installation and were run serially where suites share ignored `.runs/` roots.
 
 | Command | Result |
 |---|---|
-| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g3a-authority.test.ts tests/v37g3a-product.test.ts tests/v37g3a-http-ui.test.ts` | PASS, 20/20 |
+| `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g3a-authority.test.ts tests/v37g3a-product.test.ts tests/v37g3a-http-ui.test.ts` | PASS, 22/22 |
 | `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v37g1-registered-recovery.test.ts tests/v37g2-runtime-effective-followup.test.ts` | PASS, 25/25 |
 | `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v2a-recovery.test.ts tests/v2a-cli.test.ts tests/v2a-post-audit.test.ts` | PASS, 11/11 |
 | `node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v3g1-evidence-to-candidate.test.ts tests/v3g2-validate-promote-reject-rollback.test.ts` | PASS, 19/19 |
@@ -85,8 +90,8 @@ All commands ran from `workbench/` without installation and were run serially wh
 
 - **Fact:** The Windows Host exercised junction and hardlink rejection deterministically. Ordinary directory-symlink creation remains unavailable under local privileges; the same reparse-point check covers it.
 - **Fact:** The exact project typecheck wrapper is unavailable only because its ignored fixed compiler path is absent; the authorized existing compiler passed.
-- **Unverified:** Main rereview, Candidate freeze, independent focused audit, Goal 3A acceptance, real Case freeze, Goal 3B, and real execution remain outside this Session.
+- **Unverified:** Main rereview, Candidate freeze, fresh independent focused re-audit, Goal 3A acceptance, real Case freeze, Goal 3B, and real execution remain outside this Session.
 
 ## Implementation conclusion
 
-- **Recommendation:** Main should verify the single exceptional-remediation Candidate commit/tree and allowlist. If preliminary rereview passes, freeze it for the required fresh independent read-only focused audit. Goal 3B remains locked until Goal 3A acceptance.
+- **Recommendation:** Main should verify the single final audit-remediation Candidate commit/tree and five-path allowlist. If preliminary rereview passes, freeze it for the required fresh independent read-only focused re-audit. Goal 3B remains locked until Goal 3A acceptance.
