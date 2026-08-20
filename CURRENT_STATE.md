@@ -5,12 +5,12 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_closed
-  status: REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
+  phase: v3_7_g3b_64_request_successor
+  status: V3_7_G3B_64_REQUEST_SUCCESSOR_PENDING_REAL_ACCESS
 
-active_goal: null
+active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
 
-current_goal: null
+current_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
 
 last_executed_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
@@ -223,11 +223,11 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goals_1_2_3a_closed_accepted_goal_3b_rejected_v3_7_closed
+  implementation_status: original_goal_3b_rejected_64_request_successor_pending_real_access
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: null
+  active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -659,6 +659,22 @@ next_version:
   goal_3b_persisted_aggregate_usage: invalid_zero_projection_after_atomic_group_failure
   v3_7_final_closeout: V3_7_FINAL_CLOSEOUT.md
   v3_7_final_disposition: REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH
+  goal_3b_64_successor_contract: V3_7_G3B_64_REQUEST_SUCCESSOR_CONTRACT.md
+  goal_3b_64_successor_contract_status: accepted_by_user
+  goal_3b_64_configuration_candidate_commit: ca33885f4691f00ab9ab90643f8ed5fbc0825bb8
+  goal_3b_64_configuration_candidate_tree: ae12fd560f1d6dc802648a682eb5d94f96335f80
+  goal_3b_64_corrected_candidate_commit: 86edd40c2b8349dfdeed5c081c78cf0a4590b246
+  goal_3b_64_corrected_candidate_tree: b8d1a1faabf81ab63a48fb105fed30e9749184b7
+  goal_3b_64_main_review: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_MAIN_REVIEW.md
+  goal_3b_64_main_review_result: PASS_V3_7_G3B_64_REQUEST_CORRECTION_MAIN_REVIEW
+  goal_3b_64_reaudit: docs/reports/V3_7_G3B_64_REQUEST_AFFECTED_FINDING_REAUDIT.md
+  goal_3b_64_reaudit_result: PASS_V3_7_G3B_64_REQUEST_AFFECTED_FINDING_REAUDIT
+  goal_3b_64_execution_prompt: V3_7_GOAL_3B_64_REQUEST_SUCCESSOR_EXECUTION_PROMPT.md
+  goal_3b_64_execution_baseline: pending_Main_freeze_commit
+  goal_3b_64_real_access_authorized: false
+  goal_3b_64_execution_started: false
+  goal_3b_64_prior_workflow_reuse: forbidden
+  goal_3b_64_status: successor_contract_ready_for_execution_baseline_freeze
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
@@ -3232,11 +3248,12 @@ open_user_decisions: []
 
 ## Expected Next Handoff
 
-V3.7 is closed with `REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH`.
-Goals 1, 2 and 3A remain closed and accepted; Goal 3B consumed its one-shot execution and
-was rejected after the accepted 16-request Primary bridge delegated to the public V2B
-8-request Attempt cap. No retry, repair, second execution, user WebUI check or new version
-is authorized. Preserve the ignored execution evidence and `V3_7_FINAL_CLOSEOUT.md`.
+The original V3.7 Goal 3B run remains closed with
+`REJECT_V3_7_ACCEPTED_BRIDGE_FREEZE_BUDGET_MISMATCH`; its consumed workflow, evidence and
+`V3_7_FINAL_CLOSEOUT.md` remain immutable. The user has separately accepted the versioned
+`v37-g3b-64-request-successor-v1` contract. Its zero-access corrected Candidate and
+affected-finding re-audit pass; the next control point is the new execution-baseline
+freeze. Real access, Credential resolution and Provider/model dispatch remain locked.
 
 V0-A, V0-B and V0-C are closed and accepted. V0 now provides the minimal real
 Coding Agent Workbench foundation: controlled Workspace, Direct Pi
