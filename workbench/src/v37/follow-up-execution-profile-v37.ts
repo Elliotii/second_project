@@ -12,8 +12,8 @@ import type {
 import { digestObject, fileSha256, stableJson } from "../hash.ts";
 import { loadWorkflowRegistrationV37 } from "./workflow-registration-v37.ts";
 
-export const V37_FOLLOW_UP_PROFILE_LOCATION = "workbench/config/v37/follow-up-execution-profiles/v37-g1-det-recovery.g2.v1.json" as const;
-export const V37_FOLLOW_UP_CONFIGURATION_BASELINE_ID = "v37-g2-follow-up-profile-v1" as const;
+export const V37_FOLLOW_UP_PROFILE_LOCATION = "workbench/config/v37/follow-up-execution-profiles/v37-g1-det-recovery.g2.v2.json" as const;
+export const V37_FOLLOW_UP_CONFIGURATION_BASELINE_ID = "v37-g2-follow-up-profile-v2" as const;
 export const V37_FOLLOW_UP_PROFILE_LOADER_CONTRACT_ID = "v37-follow-up-execution-profile-loader-v1" as const;
 const HOST_PROJECT_ROOT = resolve(import.meta.dirname, "../../..");
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -28,7 +28,7 @@ const COMMAND: FollowUpCommandProfileV37 = {
 	profile_id: "v37-g2-follow-up-command-v1", commands_hard_max: 1, descriptors: [{ command_id: "follow_up_test", executable: "current_node_executable", argv: ["--test", "verifier/follow-up.test.mjs"], cwd: "workspace", timeout_seconds: 15, max_combined_output_bytes: 65536 }],
 };
 const BUDGET: FollowUpBudgetProfileV37 = {
-	profile_id: "v37-g2-deterministic-budget-v1", v36_runtime_budget_profile_id: "v36g2_frozen_acceptance_v1", provider_requests_observation_threshold: 16, provider_requests_hard_max: 16, tool_calls_hard_max: 24, combined_tokens_hard_max: 131072, cost_usd_hard_max: 0.2, commands_hard_max: 1, verifier_runs_hard_max: 1, verifier_timeout_ms_hard_max: 15000, verifier_output_bytes_hard_max: 65536, wall_time_ms_hard_max: 900000,
+	profile_id: "v37-g2-deterministic-budget-v2", v36_runtime_budget_profile_id: "v36_64_request_bounded_edit_v3", provider_requests_observation_threshold: 64, provider_requests_hard_max: 64, tool_calls_hard_max: 96, combined_tokens_hard_max: 524288, cost_usd_hard_max: 0.2, commands_hard_max: 1, verifier_runs_hard_max: 1, verifier_timeout_ms_hard_max: 15000, verifier_output_bytes_hard_max: 65536, wall_time_ms_hard_max: 3600000,
 };
 const STOP: FollowUpStopConditionProfileV37 = {
 	profile_id: "v37-g2-no-retry-stop-v1", retry: 0, same_run_retry: 0, fallback: 0, replacement: 0, automatic_replacement: 0, task_swap: 0, result_hunting: 0, terminal_requires_complete_inspection: true,
