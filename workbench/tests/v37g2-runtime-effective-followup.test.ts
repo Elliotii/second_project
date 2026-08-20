@@ -119,7 +119,7 @@ test.before(async () => {
 
 test("fixed profile loads exact effective and parent execution identities and rejects caller override", () => {
 	const loaded = loadRegisteredFollowUpExecutionProfileV37({ projectRoot: PROJECT_ROOT, dataRoot: DATA_ROOT, workflowId: WORKFLOW_ID });
-	assert.equal(loaded.profile.follow_up_execution_profile_digest, "10ab0ebbdcbf1861bfed078400bcd75df900e28e82f4a3c6dfece4b18718dff5");
+	assert.equal(loaded.profile.follow_up_execution_profile_digest, "70984877cb930789f19eb34f485dc426217f1f7c3cc2c17472582ab450cefbb8");
 	assert.equal(loaded.profile.provider_profile.external, false);
 	assert.equal(loaded.profile.parent_provider_profile_digest, "f695d0e636960c117c7176bd395e6fc19d2adaa9f649cf68973a15d715662e89");
 	assert.match(loaded.authority.follow_up_execution_authority_digest, /^[a-f0-9]{64}$/);
