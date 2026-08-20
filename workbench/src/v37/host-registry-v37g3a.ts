@@ -50,7 +50,10 @@ function fixedFile(root: string, location: string, label: string): string {
 }
 
 function readJson(root: string, location: string, label: string): unknown {
-	return JSON.parse(readFileSync(fixedFile(root, location, label), "utf8"));
+	const bytes = readFileSync(fixedFile(root, location, label), "utf8");
+	const value = JSON.parse(bytes) as unknown;
+	if (bytes !== `${stableJson(value)}\n`) throw new Error(`${label} bytes are not canonical`);
+	return value;
 }
 
 function validateEntry(value: unknown): HostRegistryEntryV37G3A {
@@ -80,8 +83,22 @@ function validateProfile(value: unknown): RegisteredFollowUpExecutionProfileV37 
 	return structuredClone(value) as RegisteredFollowUpExecutionProfileV37;
 }
 
-function loaderFingerprint(root: string): string {
-	return digestObject({ loader_contract_id: V37_G3A_LOADER_CONTRACT_ID, loader_source_sha256: fileSha256(fixedFile(root, "workbench/src/v37/host-registry-v37g3a.ts", "G3A loader source")), registry_location: V37_G3A_REGISTRY_LOCATION, root_resolution: "module_owned_candidate_checkout_v1" });
+export const V37_G3A_LOADER_SOURCE_INVENTORY = [
+	"workbench/src/hash.ts",
+	"workbench/src/contracts/v37-types.ts",
+	"workbench/src/contracts/v37g3a-types.ts",
+	"workbench/src/v37/host-registry-v37.ts",
+	"workbench/src/v37/host-registry-v37g3a.ts",
+] as const;
+
+export function loaderContractFingerprintV37G3A(projectRoot: string): string {
+	const root = hostRoot(projectRoot);
+	return digestObject({
+		loader_contract_id: V37_G3A_LOADER_CONTRACT_ID,
+		loader_sources: V37_G3A_LOADER_SOURCE_INVENTORY.map((location) => ({ location, sha256: fileSha256(fixedFile(root, location, `loader semantic source ${location}`)) })),
+		registry_location: V37_G3A_REGISTRY_LOCATION,
+		root_resolution: "module_owned_candidate_checkout_v1",
+	});
 }
 
 export function deriveRegistryTrustRootDigestV37G3A(loaded: Pick<LoadedRegisteredCaseV37G3A, "manifest" | "envelopes" | "registry_entry" | "loader_contract_fingerprint" | "follow_up_execution_profile">, envelopeCount = loaded.envelopes.length): string {
@@ -111,6 +128,13 @@ export function loadRegisteredCaseFromHostRegistryV37G3A(options: { projectRoot:
 	if (historical && !options.allowDisabledHistorical) throw new Error("Case registration is disabled");
 	const profile = validateProfile(readJson(root, entry.follow_up_execution_profile_location, "follow-up execution profile"));
 	if (profile.case_id !== entry.case_id || profile.manifest_body_digest !== manifest.manifest_body_digest || profile.follow_up_execution_profile_digest !== entry.follow_up_execution_profile_digest || profile.parent_provider_profile_digest !== manifest.provider_profile_spec.spec_digest || profile.parent_tool_profile_digest !== manifest.tool_profile_spec.spec_digest || profile.parent_command_profile_digest !== manifest.command_profile_spec.spec_digest || profile.parent_budget_profile_digest !== manifest.budget_profile_spec.spec_digest || profile.parent_stop_condition_profile_digest !== manifest.stop_condition_profile_spec.spec_digest) throw new Error("follow-up execution profile parent identity mismatch");
-	const partial = { manifest, envelopes, current_envelope: current, follow_up_execution_profile: profile, registry, registry_entry: entry, loader_contract_fingerprint: loaderFingerprint(root), historical_read_only: historical };
+	const partial = { manifest, envelopes, current_envelope: current, follow_up_execution_profile: profile, registry, registry_entry: entry, loader_contract_fingerprint: loaderContractFingerprintV37G3A(root), historical_read_only: historical };
 	return { ...partial, registry_trust_root_digest: deriveRegistryTrustRootDigestV37G3A(partial) };
+}
+
+export function listRegisteredCasesFromHostRegistryV37G3A(options: { projectRoot: string; allowDisabledHistorical?: boolean }): LoadedRegisteredCaseV37G3A[] {
+	if (Object.keys(options).some((key) => !["projectRoot", "allowDisabledHistorical"].includes(key))) throw new Error("caller registry/digest override rejected");
+	const root = hostRoot(options.projectRoot);
+	const registry = validateHostRegistryIndexV37G3A(readJson(root, V37_G3A_REGISTRY_LOCATION, "Host registry index"));
+	return registry.entries.map((entry) => loadRegisteredCaseFromHostRegistryV37G3A({ projectRoot: root, caseId: entry.case_id, allowDisabledHistorical: options.allowDisabledHistorical }));
 }

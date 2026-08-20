@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { linkSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import { digestObject, fileSha256 } from "../src/hash.ts";
-import { deriveRegistryTrustRootDigestV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, validateHostRegistryIndexV37G3A } from "../src/v37/host-registry-v37g3a.ts";
+import { V37_G3A_LOADER_CONTRACT_ID, V37_G3A_LOADER_SOURCE_INVENTORY, V37_G3A_REGISTRY_LOCATION, deriveRegistryTrustRootDigestV37G3A, loadRegisteredCaseFromHostRegistryV37G3A, loaderContractFingerprintV37G3A, validateHostRegistryIndexV37G3A } from "../src/v37/host-registry-v37g3a.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
-import { createWorkflowRegistrationV37G3A } from "../src/v37/workflow-registration-v37g3a.ts";
+import { createWorkflowRegistrationV37G3A, loadWorkflowRegistrationV37G3A } from "../src/v37/workflow-registration-v37g3a.ts";
 
 const ids=["v37-det-primary-pass","v37-det-recovery-promote-retain"];
 test("G3A registry is exact, canonical, bounded and per-entry stable",()=>{
@@ -23,6 +23,17 @@ test("loader rejects caller authority and alternate roots",()=>{
 	assert.throws(()=>loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:"unknown"}),/not present/);
 	assert.throws(()=>loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:resolve(PROJECT_ROOT,"workbench"),caseId:ids[0]!}),/alternate Host/);
 	assert.throws(()=>loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[0]!,registryLocation:"caller"} as never),/override/);
+});
+
+test("loader requires canonical registry bytes and fingerprints every validation source",()=>{
+	const registryPath=resolve(PROJECT_ROOT,V37_G3A_REGISTRY_LOCATION),bytes=readFileSync(registryPath,"utf8"),registry=JSON.parse(bytes);
+	try{writeFileSync(registryPath,JSON.stringify(registry,null,2));assert.throws(()=>loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[0]!}),/not canonical/);}finally{writeFileSync(registryPath,bytes);}
+	assert.deepEqual(V37_G3A_LOADER_SOURCE_INVENTORY,["workbench/src/hash.ts","workbench/src/contracts/v37-types.ts","workbench/src/contracts/v37g3a-types.ts","workbench/src/v37/host-registry-v37.ts","workbench/src/v37/host-registry-v37g3a.ts"]);
+	const expected=digestObject({loader_contract_id:V37_G3A_LOADER_CONTRACT_ID,loader_sources:V37_G3A_LOADER_SOURCE_INVENTORY.map((location)=>({location,sha256:fileSha256(resolve(PROJECT_ROOT,location))})),registry_location:V37_G3A_REGISTRY_LOCATION,root_resolution:"module_owned_candidate_checkout_v1"});
+	assert.equal(loaderContractFingerprintV37G3A(PROJECT_ROOT),expected);
+	const dataRoot=".runs/v37/g3a-authority-loader-fingerprint",workflowId="v37-g3a-loader-fingerprint";rmSync(resolve(PROJECT_ROOT,dataRoot),{recursive:true,force:true});createWorkflowRegistrationV37G3A({projectRoot:PROJECT_ROOT,dataRoot,caseId:ids[0]!,workflowId,createdAt:"2026-08-20T18:30:00.000Z"});
+	const semanticPath=resolve(PROJECT_ROOT,"workbench/src/contracts/v37g3a-types.ts"),semanticBytes=readFileSync(semanticPath,"utf8");
+	try{writeFileSync(semanticPath,`${semanticBytes}\n`);assert.throws(()=>loadWorkflowRegistrationV37G3A({projectRoot:PROJECT_ROOT,dataRoot,workflowId}),/recomputation mismatch/);}finally{writeFileSync(semanticPath,semanticBytes);rmSync(resolve(PROJECT_ROOT,dataRoot),{recursive:true,force:true});}
 });
 
 test("Host paths reject hardlink, symlink and junction authority",()=>{

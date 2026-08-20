@@ -26,4 +26,10 @@ test("UI remains bilingual and preserves V3.6 change handoff controls",()=>{
 	assert.match(index,/Registered recovery \/ 注册恢复/);assert.match(index,/zh-CN/);assert.match(i18n,/SUPPORTED_LOCALES.*en.*zh-CN/);for(const label of ["Changes and Diff","Apply All","Discard","Export"])assert.match(app,new RegExp(label));
 });
 
+test("workflow timeline stylesheet has balanced strings and declarations",()=>{
+	const css=readFileSync(resolve(PROJECT_ROOT,"workbench/src/webui/static/styles.css"),"utf8");let quote:"\""|"'"|null=null,escaped=false,depth=0;
+	for(const char of css){if(escaped){escaped=false;continue;}if(quote&&char==="\\"){escaped=true;continue;}if(char==='"'||char==="'"){if(quote===char)quote=null;else if(quote===null)quote=char;continue;}if(quote===null){if(char==="{")depth+=1;else if(char==="}"){depth-=1;assert.ok(depth>=0,"CSS closes an unopened declaration block");}}}
+	assert.equal(quote,null,"CSS contains an unterminated string");assert.equal(depth,0,"CSS declaration blocks are unbalanced");assert.match(css,/\.stage:after\s*\{[^}]*content:\s*"→"\s*;/);
+});
+
 test("tracked G3A source contains no rejected Schema 2 or real-access route",()=>{for(const path of ["src/v37/host-registry-v37g3a.ts","src/v37/product-service-v37g3a.ts","src/webui/application-v37g3a.ts"]){const bytes=readFileSync(resolve(PROJECT_ROOT,"workbench",path),"utf8");assert.doesNotMatch(bytes,/schema_version\s*[:=]\s*2|Credential|external_provider_calls:\s*[1-9]|real_model_calls:\s*[1-9]/,path);}});

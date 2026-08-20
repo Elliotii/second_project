@@ -319,29 +319,74 @@ function runtimeBudgetProfile(profile: ReturnType<typeof loadRegisteredFollowUpE
 	};
 }
 
-export async function executeRegisteredFollowUpV37G3A(options: RegisteredFollowUpOptionsV37G3A): Promise<{ evidence: RegisteredBoundFollowUpEvidenceBodyV37; outcome: FollowUpFormalOutcomeV37; verifier: FollowUpVerifierArtifactV37 }> {
+export interface RegisteredFollowUpRuntimeRequestV37G3A {
+	runtimeRoot: string;
+	workspace: string;
+	projectId: string;
+	workspaceId: string;
+	sessionId: string;
+	runId: string;
+	prompt: string;
+	taskPolicy: ReturnType<typeof runtimeTaskPolicy>;
+	runtimeBudget: BoundedEditBudgetProfileV36;
+	systemPrompt: string;
+	authorityDigest: string;
+	sessionPinDigest: string;
+	registeredRuntimeObservation: {
+		workflow_id: string;
+		workflow_registration_digest: string;
+		follow_up_run_id: string;
+		system_prompt_digest: string;
+		frozen_binding_digest: string;
+		follow_up_execution_authority_digest: string;
+		provider_profile_digest: string;
+		tool_profile_digest: string;
+		command_profile_digest: string;
+		budget_profile_digest: string;
+		stop_condition_profile_digest: string;
+		task_policy_input_digest: string;
+		runtime_budget_input_digest: string;
+		before_first_provider_request: () => void;
+	};
+}
+
+export interface RegisteredFollowUpRuntimePortV37G3A {
+	execute(request: RegisteredFollowUpRuntimeRequestV37G3A): Promise<Awaited<ReturnType<PersistentInteractiveSessionServiceV36["executeBoundedTurn"]>>>;
+}
+
+export const deterministicFauxFollowUpRuntimePortV37G3A: RegisteredFollowUpRuntimePortV37G3A = {
+	async execute(request) {
+		const service = new PersistentInteractiveSessionServiceV36({ runtimeRoot: request.runtimeRoot, workspaceRoot: request.workspace, projectId: request.projectId, workspaceId: request.workspaceId, sessionId: request.sessionId, title: "V3.7 registered bound-State follow-up", sessionPinDigest: request.sessionPinDigest });
+		await service.create();
+		const models = createModels();
+		const provider = fauxProvider({ provider: "v37-g2-deterministic-faux" });
+		models.setProvider(provider.provider);
+		provider.setResponses([
+			() => fauxAssistantMessage(fauxToolCall("workspace_edit", { path: "src/policy.mjs", old_text: "  return value;", new_text: "  return Math.max(0, value);" }, { id: `${request.runId}-edit` }), { stopReason: "toolUse", timestamp: 1 }),
+			() => fauxAssistantMessage("The registered follow-up edit is complete and awaits the Host verifier.", { timestamp: 2 }),
+		]);
+		return service.executeBoundedTurn({
+			sessionId: request.sessionId, runId: request.runId, prompt: request.prompt, taskPolicy: request.taskPolicy,
+			commandExecutor: async () => { throw new Error("registered follow-up command execution is Host-owned after settled runtime"); }, budgetProfile: request.runtimeBudget, models, model: provider.getModel(), systemPrompt: request.systemPrompt, authorityDigest: request.authorityDigest,
+			registeredRuntimeObservation: request.registeredRuntimeObservation,
+		});
+	},
+};
+
+export async function executeRegisteredFollowUpV37G3A(options: RegisteredFollowUpOptionsV37G3A, runtimePort: RegisteredFollowUpRuntimePortV37G3A): Promise<{ evidence: RegisteredBoundFollowUpEvidenceBodyV37; outcome: FollowUpFormalOutcomeV37; verifier: FollowUpVerifierArtifactV37 }> {
 	const prepared = loadPrepared(options);
 	const derived = await deriveBinding(options, prepared.candidate);
 	if (stableJson(derived.binding) !== stableJson(prepared.binding)) throw new Error("follow-up pre-dispatch binding recomputation mismatch");
 	const workspace = resolve(prepared.root, "workspace");
 	const runtimeRoot = resolve(prepared.root, "runtime");
 	mkdirSync(runtimeRoot, { recursive: true });
-	const service = new PersistentInteractiveSessionServiceV36({ runtimeRoot, workspaceRoot: workspace, projectId: derived.registered.workflow.project_id, workspaceId: options.workspaceId, sessionId: options.sessionId, title: "V3.7 registered bound-State follow-up", sessionPinDigest: digestObject({ workflow_registration_digest: derived.registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId }) });
-	await service.create();
-	const models = createModels();
-	const provider = fauxProvider({ provider: "v37-g2-deterministic-faux" });
-	models.setProvider(provider.provider);
-	provider.setResponses([
-		() => fauxAssistantMessage(fauxToolCall("workspace_edit", { path: "src/policy.mjs", old_text: "  return value;", new_text: "  return Math.max(0, value);" }, { id: `${options.followUpRunId}-edit` }), { stopReason: "toolUse", timestamp: 1 }),
-		() => fauxAssistantMessage("The registered follow-up edit is complete and awaits the Host verifier.", { timestamp: 2 }),
-	]);
 	const profile = derived.loadedProfile.profile;
 	const taskPolicy = runtimeTaskPolicy(profile);
 	const runtimeBudget = runtimeBudgetProfile(profile);
-	const result = await service.executeBoundedTurn({
-		sessionId: options.sessionId, runId: options.followUpRunId, prompt: (derived.registered.loadedCase.manifest.follow_up_task_spec.body as { task_body: string }).task_body,
-		taskPolicy,
-		commandExecutor: async () => { throw new Error("registered follow-up command execution is Host-owned after settled runtime"); }, budgetProfile: runtimeBudget, models, model: provider.getModel(), systemPrompt: derived.composedPrompt, authorityDigest: derived.binding.follow_up_execution_authority_digest,
+	const result = await runtimePort.execute({
+		runtimeRoot, workspace, projectId: derived.registered.workflow.project_id, workspaceId: options.workspaceId, sessionId: options.sessionId, runId: options.followUpRunId,
+		prompt: (derived.registered.loadedCase.manifest.follow_up_task_spec.body as { task_body: string }).task_body, taskPolicy, runtimeBudget, systemPrompt: derived.composedPrompt, authorityDigest: derived.binding.follow_up_execution_authority_digest,
+		sessionPinDigest: digestObject({ workflow_registration_digest: derived.registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId }),
 		registeredRuntimeObservation: {
 			workflow_id: options.workflowId, workflow_registration_digest: derived.registered.workflow.workflow_registration_digest, follow_up_run_id: options.followUpRunId, system_prompt_digest: derived.binding.composed_prompt_digest, frozen_binding_digest: derived.binding.frozen_binding_digest, follow_up_execution_authority_digest: derived.binding.follow_up_execution_authority_digest,
 			provider_profile_digest: profile.provider_profile_digest, tool_profile_digest: profile.tool_profile_digest, command_profile_digest: profile.command_profile_digest, budget_profile_digest: profile.budget_profile_digest, stop_condition_profile_digest: profile.stop_condition_profile_digest, task_policy_input_digest: digestObject(taskPolicy), runtime_budget_input_digest: digestObject(runtimeBudget),
