@@ -1,7 +1,7 @@
 # V3.7 Goal 3A Successor Long-Running Goal Plan
 
 ```yaml
-status: AUTHORIZED_AND_IN_PROGRESS
+status: PAUSED_AT_FINAL_G3B_USER_REVIEW_GATE
 recorded_on: 2026-08-20
 goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 objective_end: Goal_3A_closed_accepted_and_Goal_3B_freeze_package_ready_for_user_review
@@ -56,11 +56,21 @@ deferred and do not expand tests or product scope.
 ## Current checkpoint
 
 ```yaml
-stage: dedicated_implementation_dispatch
-implementation_started: false
-candidate_frozen: false
-audit_started: false
+stage: goal_3b_freeze_proposal_user_review
+implementation_started: true
+candidate_frozen: true
+audit_started: true
+goal_3a_status: closed_accepted
+goal_3a_disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+goal_3a_accepted_candidate_commit: a764749e0d7f0355cef06decdcd5541af62a8f2f
+goal_3a_accepted_candidate_tree: 070ce4177ebacf0250aeedf2e0db38c842c1e8a4
+goal_3a_acceptance_control_commit: 31efa1f374522090e89260af853d6bc2639fa68b
+goal_3a_acceptance_control_tree: 80f40dbfe3c551c5cf370fd273c2287373d301d5
+goal_3b_freeze_proposal: docs/reports/V3_7_G3B_FREEZE_PROPOSAL.md
+goal_3b_freeze_proposal_status: ready_for_user_review_with_one_pre_freeze_blocker
+goal_3b_pre_freeze_blocker: G3B-PREFREEZE-P1-001
 goal_3b_locked: true
-amendment_freeze_commit: 425dc6752c9074dc079fa7b952cb93869080a3df
-prompt_freeze_commit: f5af6130b6f99ecc2a9a23f4146f71c8e82ed8ab
+real_access_authorized: false
+provider_dispatches: 0
+credential_reads: 0
 ```

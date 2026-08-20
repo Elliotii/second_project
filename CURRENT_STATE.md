@@ -5,36 +5,36 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_3b_freeze_preparation
-  status: V3_7_G3A_CLOSED_ACCEPTED_G3B_PROPOSAL_PREPARATION
+  phase: v3_7_goal_3b_freeze_review
+  status: V3_7_G3B_FREEZE_PROPOSAL_READY_USER_REVIEW_REQUIRED
 
-active_goal: V3_7_G3B_FREEZE_PREPARATION
+active_goal: V3_7_G3B_FREEZE_REVIEW
 
 current_goal:
-  id: V3_7_G3B_FREEZE_PREPARATION
-  status: proposal_preparation_no_real_authority
+  id: V3_7_G3B_FREEZE_REVIEW
+  status: proposal_ready_with_one_pre_freeze_blocker_no_real_authority
 
 last_executed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
   status: closed_accepted
-  disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  closeout: docs/reports/V3_7_G2_CLOSEOUT.md
+  disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  closeout: docs/reports/V3_7_G3A_CLOSEOUT.md
 
 last_closed_goal:
-  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
   status: closed_accepted
-  disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
-  closeout: docs/reports/V3_7_G2_CLOSEOUT.md
+  disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  closeout: docs/reports/V3_7_G3A_CLOSEOUT.md
 
 last_completed_goal:
-  id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
   status: closed_accepted
-  disposition: PASS_V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
+  disposition: PASS_V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 next_goal:
-  id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: authorized_ready_for_dedicated_implementation_dispatch
-  note: optimized_versioned_Schema_1_two_Case_authority_extension_accepted
+  id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
+  status: locked_pending_user_review_and_pre_freeze_blocker_disposition
+  note: proposal_ready_but_configuration_real_access_and_execution_remain_unauthorized
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -228,11 +228,11 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goals_1_2_closed_accepted_goal_3a_control_baseline_ready
+  implementation_status: goals_1_2_3a_closed_accepted_goal_3b_freeze_review
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
+  active_goal: V3_7_G3B_FREEZE_REVIEW
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -449,6 +449,8 @@ next_version:
   goal_3a_closeout: docs/reports/V3_7_G3A_CLOSEOUT.md
   goal_3a_accepted_candidate_commit: a764749e0d7f0355cef06decdcd5541af62a8f2f
   goal_3a_accepted_candidate_tree: 070ce4177ebacf0250aeedf2e0db38c842c1e8a4
+  goal_3a_acceptance_control_commit: 31efa1f374522090e89260af853d6bc2639fa68b
+  goal_3a_acceptance_control_tree: 80f40dbfe3c551c5cf370fd273c2287373d301d5
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -464,8 +466,17 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: goal_3a_closed_accepted_goal_3b_proposal_preparation
-  goal_3b_status: locked_proposal_preparation_only_no_real_authority
+  goal_3a_long_running_goal_status: paused_at_final_goal_3b_user_review_gate
+  goal_3b_freeze_proposal: docs/reports/V3_7_G3B_FREEZE_PROPOSAL.md
+  goal_3b_freeze_proposal_status: ready_for_user_review_with_one_pre_freeze_blocker
+  goal_3b_pre_freeze_blocker: G3B-PREFREEZE-P1-001_exact_observed_access_counters_cannot_be_frozen_as_budget_caps
+  goal_3b_recommended_user_decision: AUTHORIZE_V3_7_G3B_ACCESS_COUNTER_MAXIMA_CORRECTION_AND_RETURN_FOR_EXACT_FREEZE_REVIEW
+  goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
+  goal_3b_configuration_frozen: false
+  goal_3b_execution_prompt_frozen: false
+  goal_3b_real_access_authorized: false
+  goal_3b_provider_dispatches: 0
+  goal_3b_credential_reads: 0
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
