@@ -5,12 +5,12 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_g3b_64_request_successor
-  status: V3_7_G3B_64_REQUEST_SUCCESSOR_PENDING_REAL_ACCESS
+  phase: v3_7_g3b_64_request_successor_real_full_loop
+  status: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_EXECUTION_AUTHORIZED
 
-active_goal: null
+active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
 
-current_goal: null
+current_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
 
 last_executed_goal:
   id: V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
@@ -29,7 +29,7 @@ last_completed_goal:
   status: closed_accepted
   disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
 
-next_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
+next_goal: null
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -675,14 +675,20 @@ next_version:
   goal_3b_64_execution_baseline_commit: 1a542e081420b1c0037a54bbcd641c329cfe70e2
   goal_3b_64_execution_baseline_tree: 5280a9cca668ef7b81376e5f092aea3b31b75f88
   goal_3b_64_execution_baseline_freeze: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_EXECUTION_BASELINE_FREEZE.md
-  goal_3b_64_real_access_authorized: false
+  goal_3b_64_real_access_authorized: true
+  goal_3b_64_real_execution_authorization: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_EXECUTION_AUTHORIZATION.md
+  goal_3b_64_real_execution_owner: authoritative_successor_Main_in_fresh_exact_baseline_worktree_by_explicit_user_direction
+  goal_3b_64_campaign_cost_usd_hard_max: 10.00
+  goal_3b_64_versioned_structural_corrections_authorized: true
+  goal_3b_64_internal_correction_commit_identity_count_hard_limit: none
+  goal_3b_64_continuous_execution_boundary: stop_before_user_unguided_webui_check
   goal_3b_64_execution_started: false
   goal_3b_64_prior_workflow_reuse: forbidden
-  goal_3b_64_status: execution_baseline_frozen_real_access_locked
+  goal_3b_64_status: real_execution_authorized_gate_h_pending
   goal_3b_64_correction_acceptance_status: closed_accepted
   goal_3b_64_correction_disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
   goal_3b_64_correction_closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
-  goal_3b_64_next_control_point: separate_explicit_real_access_authorization
+  goal_3b_64_next_control_point: gate_h_then_fresh_successor_workflow
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
