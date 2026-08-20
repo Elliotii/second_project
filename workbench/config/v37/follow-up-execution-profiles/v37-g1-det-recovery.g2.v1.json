@@ -3,11 +3,11 @@
   "kind": "v37_registered_follow_up_execution_profile",
   "profile_id": "v37-g2-follow-up-profile-v1",
   "case_id": "v37-g1-det-recovery",
-  "manifest_body_digest": "0e9d88e4192270795a3f62765af029e8fcf292593f10f839253cfc00c1ded14d",
+  "manifest_body_digest": "98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5",
   "parent_provider_profile_digest": "f695d0e636960c117c7176bd395e6fc19d2adaa9f649cf68973a15d715662e89",
   "parent_tool_profile_digest": "2f44ac225979c1965e7612bbcaa06b6b550f3004b294dce6bb276d6da425fbbe",
   "parent_command_profile_digest": "ac8b697d2b850d7b234801c65523dccbbdd67f1849c4ecce3f725062c1809e08",
-  "parent_budget_profile_digest": "5ee3c96c421a1c34bfe275c6e11df1a42235ad30fd3a876338e29c2e51c94653",
+  "parent_budget_profile_digest": "d7963f6d311682b73a7dc84cc5b66f245db49a133f03cd485b3b5b37f9375ec1",
   "parent_stop_condition_profile_digest": "5d7f0f95a9bf3b3d1b0a43bc602ce9bd8832dbe1397901acf11d7e764bdb377f",
   "provider_profile": {
     "profile_id": "v37-g2-deterministic-faux-v1",
@@ -67,5 +67,5 @@
     "terminal_requires_complete_inspection": true
   },
   "stop_condition_profile_digest": "97a372d6d09541bc842bafe8fa0114fd5ac8764bc8de47d9f6d3154df561a692",
-  "follow_up_execution_profile_digest": "70984877cb930789f19eb34f485dc426217f1f7c3cc2c17472582ab450cefbb8"
+  "follow_up_execution_profile_digest": "10ab0ebbdcbf1861bfed078400bcd75df900e28e82f4a3c6dfece4b18718dff5"
 }

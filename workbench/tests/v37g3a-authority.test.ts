@@ -21,15 +21,15 @@ test("G3A registry is exact, canonical, bounded and per-entry stable",()=>{
 
 test("G3B zero-access configuration loads exact real Case but grants no execution authority",async()=>{
 	const loaded=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:ids[2]!});
-	assert.equal(loaded.manifest.project_id,"v37-real-recovery-project");assert.equal(loaded.manifest.manifest_body_digest,"36a4cf214c0c9e3ab05764184cb7e702304ddb80e7570fa3c5af3282de8a384f");
-	assert.equal(loaded.follow_up_execution_profile.follow_up_execution_profile_digest,"f139a899b4304f6f403f3077ad76857a05780f824186f308489a54f15c61c8e4");
+	assert.equal(loaded.manifest.project_id,"v37-real-recovery-project");assert.equal(loaded.manifest.manifest_body_digest,"a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d");
+	assert.equal(loaded.follow_up_execution_profile.follow_up_execution_profile_digest,"e3789fe9eeedac96164836b306c239a5ac65bff618d21a631b7d391edd10cbc9");
 	const budget=loaded.follow_up_execution_profile.budget_profile as unknown as Record<string,unknown>;
 	const runtimeBudget={profile_id:budget.v36_runtime_budget_profile_id,provider_requests_observation_threshold:budget.provider_requests_observation_threshold,provider_requests_hard_max:budget.provider_requests_hard_max,tool_calls_hard_max:budget.tool_calls_hard_max,combined_tokens_hard_max:budget.combined_tokens_hard_max,cost_usd_hard_max:budget.cost_usd_hard_max,wall_time_ms_hard_max:budget.wall_time_ms_hard_max};
 	assert.deepEqual(runtimeBudget,{profile_id:"v36_daily_bounded_edit_v2",provider_requests_observation_threshold:16,provider_requests_hard_max:24,tool_calls_hard_max:24,combined_tokens_hard_max:131072,cost_usd_hard_max:0.2,wall_time_ms_hard_max:900000});
 	assert.doesNotThrow(()=>assertBoundedEditBudgetProfileV36(runtimeBudget as unknown as BoundedEditBudgetProfileV36));
 	assert.deepEqual(primaryExecutionDeclarationV37G3A(loaded.manifest),{primaryMode:"fail",executionPortKind:"injected",realAccessDeclared:true,accessExpectation:{credential_reads:1,external_provider_calls:48,network_calls:48,real_model_calls:48}});
 	assert.deepEqual(followUpAccessExpectationV37G3A(loaded.follow_up_execution_profile),{credential_reads:1,network_calls:24,external_provider_calls:24,real_model_calls:24});
-	assert.deepEqual(constructionAuthorityDigestsV37G3A(loaded.manifest),{candidateProposalAuthorityDigest:"5356ffff6acf35fa41df96addce0e987034462d848d3cc3aeee6ac652a684054",regressionAuthorityDigest:"beb420eb73b66536501f3b242f5dc04daf5ee18c5ede5c82067a2cdbb0c9db7d"});
+	assert.deepEqual(constructionAuthorityDigestsV37G3A(loaded.manifest),{candidateProposalAuthorityDigest:"e3945b699b9140d374514e20faf3c14b35e778c707a4f6e47ed0b657e8f61150",regressionAuthorityDigest:"3a7e7e603d6e071922b83ba1789aa2056134163a1b3edb04a8af902613bb49da"});
 	const product=new ProductServiceV37G3A(PROJECT_ROOT);const real=product.listCases().find((item)=>item.case_id===ids[2]);assert.equal(real?.available_for_new_workflow,false);await assert.rejects(product.createWorkflow(ids[2]!),/lacks matching Host-constructed execution authority/);
 });
 
@@ -56,12 +56,12 @@ test("Host paths reject hardlink, symlink and junction authority",()=>{
 	for(const [name,type] of [["symlink","dir"],["junction","junction"]] as const){const link=resolve(PROJECT_ROOT,`.runs/v37/g3a-authority-links/${name}`);rmSync(link,{recursive:true,force:true});try{symlinkSync(target,link,type);}catch(error){if(name==="symlink"&&(error as NodeJS.ErrnoException).code==="EPERM")continue;throw error;}try{assert.throws(()=>createWorkflowRegistrationV37G3A({projectRoot:PROJECT_ROOT,dataRoot:`.runs/v37/g3a-authority-links/${name}`,caseId:ids[0]!,workflowId:`v37-g3a-${name}`,createdAt:"2026-08-20T18:00:00.000Z"}),/symlink|junction/);}finally{rmSync(link,{recursive:true,force:true});}}
 });
 
-test("registered configuration byte inventory remains exact",()=>{
+test("accepted v1 byte inventory remains exact",()=>{
 	const inventory:Record<string,string>={
-		"workbench/config/v37/registered-cases/registry-v1.json":"280378885f44bf24cbeeb2651e17fc27f5d871551e36c20dcb2f2c297c67b021",
-		"workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json":"b01068f0218be54440ebd80532b080c5f591ca53a64630bed260b66940d69853",
-		"workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json":"16f078f6adb90650f3a04e62ac615232ee35999045ecea6d0c306ba54be1c561",
-		"workbench/config/v37/follow-up-execution-profiles/v37-g1-det-recovery.g2.v1.json":"d6e95e73ae2c1bd6a6ce4904696e1576831318204bb5dfd4f4e2c55e205eef48",
+		"workbench/config/v37/registered-cases/registry-v1.json":"cdf3b081444f3288b38b1bdb92525b5613ab068effda3c9af7848fa31d31727b",
+		"workbench/config/v37/registered-cases/manifests/v37-g1-det-recovery.v1.json":"39292054a68592b5c1951e0193d428070eebc7f3700ccd6ab1f3797e2aa161c2",
+		"workbench/config/v37/registered-cases/envelopes/v37-g1-det-recovery.r1.json":"621efc8de7747d2d7ce8c2f780b45c271bb0b0b4dc3bbb449cf80447d1a340a3",
+		"workbench/config/v37/follow-up-execution-profiles/v37-g1-det-recovery.g2.v1.json":"6820b9f8e31ee3f7a10e82a5ca7cf6d9ebae66b5a5325e7b7000cdcfbb9debb9",
 		"workbench/src/contracts/v37-types.ts":"df4c46a90377723cdd0d968b703bbeff6b013825783be7a6581aa40657785bd3",
 		"workbench/src/v37/host-registry-v37.ts":"9c837ada3ef20b48764b00b6ec95966de646691d76723f553ab849d4da9fa79b",
 		"workbench/src/v37/workflow-registration-v37.ts":"615775449f6244486f40600de237e3c7ffed9b80b0e719d11ca12d2d2cceea8c",

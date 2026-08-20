@@ -118,8 +118,8 @@
   },
   "budget_profile_spec": {
     "spec_id": "v37-g1-v2a-budget-v1",
-    "body": { "candidate_paths_exact": 2, "provider_dispatches_max": 48, "tool_calls_max": 72, "verifier_runs_max": 3, "real_cost_usd": 0 },
-    "spec_digest": "5ee3c96c421a1c34bfe275c6e11df1a42235ad30fd3a876338e29c2e51c94653"
+    "body": { "candidate_paths_exact": 2, "provider_dispatches_max": 24, "tool_calls_max": 48, "verifier_runs_max": 3, "real_cost_usd": 0 },
+    "spec_digest": "d7963f6d311682b73a7dc84cc5b66f245db49a133f03cd485b3b5b37f9375ec1"
   },
   "stop_condition_profile_spec": {
     "spec_id": "v37-g1-no-retry-stop-v1",
@@ -131,5 +131,5 @@
     "body": { "prompt": "You are working inside one restricted temporary Workspace.\nUse only the tools provided by the host. Never access or modify anything outside the Workspace.\nDo not modify protected task, package, or test files. Change only paths explicitly allowed by the task.\nRun the task-declared check before finishing.\nTool completion and Agent settlement are execution facts, not an external task-success Outcome." },
     "spec_digest": "02802ee30a2e24895d380b28ea8cb32adcb92e8546693fb03f06181c0cd45c31"
   },
-  "manifest_body_digest": "0e9d88e4192270795a3f62765af029e8fcf292593f10f839253cfc00c1ded14d"
+  "manifest_body_digest": "98b522161f0f132c5fd0507fe6df396252d010a47177b6c5a182de50ef0e83b5"
 }
