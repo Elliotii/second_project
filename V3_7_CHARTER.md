@@ -196,6 +196,19 @@ archival, Pi changes, containers beyond the accepted V3.6 backend, or a large UI
 
 Stop the current Goal and return to Main/user if implementation would require: (1) browser, caller, Agent or confirmation-conferred Authority; (2) arbitrary enrollment or unregistered Evidence; (3) changed old G1 meaning or manufactured failure/comparison/binding/Outcome; (4) Candidate Path IDs represented as Runs; (5) ordinary V3.6 admission; (6) weakened G2 Assessment/rollback/no-direct-supersede; (7) changed V3 State Store/CAS; (8) rejected Schema 2; (9) strict Provider/Docker attestation or Pi changes; (10) a demo/test-only success path; (11) post-dispatch Case/Candidate/Verifier/Regression/follow-up/budget changes; (12) a third Recovery, retry, fallback, replacement or result hunting; (13) exhausted correction budget without audit PASS; (14) more than ten high-intensity days without user review; or (15) expansion back into strict Final Capstone G3.
 
+**Accepted one-time Goal 3A remediation exception (2026-08-20).** After Main recorded
+`docs/reports/V3_7_G3A_CORRECTION_2_MAIN_REREVIEW_HARD_STOP.md`, the user explicitly
+approved one exceptional remediation unit for the repeated
+`V37-G3A-MAIN-P1-001` authority/terminalization class. This does not reset or increase
+the two-round ordinary Correction budget. It authorizes only the exact paths, behaviors
+and deterministic evidence frozen in
+`V3_7_G3A_EXCEPTIONAL_REMEDIATION_AMENDMENT.md` and
+`V3_7_GOAL_3A_EXCEPTIONAL_REMEDIATION_PROMPT.md`. The exception ends when its one
+Candidate is handed to Main. Any different finding, second remediation Candidate,
+out-of-prompt path, real access, manufactured Outcome or failure to close the recorded
+class restores this Hard Stop and returns to Main/user. Focused Audit remains mandatory
+and may begin only after Main rereview passes.
+
 ### 3.9 Common implementation and audit sequence
 
 Goal 1 and Goal 2 each use exactly this sequence:
