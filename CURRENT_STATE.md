@@ -5,14 +5,14 @@
 ```yaml
 project:
   name: Agent Harness Reliability Workbench
-  phase: v3_7_goal_3a_correction_2
-  status: V3_7_G3A_CORRECTION_1_MAIN_REREVIEW_FAILED_CORRECTION_2_AUTHORIZED
+  phase: v3_7_goal_3a_decision_required
+  status: V3_7_G3A_CORRECTION_BUDGET_EXHAUSTED_HARD_STOP
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: correction_2_authorized_pending_original_implementation_session
+  status: hard_stop_pending_user_correction_budget_decision
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -364,10 +364,10 @@ next_version:
   goal_2_closeout: docs/reports/V3_7_G2_CLOSEOUT.md
   goal_2_integrated_main_commit: ab74573f6a3b7103b3cb6e8be77a671c0abd4143
   goal_2_integrated_main_tree: 86d5ef236c3e9eb0772a2e18cfe8a0dc0cb0fa15
-  goal_3a_status: correction_1_candidate_failed_Main_rereview_correction_2_authorized
+  goal_3a_status: correction_2_candidate_failed_Main_rereview_budget_exhausted
   goal_3a_implementation_started: true
   goal_3a_implementation_session: /root/v37_g3a_implementation
-  goal_3a_implementation_session_status: completed_correction_1_candidate_Main_rereview_failed
+  goal_3a_implementation_session_status: completed_correction_2_candidate_Main_rereview_failed
   goal_3a_initial_candidate_commit: 71dd205e5fea6610d855ababb16dd17d265d83e7
   goal_3a_initial_candidate_tree: e1a71cc0858b9f1b23fb54b49e0467e6702f94ed
   goal_3a_initial_candidate_parent: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
@@ -386,7 +386,14 @@ next_version:
   goal_3a_correction_1_main_rereview_result: failed_residual_P1_001
   goal_3a_correction_2_authorization: docs/reports/V3_7_G3A_CORRECTION_2_AUTHORIZATION.md
   goal_3a_correction_2_session: /root/v37_g3a_implementation
-  goal_3a_correction_2_status: authorized_pending_dispatch
+  goal_3a_correction_2_status: completed_candidate_Main_rereview_failed_residual_P1_001
+  goal_3a_correction_2_candidate_commit: 84d8f87044eced89542e87ff35ed7176496d05b2
+  goal_3a_correction_2_candidate_tree: 177921f4825d4c490b466866f10ff432320df6c6
+  goal_3a_correction_2_main_rereview: docs/reports/V3_7_G3A_CORRECTION_2_MAIN_REREVIEW_HARD_STOP.md
+  goal_3a_correction_2_main_rereview_result: failed_repeated_P1_001
+  goal_3a_correction_budget_status: exhausted_without_audit_PASS
+  goal_3a_hard_stop: correction_budget_exhausted_pending_user_decision
+  goal_3a_current_recommended_decision: authorize_one_narrow_versioned_P1_001_remediation_amendment
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -402,7 +409,7 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_final_ordinary_correction_2
+  goal_3a_long_running_goal_status: hard_stop_pending_user_decision
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
