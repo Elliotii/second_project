@@ -6,13 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3a_final_audit_remediation_preparation
-  status: V3_7_G3A_FINAL_AUDIT_REMEDIATION_AMENDMENT_ACCEPTED
+  status: V3_7_G3A_FINAL_AUDIT_REMEDIATION_PROMPT_READY
 
 active_goal: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
 
 current_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
-  status: final_audit_remediation_accepted_prompt_pending_freeze
+  status: final_audit_remediation_prompt_ready_pending_dispatch
 
 last_executed_goal:
   id: V3_7_G2_RUNTIME_EFFECTIVE_STATE_FOLLOW_UP_BRIDGE
@@ -424,8 +424,11 @@ next_version:
   goal_3a_hard_stop_user_decision_required: false
   goal_3a_final_audit_remediation_user_decision: approved
   goal_3a_final_audit_remediation_amendment: V3_7_G3A_FINAL_AUDIT_REMEDIATION_AMENDMENT.md
-  goal_3a_final_audit_remediation_budget: 0_of_1_consumed
-  goal_3a_final_audit_remediation_status: amendment_accepted_prompt_pending_freeze
+  goal_3a_final_audit_remediation_budget: 1_of_1_consumed
+  goal_3a_final_audit_remediation_status: prompt_ready_pending_dispatch
+  goal_3a_final_audit_remediation_prompt: V3_7_GOAL_3A_FINAL_AUDIT_REMEDIATION_PROMPT.md
+  goal_3a_final_audit_remediation_amendment_freeze_commit: c769e0583c53e31380174d07117dd4f493c15aaf
+  goal_3a_final_audit_remediation_amendment_freeze_tree: f8309361e33b81424d4ff0dbbd76d2d6abe26ffc
   goal_3a_preimplementation_hard_stop: docs/reports/V3_7_G3A_PREIMPLEMENTATION_HARD_STOP.md
   goal_3a_authority_extension_decision_proposal: docs/reports/V3_7_G3A_AUTHORITY_EXTENSION_DECISION_PROPOSAL.md
   goal_3a_authority_extension_initial_proposal_status: superseded_by_optimized_proposal
@@ -441,7 +444,7 @@ next_version:
   goal_3a_prompt_freeze_tree: 64e1384f63551ec861f662876c60c346020b7f54
   goal_3a_control_baseline_commit: 5db8fcc2e1f15f35caed1e2a22ab9d222a4708f5
   goal_3a_long_running_goal_plan: docs/reports/V3_7_G3A_LONG_RUNNING_GOAL_PLAN.md
-  goal_3a_long_running_goal_status: active_final_audit_remediation_preparation
+  goal_3a_long_running_goal_status: active_final_audit_remediation_ready_for_dispatch
   goal_3b_status: locked_pending_goal_3a_acceptance_and_user_real_access_freeze
 
 v3_6_engineering_stabilization_campaign:
