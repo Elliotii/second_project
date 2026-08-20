@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_PORT_BRIDGE_DECISION_REQUIRED_TEMPLATE_PROMPT_MISSING
+  status: V3_7_G3B_HOST_PORT_BRIDGE_EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION_AUTHORIZED
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_bridge_correction_budget_exhausted_user_decision_required
-  note: corrected_candidate_closes_P1_001_but_production_prompt_omits_exact_frozen_template
+  status: locked_bridge_exceptional_template_prompt_correction_in_progress
+  note: user_authorized_single_same_three_path_micro_correction_no_real_authority
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -580,7 +580,12 @@ next_version:
   goal_3b_host_port_bridge_new_finding: G3B-HOST-BRIDGE-MAIN-P1-002_candidate_prompt_omits_exact_frozen_template
   goal_3b_host_port_bridge_ordinary_correction_capacity: exhausted_1_of_1
   goal_3b_host_port_bridge_recommended_user_decision: AUTHORIZE_V3_7_G3B_HOST_BRIDGE_EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION
-  goal_3b_status: locked_user_decision_required_no_audit_no_real_authority
+  goal_3b_host_port_bridge_exceptional_template_prompt_user_decision: approved
+  goal_3b_host_port_bridge_exceptional_template_prompt_amendment: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION_AMENDMENT.md
+  goal_3b_host_port_bridge_exceptional_template_prompt_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION_PROMPT.md
+  goal_3b_host_port_bridge_exceptional_template_prompt_capacity: 1_of_1_consumed_at_dispatch
+  goal_3b_host_port_bridge_exceptional_template_prompt_status: authorized_pending_dispatch
+  goal_3b_status: locked_zero_access_exceptional_correction_in_progress_no_audit_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
