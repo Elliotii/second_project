@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_PORT_BRIDGE_ACCEPTED
+  status: V3_7_G3B_EXECUTION_BASELINE_FROZEN_REAL_ACCESS_LOCKED
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_execution_prompt_preparation
-  note: zero_access_bridge_accepted_real_access_still_requires_separate_user_authorization
+  status: locked_pending_explicit_real_access_authorization
+  note: execution_baseline_and_prompt_frozen_no_real_workflow_started
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -624,9 +624,16 @@ next_version:
   goal_3b_host_port_bridge_disposition: PASS_V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
   goal_3b_host_port_bridge_accepted_candidate_commit: 4e86f0ecdaa1edc890ada922cfb4ce4e0b9c2227
   goal_3b_host_port_bridge_accepted_candidate_tree: 820a212aeeeea3a8f094f8d3f81c3aa28fbaed3e
-  goal_3b_status: locked_zero_access_execution_prompt_preparation_no_real_authority
-  goal_3b_configuration_frozen: false
-  goal_3b_execution_prompt_frozen: false
+  goal_3b_execution_prompt: V3_7_GOAL_3B_REAL_EXECUTION_PROMPT.md
+  goal_3b_execution_prompt_git_blob: f54230eadafa10fa3bf6d5753ec59a3d02c1dbf9
+  goal_3b_execution_prompt_sha256: 89477cf94887647f131c5b5124c3f8f96c0f383b1af344eee8c972cf4695b7c7
+  goal_3b_execution_baseline_commit: cad4db45421b239b61cb7b3b3052bc8d4167cd4b
+  goal_3b_execution_baseline_tree: 6b80cb326969c4255ea2c0616ff20e2ca5e150dc
+  goal_3b_execution_baseline_freeze: docs/reports/V3_7_G3B_EXECUTION_BASELINE_FREEZE.md
+  goal_3b_execution_session_status: not_started_real_access_locked
+  goal_3b_status: locked_execution_baseline_frozen_pending_explicit_real_access_authorization
+  goal_3b_configuration_frozen: true
+  goal_3b_execution_prompt_frozen: true
   goal_3b_real_access_authorized: false
   goal_3b_provider_dispatches: 0
   goal_3b_credential_reads: 0
