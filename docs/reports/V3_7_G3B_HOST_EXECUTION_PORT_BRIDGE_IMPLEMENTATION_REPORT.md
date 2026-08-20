@@ -1,15 +1,15 @@
 # V3.7 Goal 3B Host Execution-Port Bridge Implementation Report
 
 ```yaml
-status: EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION_CANDIDATE_READY_FOR_MAIN_REREVIEW
+status: AUDIT_REMEDIATION_CANDIDATE_READY_FOR_MAIN_REREVIEW
 prepared_on: 2026-08-21
-control_baseline_commit: 3071a0fcd91d6b95ade47c50114518973b6a7c53
-control_baseline_tree: cf479b07dc13af897399416c03bcc2b02afe29a5
+control_baseline_commit: a2eab56e0a3b98fb67137d4ec4dfce20256148e4
+control_baseline_tree: 6a99a103a7c2ba438a01d1379863598235c29deb
 configuration_candidate_commit: cd380652dc332b875c41055c95d53fb687368732
 configuration_candidate_tree: 72318985ad0f016c5a1f227cbabc052eb0906256
 candidate_commit: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
 candidate_tree: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
-parent_commit: 3071a0fcd91d6b95ade47c50114518973b6a7c53
+parent_commit: a2eab56e0a3b98fb67137d4ec4dfce20256148e4
 credential_reads: 0
 external_network_calls: 0
 external_provider_calls: 0
@@ -17,6 +17,25 @@ real_model_calls: 0
 ```
 
 ## Result
+
+The audit remediation preserves Candidate
+`c85011fd9ea8a64d6b7964dd853750b13f2b2fa4` unchanged and closes only
+`V37-G3B-BRIDGE-AUDIT-P1-001` and `V37-G3B-BRIDGE-AUDIT-P1-002` under the accepted
+two-pinned-runtime Amendment.
+
+Every execution port now synchronously reserves its exact next unit before any async
+Credential, Runtime, Provider, Tool, command or receipt boundary. Primary/Recovery holds
+one reservation across its three ordered logical units; Regression similarly retains
+its indivisible Base/Candidate group. A concurrent duplicate is rejected without
+faulting the legitimate first path, while a failure of the reserved path clears the
+reservation and faults the Bridge. The shared Credential lease coalesces an unresolved
+read through one Promise and records at most one resolver completion.
+
+Construction and inspection expose exactly two sanitized pinned Runtime compositions:
+the public V2B-owned Primary/Recovery composition and the bridge-owned Post-V3.5
+Candidate/Regression/follow-up composition. Both bind Provider `deepseek` and model
+`deepseek-v4-flash`; they share one opaque resolver invocation and one aggregate
+seven-unit budget/counter ledger. No public V2B contract changed.
 
 The exceptional template-prompt micro-correction preserves failed initial Candidate
 `73b8b9787dea1ec2cb4d43be547aef711f74fbb3` and ordinary Correction 1 Candidate
@@ -50,9 +69,9 @@ exact Primary, Candidate-proposal, symmetric Regression and registered follow-up
 and supplies their exact construction authorization to `ProductServiceV37G3A`.
 
 Construction, Case listing and pre-dispatch validation remain lazy: they do not resolve
-the opaque Credential or construct the fixed DeepSeek Runtime. One shared Credential
-lease and one fixed `deepseek-v4-flash` Runtime serve the ordered seven-unit envelope.
-The production module exports no deterministic execution alternative.
+the opaque Credential or construct either fixed DeepSeek composition. One shared
+Credential lease serves both explicitly recorded compositions. The production module
+exports no deterministic execution alternative.
 
 The bridge persists only sanitized construction, per-unit usage/lifecycle, failure-hash
 and close evidence. It enforces per-unit and global request, token, Tool, command,
@@ -72,15 +91,16 @@ changed. The user-owned untracked evidence-audit report was neither read nor mod
 
 ## Deterministic verification
 
-- New Bridge focused test: `8/8 PASS`, `0` failures. The corrected positive path derives
-  its proposal template from the actual captured request; all prior negative checks,
-  including Correction 1 valid-JSON/invalid-schema, remain passing.
+- New Bridge focused test: `10/10 PASS`, `0` failures. Barrier-based Primary and later-
+  stage duplicate regressions prove one reserved path dispatches, the duplicate creates
+  no receipt or extra resolver/Runtime/Provider operation, and the first path remains
+  valid. All eight prior checks remain passing.
 - Directly affected G3A/G3B authority test: `6/6 PASS`, `0` failures.
 - Strict TypeScript: `PASS`, zero diagnostics.
 - The complete local fake route exercised all seven units, one shared test-local opaque
-  Credential resolution, one model-factory construction, ordered Regression and the
-  corrected daily-24 follow-up Runtime path. Its sanitized simulated Provider counters
-  reconciled at `13/13/13`; these are local fake observations, not real calls.
+  Credential resolution, the two declared composition identities, ordered Regression
+  and the corrected daily-24 follow-up Runtime path. Its sanitized simulated Provider
+  counters reconciled at `13/13/13`; these are local fake observations, not real calls.
 - Actual Credential/network/Provider/model operations: `0/0/0/0`.
 - No broad G3A, G1/G2, V2, V3, V3.6 or demo suite was run.
 

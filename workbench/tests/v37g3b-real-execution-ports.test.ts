@@ -6,6 +6,7 @@ import { createModels, fauxAssistantMessage, fauxProvider, fauxToolCall } from "
 import type { AttemptRuntimeEvidenceV2B } from "../src/contracts/v2b-types.ts";
 import { sha256 } from "../src/hash.ts";
 import { createDeterministicExecutionPortV2A } from "../src/run-v2.ts";
+import { loadRegisteredCaseFromHostRegistryV37G3A } from "../src/v37/host-registry-v37g3a.ts";
 import { PROJECT_ROOT } from "./helpers.ts";
 
 const CASE_ID="v37-real-recovery-promote-retain";
@@ -15,6 +16,8 @@ const authority=()=>({schema_version:1 as const,kind:"v37_g3b_host_execution_por
 let modelFactoryCalls=0;
 let scenario:"complete"|"malformed"|"invalid_schema"|"over_budget"|"unknown_usage"="complete";
 let capturedCandidateTemplates:Array<{template_id:string;content:string}>=[];
+let runtimeCreateGate:Promise<void>|null=null;
+let signalRuntimeCreate:(()=>void)|null=null;
 const models=createModels();
 const provider=fauxProvider({provider:"deepseek",models:[{id:"deepseek-v4-flash",name:"DeepSeek V4 Flash",reasoning:true,input:["text"],cost:{input:0.14,output:0.28,cacheRead:0.0028,cacheWrite:0},contextWindow:1000000,maxTokens:384000}]});
 models.setProvider(provider.provider);
@@ -29,7 +32,7 @@ function proposalFromPrompt(prompt:string):string{
 }
 function messageText(message:any):string{return typeof message.content==="string"?message.content:Array.isArray(message.content)?message.content.filter((part:any)=>part?.type==="text").map((part:any)=>part.text).join(""):"";}
 
-mock.module("../src/session/real-smoke-turn-v35.ts",{namedExports:{createPostV35DeepSeekModelFactory:()=>({create:async(_credential:string)=>{modelFactoryCalls++;provider.setResponses([
+mock.module("../src/session/real-smoke-turn-v35.ts",{namedExports:{createPostV35DeepSeekModelFactory:()=>({create:async(_credential:string)=>{modelFactoryCalls++;signalRuntimeCreate?.();if(runtimeCreateGate)await runtimeCreateGate;provider.setResponses([
 	(context)=>fauxAssistantMessage(proposalFromPrompt(messageText(context.messages.at(-1))),{timestamp:1}),
 	()=>fauxAssistantMessage("Base arm inspected without edits.",{timestamp:2}),
 	()=>fauxAssistantMessage(fauxToolCall("workspace_edit",{path:"subject.txt",old_text:"broken\n",new_text:"fixed\n"},{id:"regression-edit"}),{stopReason:"toolUse",timestamp:3}),
@@ -49,11 +52,11 @@ mock.module("../src/pi/pi-run-handle-v2b.ts",{namedExports:{createRealExecutionP
 const bridgeModule=await import("../src/v37/real-execution-ports-v37g3b.ts");
 const {createRealExecutionPortBridgeV37G3B}=bridgeModule;
 
-test.beforeEach(()=>{for(const path of [".runs/v37/g3a-product",".runs/v37/g3b/state-stores",".runs/v37/g3b/host-bridge",".runs/v37/host-authority/v37-g3a-host-registry-v1"])rmSync(resolve(PROJECT_ROOT,path),{recursive:true,force:true});modelFactoryCalls=0;scenario="complete";capturedCandidateTemplates=[];});
+test.beforeEach(()=>{for(const path of [".runs/v37/g3a-product",".runs/v37/g3b/state-stores",".runs/v37/g3b/host-bridge",".runs/v37/host-authority/v37-g3a-host-registry-v1"])rmSync(resolve(PROJECT_ROOT,path),{recursive:true,force:true});modelFactoryCalls=0;scenario="complete";capturedCandidateTemplates=[];runtimeCreateGate=null;signalRuntimeCreate=null;});
 
 test("exact bridge authority creates all four real ports lazily and closure disables new work",async()=>{
 	let reads=0;const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>{reads++;return "test-opaque";}});
-	assert.deepEqual(Object.keys(bridge.caseExecutionPorts).sort(),["candidateProposal","followUpRuntime","primary","regressionValidation"]);assert.equal(bridge.realAccessAuthorization.follow_up_access_expectation.network_calls,24);assert.equal(bridge.service.listCases().find((item)=>item.case_id===CASE_ID)?.available_for_new_workflow,true);assert.equal(reads,0);assert.equal(modelFactoryCalls,0);
+	assert.deepEqual(Object.keys(bridge.caseExecutionPorts).sort(),["candidateProposal","followUpRuntime","primary","regressionValidation"]);assert.deepEqual(bridge.inspect().runtime_compositions,[{composition_id:"v2b_primary_recovery",owner:"public_createRealExecutionPortV2B",provider:"deepseek",model_id:"deepseek-v4-flash",lifecycle:"primary_recovery_group_scoped"},{composition_id:"post_v35_later_stages",owner:"bridge_createPostV35DeepSeekModelFactory",provider:"deepseek",model_id:"deepseek-v4-flash",lifecycle:"candidate_regression_follow_up_bridge_scoped"}]);assert.equal(bridge.inspect().in_flight,null);assert.equal(bridge.realAccessAuthorization.follow_up_access_expectation.network_calls,24);assert.equal(bridge.service.listCases().find((item)=>item.case_id===CASE_ID)?.available_for_new_workflow,true);assert.equal(reads,0);assert.equal(modelFactoryCalls,0);
 	await bridge.close();assert.equal(bridge.service.listCases().find((item)=>item.case_id===CASE_ID)?.available_for_new_workflow,false);await assert.rejects(bridge.service.createWorkflow(CASE_ID),/closed/);
 });
 
@@ -73,10 +76,18 @@ test("valid JSON with invalid Candidate schema cannot complete the unit or creat
 	scenario="invalid_schema";const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS.slice(0,4))model=await bridge.service.act(model.workflow_id,action);const receipts=model.receipt_count;await assert.rejects(bridge.service.act(model.workflow_id,"produce_candidate"),/proposal|exact-key|invalid|required/i);model=bridge.service.getWorkflow(model.workflow_id);assert.equal(model.receipt_count,receipts);assert.equal(bridge.inspect().state,"faulted");assert.deepEqual(bridge.inspect().completed_units.map((item)=>item.unit),["primary","recovery_a","recovery_b"]);assert.equal(bridge.inspect().completed_units.some((item)=>item.unit==="candidate_proposal"),false);
 });
 
+test("concurrent Primary reserves one group before Credential resolution and dispatches exactly once",async()=>{
+	let reads=0,signalEntered!:()=>void,releaseCredential!:()=>void;const entered=new Promise<void>((resolveEntered)=>{signalEntered=resolveEntered;}),gate=new Promise<void>((resolveGate)=>{releaseCredential=resolveGate;});const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>{reads++;signalEntered();await gate;return "test-opaque";}}),created=await bridge.service.createWorkflow(CASE_ID),loadedCase=loadRegisteredCaseFromHostRegistryV37G3A({projectRoot:PROJECT_ROOT,caseId:CASE_ID}),baseRoot=resolve(PROJECT_ROOT,".runs/v37/g3b/host-bridge",bridge.inspect().bridge_id);const request={projectRoot:PROJECT_ROOT,workflowId:created.workflow_id,runId:"v37-g3b-concurrent-primary-first",runRoot:resolve(baseRoot,"primary-first"),loadedCase};const first=bridge.caseExecutionPorts.primary.execute(request);await entered;assert.deepEqual(bridge.inspect().in_flight,{unit:"primary",group:"primary_recovery"});const duplicate=bridge.caseExecutionPorts.primary.execute({...request,runId:"v37-g3b-concurrent-primary-second",runRoot:resolve(baseRoot,"primary-second")});await assert.rejects(duplicate,/already in flight/);assert.equal(reads,1);assert.equal(bridge.inspect().credential_resolution_count,0);assert.deepEqual(bridge.inspect().real_access,{credential_reads:0,network_calls:0,external_provider_calls:0,real_model_calls:0});assert.equal(bridge.service.getWorkflow(created.workflow_id).receipt_count,0);releaseCredential();await first;assert.deepEqual(bridge.inspect().completed_units.map((item)=>item.unit),["primary","recovery_a","recovery_b"]);assert.equal(bridge.inspect().credential_resolution_count,1);assert.equal(bridge.inspect().in_flight,null);assert.equal(bridge.service.getWorkflow(created.workflow_id).receipt_count,0);
+});
+
+test("concurrent later-stage duplicate is rejected behind one Runtime-construction barrier",async()=>{
+	let reads=0;const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>{reads++;return "test-opaque";}});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS.slice(0,4))model=await bridge.service.act(model.workflow_id,action);const receipts=model.receipt_count;let signalEntered!:()=>void,releaseRuntime!:()=>void;const entered=new Promise<void>((resolveEntered)=>{signalEntered=resolveEntered;});runtimeCreateGate=new Promise<void>((resolveGate)=>{releaseRuntime=resolveGate;});signalRuntimeCreate=signalEntered;const first=bridge.service.act(model.workflow_id,"produce_candidate");await entered;assert.deepEqual(bridge.inspect().in_flight,{unit:"candidate_proposal",group:null});await assert.rejects(bridge.service.act(model.workflow_id,"produce_candidate"),/already in flight/);assert.equal(modelFactoryCalls,1);assert.equal(reads,1);assert.deepEqual(capturedCandidateTemplates,[]);assert.deepEqual(bridge.inspect().real_access,{credential_reads:1,network_calls:7,external_provider_calls:7,real_model_calls:7});releaseRuntime();model=await first;assert.equal(model.receipt_count,receipts+1);assert.equal(bridge.inspect().completed_units.filter((item)=>item.unit==="candidate_proposal").length,1);assert.equal(bridge.inspect().in_flight,null);assert.equal(modelFactoryCalls,1);
+});
+
 test("Candidate output budget overflow and premature direct port use fail closed",async()=>{
 	scenario="over_budget";let bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});await assert.rejects(bridge.caseExecutionPorts.candidateProposal!.propose({} as any),/order invalid/);assert.equal(bridge.inspect().credential_resolution_count,0);
 	bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});await assert.rejects(bridge.caseExecutionPorts.followUpRuntime!.execute({} as any),/order invalid/);assert.equal(bridge.inspect().credential_resolution_count,0);
-	bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});await assert.rejects(bridge.caseExecutionPorts.regressionValidation!.execute({state:{status:"staged_inactive"},workspaceRoot:"."} as any),/order invalid/);assert.equal(bridge.inspect().credential_resolution_count,0);
+	bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});await assert.rejects(bridge.caseExecutionPorts.regressionValidation!.execute({state:{status:"staged_inactive"},workspaceRoot:"."} as any),/order invalid|lacks matching/);assert.equal(bridge.inspect().credential_resolution_count,0);
 	bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS.slice(0,4))model=await bridge.service.act(model.workflow_id,action);await assert.rejects(bridge.service.act(model.workflow_id,"produce_candidate"),/exact JSON|budget/);assert.equal(bridge.inspect().state,"faulted");
 });
 
