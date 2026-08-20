@@ -121,14 +121,14 @@ function deterministicResponses(input: ExecutionAttemptRequestV2, forceToolCap: 
 		return [fauxAssistantMessage("The bounded real-shaped stub settled without a valid repair.")];
 	}
 	if (input.mode === "budget_stop") {
-		return Array.from({ length: 9 }, (_, index) =>
+		return Array.from({ length: V2B_ATTEMPT_CAPS.provider_requests + 1 }, (_, index) =>
 			fauxAssistantMessage(
 				fauxToolCall("run_command", { command_id: "public_test" }, { id: `${input.attemptId}-budget-${index + 1}` }),
 				{ stopReason: "toolUse" },
 			),
 		);
 	}
-	if (forceToolCap) return [fauxAssistantMessage(Array.from({ length: 17 }, (_, index) => fauxToolCall("run_command", { command_id: "public_test" }, { id: `${input.attemptId}-tool-cap-${index + 1}` })), { stopReason: "toolUse" })];
+	if (forceToolCap) return [fauxAssistantMessage(Array.from({ length: V2B_ATTEMPT_CAPS.tool_calls + 1 }, (_, index) => fauxToolCall("run_command", { command_id: "public_test" }, { id: `${input.attemptId}-tool-cap-${index + 1}` })), { stopReason: "toolUse" })];
 	return [
 		fauxAssistantMessage(
 			fauxToolCall("workspace_write", { path: "src/subject.ts", content: input.patch }, { id: `${input.attemptId}-write` }),

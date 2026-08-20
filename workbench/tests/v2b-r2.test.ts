@@ -7,7 +7,7 @@ import type { AttemptRuntimeEvidenceV2B, RunTerminalV2B } from "../src/contracts
 import type { CandidatePathV2A, CandidatePreVerifierCheckpointV2A, ProviderReservationLedgerV2A, RecoverySeedV2A, RunTerminalV2A } from "../src/contracts/v2-types.ts";
 import { sha256, stableJson, treeDigest } from "../src/hash.ts";
 import { inspectSequenceV2B, inspectStage1RunV2B, inspectionFingerprintV2B } from "../src/inspect-v2b.ts";
-import { scanEvidenceBytesV2, validateSessionToolLineageV2 } from "../src/inspect-v2.ts";
+import { inspectRunV2A, scanEvidenceBytesV2, validateSessionToolLineageV2 } from "../src/inspect-v2.ts";
 import { createRealExecutionPortV2B, createStage1ExecutionAuthorityV2B, createStage1RealShapedExecutionPortV2B, firstProviderPayloadEvidenceV2B, providerPayloadIdentityV2B, V2BExecutionBoundaryError } from "../src/pi/pi-run-handle-v2b.ts";
 import { createOneRunProviderAuthorityV1B } from "../src/provider/fixed-provider-v1.ts";
 import { buildExecutionManifestV2B, executeStage1RunV2B, preflightExecutionManifestV2B, runNextSequenceV2B, V2B_STAGE1_SCENARIOS, type ObservedStage2IdentityV2B, type SequencePortFactoryV2B } from "../src/run-v2b.ts";
@@ -267,6 +267,33 @@ test("R2-C safe pre-dispatch budget terminal is quiescent, verified once, retain
 		assert.equal(rejected.integrity_valid, false, field);
 		assert.match(rejected.errors.join("; "), /reservation|usage|checkpoint/i);
 	}
+});
+
+test("Primary safe 16-request budget terminal proceeds through Verifier and Recovery", async () => {
+	const runId = `v2b-r2-primary-budget-${process.pid}`;
+	const runRoot = rootFor("primary-budget-terminal");
+	const attempts: AttemptRuntimeEvidenceV2B[] = [];
+	const primaryPort = createStage1RealShapedExecutionPortV2B({
+		authority: createStage1ExecutionAuthorityV2B({ runId, caseId: "primary_positive", authorized: true }),
+		onAttemptEvidence: (evidence) => attempts.push(evidence),
+	});
+	const terminal = await executeRunV2A({
+		projectRoot: PROJECT_ROOT,
+		runRoot,
+		runId,
+		primaryMode: "budget_stop",
+		candidateModes: ["pass", "fail"],
+		primaryExecutionPort: primaryPort,
+		candidateExecutionPort: createDeterministicExecutionPortV2A(),
+	});
+	await primaryPort.close?.();
+	assert.equal(terminal.primary_agent_completion, "pre_dispatch_budget_terminal");
+	assert.equal(terminal.primary_verifier_status, "failed");
+	assert.equal(terminal.outcome, "recovery_selected");
+	assert.equal(attempts[0]!.usage.provider_requests, 16);
+	assert.equal(existsSync(resolve(runRoot, terminal.primary_verifier_result_ref.path)), true);
+	const inspected = inspectRunV2A({ projectRoot: PROJECT_ROOT, runRoot, expectedExecutionPortKind: "injected" });
+	assert.equal(inspected.integrity_valid, true, inspected.errors.join("; "));
 });
 
 test("R2-MR raw gate stops before Verifier and injected legacy-shaped data cannot bypass Controller authority", async () => {

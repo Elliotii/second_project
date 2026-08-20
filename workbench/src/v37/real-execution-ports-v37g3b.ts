@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { AgentHarness, InMemorySessionStorage, Session } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import type { AttemptRuntimeEvidenceV2B, RealCallCountersV2B } from "../contracts/v2b-types.ts";
+import { V2B_ATTEMPT_CAPS, type AttemptRuntimeEvidenceV2B, type RealCallCountersV2B } from "../contracts/v2b-types.ts";
 import type { FauxExecutionEventV3, HarnessStateVersionV3 } from "../contracts/v3g2-types.ts";
 import type { StagedHarnessStateV3 } from "../contracts/v3-types.ts";
 import { writeOnceJson } from "../evidence/artifacts.ts";
@@ -34,14 +34,14 @@ import type { RegisteredFollowUpRuntimePortV37G3A } from "./registered-follow-up
 
 const CASE_ID = "v37-real-recovery-promote-retain";
 const PROJECT_ID = "v37-real-recovery-project";
-const CONFIGURATION_CANDIDATE_COMMIT = "cd380652dc332b875c41055c95d53fb687368732";
-const CONFIGURATION_CANDIDATE_TREE = "72318985ad0f016c5a1f227cbabc052eb0906256";
-const MANIFEST_DIGEST = "a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d";
-const REGISTRATION_DIGEST = "1e6a74edc68954e044815322ec65c2e163e2258c00b63527d29b0ea12a6dd52a";
-const FOLLOW_UP_PROFILE_DIGEST = "e3789fe9eeedac96164836b306c239a5ac65bff618d21a631b7d391edd10cbc9";
-const REGISTRY_DIGEST = "cd4da08a8d3d6daac317ac6bbe04b8a70a424fc079589a66598eced4bb51b762";
-const CANDIDATE_AUTHORITY_DIGEST = "e3945b699b9140d374514e20faf3c14b35e778c707a4f6e47ed0b657e8f61150";
-const REGRESSION_AUTHORITY_DIGEST = "3a7e7e603d6e071922b83ba1789aa2056134163a1b3edb04a8af902613bb49da";
+const CONFIGURATION_CANDIDATE_COMMIT = "57f419c35bdbd972bda890f45d874df35777dd72";
+const CONFIGURATION_CANDIDATE_TREE = "43dc96fa99fa31cd552863cc0b569637a682ba10";
+const MANIFEST_DIGEST = "36a4cf214c0c9e3ab05764184cb7e702304ddb80e7570fa3c5af3282de8a384f";
+const REGISTRATION_DIGEST = "05c21169123adad97723251caf0835a622a7f7de25d06ca99df6dbbb5d532b0d";
+const FOLLOW_UP_PROFILE_DIGEST = "f139a899b4304f6f403f3077ad76857a05780f824186f308489a54f15c61c8e4";
+const REGISTRY_DIGEST = "0fc93a326f4275465d285dd94fad0ac686b0c86778b8865bace5ae5ba48e9d3d";
+const CANDIDATE_AUTHORITY_DIGEST = "5356ffff6acf35fa41df96addce0e987034462d848d3cc3aeee6ac652a684054";
+const REGRESSION_AUTHORITY_DIGEST = "beb420eb73b66536501f3b242f5dc04daf5ee18c5ede5c82067a2cdbb0c9db7d";
 const CANDIDATE_TEMPLATE_ID = "v37-verify-before-finish";
 const CANDIDATE_TEMPLATE_CONTENT = "Before reporting completion, run the task-declared check and rely on its result rather than self-assessment.";
 const CANDIDATE_TEMPLATE_CONTENT_SHA256 = "1341b7b213c788c3d17ced324ba46da316c091af8d43182d02f589add792cc8f";
@@ -51,9 +51,9 @@ const UNIT_ORDER = ["primary", "recovery_a", "recovery_b", "candidate_proposal",
 type Unit = typeof UNIT_ORDER[number];
 
 const UNIT_CAPS: Readonly<Record<Unit, { requests:number; tokens:number; tools:number; commands:number; wallMs:number; cost:number }>> = Object.freeze({
-	primary:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
-	recovery_a:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
-	recovery_b:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
+	primary:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
+	recovery_a:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
+	recovery_b:{requests:V2B_ATTEMPT_CAPS.provider_requests,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
 	candidate_proposal:{requests:1,tokens:16384,tools:0,commands:0,wallMs:120000,cost:0.2},
 	regression_base:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
 	regression_candidate:{requests:16,tokens:131072,tools:24,commands:1,wallMs:900000,cost:0.2},
@@ -142,6 +142,7 @@ class Coordinator {
 	assertReserved(unit:Unit):void{this.assertOpen();const expected=UNIT_ORDER[this.units.length];const permits=this.reservation?.unit===unit||this.reservation?.group==="primary_recovery"&&["primary","recovery_a","recovery_b"].includes(unit)||this.reservation?.group==="regression"&&["regression_base","regression_candidate"].includes(unit);if(expected!==unit||!permits)this.fail(unit,new Error("bridge unit lacks matching in-flight reservation"));}
 	validateUsage(unit:Unit,usage:Usage):void{if(!validUsage(usage))return this.fail(unit,new Error("unknown or invalid usage"));const cap=UNIT_CAPS[unit],totals=sumUsage([...this.units.map((v)=>v.usage),usage]);if(usage.provider_requests>cap.requests||usage.combined_tokens>cap.tokens||usage.tool_calls>cap.tools||usage.commands>cap.commands||usage.wall_time_ms>cap.wallMs||usage.cost_usd>cap.cost+Number.EPSILON||totals.provider_requests>GLOBAL_CAP.requests||totals.combined_tokens>GLOBAL_CAP.tokens||totals.tool_calls>GLOBAL_CAP.tools||totals.commands>GLOBAL_CAP.commands||totals.wall_time_ms>GLOBAL_CAP.wallMs||totals.cost_usd>GLOBAL_CAP.cost+Number.EPSILON)return this.fail(unit,new Error("bridge budget exceeded"));}
 	complete(unit:Unit,usage:Usage,evidence:unknown):void{this.assertReserved(unit);this.validateUsage(unit,usage);const item:UnitInspection={unit,status:"complete",usage:{...usage},evidence_digest:digestObject(evidence)};this.units.push(item);try{writeOnceJson(this.root,`units/${String(this.units.length).padStart(2,"0")}-${unit}.json`,item);}catch(error){this.fail(unit,error instanceof Error?error:new Error(String(error)));}if(this.reservation?.group===null||this.reservation?.group==="primary_recovery"&&unit==="recovery_b"||this.reservation?.group==="regression"&&unit==="regression_candidate")this.reservation=null;}
+	recordFailedUsage(unit:Unit,usage:Usage,evidence:unknown):void{if(!validUsage(usage))return;this.assertReserved(unit);const item:UnitInspection={unit,status:"failed",usage:{...usage},evidence_digest:digestObject(evidence)};this.units.push(item);try{writeOnceJson(this.root,`units/${String(this.units.length).padStart(2,"0")}-${unit}.json`,item);}catch{}}
 	fail(unit:Unit,error:Error):never{this.reservation=null;this.state="faulted";const body={schema_version:1,kind:"v37_g3b_bridge_failure",bridge_id:this.bridgeId,unit,error_sha256:sha256(error.message)};try{writeOnceJson(this.root,"failure.json",body);}catch{}throw error;}
 	inspection():RealExecutionPortBridgeInspectionV37G3B{const body={bridge_id:this.bridgeId,case_id:CASE_ID as typeof CASE_ID,state:this.state,completed_units:structuredClone(this.units),totals:sumUsage(this.units.map((v)=>v.usage)),real_access:{...this.real},credential_resolution_count:this.lease.count(),runtime_compositions:RUNTIME_COMPOSITIONS,in_flight:this.reservation?{...this.reservation}:null};return {...body,inspection_digest:digestObject(body)};}
 	async close():Promise<void>{if(this.state==="closed")return;await this.runtime?.close();this.lease.clear();this.state="closed";if(existsSync(this.root))writeOnceJson(this.root,"close.json",{schema_version:1,kind:"v37_g3b_bridge_close",bridge_id:this.bridgeId,completed_unit_count:this.units.length,inspection_digest:this.inspection().inspection_digest});}
@@ -158,7 +159,7 @@ function primaryPort(coordinator:Coordinator,lease:SharedCredentialLease):Produc
 	try{
 		const authority=createOneRunProviderAuthorityV1B({authorized:true,resolver:{resolve:()=>lease.resolve()}});port=createRealExecutionPortV2B({runId:request.runId,authority,realCounters:coordinator.real,onAttemptStarted:({role})=>{const unit=role==="primary"?"primary":role==="continue_failed_session"?"recovery_a":"recovery_b";const expected=roles.length===0?"primary":roles.length===1?"recovery_a":"recovery_b";if(unit!==expected)coordinator.fail(unit,new Error("Primary/Recovery arm order drift"));roles.push(unit);},onAttemptEvidence:(item)=>evidence.push(structuredClone(item))});
 		const terminal=await executeRunV2A({projectRoot:request.projectRoot,runRoot:request.runRoot,runId:request.runId,taskId:String((request.loadedCase.manifest.primary_task_spec.body as {task_id:string}).task_id),primaryMode:"fail",candidateModes:["pass","pass"],executionPort:port,realExecutionAuthorized:true,realCallCounters:coordinator.real});if(evidence.length!==3||roles.length!==3)coordinator.fail("primary",new Error("Primary V2 group did not produce exact three attempts"));for(let i=0;i<evidence.length;i++){const item=evidence[i]!,unit=UNIT_ORDER[i]!;const usage:Usage={provider_requests:item.usage.provider_requests,combined_tokens:item.usage.tokens,tool_calls:item.usage.tool_calls,commands:commandCalls(item.composition.session_path),wall_time_ms:item.usage.active_execution_time_ms,cost_usd:item.usage.real_cost_usd};coordinator.complete(unit,usage,{attempt_id:item.attempt_id,role:item.role,terminal_reason:item.terminal_reason,usage,runtime_composition_id:RUNTIME_COMPOSITIONS[0].composition_id});}return terminal as unknown as Record<string,unknown>;
-	}catch(error){return coordinator.fail(UNIT_ORDER[Math.min(evidence.length,2)]!,error instanceof Error?error:new Error(String(error)));}finally{await port?.close?.();}
+	}catch(error){if(coordinator.inspection().state==="open")for(const item of evidence){const unit=item.role==="primary"?"primary":item.role==="continue_failed_session"?"recovery_a":"recovery_b";const usage:Usage={provider_requests:item.usage.provider_requests,combined_tokens:item.usage.tokens,tool_calls:item.usage.tool_calls,commands:commandCalls(item.composition.session_path),wall_time_ms:item.usage.active_execution_time_ms,cost_usd:item.usage.real_cost_usd};coordinator.recordFailedUsage(unit,usage,{attempt_id:item.attempt_id,role:item.role,terminal_reason:item.terminal_reason,usage,runtime_composition_id:RUNTIME_COMPOSITIONS[0].composition_id});}if(coordinator.inspection().state!=="open")throw error;return coordinator.fail(roles.at(-1)??"primary",error instanceof Error?error:new Error(String(error)));}finally{await port?.close?.();}
 }};}
 
 function candidatePort(coordinator:Coordinator,template:Readonly<{template_id:string;content:string;content_sha256:string}>):BoundedProposalPortV3{return {async propose(input){coordinator.reserve("candidate_proposal");try{const root=resolve(coordinator.root,"candidate-workspace");mkdirSync(root,{recursive:true});const prompt=`Return exactly one JSON object and no markdown. Preserve the frozen producer input and use exactly this registered prompt_addendum template.\nFrozen registered prompt-addendum template:\n${stableJson({template_id:template.template_id,content:template.content})}\nFrozen producer input:\n${stableJson(input)}`;const result=await runModelUnit(coordinator,"candidate_proposal",root,prompt,"You produce one bounded JSON refinement proposal. Do not invent evaluation authority.");coordinator.validateUsage("candidate_proposal",result.usage);let parsed:unknown;try{parsed=JSON.parse(result.text);}catch{throw new Error("Candidate proposal is not exact JSON");}let serialized:string;try{serialized=stableJson(parsed);}catch{throw new Error("Candidate proposal is not JSON serializable");}if(Buffer.byteLength(serialized,"utf8")>32*1024)throw new Error("bounded producer output limit exceeded");const validated=validateProposalAndBuildCandidateV3({rawProposal:parsed,opportunity:input.opportunity,currentBaseStateDigest:input.expected_base_state_digest,derivation:"model_proposal"});coordinator.complete("candidate_proposal",result.usage,{proposal_digest:digestObject(parsed),candidate_digest:validated.candidate_digest,runtime_composition_id:RUNTIME_COMPOSITIONS[1].composition_id});return parsed;}catch(error){return coordinator.fail("candidate_proposal",error instanceof Error?error:new Error(String(error)));}}};}

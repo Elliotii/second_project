@@ -271,7 +271,7 @@ function fakeResponses(mode: CandidateModeV2A | "primary_pass" | "primary_fail",
 		return [fauxAssistantMessage("The bounded attempt settled without a valid repair.")];
 	}
 	if (mode === "budget_stop") {
-		return Array.from({ length: 9 }, (_, index) =>
+		return Array.from({ length: V2A_ATTEMPT_CAPS.faux_provider_dispatches_max + 1 }, (_, index) =>
 			fauxAssistantMessage(
 				fauxToolCall("run_command", { command_id: "public_test" }, { id: `${attemptId}-budget-${index + 1}` }),
 				{ stopReason: "toolUse" },
@@ -517,6 +517,33 @@ function knownReservationLedgerReconcilesV2(
 		responseCost += response.cost_usd;
 	}
 	return reservationTokens === responseTokens && reservationCost === responseCost;
+}
+
+function primaryVerifierSafeTerminalV2A(
+	harness: HarnessResultV2A,
+	entries: readonly unknown[],
+	attemptId: string,
+	internalDeterministicExecution: boolean,
+): boolean {
+	if (harness.settled && harness.agentCompletion === "settled" && harness.terminalReason === "settled") return true;
+	if (
+		harness.settled || harness.agentCompletion !== "pre_dispatch_budget_terminal" || harness.terminalReason !== "budget_stopped" ||
+		harness.providerDispatches !== V2A_ATTEMPT_CAPS.faux_provider_dispatches_max
+	) return false;
+	if (internalDeterministicExecution) return true;
+	const observation = harness.runtimeBudgetStopObservation;
+	if (
+		!observation || observation.pre_dispatch_refusal !== true || observation.pending_provider_responses !== 0 ||
+		observation.pending_provider_reservation !== false || observation.pending_tool_calls !== 0 ||
+		observation.prior_usage_known !== true || observation.reservations_reconciled !== true
+	) return false;
+	const rawUsage = rawAttemptUsage(entries, 0);
+	const rawResponses = rawProviderResponseUsageV2(entries, 0);
+	return (
+		knownReservationLedgerReconcilesV2(harness.providerReservations, rawResponses, attemptId) &&
+		rawUsage.providerDispatches === harness.providerDispatches && rawUsage.toolCalls === harness.toolCalls &&
+		rawUsage.tokens === harness.tokens && rawUsage.settled === false && sessionToolLifecycleClosedV2(entries)
+	);
 }
 
 function assertIndependentFiles(...roots: string[]): void {
@@ -986,12 +1013,9 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		skill,
 		prompt: instruction,
 		attemptId: primaryAttemptId,
-		mode: options.primaryMode === "pass" ? "primary_pass" : "primary_fail",
+		mode: options.primaryMode === "pass" ? "primary_pass" : options.primaryMode === "fail" ? "primary_fail" : "budget_stop",
 		patch: primaryPatch,
 	});
-	if (!primaryHarness.settled || primaryHarness.agentCompletion !== "settled" || primaryHarness.terminalReason !== "settled") {
-		throw new Error("V2-A primary Attempt did not reach a verifier-safe settled terminal");
-	}
 	const parentSessionMetadata = await parentSession.getMetadata();
 	const primarySessionRef = sessionArtifact(options.runRoot, parentSessionMetadata);
 	const parentEntries = await parentSession.getEntries();
@@ -1000,9 +1024,12 @@ export async function executeRunV2A(options: ExecuteRunOptionsV2A & {
 		primaryRawUsage.providerDispatches !== primaryHarness.providerDispatches ||
 		primaryRawUsage.toolCalls !== primaryHarness.toolCalls ||
 		primaryRawUsage.tokens !== primaryHarness.tokens ||
-		primaryRawUsage.settled !== primaryHarness.settled
+		(primaryRawUsage.settled !== primaryHarness.settled && primaryHarness.terminalReason !== "budget_stopped")
 	) {
 		throw new Error("V2-A primary raw Session usage disagrees with runtime observation");
+	}
+	if (!primaryVerifierSafeTerminalV2A(primaryHarness, parentEntries, primaryAttemptId, internalDefaultExecution)) {
+		throw new Error("V2-A primary Attempt did not reach a verifier-safe terminal");
 	}
 	appendJournal(options.runRoot, sequence, "primary_settled", {
 		attempt_id: primaryAttemptId,

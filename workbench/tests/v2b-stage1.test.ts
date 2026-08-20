@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import test from "node:test";
 import type { ArtifactRefV0B } from "../src/contracts/v0b-types.ts";
-import { V2B_ATTEMPT_CAPS, V2B_SEQUENCE_CAPS, type AttemptRuntimeEvidenceV2B, type RunTerminalV2B, type UsageV2B } from "../src/contracts/v2b-types.ts";
+import { V2B_ATTEMPT_CAPS, V2B_GROUP_CAPS, V2B_SEQUENCE_CAPS, type AttemptRuntimeEvidenceV2B, type RunTerminalV2B, type UsageV2B } from "../src/contracts/v2b-types.ts";
 import { sha256, stableJson } from "../src/hash.ts";
 import { inspectSequenceV2B, inspectStage1RunV2B, inspectionFingerprintV2B } from "../src/inspect-v2b.ts";
 import {
@@ -20,6 +20,21 @@ import { assertCaseActivationV2B, assertSequenceBudgetCapacityV2B, buildExecutio
 import { PROJECT_ROOT } from "./helpers.ts";
 
 const ZERO = Object.freeze({ credential_reads: 0, network_calls: 0, external_provider_calls: 0, real_model_calls: 0 });
+
+test("V2-B Provider request caps are aligned at 16 per Attempt", () => {
+	assert.deepEqual(
+		[V2B_ATTEMPT_CAPS.provider_requests, V2B_ATTEMPT_CAPS.tool_calls, V2B_ATTEMPT_CAPS.tokens, V2B_ATTEMPT_CAPS.active_execution_time_ms],
+		[16, 24, 131_072, 900_000],
+	);
+	assert.deepEqual(
+		[V2B_GROUP_CAPS.provider_requests, V2B_GROUP_CAPS.tool_calls, V2B_GROUP_CAPS.tokens, V2B_GROUP_CAPS.active_execution_time_ms],
+		[48, 72, 393_216, 2_700_000],
+	);
+	assert.deepEqual(
+		[V2B_SEQUENCE_CAPS.provider_requests, V2B_SEQUENCE_CAPS.tool_calls, V2B_SEQUENCE_CAPS.tokens, V2B_SEQUENCE_CAPS.active_execution_time_ms],
+		[112, 168, 917_504, 6_300_000],
+	);
+});
 
 function usageV2B(overrides: Partial<UsageV2B> = {}): UsageV2B {
 	return { provider_requests: 0, tool_calls: 0, tokens: 0, input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0, active_execution_time_ms: 0, verifier_runs: 0, real_cost_usd: 0, conservative_charged_tokens: 0, conservative_charged_cost_usd: 0, ...overrides };

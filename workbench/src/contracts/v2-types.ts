@@ -24,21 +24,21 @@ export interface BudgetUsageV2A {
 }
 
 export interface BudgetCapsV2A {
-	faux_provider_dispatches_max: 8;
-	tool_calls_max: 16;
+	faux_provider_dispatches_max: 16;
+	tool_calls_max: 24;
 	verifier_runs_max: 1;
 }
 
 export const V2A_ATTEMPT_BUDGET_CAPS: BudgetCapsV2A = Object.freeze({
-	faux_provider_dispatches_max: 8,
-	tool_calls_max: 16,
+	faux_provider_dispatches_max: 16,
+	tool_calls_max: 24,
 	verifier_runs_max: 1,
 });
 
 export const V2A_GROUP_BUDGET_CAPS = Object.freeze({
 	candidate_paths_exact_on_valid_failure: 2 as const,
-	faux_provider_dispatches_max: 24 as const,
-	tool_calls_max: 48 as const,
+	faux_provider_dispatches_max: 48 as const,
+	tool_calls_max: 72 as const,
 	verifier_runs_max: 3 as const,
 	real_cost_usd: 0 as const,
 });
@@ -241,8 +241,8 @@ export interface RunManifestV2A {
 	per_attempt_budget: BudgetCapsV2A;
 	per_group_budget: {
 		candidate_paths_exact_on_valid_failure: 2;
-		faux_provider_dispatches_max: 24;
-		tool_calls_max: 48;
+		faux_provider_dispatches_max: 48;
+		tool_calls_max: 72;
 		verifier_runs_max: 3;
 		real_cost_usd: 0;
 	};
@@ -252,7 +252,7 @@ export interface ExecuteRunOptionsV2A {
 	projectRoot: string;
 	runRoot: string;
 	runId: string;
-	primaryMode: "pass" | "fail";
+	primaryMode: "pass" | "fail" | "budget_stop";
 	candidateModes?: readonly [CandidateModeV2A, CandidateModeV2A];
 }
 

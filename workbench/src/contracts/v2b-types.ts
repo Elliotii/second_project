@@ -11,10 +11,10 @@ export const V2B_POLICY_ID = "v2b_two_path_real_recovery" as const;
 export const V2B_CREDENTIAL_PROFILE = "DEEPSEEK_API_KEY" as const;
 
 export const V2B_ATTEMPT_CAPS = Object.freeze({
-	provider_requests: 8,
-	tool_calls: 12,
-	tokens: 65_536,
-	active_execution_time_ms: 300_000,
+	provider_requests: 16,
+	tool_calls: 24,
+	tokens: 131_072,
+	active_execution_time_ms: 900_000,
 	verifier_runs: 1,
 	real_cost_usd: 0.20,
 } as const);
@@ -22,20 +22,20 @@ export const V2B_ATTEMPT_CAPS = Object.freeze({
 export const V2B_GROUP_CAPS = Object.freeze({
 	attempts_exact_on_valid_failure: 3,
 	candidate_paths_exact: 2,
-	provider_requests: 24,
-	tool_calls: 36,
-	tokens: 196_608,
-	active_execution_time_ms: 900_000,
+	provider_requests: 48,
+	tool_calls: 72,
+	tokens: 393_216,
+	active_execution_time_ms: 2_700_000,
 	verifier_runs: 3,
 	real_cost_usd: 0.60,
 } as const);
 
 export const V2B_SEQUENCE_CAPS = Object.freeze({
 	started_attempts: 7,
-	provider_requests: 56,
-	tool_calls: 84,
-	tokens: 458_752,
-	active_execution_time_ms: 2_100_000,
+	provider_requests: 112,
+	tool_calls: 168,
+	tokens: 917_504,
+	active_execution_time_ms: 6_300_000,
 	verifier_runs: 7,
 	credential_reads: 3,
 	real_cost_usd: 1.40,
