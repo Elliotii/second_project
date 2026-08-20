@@ -6,11 +6,13 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_EXECUTION_PROMPT_PREPARATION_HARD_STOP_MISSING_HOST_PORT_COMPOSITION
+  status: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_AMENDMENT_AUTHORIZED_PROMPT_FREEZE_PENDING
 
-active_goal: null
+active_goal: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
 
-current_goal: null
+current_goal:
+  id: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
+  status: amendment_authorized_zero_access_prompt_freeze_pending
 
 last_executed_goal:
   id: V3_7_G3A_REUSABLE_PRODUCT_CAPABILITY
@@ -31,8 +33,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_pending_pre_execution_host_port_bridge_decision
-  note: configuration_candidate_audit_passed_but_no_source_edit_execution_prompt_cannot_construct_four_real_ports
+  status: locked_pending_host_port_bridge_candidate_audit_and_execution_prompt
+  note: bridge_amendment_authorized_but_real_access_and_execution_remain_unauthorized
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -230,7 +232,7 @@ next_version:
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: null
+  active_goal: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -525,7 +527,14 @@ next_version:
   goal_3b_execution_prompt_hard_stop: docs/reports/V3_7_G3B_EXECUTION_PROMPT_PREPARATION_HARD_STOP.md
   goal_3b_execution_prompt_blocker: G3B-PREEXEC-P1-001_missing_Host_constructed_real_ports_for_candidate_regression_follow_up
   goal_3b_execution_prompt_status: not_created_hard_stop
-  goal_3b_recommended_user_decision: AUTHORIZE_BOUNDED_ZERO_ACCESS_G3B_HOST_EXECUTION_PORT_BRIDGE_AMENDMENT
+  goal_3b_recommended_user_decision: none_bridge_amendment_authorized
+  goal_3b_host_port_bridge_amendment: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_AMENDMENT.md
+  goal_3b_host_port_bridge_user_decision: approved_fix
+  goal_3b_host_port_bridge_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_IMPLEMENTATION_PROMPT.md
+  goal_3b_host_port_bridge_owner: /root/v37_g3b_host_port_bridge_implementation
+  goal_3b_host_port_bridge_candidate_capacity: 1
+  goal_3b_host_port_bridge_correction_capacity: 1
+  goal_3b_host_port_bridge_real_access: false
   goal_3b_status: locked_user_review_required_no_configuration_or_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
