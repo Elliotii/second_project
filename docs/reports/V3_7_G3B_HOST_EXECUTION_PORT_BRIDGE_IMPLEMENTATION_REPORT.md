@@ -1,15 +1,15 @@
 # V3.7 Goal 3B Host Execution-Port Bridge Implementation Report
 
 ```yaml
-status: CANDIDATE_READY_FOR_MAIN_PRELIMINARY_REVIEW
+status: CORRECTION_1_CANDIDATE_READY_FOR_MAIN_REREVIEW
 prepared_on: 2026-08-21
-control_baseline_commit: a20a3115596ad41ec77de0607357deb492c57f08
-control_baseline_tree: 306193b69a0b19bf5188fc0217decfe0d3384e0c
+control_baseline_commit: f3ac860069b1479d9be42db2e6bad2748ddd298a
+control_baseline_tree: c39d9743bf62b8cf0e052c6b913f60cade7560c2
 configuration_candidate_commit: cd380652dc332b875c41055c95d53fb687368732
 configuration_candidate_tree: 72318985ad0f016c5a1f227cbabc052eb0906256
 candidate_commit: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
 candidate_tree: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
-parent_commit: a20a3115596ad41ec77de0607357deb492c57f08
+parent_commit: f3ac860069b1479d9be42db2e6bad2748ddd298a
 credential_reads: 0
 external_network_calls: 0
 external_provider_calls: 0
@@ -17,6 +17,17 @@ real_model_calls: 0
 ```
 
 ## Result
+
+Correction 1 preserves failed Candidate
+`73b8b9787dea1ec2cb4d43be547aef711f74fbb3` unchanged and closes only
+`G3B-HOST-BRIDGE-MAIN-P1-001`. Before a Candidate-proposal unit can be persisted as
+complete, the Bridge now applies the existing producer's default 32 KiB stable-JSON
+output boundary and calls the existing `validateProposalAndBuildCandidateV3` with the
+frozen opportunity/base-State input and `model_proposal` derivation. The original parsed
+proposal is still returned for the Product producer's normal authoritative revalidation.
+
+Syntactically valid JSON with an invalid Candidate schema now faults the Bridge without
+persisting a completed Candidate unit and without creating a Product receipt.
 
 The Host-owned bridge is implemented for the single registered Case
 `v37-real-recovery-promote-retain`. It binds the corrected configuration Candidate and
@@ -47,7 +58,8 @@ changed. The user-owned untracked evidence-audit report was neither read nor mod
 
 ## Deterministic verification
 
-- New Bridge focused test: `7/7 PASS`, `0` failures.
+- New Bridge focused test: `8/8 PASS`, `0` failures, including the Correction 1
+  valid-JSON/invalid-Candidate-schema regression.
 - Directly affected G3A/G3B authority test: `6/6 PASS`, `0` failures.
 - Strict TypeScript: `PASS`, zero diagnostics.
 - The complete local fake route exercised all seven units, one shared test-local opaque

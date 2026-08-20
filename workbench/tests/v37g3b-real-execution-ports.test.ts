@@ -13,13 +13,14 @@ const ACTIONS=["run_primary","run_recovery","confirm_recovery_evidence","request
 const authority=()=>({schema_version:1 as const,kind:"v37_g3b_host_execution_port_bridge_authority" as const,case_id:CASE_ID as typeof CASE_ID,project_id:"v37-real-recovery-project" as const,configuration_candidate_commit:"cd380652dc332b875c41055c95d53fb687368732" as const,configuration_candidate_tree:"72318985ad0f016c5a1f227cbabc052eb0906256" as const,manifest_body_digest:"a1464d12cb1dd509b4b300282fcdb5ebdf59fdf52f55d9bcd49e49aa5bbb262d" as const,workflow_registration_digest:"1e6a74edc68954e044815322ec65c2e163e2258c00b63527d29b0ea12a6dd52a" as const,follow_up_execution_profile_digest:"e3789fe9eeedac96164836b306c239a5ac65bff618d21a631b7d391edd10cbc9" as const,registry_index_digest:"cd4da08a8d3d6daac317ac6bbe04b8a70a424fc079589a66598eced4bb51b762" as const,candidate_proposal_authority_digest:"e3945b699b9140d374514e20faf3c14b35e778c707a4f6e47ed0b657e8f61150" as const,regression_authority_digest:"3a7e7e603d6e071922b83ba1789aa2056134163a1b3edb04a8af902613bb49da" as const});
 
 let modelFactoryCalls=0;
-let scenario:"complete"|"malformed"|"over_budget"|"unknown_usage"="complete";
+let scenario:"complete"|"malformed"|"invalid_schema"|"over_budget"|"unknown_usage"="complete";
 const models=createModels();
 const provider=fauxProvider({provider:"deepseek",models:[{id:"deepseek-v4-flash",name:"DeepSeek V4 Flash",reasoning:true,input:["text"],cost:{input:0.14,output:0.28,cacheRead:0.0028,cacheWrite:0},contextWindow:1000000,maxTokens:384000}]});
 models.setProvider(provider.provider);
 
 function proposalFromPrompt(prompt:string):string{
 	if(scenario==="malformed")return "not json";
+	if(scenario==="invalid_schema")return JSON.stringify({schema_version:1});
 	if(scenario==="over_budget")return "x".repeat(70000);
 	const input=JSON.parse(prompt.slice(prompt.indexOf("\n")+1)) as any;
 	const applicability={task_kinds:[input.opportunity.task_context.task_kind],failure_families:[input.opportunity.task_context.failure_family]};
@@ -65,6 +66,10 @@ test("complete seven-unit route shares one Credential, preserves order and recon
 
 test("malformed Candidate JSON fails closed without receipt or reproposal",async()=>{
 	scenario="malformed";const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS.slice(0,4))model=await bridge.service.act(model.workflow_id,action);const receipts=model.receipt_count;await assert.rejects(bridge.service.act(model.workflow_id,"produce_candidate"),/exact JSON/);assert.equal(bridge.service.getWorkflow(model.workflow_id).receipt_count,receipts);assert.equal(bridge.inspect().state,"faulted");await assert.rejects(bridge.service.act(model.workflow_id,"produce_candidate"),/faulted/);
+});
+
+test("valid JSON with invalid Candidate schema cannot complete the unit or create a receipt",async()=>{
+	scenario="invalid_schema";const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>"test-opaque"});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS.slice(0,4))model=await bridge.service.act(model.workflow_id,action);const receipts=model.receipt_count;await assert.rejects(bridge.service.act(model.workflow_id,"produce_candidate"),/proposal|exact-key|invalid|required/i);model=bridge.service.getWorkflow(model.workflow_id);assert.equal(model.receipt_count,receipts);assert.equal(bridge.inspect().state,"faulted");assert.deepEqual(bridge.inspect().completed_units.map((item)=>item.unit),["primary","recovery_a","recovery_b"]);assert.equal(bridge.inspect().completed_units.some((item)=>item.unit==="candidate_proposal"),false);
 });
 
 test("Candidate output budget overflow and premature direct port use fail closed",async()=>{
