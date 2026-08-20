@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_PORT_BRIDGE_AUDIT_FAIL_DECISION_REQUIRED
+  status: V3_7_G3B_HOST_PORT_BRIDGE_AUDIT_REMEDIATION_AUTHORIZED
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_bridge_audit_failed_contract_revision_user_decision_required
-  note: concurrency_reservation_missing_and_single_runtime_claim_conflicts_with_public_V2B_seam
+  status: locked_bridge_audit_remediation_in_progress
+  note: fix_in_flight_and_adopt_one_credential_two_pinned_runtime_compositions
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -603,7 +603,12 @@ next_version:
   goal_3b_host_port_bridge_exceptional_template_prompt_capacity: exhausted_1_of_1
   goal_3b_host_port_bridge_audit_remediation_recommended_contract: one_credential_resolution_two_pinned_runtime_compositions
   goal_3b_host_port_bridge_audit_remediation_recommended_decision: AUTHORIZE_V3_7_G3B_HOST_BRIDGE_AUDIT_REMEDIATION_WITH_TWO_PINNED_RUNTIMES
-  goal_3b_status: locked_user_decision_required_no_execution_prompt_no_real_authority
+  goal_3b_host_port_bridge_audit_remediation_user_decision: approved
+  goal_3b_host_port_bridge_audit_remediation_amendment: V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_AUDIT_REMEDIATION_AMENDMENT.md
+  goal_3b_host_port_bridge_audit_remediation_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_AUDIT_REMEDIATION_PROMPT.md
+  goal_3b_host_port_bridge_audit_remediation_capacity: 1_of_1_consumed_at_dispatch
+  goal_3b_host_port_bridge_audit_remediation_status: authorized_pending_dispatch
+  goal_3b_status: locked_zero_access_audit_remediation_in_progress_no_execution_prompt_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
