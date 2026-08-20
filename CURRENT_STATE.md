@@ -6,7 +6,7 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_goal_3b_freeze_review
-  status: V3_7_G3B_HOST_PORT_BRIDGE_MAIN_REREVIEW_PASS_AUDIT_PENDING
+  status: V3_7_G3B_HOST_PORT_BRIDGE_AUDIT_FAIL_DECISION_REQUIRED
 
 active_goal: null
 
@@ -31,8 +31,8 @@ last_completed_goal:
 
 next_goal:
   id: V3_7_G3B_ONE_FROZEN_REAL_FULL_LOOP
-  status: locked_bridge_focused_audit_pending
-  note: exceptional_candidate_Main_rereview_passed_real_access_still_locked
+  status: locked_bridge_audit_failed_contract_revision_user_decision_required
+  note: concurrency_reservation_missing_and_single_runtime_claim_conflicts_with_public_V2B_seam
 
 final_capstone:
   version_id: SECOND_PROJECT_FINAL_CAPSTONE
@@ -571,7 +571,7 @@ next_version:
   goal_3b_host_port_bridge_correction_1_finding: G3B-HOST-BRIDGE-MAIN-P1-001_candidate_completion_precedes_frozen_validation
   goal_3b_host_port_bridge_correction_1_prompt: V3_7_GOAL_3B_HOST_EXECUTION_PORT_BRIDGE_CORRECTION_1_PROMPT.md
   goal_3b_host_port_bridge_correction_capacity: 1_of_1_consumed_at_dispatch
-  goal_3b_host_port_bridge_audit_started: false
+  goal_3b_host_port_bridge_audit_started: true_completed_fail
   goal_3b_host_port_bridge_corrected_candidate_commit: e154d788ec2b3def81b50215fc732709132da517
   goal_3b_host_port_bridge_corrected_candidate_tree: c6e9ea0bd9f04d8cf76c4031e61d544f0bc3aaff
   goal_3b_host_port_bridge_correction_1_closed_finding: G3B-HOST-BRIDGE-MAIN-P1-001
@@ -595,7 +595,15 @@ next_version:
   goal_3b_host_port_bridge_final_actual_external_operations: credentials_0_network_0_provider_0_model_0
   goal_3b_host_port_bridge_audit_candidate_commit: c85011fd9ea8a64d6b7964dd853750b13f2b2fa4
   goal_3b_host_port_bridge_audit_candidate_tree: 2bb2fb399cd4f08a89da9c02edb3abf15e740938
-  goal_3b_status: locked_bridge_focused_audit_pending_no_real_authority
+  goal_3b_host_port_bridge_focused_audit: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_FOCUSED_AUDIT.md
+  goal_3b_host_port_bridge_focused_audit_status: FAIL_V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_FOCUSED_AUDIT
+  goal_3b_host_port_bridge_audit_finding_1: V37-G3B-BRIDGE-AUDIT-P1-001_missing_in_flight_reservation_duplicate_dispatch_risk
+  goal_3b_host_port_bridge_audit_finding_2: V37-G3B-BRIDGE-AUDIT-P1-002_two_runtime_compositions_hidden_by_mock
+  goal_3b_host_port_bridge_audit_integration: docs/reports/V3_7_G3B_HOST_EXECUTION_PORT_BRIDGE_AUDIT_INTEGRATION_HARD_STOP.md
+  goal_3b_host_port_bridge_exceptional_template_prompt_capacity: exhausted_1_of_1
+  goal_3b_host_port_bridge_audit_remediation_recommended_contract: one_credential_resolution_two_pinned_runtime_compositions
+  goal_3b_host_port_bridge_audit_remediation_recommended_decision: AUTHORIZE_V3_7_G3B_HOST_BRIDGE_AUDIT_REMEDIATION_WITH_TWO_PINNED_RUNTIMES
+  goal_3b_status: locked_user_decision_required_no_execution_prompt_no_real_authority
   goal_3b_configuration_frozen: false
   goal_3b_execution_prompt_frozen: false
   goal_3b_real_access_authorized: false
