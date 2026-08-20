@@ -1,15 +1,15 @@
 # V3.7 Goal 3B Host Execution-Port Bridge Implementation Report
 
 ```yaml
-status: CORRECTION_1_CANDIDATE_READY_FOR_MAIN_REREVIEW
+status: EXCEPTIONAL_TEMPLATE_PROMPT_CORRECTION_CANDIDATE_READY_FOR_MAIN_REREVIEW
 prepared_on: 2026-08-21
-control_baseline_commit: f3ac860069b1479d9be42db2e6bad2748ddd298a
-control_baseline_tree: c39d9743bf62b8cf0e052c6b913f60cade7560c2
+control_baseline_commit: 3071a0fcd91d6b95ade47c50114518973b6a7c53
+control_baseline_tree: cf479b07dc13af897399416c03bcc2b02afe29a5
 configuration_candidate_commit: cd380652dc332b875c41055c95d53fb687368732
 configuration_candidate_tree: 72318985ad0f016c5a1f227cbabc052eb0906256
 candidate_commit: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
 candidate_tree: SELF_RESOLVED_BY_COMMIT_CONTAINING_THIS_REPORT
-parent_commit: f3ac860069b1479d9be42db2e6bad2748ddd298a
+parent_commit: 3071a0fcd91d6b95ade47c50114518973b6a7c53
 credential_reads: 0
 external_network_calls: 0
 external_provider_calls: 0
@@ -17,6 +17,20 @@ real_model_calls: 0
 ```
 
 ## Result
+
+The exceptional template-prompt micro-correction preserves failed initial Candidate
+`73b8b9787dea1ec2cb4d43be547aef711f74fbb3` and ordinary Correction 1 Candidate
+`e154d788ec2b3def81b50215fc732709132da517` without amend. It closes only
+`G3B-HOST-BRIDGE-MAIN-P1-002`.
+
+Bridge construction now reads the sole generic prompt-addendum template from the already
+Host-loaded real Manifest and requires exact ID `v37-verify-before-finish`, exact frozen
+content and SHA-256
+`1341b7b213c788c3d17ced324ba46da316c091af8d43182d02f589add792cc8f`.
+The Candidate model request includes that exact template ID/content beside the frozen
+producer input. The positive fake parses the template from the actual captured request,
+uses those parsed values for its proposal, and separately asserts their frozen identity;
+it no longer succeeds from an independent proposal-template constant.
 
 Correction 1 preserves failed Candidate
 `73b8b9787dea1ec2cb4d43be547aef711f74fbb3` unchanged and closes only
@@ -58,8 +72,9 @@ changed. The user-owned untracked evidence-audit report was neither read nor mod
 
 ## Deterministic verification
 
-- New Bridge focused test: `8/8 PASS`, `0` failures, including the Correction 1
-  valid-JSON/invalid-Candidate-schema regression.
+- New Bridge focused test: `8/8 PASS`, `0` failures. The corrected positive path derives
+  its proposal template from the actual captured request; all prior negative checks,
+  including Correction 1 valid-JSON/invalid-schema, remain passing.
 - Directly affected G3A/G3B authority test: `6/6 PASS`, `0` failures.
 - Strict TypeScript: `PASS`, zero diagnostics.
 - The complete local fake route exercised all seven units, one shared test-local opaque

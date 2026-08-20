@@ -14,6 +14,7 @@ const authority=()=>({schema_version:1 as const,kind:"v37_g3b_host_execution_por
 
 let modelFactoryCalls=0;
 let scenario:"complete"|"malformed"|"invalid_schema"|"over_budget"|"unknown_usage"="complete";
+let capturedCandidateTemplates:Array<{template_id:string;content:string}>=[];
 const models=createModels();
 const provider=fauxProvider({provider:"deepseek",models:[{id:"deepseek-v4-flash",name:"DeepSeek V4 Flash",reasoning:true,input:["text"],cost:{input:0.14,output:0.28,cacheRead:0.0028,cacheWrite:0},contextWindow:1000000,maxTokens:384000}]});
 models.setProvider(provider.provider);
@@ -22,9 +23,9 @@ function proposalFromPrompt(prompt:string):string{
 	if(scenario==="malformed")return "not json";
 	if(scenario==="invalid_schema")return JSON.stringify({schema_version:1});
 	if(scenario==="over_budget")return "x".repeat(70000);
-	const input=JSON.parse(prompt.slice(prompt.indexOf("\n")+1)) as any;
+	const templateMarker="Frozen registered prompt-addendum template:\n",inputMarker="\nFrozen producer input:\n",templateStart=prompt.indexOf(templateMarker);assert.notEqual(templateStart,-1);const inputStart=prompt.indexOf(inputMarker,templateStart);assert.notEqual(inputStart,-1);const template=JSON.parse(prompt.slice(templateStart+templateMarker.length,inputStart)) as {template_id:string;content:string};const input=JSON.parse(prompt.slice(inputStart+inputMarker.length)) as any;capturedCandidateTemplates.push(template);
 	const applicability={task_kinds:[input.opportunity.task_context.task_kind],failure_families:[input.opportunity.task_context.failure_family]};
-	return JSON.stringify({schema_version:1,proposal_id:`bridge-proposal-${input.opportunity.opportunity_id}`,evidence_digest:input.opportunity.evidence_identity.evidence_digest,expected_base_state_digest:input.expected_base_state_digest,diagnosis:{pattern_id:input.opportunity.trigger,statement:"The frozen Primary evidence shows a verifier failure before bounded recovery.",evidence_refs:input.opportunity.evidence_refs},lesson:{statement:"Run the task-declared check before reporting completion.",expected_outcome:"The related task is externally checked before completion.",applicability},edits:[{kind:"prompt_addendum",entry_id:"v37-verify-before-finish",content:"Before reporting completion, run the task-declared check and rely on its result rather than self-assessment.",applicability}]});
+	return JSON.stringify({schema_version:1,proposal_id:`bridge-proposal-${input.opportunity.opportunity_id}`,evidence_digest:input.opportunity.evidence_identity.evidence_digest,expected_base_state_digest:input.expected_base_state_digest,diagnosis:{pattern_id:input.opportunity.trigger,statement:"The frozen Primary evidence shows a verifier failure before bounded recovery.",evidence_refs:input.opportunity.evidence_refs},lesson:{statement:"Run the task-declared check before reporting completion.",expected_outcome:"The related task is externally checked before completion.",applicability},edits:[{kind:"prompt_addendum",entry_id:template.template_id,content:template.content,applicability}]});
 }
 function messageText(message:any):string{return typeof message.content==="string"?message.content:Array.isArray(message.content)?message.content.filter((part:any)=>part?.type==="text").map((part:any)=>part.text).join(""):"";}
 
@@ -48,7 +49,7 @@ mock.module("../src/pi/pi-run-handle-v2b.ts",{namedExports:{createRealExecutionP
 const bridgeModule=await import("../src/v37/real-execution-ports-v37g3b.ts");
 const {createRealExecutionPortBridgeV37G3B}=bridgeModule;
 
-test.beforeEach(()=>{for(const path of [".runs/v37/g3a-product",".runs/v37/g3b/state-stores",".runs/v37/g3b/host-bridge",".runs/v37/host-authority/v37-g3a-host-registry-v1"])rmSync(resolve(PROJECT_ROOT,path),{recursive:true,force:true});modelFactoryCalls=0;scenario="complete";});
+test.beforeEach(()=>{for(const path of [".runs/v37/g3a-product",".runs/v37/g3b/state-stores",".runs/v37/g3b/host-bridge",".runs/v37/host-authority/v37-g3a-host-registry-v1"])rmSync(resolve(PROJECT_ROOT,path),{recursive:true,force:true});modelFactoryCalls=0;scenario="complete";capturedCandidateTemplates=[];});
 
 test("exact bridge authority creates all four real ports lazily and closure disables new work",async()=>{
 	let reads=0;const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>{reads++;return "test-opaque";}});
@@ -61,7 +62,7 @@ test("wrong authority and missing resolver fail before artifacts, Credential or 
 });
 
 test("complete seven-unit route shares one Credential, preserves order and reconciles bounded usage",async()=>{
-	let reads=0;const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>{reads++;return "test-opaque";}});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS)model=await bridge.service.act(model.workflow_id,action);assert.equal(model.stage,"complete");const inspection=bridge.inspect();assert.deepEqual(inspection.completed_units.map((item)=>item.unit),["primary","recovery_a","recovery_b","candidate_proposal","regression_base","regression_candidate","follow_up"]);assert.equal(reads,1);assert.equal(modelFactoryCalls,1);assert.equal(inspection.credential_resolution_count,1);assert.ok(inspection.totals.provider_requests<=105);assert.ok(inspection.totals.combined_tokens<=802816);assert.ok(inspection.totals.cost_usd<=1.4);assert.deepEqual(inspection.real_access,{credential_reads:1,network_calls:13,external_provider_calls:13,real_model_calls:13});await bridge.close();await assert.rejects(bridge.service.act(model.workflow_id,"assess_state"),/closed/);
+	let reads=0;const bridge=createRealExecutionPortBridgeV37G3B(PROJECT_ROOT,authority(),{resolve:async()=>{reads++;return "test-opaque";}});let model=await bridge.service.createWorkflow(CASE_ID);for(const action of ACTIONS)model=await bridge.service.act(model.workflow_id,action);assert.equal(model.stage,"complete");assert.deepEqual(capturedCandidateTemplates,[{template_id:"v37-verify-before-finish",content:"Before reporting completion, run the task-declared check and rely on its result rather than self-assessment."}]);assert.equal(sha256(capturedCandidateTemplates[0]!.content),"1341b7b213c788c3d17ced324ba46da316c091af8d43182d02f589add792cc8f");const inspection=bridge.inspect();assert.deepEqual(inspection.completed_units.map((item)=>item.unit),["primary","recovery_a","recovery_b","candidate_proposal","regression_base","regression_candidate","follow_up"]);assert.equal(reads,1);assert.equal(modelFactoryCalls,1);assert.equal(inspection.credential_resolution_count,1);assert.ok(inspection.totals.provider_requests<=105);assert.ok(inspection.totals.combined_tokens<=802816);assert.ok(inspection.totals.cost_usd<=1.4);assert.deepEqual(inspection.real_access,{credential_reads:1,network_calls:13,external_provider_calls:13,real_model_calls:13});await bridge.close();await assert.rejects(bridge.service.act(model.workflow_id,"assess_state"),/closed/);
 });
 
 test("malformed Candidate JSON fails closed without receipt or reproposal",async()=>{
