@@ -6,11 +6,11 @@
 project:
   name: Agent Harness Reliability Workbench
   phase: v3_7_g3b_64_request_successor_real_full_loop
-  status: V3_7_G3B_CLOSED_INCOMPLETE_USER_WEBUI_CHECK_PENDING
+  status: V3_7_G3B_SUCCESSOR_IDENTITY_3_REAL_EXECUTION_AUTHORIZED
 
-active_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
+active_goal: V3_7_G3B_SUCCESSOR_IDENTITY_3_REAL_EXECUTION
 
-current_goal: V3_7_G3B_64_REQUEST_SUCCESSOR_REAL_FULL_LOOP
+current_goal: V3_7_G3B_SUCCESSOR_IDENTITY_3_REAL_EXECUTION
 
 last_executed_goal:
   id: V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
@@ -223,11 +223,11 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_3b_successor_identity_2_closed_incomplete_user_webui_check_pending
+  implementation_status: goal_3b_successor_identity_3_contract_pending_baseline_freeze
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
-  active_goal: null
+  active_goal: V3_7_G3B_SUCCESSOR_IDENTITY_3_REAL_EXECUTION
   goal_1_prompt: V3_7_GOAL_1_IMPLEMENTATION_PROMPT.md
   goal_1_prompt_follow_up_fixture: exact_task_source_verifier_frozen
   goal_1_candidate_report_identity_rule: SELF_resolved_by_Session_return_and_Main_review
@@ -715,7 +715,7 @@ next_version:
   goal_3b_64_successor_v2_gate_h_status: passed_zero_call
   goal_3b_64_successor_v2_gate_h_git_identity: exact_commit_tree_candidate_ancestry_prompt_blob_prompt_git_byte_sha256_and_six_frozen_blobs_passed
   goal_3b_64_successor_v2_gate_h_docker_identity: Docker_Desktop_4_85_0_client_server_29_6_2_desktop_linux_linux_amd64_pinned_node_3638d9_image_passed_zero_leftovers
-  goal_3b_64_next_execution_identity: v37-g3b-64-request-successor-v2
+  goal_3b_64_successor_v2_execution_identity: v37-g3b-64-request-successor-v2
   goal_3b_64_prior_workflow_reuse: forbidden
   goal_3b_64_successor_v2_workflow_id: v37-g3a-workflow-e79fbbed-119e-444f-a973-13efb0a64dbc
   goal_3b_64_successor_v2_bridge_id: v37-g3b-bridge-04e353e7-d846-4e40-bd54-82fd8850ed1e
@@ -734,11 +734,16 @@ next_version:
   goal_3b_64_successor_v2_loopback_webui: running_127_0_0_1_port_15366_pid_11004_closed_read_only
   goal_3b_64_successor_v2_pre_user_check_status: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_PRE_USER_CHECK_STATUS.md
   goal_3b_64_successor_v2_user_unguided_check: pending_not_started_by_Main
-  goal_3b_64_status: successor_v2_closed_incomplete_user_webui_check_pending
+  goal_3b_64_successor_v3_authorization: docs/reports/V3_7_G3B_SUCCESSOR_IDENTITY_3_REAL_EXECUTION_AUTHORIZATION.md
+  goal_3b_64_successor_v3_contract: V3_7_G3B_64_REQUEST_SUCCESSOR_V3_CONTRACT.md
+  goal_3b_64_successor_v3_prompt: V3_7_GOAL_3B_64_REQUEST_SUCCESSOR_V3_EXECUTION_PROMPT.md
+  goal_3b_64_successor_v3_user_direction: explicit_one_time_retry
+  goal_3b_64_next_execution_identity: v37-g3b-64-request-successor-v3
+  goal_3b_64_status: successor_v3_contract_pending_execution_baseline_freeze
   goal_3b_64_correction_acceptance_status: closed_accepted
   goal_3b_64_correction_disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
   goal_3b_64_correction_closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
-  goal_3b_64_next_control_point: user_unguided_webui_check_then_final_closeout
+  goal_3b_64_next_control_point: freeze_successor_v3_execution_baseline_then_gate_h
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
