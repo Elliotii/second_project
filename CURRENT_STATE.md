@@ -223,7 +223,7 @@ strict_g3:
 next_version:
   version: V3.7
   planning_status: charter_accepted
-  implementation_status: goal_3b_successor_identity_3_contract_pending_baseline_freeze
+  implementation_status: goal_3b_successor_identity_3_execution_baseline_frozen_gate_h_pending
   charter: V3_7_CHARTER.md
   charter_baseline_commit: 58f3f1aace8b0eafa153082dc34dd0a41bfe2922
   charter_baseline_tree: c7ac66090f1e07d1dc8b3091be544b67aae62e27
@@ -738,12 +738,17 @@ next_version:
   goal_3b_64_successor_v3_contract: V3_7_G3B_64_REQUEST_SUCCESSOR_V3_CONTRACT.md
   goal_3b_64_successor_v3_prompt: V3_7_GOAL_3B_64_REQUEST_SUCCESSOR_V3_EXECUTION_PROMPT.md
   goal_3b_64_successor_v3_user_direction: explicit_one_time_retry
+  goal_3b_64_successor_v3_prompt_git_blob: c5c28a9b97e5415999ce3f08f43d6672c57a2213
+  goal_3b_64_successor_v3_prompt_sha256: a308a46006771c9140727e9dd460912420a922984ab59db94d865a2f334051fe
+  goal_3b_64_successor_v3_execution_baseline_commit: cf924f6f5da70a24cfabb68682c8c4af5bf2697d
+  goal_3b_64_successor_v3_execution_baseline_tree: e61871de8353db5240bf1da9fb7427a69323592b
+  goal_3b_64_successor_v3_execution_baseline_freeze: docs/reports/V3_7_G3B_64_REQUEST_SUCCESSOR_V3_EXECUTION_BASELINE_FREEZE.md
   goal_3b_64_next_execution_identity: v37-g3b-64-request-successor-v3
-  goal_3b_64_status: successor_v3_contract_pending_execution_baseline_freeze
+  goal_3b_64_status: successor_v3_execution_baseline_frozen_gate_h_pending
   goal_3b_64_correction_acceptance_status: closed_accepted
   goal_3b_64_correction_disposition: PASS_V3_7_G3B_64_REQUEST_SUCCESSOR_CORRECTION
   goal_3b_64_correction_closeout: docs/reports/V3_7_G3B_64_REQUEST_CORRECTION_CLOSEOUT.md
-  goal_3b_64_next_control_point: freeze_successor_v3_execution_baseline_then_gate_h
+  goal_3b_64_next_control_point: successor_v3_gate_h_then_one_new_workflow
 
 v3_6_engineering_stabilization_campaign:
   status: closed_completed
