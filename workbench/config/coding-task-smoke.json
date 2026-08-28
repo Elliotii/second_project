@@ -1,0 +1,27 @@
+{
+  "task_id": "v1-parse-duration",
+  "prompt": "Repair `src/subject.ts` so `parseDuration` accepts non-negative integer values suffixed by `ms` or `s`, returns milliseconds, and rejects malformed input. Preserve the export and run the declared public check.",
+  "source_root": "fixtures/tasks/v1/parse-duration/workspace",
+  "existing_tree_digest": "5690aab9c1e7eb3905258c342d7bad4504e23377c18fec9fde39f22f9a99defa",
+  "writable_paths": ["src/subject.ts"],
+  "protected_paths": ["package.json", "test/public.test.mjs"],
+  "command_descriptors": [
+    {
+      "command_id": "public_test",
+      "executable": "current_node_executable",
+      "argv": ["--test", "test/public.test.mjs"],
+      "cwd": "workspace",
+      "timeout_seconds": 15,
+      "max_combined_output_bytes": 51200
+    }
+  ],
+  "verifier_spec": {
+    "id": "v1-parse-duration-verifier",
+    "source_path": "fixtures/verifiers/v1/parse-duration.mjs",
+    "sha256": "0924cb0f56e43a56dc74b262539f2ad0700b2cb2a43da26a9415b7e9ffaf21da",
+    "timeout_ms": 30000,
+    "output_limit_bytes": 51200
+  },
+  "output_root": ".runs/commit1-coding-task-smoke",
+  "timeout_ms": 900000
+}
