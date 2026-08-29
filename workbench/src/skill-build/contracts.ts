@@ -56,7 +56,7 @@ export interface LoadedSourceRunSet {
 }
 
 export interface InductionUsage {
-	prompt_id: "bundle-procedure-induction-v1";
+	prompt_id: "bundle-procedure-induction-v2";
 	model: string;
 	request_count: number;
 	input_tokens: number | null;

@@ -6,7 +6,7 @@ import test from "node:test";
 import { buildSkillCandidate, replaySkillCandidate } from "../src/skill-build/build.ts";
 import type { NormalizedCodingRun } from "../src/coding-task/normalization.ts";
 import type { CandidateSpec, InductionModelRuntime } from "../src/skill-build/contracts.ts";
-import { induceProcedureDetailed, INDUCTION_SYSTEM_PROMPT, parseInductionDecision } from "../src/skill-build/inducer.ts";
+import { buildInductionUserPrompt, induceProcedureDetailed, INDUCTION_PROMPT_ID, INDUCTION_SYSTEM_PROMPT, parseInductionDecision } from "../src/skill-build/inducer.ts";
 import { renderSkill } from "../src/skill-build/renderer.ts";
 import { loadSourceRunSet } from "../src/skill-build/source-loader.ts";
 import { validateCandidateSpec, validateSourceAbV1FixedLiterals } from "../src/skill-build/validator.ts";
@@ -102,6 +102,27 @@ test("the model Draft omits task_family and the host fills it from SourceRunSet"
 	const withModelFamily = JSON.parse(response) as Record<string, unknown>;
 	(withModelFamily.candidate as Record<string, unknown>).task_family = "model-owned-family";
 	assert.throws(() => parseInductionDecision(JSON.stringify(withModelFamily), source.taskFamily), /exact keys/);
+});
+
+test("the v2 Prompt calibrates repository-role abstraction without source answers", () => {
+	assert.equal(INDUCTION_PROMPT_ID, "bundle-procedure-induction-v2");
+	assert.match(INDUCTION_SYSTEM_PROMPT, /different concrete values occupy the same repository-level role/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /do not need to implement the same domain action/);
+	for (const supportedStep of ["repository operation", "integration step", "extension point", "behavioral invariant", "test-and-verification step"]) {
+		assert.match(INDUCTION_SYSTEM_PROMPT, new RegExp(supportedStep));
+	}
+	assert.match(INDUCTION_SYSTEM_PROMPT, /Generic coding practices such as reading code, editing a target file, adding tests, fixing failures, or running tests are not sufficient by themselves/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /Do not introduce a parameter schema, placeholder language, template variables/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /For insufficient_evidence, the rationale must briefly identify the shared repository structures or operations that were considered/);
+	for (const forbidden of ["pause_job", "disable_worker", "job.paused", "worker.disabled", "pause-job.ts", "disable-worker.ts", "action handler", "central registry", "no side effects", "one audit event", "unified action tests"]) {
+		assert.doesNotMatch(INDUCTION_SYSTEM_PROMPT, new RegExp(forbidden.replace(".", "\\."), "i"));
+	}
+	const runs = [normalized(RUN_A, "action_one"), normalized(RUN_B, "action_two")];
+	assert.deepEqual(JSON.parse(buildInductionUserPrompt(runs, { buildId: "prompt-test", taskFamily: "source-family-v1" })), {
+		build_id: "prompt-test",
+		task_family: "source-family-v1",
+		normalized_runs: runs,
+	});
 });
 
 test("the generic Validator requires formal support but does not derive source-content bans", () => {
