@@ -8,6 +8,7 @@
   },
   "scripts": {
     "coding-task:run": "node --experimental-loader ./scripts/coding-task-public-pi-loader.mjs scripts/run-coding-task.ts",
+    "commit2b:test": "node --test tests/skill-build.test.ts",
     "typecheck": "node ../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test test",
     "v0b:deterministic": "node scripts/run-v0b-deterministic-suite.mjs",
