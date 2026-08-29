@@ -58,15 +58,26 @@ export interface LoadedAdaptiveSkillV3 {
 	wrapper_size_bytes: number;
 }
 
-export async function loadAdaptiveSkillV3(options: { skillRoot: string; expectedName: string; expectedSourceSha256: string }): Promise<LoadedAdaptiveSkillV3> {
+async function loadAdaptiveSkill(options: { skillRoot: string; expectedName?: string; expectedPath?: string; expectedSourceSha256: string }): Promise<LoadedAdaptiveSkillV3> {
 	const root = resolve(options.skillRoot); scanOrdinaryTree(root);
 	const loaded = await loadSkills(createSlashPathEnv(root), slash(root));
 	if (loaded.diagnostics.length !== 0) throw new Error(`Pi Skill diagnostics fail closed: ${JSON.stringify(loaded.diagnostics)}`);
 	if (loaded.skills.length !== 1) throw new Error(`Exactly one adaptive Skill required; observed ${loaded.skills.length}`);
 	const skill = loaded.skills[0]!;
-	if (skill.name !== options.expectedName || skill.disableModelInvocation !== true) throw new Error("adaptive Skill public identity mismatch");
+	if ((options.expectedName !== undefined && skill.name !== options.expectedName) || skill.disableModelInvocation !== true) throw new Error("adaptive Skill public identity mismatch");
 	if (RELATIVE_RESOURCE.test(skill.content)) throw new Error("adaptive Skill relative resource rejected");
-	const source = readFileSync(skill.filePath); if (sha256(source) !== options.expectedSourceSha256) throw new Error("adaptive Skill source digest mismatch");
+	const sourcePath = realpathSync.native(skill.filePath);
+	if (options.expectedPath !== undefined && sourcePath.toLowerCase() !== realpathSync.native(resolve(options.expectedPath)).toLowerCase()) throw new Error("adaptive Skill source path mismatch");
+	const source = readFileSync(sourcePath); if (sha256(source) !== options.expectedSourceSha256) throw new Error("adaptive Skill source digest mismatch");
 	const wrapper = formatSkillInvocation(skill);
 	return { skill, wrapper, source_sha256: sha256(source), source_size_bytes: source.length, wrapper_sha256: sha256(wrapper), wrapper_size_bytes: Buffer.byteLength(wrapper, "utf8") };
+}
+
+export async function loadAdaptiveSkillV3(options: { skillRoot: string; expectedName: string; expectedSourceSha256: string }): Promise<LoadedAdaptiveSkillV3> {
+	return loadAdaptiveSkill(options);
+}
+
+export async function loadAdaptiveSkillPathV3(options: { skillPath: string; expectedSourceSha256: string }): Promise<LoadedAdaptiveSkillV3> {
+	const skillPath = resolve(options.skillPath);
+	return loadAdaptiveSkill({ skillRoot: resolve(skillPath, ".."), expectedPath: skillPath, expectedSourceSha256: options.expectedSourceSha256 });
 }

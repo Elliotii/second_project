@@ -28,6 +28,14 @@ function localPath(projectRoot: string, value: unknown, label: string): string {
 	return path;
 }
 
+function skillInput(value: unknown): CodingTaskSpec["skill"] {
+	if (value === undefined) return undefined;
+	const skill = object(value, "skill");
+	if (typeof skill.path !== "string" || !isAbsolute(skill.path)) throw new Error("skill.path must be an absolute path");
+	if (typeof skill.expected_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(skill.expected_sha256)) throw new Error("skill.expected_sha256 must be a lowercase SHA256");
+	return { path: resolve(skill.path), expected_sha256: skill.expected_sha256 };
+}
+
 function parseConfig(projectRoot: string, value: unknown): CodingTaskSpec {
 	const input = object(value, "coding task config");
 	const verifier = object(input.verifier_spec, "verifier_spec");
@@ -37,6 +45,7 @@ function parseConfig(projectRoot: string, value: unknown): CodingTaskSpec {
 	return {
 		task_id: input.task_id,
 		prompt: input.prompt,
+		...(input.skill === undefined ? {} : { skill: skillInput(input.skill) }),
 		source_root: localPath(projectRoot, input.source_root, "source_root"),
 		...(typeof input.source_revision === "string" ? { source_revision: input.source_revision } : {}),
 		...(typeof input.existing_tree_digest === "string" ? { existing_tree_digest: input.existing_tree_digest } : {}),

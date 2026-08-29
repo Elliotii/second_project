@@ -6,6 +6,10 @@ export const PINNED_PI_COMMIT = "027a5847901b5dde30270abaa1041046cd2b4b55";
 export interface CodingTaskSpec {
 	task_id: string;
 	prompt: string;
+	skill?: {
+		path: string;
+		expected_sha256: string;
+	};
 	source_root: string;
 	source_revision?: string;
 	existing_tree_digest?: string;
@@ -51,6 +55,7 @@ export interface CodingTaskRunManifest {
 	existing_tree_digest: string | null;
 	model: { provider: string; id: string };
 	pi_commit: string;
+	skill: { path: string; actual_sha256: string } | null;
 	execution_status: ExecutionStatus;
 	verification_status: VerificationStatus;
 	failure_reason: FailureReason;

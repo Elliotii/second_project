@@ -9,6 +9,7 @@ import type { TaskSpecV0B } from "../contracts/v0b-types.ts";
 import { artifactRef, writeOnceBytes } from "../evidence/artifacts.ts";
 import { fileSha256 } from "../hash.ts";
 import { createBoundedToolProfile } from "../pi/tool-profile.ts";
+import { loadAdaptiveSkillPathV3 } from "../skill/adapter-v3.ts";
 import { isPathInScope } from "../workspace/path-policy.ts";
 import { runExternalVerifierV0B } from "../verifier/runner.ts";
 import { portableArtifactPath, renderReport, writeJson, writeText } from "./artifacts.ts";
@@ -97,6 +98,7 @@ export async function runCodingTask(options: {
 }): Promise<{ manifest: CodingTaskRunManifest; run_root: string }> {
 	validateTask(options.task);
 	const task = options.task;
+	const loadedSkill = task.skill ? await loadAdaptiveSkillPathV3({ skillPath: task.skill.path, expectedSourceSha256: task.skill.expected_sha256 }) : null;
 	const runId = options.runId ?? `coding-task-${new Date().toISOString().replace(/[-:.TZ]/g, "")}-${randomUUID().slice(0, 8)}`;
 	mkdirSync(resolve(task.output_root), { recursive: true });
 	const runRoot = resolve(task.output_root, runId);
@@ -133,6 +135,7 @@ export async function runCodingTask(options: {
 		model: options.runtime.model,
 		tools: profile.tools,
 		toolContext: profile.context,
+		resources: { skills: loadedSkill ? [loadedSkill.skill] : [] },
 		systemPrompt: SYSTEM_PROMPT,
 		thinkingLevel: "off",
 		streamOptions: { maxRetries: 0, timeoutMs: task.timeout_ms },
@@ -168,7 +171,7 @@ export async function runCodingTask(options: {
 		const timeout = new Promise<never>((_fulfill, reject) => {
 			timer = setTimeout(() => { timedOut = true; void harness.abort(); reject(new Error("coding task timeout")); }, task.timeout_ms);
 		});
-		const response = await Promise.race([harness.prompt(task.prompt), timeout]);
+		const response = await Promise.race([loadedSkill ? harness.skill(loadedSkill.skill.name, task.prompt) : harness.prompt(task.prompt), timeout]);
 		await harness.waitForIdle();
 		if (!settled) throw new Error("AgentHarness did not emit settled");
 		finalClaim = assistantText(response);
@@ -238,7 +241,8 @@ export async function runCodingTask(options: {
 	writeJson(tracePath, trace);
 	const manifest: CodingTaskRunManifest = {
 		schema_version: 1, run_id: runId, task_id: task.task_id, source_revision: task.source_revision ?? null, existing_tree_digest: task.existing_tree_digest ?? null,
-		model: { provider: options.runtime.model.provider, id: options.runtime.model.id }, pi_commit: PINNED_PI_COMMIT, execution_status: executionStatus, verification_status: verificationStatus,
+		model: { provider: options.runtime.model.provider, id: options.runtime.model.id }, pi_commit: PINNED_PI_COMMIT,
+		skill: loadedSkill ? { path: loadedSkill.skill.filePath, actual_sha256: loadedSkill.source_sha256 } : null, execution_status: executionStatus, verification_status: verificationStatus,
 		failure_reason: failureReason, agent_final_claim: finalClaim, started_at: startedAt, finished_at: finishedAt, usage: trace.usage, changes: diff.changes,
 		artifacts: { session: sessionPath, trace: "trace.json", diff: "diff.patch", verifier_result: "verifier/result.json", report: "report.md" },
 		known_limitations: [...(usageObserved ? [] : ["Provider token and cost usage were unavailable."]), ...(runtimeCloseError ? [`Runtime close failed: ${runtimeCloseError}`] : []), ...(executionError ? [`Execution detail: ${executionError}`] : [])],

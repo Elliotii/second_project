@@ -22,6 +22,40 @@ function fauxRuntime(source: string): CodingTaskModelRuntime {
 	return { models, model: registration.getModel(), async close(): Promise<void> {} };
 }
 
+function singleResponseRuntime(response: string): CodingTaskModelRuntime {
+	const models = createModels();
+	const registration = fauxProvider({ provider: "coding-task-skill-deterministic" });
+	models.setProvider(registration.provider);
+	registration.setResponses([fauxAssistantMessage(response)]);
+	return { models, model: registration.getModel(), async close(): Promise<void> {} };
+}
+
+function skillCase(label: string): { root: string; task: CodingTaskSpec; skillPath: string; verifierMarker: string } {
+	const root = mkdtempSync(resolve(tmpdir(), `${label}-`));
+	const sourceRoot = resolve(root, "source");
+	mkdirSync(resolve(sourceRoot, "src"), { recursive: true });
+	writeFileSync(resolve(sourceRoot, "src/subject.ts"), "export const unchanged = true;\n");
+	const verifierMarker = resolve(root, "verifier-ran.txt");
+	const verifierPath = resolve(root, "verifier.mjs");
+	writeFileSync(verifierPath, `import { writeFileSync } from "node:fs"; writeFileSync(${JSON.stringify(verifierMarker)}, "yes"); console.log(JSON.stringify({schema_version:1,verifier_id:"skill-verifier",status:"passed",summary:"accepted"}));\n`);
+	const skillRoot = resolve(root, "skill");
+	mkdirSync(skillRoot);
+	const skillPath = resolve(skillRoot, "SKILL.md");
+	writeFileSync(skillPath, "---\nname: skill\ndescription: Apply the bounded test procedure.\ndisable-model-invocation: true\n---\n\nFollow the bounded test procedure.\n");
+	return {
+		root,
+		skillPath,
+		verifierMarker,
+		task: {
+			task_id: label, prompt: "ORIGINAL_TASK_MARKER: inspect the unchanged source.", source_root: sourceRoot, existing_tree_digest: snapshotWorkspace(sourceRoot).tree_digest,
+			writable_paths: ["src/subject.ts"], protected_paths: [],
+			command_descriptors: [{ command_id: "public_test", executable: "current_node_executable", argv: ["--version"], cwd: "workspace", timeout_seconds: 15, max_combined_output_bytes: 50_000 }],
+			verifier_spec: { id: "skill-verifier", source_path: verifierPath, sha256: fileSha256(verifierPath), timeout_ms: 15_000, output_limit_bytes: 50_000 },
+			output_root: resolve(root, "runs"), timeout_ms: 30_000,
+		},
+	};
+}
+
 test("ordinary Coding Task persists Session, Trace, Diff, Verifier, manifest, and report", async () => {
 	const root = mkdtempSync(resolve(tmpdir(), "coding-task-e2e-"));
 	const sourceRoot = resolve(root, "source");
@@ -43,6 +77,7 @@ test("ordinary Coding Task persists Session, Trace, Diff, Verifier, manifest, an
 	const result = await runCodingTask({ task, runtime: fauxRuntime(initial), runId: "deterministic-run" });
 	assert.equal(result.manifest.execution_status, "completed");
 	assert.equal(result.manifest.verification_status, "passed");
+	assert.equal(result.manifest.skill, null);
 	assert.equal(result.manifest.usage.request_count, 4);
 	assert.deepEqual(result.manifest.changes, { added: [], modified: ["src/subject.ts"], deleted: [] });
 	for (const path of [result.manifest.artifacts.session, "trace.json", "diff.patch", "diff.json", "verifier/result.json", "run-manifest.json", "report.md"]) assert.equal(existsSync(resolve(result.run_root, path)), true, path);
@@ -54,6 +89,28 @@ test("ordinary Coding Task persists Session, Trace, Diff, Verifier, manifest, an
 	assert.match(trace.agent.final_claim, /public test passed/);
 	assert.match(readFileSync(resolve(result.run_root, "diff.patch"), "utf8"), /\+export function answer\(\): number \{ return 42; \}/);
 	assert.match(readFileSync(resolve(result.run_root, "report.md"), "utf8"), /External Verifier result: passed/);
+});
+
+test("optional Skill uses Pi invocation with the original task and persists its identity", async () => {
+	const fixture = skillCase("coding-task-with-skill");
+	fixture.task.skill = { path: fixture.skillPath, expected_sha256: fileSha256(fixture.skillPath) };
+	const result = await runCodingTask({ task: fixture.task, runtime: singleResponseRuntime("Completed the original task."), runId: "with-skill-run" });
+	assert.equal(result.manifest.execution_status, "completed");
+	assert.equal(result.manifest.verification_status, "passed");
+	assert.deepEqual(result.manifest.skill, { path: fixture.skillPath.replace(/\\/g, "/"), actual_sha256: fileSha256(fixture.skillPath) });
+	const trace = JSON.parse(readFileSync(resolve(result.run_root, "trace.json"), "utf8")) as { messages: Array<{ role: string; text: string }> };
+	const user = trace.messages.find((message) => message.role === "user");
+	assert.match(user?.text ?? "", /^<skill name="skill" location=/);
+	assert.match(user?.text ?? "", /Follow the bounded test procedure\./);
+	assert.match(user?.text ?? "", /ORIGINAL_TASK_MARKER: inspect the unchanged source\./);
+});
+
+test("Skill SHA mismatch fails before Agent execution and Verifier", async () => {
+	const fixture = skillCase("coding-task-skill-sha-mismatch");
+	fixture.task.skill = { path: fixture.skillPath, expected_sha256: "0".repeat(64) };
+	await assert.rejects(() => runCodingTask({ task: fixture.task, runtime: singleResponseRuntime("must not run"), runId: "sha-mismatch-run" }), /adaptive Skill source digest mismatch/);
+	assert.equal(existsSync(fixture.verifierMarker), false);
+	assert.equal(existsSync(fixture.task.output_root), false);
 });
 
 test("Agent success claim cannot override an External Verifier failure", async () => {
