@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "fixture-run-001",
+  "task_id": "fixture-task",
+  "source_revision": null,
+  "existing_tree_digest": "fixture-tree-digest",
+  "changes": {
+    "added": ["src/new.ts"],
+    "modified": ["src/subject.ts"],
+    "deleted": ["src/old.ts"]
+  },
+  "artifacts": {
+    "trace": "trace.json",
+    "diff": "diff.patch",
+    "verifier_result": "verifier/result.json"
+  }
+}

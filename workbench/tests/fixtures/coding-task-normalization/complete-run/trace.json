@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task": {
+    "task_id": "fixture-task",
+    "prompt": "Update the subject and run the declared test.",
+    "source_revision": null,
+    "existing_tree_digest": "fixture-tree-digest",
+    "writable_paths": ["src/**"],
+    "protected_paths": ["test/**"]
+  },
+  "events": [
+    { "sequence": 10, "type": "file_read", "phase": "start", "tool_call_id": "read-1", "tool_name": "workspace_read", "path": "src/subject.ts" },
+    { "sequence": 11, "type": "tool_result", "phase": "end", "tool_call_id": "read-1", "tool_name": "workspace_read", "status": "ok" },
+    { "sequence": 20, "type": "test", "phase": "start", "tool_call_id": "test-1", "tool_name": "run_command", "command_id": "public_test" },
+    { "sequence": 21, "type": "tool_result", "phase": "end", "tool_call_id": "test-1", "tool_name": "run_command", "status": "ok", "command_id": "public_test", "exit_code": 0, "timed_out": false },
+    { "sequence": 30, "type": "file_write", "phase": "start", "tool_call_id": "edit-1", "tool_name": "workspace_edit", "path": "src/subject.ts" },
+    { "sequence": 31, "type": "tool_error", "phase": "end", "tool_call_id": "edit-1", "tool_name": "workspace_edit", "status": "error" }
+  ]
+}
