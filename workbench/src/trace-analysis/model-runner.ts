@@ -12,12 +12,12 @@ import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } fro
 import { loadAnalysisState, renderDevelopmentFinding } from "./state.ts";
 
 export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analyst.
-1. Treat the frozen External Verifier result as the authority for Run Outcome.
+1. Treat the outcome, evaluable status, selection status, and reason returned by list_runs as authoritative for evaluation classification. Use the External Verifier artifact as the authority for task correctness, but do not override or recompute the evaluation classification.
 2. Use only Artifact content actually read through the provided tools; do not assume unread content.
 3. Keep Observation separate from Interpretation.
 4. Before saving a Finding, include at least one support Locator that you actually read.
 5. Before keeping a Finding, actively check another Run or another Evidence kind for counter-evidence or limitations.
-6. Do not infer general causality or Skill effects. Save all progress through update_state.`;
+6. Limit conclusions to the provided runs and their labels. You may report bounded differences between labeled conditions, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
 
 export function emptyAnalysisState(runIds: string[]): AnalysisState {
 	return { covered_runs: [...runIds], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };

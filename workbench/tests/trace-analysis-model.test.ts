@@ -78,6 +78,6 @@ test("resume Prompt contains only the saved State summary, not prior chat or Evi
 
 test("System Prompt is the short six-discipline contract", () => {
 	assert.equal(ANALYSIS_SYSTEM_PROMPT.split("\n").filter((line) => /^\d\./.test(line)).length, 6);
-	for (const required of ["External Verifier","actually read","Observation","support Locator","another Run or another Evidence kind","Skill effects","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
+	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","actually read","Observation","support Locator","another Run or another Evidence kind","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
 	for (const forbidden of ["Planner","Critic","confidence","expected Finding"]) assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, new RegExp(forbidden, "i"));
 });

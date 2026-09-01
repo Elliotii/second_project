@@ -35,6 +35,15 @@ function readRequiredText(runRoot: string, relativePath: string, label: string):
 	return { path, text: readFileSync(path, "utf8") };
 }
 
+function readEvaluationText(runRoot: string, relativePath: string, label: string, allowMissing: boolean): { path: string; text: string; available: boolean } {
+	try {
+		return { ...readRequiredText(runRoot, relativePath, label), available: true };
+	} catch (error) {
+		if (!allowMissing) throw error;
+		return { path: resolveRunRelative(runRoot, relativePath), text: "", available: false };
+	}
+}
+
 function artifactPath(manifest: CodingTaskRunManifest, key: keyof CodingTaskRunManifest["artifacts"]): string {
 	const value = manifest.artifacts[key];
 	if (typeof value !== "string" || value.length === 0) throw new Error(`run-manifest.json.artifacts.${key} is invalid`);
@@ -76,17 +85,24 @@ export function readRunArtifacts(descriptor: RunDescriptor): LoadedRun {
 	if (manifest.run_id !== descriptor.runId) {
 		throw new Error(`RunDescriptor runId ${descriptor.runId} does not match manifest run_id ${String(manifest.run_id)}`);
 	}
-	const traceRead = readRequiredText(runRoot, artifactPath(manifest, "trace"), "trace artifact");
+	const allowMissing = descriptor.evaluation?.outcome === "INFRA_FAILURE" || descriptor.evaluation?.outcome === "INVALID_TRIAL";
+	const allowMissingEvaluationSupplement = descriptor.evaluation !== undefined;
+	const traceRead = readEvaluationText(runRoot, artifactPath(manifest, "trace"), "trace artifact", allowMissing);
 	const diffRelative = existsSync(resolveRunRelative(runRoot, "diff.json")) ? "diff.json" : artifactPath(manifest, "diff");
-	const diffRead = readRequiredText(runRoot, diffRelative, "diff artifact");
-	const verifierResultRead = readRequiredText(runRoot, artifactPath(manifest, "verifier_result"), "verifier result");
-	const verifierOutputRead = readRequiredText(runRoot, "verifier/output.txt", "verifier output");
-	const reportRead = readRequiredText(runRoot, artifactPath(manifest, "report"), "report");
+	const diffRead = readEvaluationText(runRoot, diffRelative, "diff artifact", allowMissing);
+	const verifierResultRead = readEvaluationText(runRoot, artifactPath(manifest, "verifier_result"), "verifier result", allowMissing);
+	const verifierOutputRead = readEvaluationText(runRoot, "verifier/output.txt", "verifier output", allowMissing || allowMissingEvaluationSupplement);
+	const reportRead = readEvaluationText(runRoot, artifactPath(manifest, "report"), "report", allowMissing || allowMissingEvaluationSupplement);
+	const unavailableArtifacts = [
+		...(!traceRead.available ? ["trace" as const] : []), ...(!diffRead.available ? ["diff" as const] : []),
+		...(!verifierResultRead.available ? ["verifierResult" as const] : []), ...(!verifierOutputRead.available ? ["verifierOutput" as const] : []),
+		...(!reportRead.available ? ["report" as const] : []),
+	];
 	return {
 		descriptor: { ...descriptor, root: runRoot, labels: { ...descriptor.labels } },
 		manifest,
-		trace: parseTrace(traceRead.text),
-		verifierResult: object(JSON.parse(verifierResultRead.text), "verifier/result.json"),
+		trace: traceRead.available ? parseTrace(traceRead.text) : { events: [] },
+		verifierResult: verifierResultRead.available ? object(JSON.parse(verifierResultRead.text), "verifier/result.json") : { status: "not_run" },
 		manifestText: manifestRead.text,
 		traceText: traceRead.text,
 		diffText: diffRead.text,
@@ -102,6 +118,7 @@ export function readRunArtifacts(descriptor: RunDescriptor): LoadedRun {
 			verifierOutput: verifierOutputRead.path,
 			report: reportRead.path,
 		},
+		unavailableArtifacts,
 	};
 }
 
@@ -122,15 +139,21 @@ function run(context: AnalysisContext, runId: string): LoadedRun {
 
 export function listRuns(context: AnalysisContext): Array<Record<string, unknown>> {
 	return [...context.runs.values()].map((loaded) => {
-		const result = determineOutcome({
+		const baseResult = determineOutcome({
 			executionStatus: loaded.manifest.execution_status,
 			manifestVerificationStatus: loaded.manifest.verification_status,
 			verifierStatus: loaded.verifierResult.status,
 		});
+		const result = loaded.descriptor.evaluation ?? baseResult;
 		return {
 			runId: loaded.manifest.run_id,
 			taskId: loaded.manifest.task_id,
 			...result,
+			...(loaded.descriptor.evaluation ? {
+				attempt: loaded.descriptor.evaluation.attempt,
+				includedForEvaluation: loaded.descriptor.evaluation.includedForEvaluation,
+				reason: loaded.descriptor.evaluation.reason,
+			} : {}),
 			model: { ...loaded.manifest.model },
 			skill: loaded.manifest.skill == null ? null : { ...loaded.manifest.skill },
 			usage: { ...loaded.manifest.usage },
@@ -156,6 +179,7 @@ function summary(event: TraceEvent): string {
 
 export function searchTrace(context: AnalysisContext, runId: string, query: TraceQuery): TraceSearchResult[] {
 	const loaded = run(context, runId);
+	if (loaded.unavailableArtifacts.includes("trace")) throw new Error(`Trace artifact is unavailable for Run ${runId}`);
 	const limit = query.limit === undefined ? 20 : query.limit;
 	if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error("TraceQuery.limit must be an integer from 1 to 100");
 	const keyword = query.keyword?.toLocaleLowerCase();
@@ -186,6 +210,8 @@ function verifierContent(loaded: LoadedRun): string {
 
 export function readEvidence(context: AnalysisContext, locator: EvidenceLocator): EvidenceRead {
 	const loaded = run(context, locator.run_id);
+	const unavailable = locator.artifact === "trace" ? ["trace" as const] : locator.artifact === "diff" ? ["diff" as const] : locator.artifact === "verifier" ? ["verifierResult" as const, "verifierOutput" as const] : [];
+	if (unavailable.some((artifact) => loaded.unavailableArtifacts.includes(artifact))) throw new Error(`${locator.artifact} artifact is unavailable for Run ${locator.run_id}`);
 	let content: string;
 	if (locator.artifact === "trace") {
 		const event = loaded.trace.events.find((candidate) => candidate.sequence === locator.sequence);

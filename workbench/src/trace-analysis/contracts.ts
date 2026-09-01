@@ -6,9 +6,20 @@ export interface RunDescriptor {
 	runId: string;
 	root: string;
 	labels: Record<string, RunLabel>;
+	evaluation?: EvaluationRunSummary;
 }
 
 export type AnalysisOutcome = "PASS" | "TASK_FAILURE" | "INFRA_FAILURE";
+
+export type EvaluationOutcome = AnalysisOutcome | "INVALID_TRIAL";
+
+export interface EvaluationRunSummary {
+	attempt: number;
+	includedForEvaluation: boolean;
+	outcome: EvaluationOutcome;
+	evaluable: boolean;
+	reason: string;
+}
 
 export interface OutcomeResult {
 	outcome: AnalysisOutcome;
@@ -47,6 +58,7 @@ export interface LoadedRun {
 		verifierOutput: string;
 		report: string;
 	};
+	unavailableArtifacts: Array<"trace" | "diff" | "verifierResult" | "verifierOutput" | "report">;
 }
 
 export type EvidenceLocator =
