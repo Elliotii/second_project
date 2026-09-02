@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import type { AgentHarnessTool } from "@earendil-works/pi-agent-core";
 import { Type, type TSchema } from "@earendil-works/pi-ai";
 import { listRuns, readEvidence, searchTrace, validateAnalysisWorkflow } from "./analysis.ts";
-import type { AnalysisContext, AnalysisState, EvidenceLocator, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
+import type { AnalysisContext, AnalysisState, EvidenceLocator, EvidenceReadRecord, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
 import { saveAnalysisState } from "./state.ts";
 
 export interface AnalysisToolCall {
@@ -28,6 +28,7 @@ interface AnalysisToolContext {
 	calls: AnalysisToolCall[];
 	currentState: AnalysisState;
 	matrixListed: boolean;
+	searchExposedEvidence: Map<string, EvidenceReadRecord>;
 }
 
 type AnyAnalysisTool = AgentHarnessTool<AnalysisToolContext, TSchema, unknown> & { name: AnalysisToolCall["name"] };
@@ -94,6 +95,10 @@ function cloneLocator(value: EvidenceLocator): EvidenceLocator {
 	return { artifact: input.artifact, run_id: input.run_id };
 }
 
+function locatorKey(locator: EvidenceLocator): string {
+	return JSON.stringify(locator);
+}
+
 function validateUpdate(value: SemanticStateUpdate): SemanticStateUpdate {
 	if (typeof value.matrix_triage_complete !== "boolean" || !Array.isArray(value.investigation_agenda) ||
 		!Array.isArray(value.notes) || value.notes.some((entry) => typeof entry !== "string") ||
@@ -124,6 +129,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		currentState: structuredClone(options.initialState),
 		calls: [],
 		matrixListed: false,
+		searchExposedEvidence: new Map(),
 	};
 	const tools: AnyAnalysisTool[] = [
 		{
@@ -144,7 +150,12 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 				if (!toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("Global Matrix Triage through list_runs is required before Deep Investigation");
 				const input = args as Record<string, unknown>;
 				record(toolContext, "search_trace", input);
-				return text(searchTrace(toolContext.analysis, input.run_id as string, { eventType: input.eventType as string | undefined, toolName: input.toolName as string | undefined, keyword: input.keyword as string | undefined, limit: input.limit as number | undefined }));
+				const results = searchTrace(toolContext.analysis, input.run_id as string, { eventType: input.eventType as string | undefined, toolName: input.toolName as string | undefined, keyword: input.keyword as string | undefined, limit: input.limit as number | undefined });
+				const toolResult = text(results);
+				for (const result of results) {
+					toolContext.searchExposedEvidence.set(locatorKey(result.locator), { artifact: "trace", locator: structuredClone(result.locator), characterCount: JSON.stringify(result).length });
+				}
+				return toolResult;
 			},
 		},
 		{
@@ -180,6 +191,15 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 					loaded_evidence: [...toolContext.initialState.loaded_evidence, ...structuredClone(toolContext.analysis.loadedEvidence)],
 					finding_drafts: update.finding_drafts,
 				};
+				const loadedKeys = new Set(next.loaded_evidence.map((entry) => locatorKey(entry.locator)));
+				for (const locator of next.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter])) {
+					const key = locatorKey(locator);
+					if (loadedKeys.has(key)) continue;
+					const exposed = toolContext.searchExposedEvidence.get(key);
+					if (!exposed) throw new Error(`Finding uses a Locator not loaded or exposed by search_trace in this Invocation: ${key}`);
+					next.loaded_evidence.push(structuredClone(exposed));
+					loadedKeys.add(key);
+				}
 				if (!next.matrix_triage_complete && (next.investigation_agenda.length > 0 || next.finding_drafts.some((finding) => finding.claim_scope !== undefined))) throw new Error("v2 Agenda and Findings require completed Global Matrix Triage");
 				validateAnalysisWorkflow(next, [...toolContext.analysis.runs.values()].map((loaded) => loaded.descriptor));
 				toolContext.currentState = next;

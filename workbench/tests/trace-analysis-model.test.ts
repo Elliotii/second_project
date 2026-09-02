@@ -15,7 +15,10 @@ function json(path: string, value: unknown): void { mkdirSync(resolve(path, ".."
 function fixture(label: string): RunDescriptor {
 	const root = temporary(label); const runId = `run-${label}`;
 	json(resolve(root, "run-manifest.json"), { schema_version:1, run_id:runId, task_id:"fixture-task", source_revision:null, existing_tree_digest:"tree", model:{provider:"faux",id:"fixture"}, pi_commit:"0".repeat(40), skill:null, execution_status:"completed", verification_status:"passed", failure_reason:null, agent_final_claim:null, started_at:"2026-01-01T00:00:00Z", finished_at:"2026-01-01T00:00:01Z", usage:{request_count:0,input_tokens:0,output_tokens:0,cost_usd:0,tool_count:1,duration_ms:1,unknown_fields:[]}, changes:{added:[],modified:["src/a.ts"],deleted:[]}, artifacts:{session:"missing.jsonl",trace:"trace.json",diff:"diff.patch",verifier_result:"verifier/result.json",report:"report.md"}, known_limitations:[] });
-	json(resolve(root, "trace.json"), { events:[{sequence:1,type:"file_write",phase:"start",tool_call_id:"c1",tool_name:"workspace_write",path:"src/a.ts",input:{text:"synthetic change"}}] });
+	json(resolve(root, "trace.json"), { events:[
+		{sequence:1,type:"file_write",phase:"start",tool_call_id:"c1",tool_name:"workspace_write",path:"src/a.ts",input:{text:"synthetic change"}},
+		{sequence:2,type:"tool_result",phase:"end",tool_call_id:"c1",tool_name:"workspace_write",path:"src/a.ts",output:{status:"ok"}},
+	] });
 	json(resolve(root, "diff.json"), { changes:{added:[],modified:["src/a.ts"],deleted:[]} });
 	writeFileSync(resolve(root, "diff.patch"), "diff --git a/src/a.ts b/src/a.ts\n", "utf8");
 	json(resolve(root, "verifier/result.json"), { status:"passed" });
@@ -69,9 +72,31 @@ test("read_evidence records real counts in memory and only update_state persists
 	assert.equal(saved.loaded_evidence[0]!.characterCount, evidenceCall.evidence!.characterCount);
 });
 
+test("update_state persists only cited search_trace exposure", async () => {
+	const profile = setup("search-evidence");
+	await execute(profile, "list_runs", {});
+	await execute(profile, "search_trace", { run_id:profile.descriptor.runId });
+	await execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"continue", finding_drafts:[draft(profile.descriptor.runId)] });
+	const saved = loadAnalysisState(profile.statePath);
+	assert.equal(saved.loaded_evidence.length, 1);
+	assert.deepEqual(saved.loaded_evidence[0]!.locator, { artifact:"trace", run_id:profile.descriptor.runId, sequence:1 });
+	assert.ok(saved.loaded_evidence[0]!.characterCount > 0);
+});
+
+test("update_state rejects a resolvable Locator that was neither read nor search-exposed", async () => {
+	const profile = setup("unexposed-evidence");
+	await execute(profile, "list_runs", {});
+	await assert.rejects(
+		execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"continue", finding_drafts:[draft(profile.descriptor.runId)] }),
+		/not loaded or exposed by search_trace/,
+	);
+	assert.equal(existsSync(profile.statePath), false);
+});
+
 test("semantic snapshots allow f1 draft to kept while rejecting duplicate IDs and invalid status", async () => {
 	const profile = setup("semantic");
 	await execute(profile, "list_runs", {});
+	await execute(profile, "read_evidence", { artifact:"trace", run_id:profile.descriptor.runId, sequence:1 });
 	await execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"continue", finding_drafts:[draft(profile.descriptor.runId)] });
 	const kept = { ...draft(profile.descriptor.runId), counter_checked:true, status:"kept", limitation:"checked" };
 	await execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:["continued"], open_questions:[], next_action:"stop", finding_drafts:[kept] });
