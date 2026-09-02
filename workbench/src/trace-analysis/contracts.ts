@@ -105,10 +105,29 @@ export interface FindingDraft {
 	counter: EvidenceLocator[];
 	counter_checked: boolean;
 	status: "draft" | "kept" | "dropped";
+	claim_scope?: ClaimScope;
+	agenda_item_id?: string;
+}
+
+export type ClaimScope = "run_observation" | "cell_pattern" | "condition_comparison" | "cross_case";
+
+export interface InvestigationAgendaItem {
+	id: string;
+	question: string;
+	trigger: string;
+	claim_scope: ClaimScope;
+	anchor_run_ids: string[];
+	relevant_case_ids: string[];
+	checked_runs: string[];
+	settle_condition: string;
+	status: "open" | "settled" | "deprioritized";
+	closure_reason: string;
 }
 
 export interface AnalysisState {
 	covered_runs: string[];
+	matrix_triage_complete: boolean;
+	investigation_agenda: InvestigationAgendaItem[];
 	notes: string[];
 	open_questions: string[];
 	next_action: string;

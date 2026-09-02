@@ -5,14 +5,17 @@ import { resolve } from "node:path";
 import test from "node:test";
 import {
 	createAnalysisContext,
+	deriveOpenRuns,
+	deriveRequiredRuns,
 	determineOutcome,
+	isAnalysisGloballyComplete,
 	listRuns,
 	readEvidence,
 	readRunArtifacts,
 	resolveFindingLocators,
 	searchTrace,
 } from "../src/trace-analysis/analysis.ts";
-import type { AnalysisState, EvidenceLocator, RunDescriptor } from "../src/trace-analysis/contracts.ts";
+import type { AnalysisState, ClaimScope, EvidenceLocator, InvestigationAgendaItem, RunDescriptor } from "../src/trace-analysis/contracts.ts";
 import { loadAnalysisState, renderDevelopmentFinding, saveAnalysisState } from "../src/trace-analysis/state.ts";
 
 function temporary(label: string): string {
@@ -129,7 +132,7 @@ test("Analysis State round-trips and the renderer exposes the required developme
 	readEvidence(context, trace);
 	readEvidence(context, verifier);
 	const state: AnalysisState = {
-		covered_runs: [descriptor.runId], notes: [], open_questions: ["bounded evidence"], next_action: "stop",
+		covered_runs: [descriptor.runId], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: ["bounded evidence"], next_action: "stop",
 		loaded_evidence: structuredClone(context.loadedEvidence),
 		finding_drafts: [{ id: "f1", observation: "observed", interpretation: "interpreted", limitation: "limited", applicable_runs: [descriptor.runId], support: [trace], counter: [verifier], counter_checked: true, status: "draft" }],
 	};
@@ -156,11 +159,72 @@ test("two real Smoke Runs complete the no-model vertical development chain", { s
 	const counter: EvidenceLocator[] = [passed[0]!.locator, { artifact: "verifier", run_id: descriptors[1]!.runId }];
 	resolveFindingLocators(context, [...support, ...counter]);
 	const state: AnalysisState = {
-		covered_runs: [...context.coveredRuns], notes: [], open_questions: ["no general causal claim"], next_action: "stop after Day 1-A",
+		covered_runs: [...context.coveredRuns], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: ["no general causal claim"], next_action: "stop after Day 1-A",
 		loaded_evidence: structuredClone(context.loadedEvidence),
 		finding_drafts: [{ id: "f1", observation: "The write paths differ consistently with the two Verifier outcomes.", interpretation: "The failed path trims input while the passing path preserves it.", limitation: "Two Runs only.", applicable_runs: descriptors.map((entry) => entry.runId), support, counter, counter_checked: true, status: "draft" }],
 	};
 	const reloaded = loadAnalysisState(saveAnalysisState(temporary("real-smoke"), state));
 	assert.deepEqual(reloaded, state);
 	assert.equal(resolveFindingLocators(context, [...reloaded.finding_drafts[0]!.support, ...reloaded.finding_drafts[0]!.counter]).length, 5);
+});
+
+function matrixDescriptors(): RunDescriptor[] {
+	const output: RunDescriptor[] = [];
+	for (const caseId of ["A", "B", "C"]) for (const condition of ["No-Skill", "With-Skill"]) for (const trial of [1, 2, 3]) {
+		const runId = `${caseId}-${condition}-${trial}`;
+		output.push({ runId, root:"unused", labels:{ case_id:caseId, condition, trial }, evaluation:{ attempt:1, includedForEvaluation:true, outcome:"PASS", evaluable:true, reason:"fixture" } });
+	}
+	return output;
+}
+
+test("Claim Scopes derive minimum formal Runs and reject invalid identities", () => {
+	const descriptors = matrixDescriptors();
+	const cases: Array<{ scope: ClaimScope; anchors: string[]; relevant: string[]; expected: string[] }> = [
+		{ scope:"run_observation", anchors:["A-No-Skill-1"], relevant:[], expected:["A-No-Skill-1"] },
+		{ scope:"cell_pattern", anchors:["A-No-Skill-1"], relevant:[], expected:["A-No-Skill-1","A-No-Skill-2","A-No-Skill-3"] },
+		{ scope:"condition_comparison", anchors:["A-No-Skill-1"], relevant:[], expected:descriptors.filter((entry) => entry.labels.case_id === "A").map((entry) => entry.runId) },
+		{ scope:"cross_case", anchors:["A-No-Skill-1"], relevant:["A","C"], expected:descriptors.filter((entry) => entry.labels.case_id === "A" || entry.labels.case_id === "C").map((entry) => entry.runId) },
+	];
+	for (const entry of cases) assert.deepEqual(deriveRequiredRuns(entry.scope, entry.anchors, entry.relevant, descriptors), entry.expected);
+	assert.throws(() => deriveRequiredRuns("run_observation", ["missing"], [], descriptors), /not in the formal Evaluation/);
+	assert.throws(() => deriveRequiredRuns("cross_case", ["A-No-Skill-1"], ["A","missing"], descriptors), /relevant Case missing/);
+	assert.throws(() => deriveRequiredRuns("cross_case", ["A-No-Skill-1"], ["A"], descriptors), /at least two/);
+});
+
+function agenda(overrides: Partial<InvestigationAgendaItem> = {}): InvestigationAgendaItem {
+	return { id:"i1", question:"Does the cell repeat?", trigger:"triage signal", claim_scope:"cell_pattern", anchor_run_ids:["A-No-Skill-1"], relevant_case_ids:[], checked_runs:[], settle_condition:"inspect all formal trials", status:"open", closure_reason:"", ...overrides };
+}
+
+function workflowState(itemList: InvestigationAgendaItem[], finding_drafts: AnalysisState["finding_drafts"] = []): AnalysisState {
+	return { covered_runs:matrixDescriptors().map((entry) => entry.runId), matrix_triage_complete:true, investigation_agenda:itemList, notes:[], open_questions:[], next_action:"continue", loaded_evidence:[], finding_drafts };
+}
+
+test("Local and Global Completion use required subset checks, not counter_checked", () => {
+	const descriptors = matrixDescriptors();
+	const required = ["A-No-Skill-1","A-No-Skill-2","A-No-Skill-3"];
+	assert.deepEqual(deriveOpenRuns(agenda({ checked_runs:[required[0]!] }), descriptors), required.slice(1));
+	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ status:"settled", closure_reason:"repeated", checked_runs:required.slice(0, 2) })]), descriptors), /settled before all required Runs/);
+	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ checked_runs:required })]), descriptors), false);
+	assert.equal(isAnalysisGloballyComplete({ ...workflowState([agenda({ status:"settled", closure_reason:"repeated", checked_runs:[...required,"B-No-Skill-1"] })]), matrix_triage_complete:false }, descriptors), false);
+	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ status:"settled", closure_reason:"repeated", checked_runs:[...required,"B-No-Skill-1"] })]), descriptors), true);
+	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized", closure_reason:"low value" })]), descriptors), true);
+	assert.equal(isAnalysisGloballyComplete(workflowState([]), descriptors), true);
+	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized" })]), descriptors), /closure_reason/);
+	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ checked_runs:["missing"] })]), descriptors), /checked Run missing/);
+	const kept = { id:"f-v2", observation:"one Run", interpretation:"bounded", limitation:"local", applicable_runs:["A-No-Skill-1"], support:[], counter:[], counter_checked:true, status:"kept" as const, claim_scope:"cell_pattern" as const, agenda_item_id:"i1" };
+	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ status:"open", checked_runs:["A-No-Skill-1"] })], [kept]), descriptors), /exceeds its Agenda Item checked Runs/);
+	const narrowed = { ...kept, claim_scope:"run_observation" as const };
+	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized", closure_reason:"narrowed", checked_runs:["A-No-Skill-1"] })], [narrowed]), descriptors), true);
+});
+
+test("v2 State round-trips persisted workflow fields and legacy Day 3 State still loads", () => {
+	const item = agenda({ checked_runs:["A-No-Skill-1"], settle_condition:"check paired trials", status:"deprioritized", closure_reason:"weak signal" });
+	const finding = { id:"f-v2", observation:"observed", interpretation:"bounded", limitation:"one Run", applicable_runs:["A-No-Skill-1"], support:[], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" };
+	const state = { ...workflowState([item], [finding]), next_action:"inspect B" };
+	assert.deepEqual(loadAnalysisState(saveAnalysisState(temporary("v2-state"), state)), state);
+	const legacyPath = resolve(temporary("legacy-state"), "analysis-state.json");
+	json(legacyPath, { covered_runs:["old"], notes:[], open_questions:[], next_action:"resume", loaded_evidence:[], finding_drafts:[] });
+	const legacy = loadAnalysisState(legacyPath);
+	assert.equal(legacy.matrix_triage_complete, false);
+	assert.deepEqual(legacy.investigation_agenda, []);
 });

@@ -4,11 +4,14 @@ import type { CodingTaskRunManifest, ExecutionStatus, VerificationStatus } from 
 import { resolveRunRelative, validateRunRootBoundary } from "../evidence/artifacts.ts";
 import type {
 	AnalysisContext,
+	AnalysisState,
+	ClaimScope,
 	EvidenceLocator,
 	EvidenceRead,
 	LoadedRun,
 	OutcomeResult,
 	RunDescriptor,
+	InvestigationAgendaItem,
 	TraceArtifact,
 	TraceEvent,
 	TraceQuery,
@@ -161,6 +164,87 @@ export function listRuns(context: AnalysisContext): Array<Record<string, unknown
 			labels: { ...loaded.descriptor.labels },
 		};
 	});
+}
+
+function formalDescriptors(descriptors: RunDescriptor[]): RunDescriptor[] {
+	return descriptors.filter((descriptor) => descriptor.evaluation === undefined || descriptor.evaluation.includedForEvaluation);
+}
+
+function label(descriptor: RunDescriptor, key: "case_id" | "condition"): string {
+	const value = descriptor.labels[key];
+	if (typeof value !== "string" || value.length === 0) throw new Error(`formal Run ${descriptor.runId} has no valid ${key}`);
+	return value;
+}
+
+export function deriveRequiredRuns(
+	claimScope: ClaimScope,
+	anchorRunIds: string[],
+	relevantCaseIds: string[],
+	descriptors: RunDescriptor[],
+): string[] {
+	const formal = formalDescriptors(descriptors);
+	const byId = new Map(formal.map((descriptor) => [descriptor.runId, descriptor]));
+	if (anchorRunIds.length === 0) throw new Error("claim scope requires at least one anchor Run");
+	const anchors = anchorRunIds.map((runId) => {
+		const descriptor = byId.get(runId);
+		if (!descriptor) throw new Error(`anchor Run ${runId} is not in the formal Evaluation`);
+		return descriptor;
+	});
+	if (claimScope === "run_observation") return [...new Set(anchorRunIds)];
+	if (claimScope === "cell_pattern") {
+		const caseId = label(anchors[0]!, "case_id");
+		const condition = label(anchors[0]!, "condition");
+		if (anchors.some((entry) => label(entry, "case_id") !== caseId || label(entry, "condition") !== condition)) throw new Error("cell_pattern anchors must identify one case and condition");
+		return formal.filter((entry) => label(entry, "case_id") === caseId && label(entry, "condition") === condition).map((entry) => entry.runId);
+	}
+	if (claimScope === "condition_comparison") {
+		const caseId = label(anchors[0]!, "case_id");
+		if (anchors.some((entry) => label(entry, "case_id") !== caseId)) throw new Error("condition_comparison anchors must identify one case");
+		const selected = formal.filter((entry) => label(entry, "case_id") === caseId);
+		if (new Set(selected.map((entry) => label(entry, "condition"))).size < 2) throw new Error(`case ${caseId} does not contain both formal conditions`);
+		return selected.map((entry) => entry.runId);
+	}
+	const caseIds = [...new Set(relevantCaseIds)];
+	if (caseIds.length < 2) throw new Error("cross_case requires at least two explicit relevant_case_ids");
+	const availableCases = new Set(formal.map((entry) => label(entry, "case_id")));
+	for (const caseId of caseIds) if (!availableCases.has(caseId)) throw new Error(`relevant Case ${caseId} is not in the formal Evaluation`);
+	if (anchors.some((entry) => !caseIds.includes(label(entry, "case_id")))) throw new Error("cross_case anchor Run must belong to a relevant Case");
+	return formal.filter((entry) => caseIds.includes(label(entry, "case_id"))).map((entry) => entry.runId);
+}
+
+export function deriveOpenRuns(item: InvestigationAgendaItem, descriptors: RunDescriptor[]): string[] {
+	const checked = new Set(item.checked_runs);
+	return deriveRequiredRuns(item.claim_scope, item.anchor_run_ids, item.relevant_case_ids, descriptors).filter((runId) => !checked.has(runId));
+}
+
+export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunDescriptor[]): void {
+	const formalIds = new Set(formalDescriptors(descriptors).map((entry) => entry.runId));
+	const agenda = new Map<string, InvestigationAgendaItem>();
+	for (const item of state.investigation_agenda) {
+		if (item.id.length === 0 || agenda.has(item.id)) throw new Error(`Agenda Item ID is empty or duplicate: ${item.id}`);
+		if (!["run_observation", "cell_pattern", "condition_comparison", "cross_case"].includes(item.claim_scope)) throw new Error(`Agenda Item ${item.id} claim_scope is invalid`);
+		if (!["open", "settled", "deprioritized"].includes(item.status)) throw new Error(`Agenda Item ${item.id} status is invalid`);
+		agenda.set(item.id, item);
+		for (const runId of item.checked_runs) if (!formalIds.has(runId)) throw new Error(`checked Run ${runId} is not in the formal Evaluation`);
+		if ((item.status === "settled" || item.status === "deprioritized") && item.closure_reason.trim().length === 0) throw new Error(`Agenda Item ${item.id} closure_reason is required`);
+		if (item.status === "settled" && deriveOpenRuns(item, descriptors).length > 0) throw new Error(`Agenda Item ${item.id} is settled before all required Runs were checked`);
+	}
+	for (const finding of state.finding_drafts) {
+		if (finding.claim_scope === undefined && finding.agenda_item_id === undefined) continue;
+		if (finding.claim_scope === undefined || !finding.agenda_item_id) throw new Error(`Finding ${finding.id} must provide claim_scope and agenda_item_id together`);
+		const item = agenda.get(finding.agenda_item_id);
+		if (!item) throw new Error(`Finding ${finding.id} refers to unknown Agenda Item ${finding.agenda_item_id}`);
+		if (finding.status === "kept") {
+			const required = deriveRequiredRuns(finding.claim_scope, finding.applicable_runs, item.relevant_case_ids, descriptors);
+			const checked = new Set(item.checked_runs);
+			if (required.some((runId) => !checked.has(runId))) throw new Error(`kept Finding ${finding.id} exceeds its Agenda Item checked Runs`);
+		}
+	}
+}
+
+export function isAnalysisGloballyComplete(state: AnalysisState, descriptors: RunDescriptor[]): boolean {
+	validateAnalysisWorkflow(state, descriptors);
+	return state.matrix_triage_complete && state.investigation_agenda.every((item) => item.status === "settled" || item.status === "deprioritized");
 }
 
 function visibleFields(event: TraceEvent): Record<string, string | number | boolean> {

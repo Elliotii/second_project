@@ -58,6 +58,8 @@ const evidence = [
 ];
 const state: AnalysisState = {
 	covered_runs: [...context.coveredRuns],
+	matrix_triage_complete: false,
+	investigation_agenda: [],
 	notes: ["Compared the corresponding workspace_write events and deterministic Verifier outcomes for two Runs of the same task."],
 	open_questions: ["This two-Run development check does not establish a general causal rule or a Skill effect."],
 	next_action: "Day 1-B remains separate and is not started by this development analysis.",

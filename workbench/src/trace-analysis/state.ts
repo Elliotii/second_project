@@ -10,7 +10,12 @@ export function saveAnalysisState(outputDirectory: string, state: AnalysisState)
 }
 
 export function loadAnalysisState(path: string): AnalysisState {
-	const value = JSON.parse(readFileSync(resolve(path), "utf8")) as AnalysisState;
+	const parsed = JSON.parse(readFileSync(resolve(path), "utf8")) as Partial<AnalysisState>;
+	const value = {
+		...parsed,
+		matrix_triage_complete: parsed.matrix_triage_complete ?? false,
+		investigation_agenda: parsed.investigation_agenda ?? [],
+	} as AnalysisState;
 	if (!Array.isArray(value.covered_runs) || !Array.isArray(value.loaded_evidence) || !Array.isArray(value.finding_drafts)) {
 		throw new Error("analysis State is missing required arrays");
 	}

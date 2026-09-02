@@ -35,7 +35,8 @@ async function execute(profile: ReturnType<typeof setup>, name: string, args: Re
 	return tool.execute("test-call", args as never, undefined, undefined, profile.context);
 }
 
-const draft = (runId: string) => ({ id:"f1", observation:"synthetic observation", interpretation:"bounded interpretation", limitation:"one fixture", applicable_runs:[runId], support:[{artifact:"trace" as const,run_id:runId,sequence:1}], counter:[], counter_checked:false, status:"draft" as const });
+const draft = (runId: string) => ({ id:"f1", observation:"synthetic observation", interpretation:"bounded interpretation", limitation:"one fixture", applicable_runs:[runId], support:[{artifact:"trace" as const,run_id:runId,sequence:1}], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" });
+const workflow = (runId: string) => ({ matrix_triage_complete:true, investigation_agenda:[{ id:"i1", question:"What happened in this Run?", trigger:"Matrix signal", claim_scope:"run_observation" as const, anchor_run_ids:[runId], relevant_case_ids:[], checked_runs:[runId], settle_condition:"inspect the anchor Run", status:"open" as const, closure_reason:"" }] });
 
 test("Analysis model receives exactly the four frozen tools", () => {
 	const profile = setup("allowlist");
@@ -44,14 +45,24 @@ test("Analysis model receives exactly the four frozen tools", () => {
 	for (const forbidden of ["bash","git","workspace_read","workspace_write","run_command","skill"] ) assert.equal(profile.tools.some((tool) => tool.name === forbidden), false);
 });
 
+test("matrix_triage_complete requires list_runs exposure in the current fresh Invocation", async () => {
+	const profile = setup("triage");
+	await assert.rejects(execute(profile, "update_state", { matrix_triage_complete:true, investigation_agenda:[], notes:[], open_questions:[], next_action:"", finding_drafts:[] }), /requires list_runs exposure/);
+	await execute(profile, "list_runs", {});
+	await execute(profile, "update_state", { matrix_triage_complete:true, investigation_agenda:[], notes:[], open_questions:[], next_action:"", finding_drafts:[] });
+	assert.equal(loadAnalysisState(profile.statePath).matrix_triage_complete, true);
+});
+
 test("read_evidence records real counts in memory and only update_state persists them", async () => {
 	const profile = setup("evidence");
+	await assert.rejects(execute(profile, "read_evidence", { artifact:"trace", run_id:profile.descriptor.runId, sequence:1 }), /Global Matrix Triage/);
+	await execute(profile, "list_runs", {});
 	await execute(profile, "read_evidence", { artifact:"trace", run_id:profile.descriptor.runId, sequence:1 });
 	assert.equal(existsSync(profile.statePath), false);
-	const evidenceCall = profile.context.calls[0]!;
+	const evidenceCall = profile.context.calls[1]!;
 	assert.equal(evidenceCall.name, "read_evidence");
 	assert.ok((evidenceCall.evidence?.characterCount ?? 0) > 0);
-	await execute(profile, "update_state", { notes:[], open_questions:[], next_action:"inspect another Run", finding_drafts:[draft(profile.descriptor.runId)], covered_runs:["forged"], loaded_evidence:[{characterCount:999}] });
+	await execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"continue", finding_drafts:[draft(profile.descriptor.runId)], covered_runs:["forged"], loaded_evidence:[{characterCount:999}] });
 	const saved = loadAnalysisState(profile.statePath);
 	assert.deepEqual(saved.covered_runs, [profile.descriptor.runId]);
 	assert.equal(saved.loaded_evidence.length, 1);
@@ -60,24 +71,26 @@ test("read_evidence records real counts in memory and only update_state persists
 
 test("semantic snapshots allow f1 draft to kept while rejecting duplicate IDs and invalid status", async () => {
 	const profile = setup("semantic");
-	await execute(profile, "update_state", { notes:[], open_questions:[], next_action:"continue", finding_drafts:[draft(profile.descriptor.runId)] });
+	await execute(profile, "list_runs", {});
+	await execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"continue", finding_drafts:[draft(profile.descriptor.runId)] });
 	const kept = { ...draft(profile.descriptor.runId), counter_checked:true, status:"kept", limitation:"checked" };
-	await execute(profile, "update_state", { notes:["continued"], open_questions:[], next_action:"stop", finding_drafts:[kept] });
+	await execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:["continued"], open_questions:[], next_action:"stop", finding_drafts:[kept] });
 	assert.equal(loadAnalysisState(profile.statePath).finding_drafts[0]!.status, "kept");
-	await assert.rejects(execute(profile, "update_state", { notes:[], open_questions:[], next_action:"", finding_drafts:[draft(profile.descriptor.runId),draft(profile.descriptor.runId)] }), /duplicate Finding ID/);
-	await assert.rejects(execute(profile, "update_state", { notes:[], open_questions:[], next_action:"", finding_drafts:[{...draft(profile.descriptor.runId),status:"scored"}] }), /status is invalid/);
+	await assert.rejects(execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"", finding_drafts:[draft(profile.descriptor.runId),draft(profile.descriptor.runId)] }), /duplicate Finding ID/);
+	await assert.rejects(execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"", finding_drafts:[{...draft(profile.descriptor.runId),status:"scored"}] }), /status is invalid/);
+	await assert.rejects(execute(profile, "update_state", { ...workflow(profile.descriptor.runId), notes:[], open_questions:[], next_action:"", finding_drafts:[{...draft(profile.descriptor.runId),id:"new-legacy",claim_scope:undefined,agenda_item_id:undefined}] }), /new Finding new-legacy requires/);
 });
 
 test("resume Prompt contains only the saved State summary, not prior chat or Evidence content", () => {
-	const state: AnalysisState = { covered_runs:["r1"], notes:["note"], open_questions:["question"], next_action:"inspect r2 verifier", loaded_evidence:[{artifact:"trace",locator:{artifact:"trace",run_id:"r1",sequence:4},characterCount:123}], finding_drafts:[draft("r1")] };
+	const state: AnalysisState = { covered_runs:["r1"], matrix_triage_complete:true, investigation_agenda:[], notes:["note"], open_questions:["question"], next_action:"inspect r2 verifier", loaded_evidence:[{artifact:"trace",locator:{artifact:"trace",run_id:"r1",sequence:4},characterCount:123}], finding_drafts:[draft("r1")] };
 	const prompt = resumeAnalysisPrompt(state);
 	for (const expected of ["inspect r2 verifier","synthetic observation","characterCount","sequence"]) assert.match(prompt, new RegExp(expected));
 	for (const forbidden of ["SECRET_EVIDENCE_CONTENT","prior assistant chat","value\\.trim\\(\\)","sequence 9","sequence 11"]) assert.doesNotMatch(prompt, new RegExp(forbidden));
 	assert.doesNotMatch(freshAnalysisPrompt(), /value\.trim|sequence 9|sequence 11|coding-task-/);
 });
 
-test("System Prompt is the short six-discipline contract", () => {
-	assert.equal(ANALYSIS_SYSTEM_PROMPT.split("\n").filter((line) => /^\d\./.test(line)).length, 6);
-	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","actually read","Observation","support Locator","another Run or another Evidence kind","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
+test("System Prompt carries the claim-scoped workflow disciplines", () => {
+	assert.equal(ANALYSIS_SYSTEM_PROMPT.split("\n").filter((line) => /^\d\./.test(line)).length, 7);
+	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","Global Matrix Triage","Claim Scope","Required Runs","run_observation requires only its anchor Run","Local Item closure is not Global Completion","Observation","Interpretation","Limitation","narrow the final Finding claim_scope","deprioritize","Do not manufacture a Finding","State records task progress while Artifacts record facts","counter_checked remains descriptive, not completion authority","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
 	for (const forbidden of ["Planner","Critic","confidence","expected Finding"]) assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, new RegExp(forbidden, "i"));
 });

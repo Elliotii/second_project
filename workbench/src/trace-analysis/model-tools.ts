@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import type { AgentHarnessTool } from "@earendil-works/pi-agent-core";
 import { Type, type TSchema } from "@earendil-works/pi-ai";
-import { listRuns, readEvidence, searchTrace } from "./analysis.ts";
-import type { AnalysisContext, AnalysisState, EvidenceLocator, FindingDraft } from "./contracts.ts";
+import { listRuns, readEvidence, searchTrace, validateAnalysisWorkflow } from "./analysis.ts";
+import type { AnalysisContext, AnalysisState, EvidenceLocator, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
 import { saveAnalysisState } from "./state.ts";
 
 export interface AnalysisToolCall {
@@ -13,6 +13,8 @@ export interface AnalysisToolCall {
 }
 
 export interface SemanticStateUpdate {
+	matrix_triage_complete: boolean;
+	investigation_agenda: InvestigationAgendaItem[];
 	notes: string[];
 	open_questions: string[];
 	next_action: string;
@@ -25,6 +27,7 @@ interface AnalysisToolContext {
 	initialState: AnalysisState;
 	calls: AnalysisToolCall[];
 	currentState: AnalysisState;
+	matrixListed: boolean;
 }
 
 type AnyAnalysisTool = AgentHarnessTool<AnalysisToolContext, TSchema, unknown> & { name: AnalysisToolCall["name"] };
@@ -44,6 +47,20 @@ const findingSchema = Type.Object({
 	counter: Type.Array(locatorSchema),
 	counter_checked: Type.Boolean(),
 	status: Type.Union([Type.Literal("draft"), Type.Literal("kept"), Type.Literal("dropped")]),
+	claim_scope: Type.Optional(Type.Union([Type.Literal("run_observation"), Type.Literal("cell_pattern"), Type.Literal("condition_comparison"), Type.Literal("cross_case")])),
+	agenda_item_id: Type.Optional(Type.String({ minLength: 1 })),
+}, { additionalProperties: false });
+const agendaItemSchema = Type.Object({
+	id: Type.String({ minLength: 1 }),
+	question: Type.String({ minLength: 1 }),
+	trigger: Type.String({ minLength: 1 }),
+	claim_scope: Type.Union([Type.Literal("run_observation"), Type.Literal("cell_pattern"), Type.Literal("condition_comparison"), Type.Literal("cross_case")]),
+	anchor_run_ids: Type.Array(Type.String({ minLength: 1 })),
+	relevant_case_ids: Type.Array(Type.String({ minLength: 1 })),
+	checked_runs: Type.Array(Type.String({ minLength: 1 })),
+	settle_condition: Type.String({ minLength: 1 }),
+	status: Type.Union([Type.Literal("open"), Type.Literal("settled"), Type.Literal("deprioritized")]),
+	closure_reason: Type.String(),
 }, { additionalProperties: false });
 
 const listRunsSchema = Type.Object({}, { additionalProperties: false });
@@ -55,6 +72,8 @@ const searchTraceSchema = Type.Object({
 	limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
 }, { additionalProperties: false });
 const updateStateSchema = Type.Object({
+	matrix_triage_complete: Type.Boolean(),
+	investigation_agenda: Type.Array(agendaItemSchema),
 	notes: Type.Array(Type.String()),
 	open_questions: Type.Array(Type.String()),
 	next_action: Type.String(),
@@ -76,7 +95,8 @@ function cloneLocator(value: EvidenceLocator): EvidenceLocator {
 }
 
 function validateUpdate(value: SemanticStateUpdate): SemanticStateUpdate {
-	if (!Array.isArray(value.notes) || value.notes.some((entry) => typeof entry !== "string") ||
+	if (typeof value.matrix_triage_complete !== "boolean" || !Array.isArray(value.investigation_agenda) ||
+		!Array.isArray(value.notes) || value.notes.some((entry) => typeof entry !== "string") ||
 		!Array.isArray(value.open_questions) || value.open_questions.some((entry) => typeof entry !== "string") ||
 		typeof value.next_action !== "string" || !Array.isArray(value.finding_drafts)) throw new Error("semantic State update is invalid");
 	const ids = new Set<string>();
@@ -103,6 +123,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		initialState: structuredClone(options.initialState),
 		currentState: structuredClone(options.initialState),
 		calls: [],
+		matrixListed: false,
 	};
 	const tools: AnyAnalysisTool[] = [
 		{
@@ -110,6 +131,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 			description: "List deterministic summaries for the loaded development Runs. Does not return complete Trace, Diff, or Verifier content.",
 			parameters: listRunsSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
+				toolContext.matrixListed = true;
 				record(toolContext, "list_runs", args as Record<string, unknown>);
 				return text(listRuns(toolContext.analysis));
 			},
@@ -119,6 +141,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 			description: "Search one loaded Run Trace by eventType, toolName, or visible keyword. Returns bounded summaries and precise Locators, never a complete Trace.",
 			parameters: searchTraceSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
+				if (!toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("Global Matrix Triage through list_runs is required before Deep Investigation");
 				const input = args as Record<string, unknown>;
 				record(toolContext, "search_trace", input);
 				return text(searchTrace(toolContext.analysis, input.run_id as string, { eventType: input.eventType as string | undefined, toolName: input.toolName as string | undefined, keyword: input.keyword as string | undefined, limit: input.limit as number | undefined }));
@@ -129,6 +152,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 			description: "Read one trace, diff, verifier, or manifest Locator. The Runner records the real Locator and character count. This tool does not persist Analysis State.",
 			parameters: locatorSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
+				if (!toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("Global Matrix Triage through list_runs is required before Deep Investigation");
 				const locator = cloneLocator(args as EvidenceLocator);
 				const evidence = readEvidence(toolContext.analysis, locator);
 				record(toolContext, "read_evidence", args as Record<string, unknown>, { locator, characterCount: evidence.characterCount });
@@ -137,18 +161,27 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		},
 		{
 			name: "update_state", label: "update_state",
-			description: "Persist a complete semantic State snapshot. counter_checked=false means counter-evidence has not been actively checked. counter_checked=true with counter=[] means it was checked and no direct counter-evidence was found. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
+			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. checked_runs records explicit question-specific workflow progress. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
 			parameters: updateStateSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
 				const update = validateUpdate(args as SemanticStateUpdate);
+				if (update.matrix_triage_complete && !toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("matrix_triage_complete requires list_runs exposure in this Invocation");
+				const priorFindingIds = new Set(toolContext.initialState.finding_drafts.map((finding) => finding.id));
+				for (const finding of update.finding_drafts) {
+					if (!priorFindingIds.has(finding.id) && (finding.claim_scope === undefined || finding.agenda_item_id === undefined)) throw new Error(`new Finding ${finding.id} requires claim_scope and agenda_item_id`);
+				}
 				const next: AnalysisState = {
 					covered_runs: [...toolContext.analysis.coveredRuns],
+					matrix_triage_complete: toolContext.initialState.matrix_triage_complete || update.matrix_triage_complete,
+					investigation_agenda: update.investigation_agenda,
 					notes: update.notes,
 					open_questions: update.open_questions,
 					next_action: update.next_action,
 					loaded_evidence: [...toolContext.initialState.loaded_evidence, ...structuredClone(toolContext.analysis.loadedEvidence)],
 					finding_drafts: update.finding_drafts,
 				};
+				if (!next.matrix_triage_complete && (next.investigation_agenda.length > 0 || next.finding_drafts.some((finding) => finding.claim_scope !== undefined))) throw new Error("v2 Agenda and Findings require completed Global Matrix Triage");
+				validateAnalysisWorkflow(next, [...toolContext.analysis.runs.values()].map((loaded) => loaded.descriptor));
 				toolContext.currentState = next;
 				saveAnalysisState(toolContext.statePath.replace(/[\\/]analysis-state\.json$/, ""), next);
 				record(toolContext, "update_state", args as Record<string, unknown>);

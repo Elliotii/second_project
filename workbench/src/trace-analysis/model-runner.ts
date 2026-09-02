@@ -6,25 +6,26 @@ import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { createModels, InMemoryCredentialStore, type AssistantMessage } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
-import { createAnalysisContext, resolveFindingLocators } from "./analysis.ts";
+import { createAnalysisContext, isAnalysisGloballyComplete, resolveFindingLocators } from "./analysis.ts";
 import type { AnalysisState, EvidenceLocator, RunDescriptor } from "./contracts.ts";
 import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } from "./model-tools.ts";
 import { loadAnalysisState, renderDevelopmentFinding } from "./state.ts";
 
 export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analyst.
 1. Treat the outcome, evaluable status, selection status, and reason returned by list_runs as authoritative for evaluation classification. Use the External Verifier artifact as the authority for task correctness, but do not override or recompute the evaluation classification.
-2. Use only Artifact content actually read through the provided tools; do not assume unread content.
-3. Keep Observation separate from Interpretation.
-4. Before saving a Finding, include at least one support Locator that you actually read.
-5. Before keeping a Finding, actively check another Run or another Evidence kind for counter-evidence or limitations.
-6. Limit conclusions to the provided runs and their labels. You may report bounded differences between labeled conditions, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
+2. Complete Global Matrix Triage by exposing the complete formal Matrix with list_runs before Deep Investigation, then create only a few high-value Agenda Items with explicit Claim Scope.
+3. Use Required Runs and Open Runs implied by each Claim Scope to advance checked_runs. A run_observation requires only its anchor Run. Local Item closure is not Global Completion.
+4. Keep Observation separate from Interpretation and Limitation. Use only Artifact content actually read through the provided tools; State records task progress while Artifacts record facts.
+5. If evidence is insufficient, narrow the final Finding claim_scope; deprioritize low-value Agenda Items with a reason. Do not manufacture a Finding merely to fill the workflow.
+6. Before saving a Finding, include at least one support Locator that you actually read. A kept Finding must link to its Agenda Item and fit that Item's checked_runs; counter_checked remains descriptive, not completion authority.
+7. Limit conclusions to the provided runs and their labels. You may report bounded differences between labeled conditions, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
 
 export function emptyAnalysisState(runIds: string[]): AnalysisState {
-	return { covered_runs: [...runIds], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
+	return { covered_runs: [...runIds], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
 }
 
 export function freshAnalysisPrompt(): string {
-	return `Start one bounded development analysis from the empty State. Call list_runs, choose an analyzable implementation difference or failure mechanism, search Trace data, and read supporting Evidence by Locator. Save one supported Finding with status=draft and counter_checked=false. Set a non-empty next_action that tells a later independent resume invocation which other Run or Evidence kind to inspect for counter-evidence or limitations. Call update_state once and stop.`;
+	return `Start one bounded development analysis from the empty State. Call list_runs and perform Global Matrix Triage before Deep Investigation. Save matrix_triage_complete=true and a small structured Investigation Agenda; the Agenda may be empty when no investigation is warranted. You may continue naturally into the first high-value Item. Derive its Required and Open Runs from claim_scope, record only explicitly completed checks in checked_runs, and do not manufacture a Finding. If Global Completion is still false, save a non-empty next_action. Call update_state once and stop.`;
 }
 
 export function resumeAnalysisPrompt(state: AnalysisState): string {
@@ -32,10 +33,12 @@ export function resumeAnalysisPrompt(state: AnalysisState): string {
 		notes: state.notes,
 		open_questions: state.open_questions,
 		next_action: state.next_action,
+		matrix_triage_complete: state.matrix_triage_complete,
+		investigation_agenda: state.investigation_agenda,
 		finding_drafts: state.finding_drafts,
 		loaded_evidence: state.loaded_evidence,
 	};
-	return `Resume one bounded development analysis in a new Session. No prior chat or Evidence content is available. Follow the saved next_action, use the tools to inspect another Run or Evidence kind, actively check counter-evidence or limitations, then update the existing Finding to kept or dropped with counter_checked=true. Update limitation and open_questions, call update_state once, and stop.\n\nSaved State summary:\n${JSON.stringify(summary, null, 2)}`;
+	return `Resume one bounded development analysis in a new Session. No prior chat or Evidence content is available. Follow the saved next_action and current Agenda. Use Required and Open Runs for the current Item, persist explicit checked_runs progress, and settle or deprioritize it only with a closure_reason. Narrow a final Finding claim_scope when evidence supports less than the initial scope. Local completion does not imply Global Completion; retain an open Agenda or next_action while work remains. Call update_state once and stop.\n\nSaved State summary:\n${JSON.stringify(summary, null, 2)}`;
 }
 
 function locatorKey(locator: EvidenceLocator): string {
@@ -130,14 +133,14 @@ export async function runAnalysisInvocation(options: {
 	if (settled !== 1) throw new Error(`Analysis Invocation must settle exactly once; observed ${settled}`);
 	if (!analysisStateWasSaved(statePath)) throw new Error("Analysis model did not persist State through update_state");
 	const state = loadAnalysisState(statePath);
+	const globalComplete = isAnalysisGloballyComplete(state, options.descriptors);
 	const locators = state.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter]);
 	const resolved = resolveFindingLocators(analysis, locators).map((entry) => ({ locator: entry.locator, characterCount: entry.characterCount }));
 	const loadedKeys = new Set(state.loaded_evidence.map((entry) => locatorKey(entry.locator)));
 	const allLoaded = locators.every((locator) => loadedKeys.has(locatorKey(locator)));
 	if (!allLoaded) throw new Error("Finding uses a Locator absent from loaded_evidence");
-	if (options.mode === "fresh") {
-		if (!state.finding_drafts.some((finding) => finding.status === "draft" && finding.support.length > 0 && finding.counter_checked === false) || state.next_action.trim().length === 0) throw new Error("fresh Invocation did not persist the required supported Draft");
-	} else if (!state.finding_drafts.some((finding) => finding.counter_checked === true)) throw new Error("resume Invocation did not persist a counter check");
+	if (options.mode === "fresh" && !state.matrix_triage_complete) throw new Error("fresh Invocation did not complete Global Matrix Triage");
+	if (!globalComplete && state.next_action.trim().length === 0) throw new Error("globally incomplete Analysis State requires next_action");
 
 	let resumeDirection: AnalysisInvocationResult["resume_direction"];
 	if (options.mode === "resume") {
@@ -160,6 +163,8 @@ export async function runAnalysisInvocation(options: {
 		...(resumeDirection ? { resume_direction: resumeDirection } : {}), state, resolved_locators: resolved, all_finding_locators_were_loaded: allLoaded, assistant_text: finalText,
 	};
 	writeFileSync(resolve(outputDirectory, `${options.mode}-invocation.json`), `${JSON.stringify(result, null, 2)}\n`, "utf8");
-	if (options.mode === "resume") writeFileSync(resolve(outputDirectory, "development-finding.md"), renderDevelopmentFinding(state, state.finding_drafts.find((finding) => finding.status === "kept")?.id ?? state.finding_drafts[0]!.id), "utf8");
+	if (options.mode === "resume" && state.finding_drafts.length > 0) {
+		writeFileSync(resolve(outputDirectory, "development-finding.md"), renderDevelopmentFinding(state, state.finding_drafts.find((finding) => finding.status === "kept")?.id ?? state.finding_drafts[0]!.id), "utf8");
+	}
 	return result;
 }
