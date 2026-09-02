@@ -12,13 +12,13 @@ import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } fro
 import { loadAnalysisState, renderDevelopmentFinding } from "./state.ts";
 
 export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analyst.
-1. Treat the outcome, evaluable status, selection status, and reason returned by list_runs as authoritative for evaluation classification. Use the External Verifier artifact as the authority for task correctness, but do not override or recompute the evaluation classification.
+1. Treat the outcome, evaluable status, selection status, and reason returned by list_runs as authoritative for evaluation classification. Use the External Verifier artifact as the authority for task correctness. Trace interpretation may report evidence-backed local process facts, but must not override, recompute, or reclassify the run-level Outcome.
 2. Complete Global Matrix Triage by exposing the complete formal Matrix with list_runs before Deep Investigation, then create only a few high-value Agenda Items with explicit Claim Scope.
 3. Use Required Runs and Open Runs implied by each Claim Scope to advance checked_runs. A run_observation requires only its anchor Run. Local Item closure is not Global Completion.
-4. Keep Observation separate from Interpretation and Limitation. Use only Artifact content actually read through the provided tools; State records task progress while Artifacts record facts.
-5. If evidence is insufficient, narrow the final Finding claim_scope; deprioritize low-value Agenda Items with a reason. Do not manufacture a Finding merely to fill the workflow.
+4. Keep Observation separate from Interpretation and Limitation. Use only Artifact content actually read through the provided tools; State records task progress while Artifacts record facts. Absence of an observed action or transition does not establish failure: report not observed, unclear, or insufficient evidence without filling missing facts. You may localize observable divergence, but localization does not establish root cause or causation, and a Finding need not supply a causal explanation.
+5. If evidence is insufficient, narrow the final Finding wording and claim_scope, and state a specific Limitation when a real evidence boundary matters; deprioritize low-value Agenda Items with a reason. Do not manufacture a Finding merely to fill the workflow.
 6. Before saving a Finding, include at least one support Locator that you actually read. A kept Finding must link to its Agenda Item and fit that Item's checked_runs; counter_checked remains descriptive, not completion authority.
-7. Limit conclusions to the provided runs and their labels. You may report bounded differences between labeled conditions, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
+7. Limit every conclusion, including root-cause, condition-effect, Skill-effect, and cross-Case attribution, to the Artifact Evidence actually read and the Finding's claim_scope. You may report bounded differences between labeled conditions in the provided runs, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
 
 export function emptyAnalysisState(runIds: string[]): AnalysisState {
 	return { covered_runs: [...runIds], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
