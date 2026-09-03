@@ -58,7 +58,7 @@ function fixture(label: string, options: { runId?: string; execution?: string; v
 	] });
 	json(resolve(root, "diff.json"), { changes: { added: [], modified: ["src/subject.ts"], deleted: [] } });
 	writeFileSync(resolve(root, "diff.patch"), "diff --git a/src/subject.ts b/src/subject.ts\n", "utf8");
-	json(resolve(root, "verifier/result.json"), { status: verification, execution: { source_snapshot_ref: { path: "verifier/source.mjs" } } });
+	json(resolve(root, "verifier/result.json"), { status: verification, exit_code: verification === "passed" ? 0 : 1, execution: { source_snapshot_ref: { path: "verifier/source.mjs" } } });
 	writeFileSync(resolve(root, "verifier/output.txt"), `[stdout] ${verification}\n`, "utf8");
 	writeFileSync(resolve(root, "verifier/source.mjs"), "// whitespace contract\n", "utf8");
 	writeFileSync(resolve(root, "report.md"), "# fixture report\n", "utf8");
@@ -81,6 +81,10 @@ test("one reader loads required artifacts while tolerating a missing Session JSO
 	const summary = listRuns(createAnalysisContext([descriptor]))[0]!;
 	assert.deepEqual(summary.labels, { cohort: "development" });
 	assert.equal(summary.skill, null);
+	assert.equal(summary.diff_empty, false);
+	assert.equal(summary.changed_files_count, 1);
+	assert.equal(summary.verifier_status, "passed");
+	assert.equal(summary.verifier_code, 0);
 });
 
 test("reader rejects a Descriptor and Manifest Run ID mismatch", () => {

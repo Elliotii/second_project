@@ -148,10 +148,15 @@ export function listRuns(context: AnalysisContext): Array<Record<string, unknown
 			verifierStatus: loaded.verifierResult.status,
 		});
 		const result = loaded.descriptor.evaluation ?? baseResult;
+		const changedFilesCount = loaded.manifest.changes.added.length + loaded.manifest.changes.modified.length + loaded.manifest.changes.deleted.length;
 		return {
 			runId: loaded.manifest.run_id,
 			taskId: loaded.manifest.task_id,
 			...result,
+			diff_empty: changedFilesCount === 0,
+			changed_files_count: changedFilesCount,
+			verifier_status: loaded.verifierResult.status,
+			verifier_code: loaded.verifierResult.exit_code ?? null,
 			...(loaded.descriptor.evaluation ? {
 				attempt: loaded.descriptor.evaluation.attempt,
 				includedForEvaluation: loaded.descriptor.evaluation.includedForEvaluation,

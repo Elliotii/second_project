@@ -21,7 +21,7 @@ function fixture(label: string): RunDescriptor {
 	] });
 	json(resolve(root, "diff.json"), { changes:{added:[],modified:["src/a.ts"],deleted:[]} });
 	writeFileSync(resolve(root, "diff.patch"), "diff --git a/src/a.ts b/src/a.ts\n", "utf8");
-	json(resolve(root, "verifier/result.json"), { status:"passed" });
+	json(resolve(root, "verifier/result.json"), { status:"passed", exit_code:0 });
 	writeFileSync(resolve(root, "verifier/output.txt"), "passed\n", "utf8");
 	writeFileSync(resolve(root, "report.md"), "# report\n", "utf8");
 	return { runId, root, labels:{cohort:"development"} };
@@ -45,13 +45,23 @@ test("Analysis model receives exactly the four frozen tools", () => {
 	const profile = setup("allowlist");
 	assert.deepEqual(profile.tools.map((tool) => tool.name), ["list_runs", "search_trace", "read_evidence", "update_state"]);
 	assert.equal((profile.tools.find((tool) => tool.name === "read_evidence")!.parameters as { type?: string }).type, "object");
+	const updateDescription = profile.tools.find((tool) => tool.name === "update_state")!.description;
+	for (const required of ["observable Matrix anomaly or contrast", "not a generic todo", "necessary checks", "evidence state", "completing required_runs does not establish support", "semantically satisfy settle_condition", "automatically close", "what was checked", "what was and was not supported", "why investigation can stop", "without a kept Finding"]) assert.match(updateDescription, new RegExp(required));
 	for (const forbidden of ["bash","git","workspace_read","workspace_write","run_command","skill"] ) assert.equal(profile.tools.some((tool) => tool.name === forbidden), false);
 });
 
 test("matrix_triage_complete requires list_runs exposure in the current fresh Invocation", async () => {
 	const profile = setup("triage");
 	await assert.rejects(execute(profile, "update_state", { matrix_triage_complete:true, investigation_agenda:[], notes:[], open_questions:[], next_action:"", finding_drafts:[] }), /requires list_runs exposure/);
-	await execute(profile, "list_runs", {});
+	const result = await execute(profile, "list_runs", {});
+	const visibleContent = result.content[0]!;
+	assert.equal(visibleContent.type, "text");
+	if (visibleContent.type !== "text") throw new Error("list_runs did not return model-visible text");
+	const visibleRuns = JSON.parse(visibleContent.text) as Array<Record<string, unknown>>;
+	assert.deepEqual(
+		{ diff_empty:visibleRuns[0]!.diff_empty, changed_files_count:visibleRuns[0]!.changed_files_count, verifier_status:visibleRuns[0]!.verifier_status, verifier_code:visibleRuns[0]!.verifier_code },
+		{ diff_empty:false, changed_files_count:1, verifier_status:"passed", verifier_code:0 },
+	);
 	await execute(profile, "update_state", { matrix_triage_complete:true, investigation_agenda:[], notes:[], open_questions:[], next_action:"", finding_drafts:[] });
 	assert.equal(loadAnalysisState(profile.statePath).matrix_triage_complete, true);
 });
@@ -112,11 +122,13 @@ test("resume Prompt contains only the saved State summary, not prior chat or Evi
 	for (const expected of ["inspect r2 verifier","synthetic observation","characterCount","sequence"]) assert.match(prompt, new RegExp(expected));
 	for (const forbidden of ["SECRET_EVIDENCE_CONTENT","prior assistant chat","value\\.trim\\(\\)","sequence 9","sequence 11"]) assert.doesNotMatch(prompt, new RegExp(forbidden));
 	assert.doesNotMatch(freshAnalysisPrompt(), /value\.trim|sequence 9|sequence 11|coding-task-/);
+	assert.match(freshAnalysisPrompt(), /triggers preserve the observable Matrix anomalies or contrasts.*settle_condition.*necessary checks and the evidence state/s);
+	assert.match(prompt, /mechanical coverage, not proof of the claim.*not supported.*closing without a kept Finding is valid/s);
 });
 
 test("System Prompt carries the claim-scoped workflow disciplines", () => {
 	assert.equal(ANALYSIS_SYSTEM_PROMPT.split("\n").filter((line) => /^\d\./.test(line)).length, 7);
-	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","Global Matrix Triage","Claim Scope","Required Runs","run_observation requires only its anchor Run","Local Item closure is not Global Completion","Observation","Interpretation","Limitation","narrow the final Finding wording and claim_scope","deprioritize","Do not manufacture a Finding","State records task progress while Artifacts record facts","counter_checked remains descriptive, not completion authority","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
+	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","Global Matrix Triage","Claim Scope","observable anomaly or contrast","rather than a generic todo","Required Runs","run_observation requires only its anchor Run","necessary inspection scope","retain, narrow, reject, or stop","does not establish that a claim is supported","semantically satisfy settle_condition","automatically close an Item","evidence-based semantic decision","Local Item closure is not Global Completion","Observation","Interpretation","Limitation","narrow the final Finding wording and claim_scope","deprioritize","what was checked","what was and was not supported","why investigation can stop","without a kept Finding","Do not manufacture a Finding","State records task progress while Artifacts record facts","counter_checked remains descriptive, not completion authority","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /local process facts, but must not .* reclassify the run-level Outcome/);
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /Absence of an observed action or transition does not establish failure.*localization does not establish root cause or causation.*need not supply a causal explanation/s);
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /root-cause, condition-effect, Skill-effect, and cross-Case attribution.*Artifact Evidence actually read and the Finding's claim_scope/);

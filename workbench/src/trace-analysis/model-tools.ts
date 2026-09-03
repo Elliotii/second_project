@@ -172,7 +172,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		},
 		{
 			name: "update_state", label: "update_state",
-			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. checked_runs records explicit question-specific workflow progress. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
+			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. trigger records the observable Matrix anomaly or contrast that made an investigation worth starting, not a generic todo. settle_condition states both the necessary checks and the evidence state that would permit retain, narrow, reject, or stop. checked_runs records explicit question-specific workflow progress; completing required_runs does not establish support, semantically satisfy settle_condition, or automatically close an Item. For a settled or deprioritized Item, closure_reason records what was checked, what was and was not supported, and why investigation can stop; closure without a kept Finding is valid. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
 			parameters: updateStateSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
 				const update = validateUpdate(args as SemanticStateUpdate);

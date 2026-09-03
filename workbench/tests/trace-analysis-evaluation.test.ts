@@ -102,6 +102,10 @@ test("Evaluated descriptors feed list_runs while development descriptors retain 
 	const runs = joinEvaluation({ batch:batch([plan("p1", "one"), plan("p2", "two")]), mapping:mapping([ref("p1", selected), ref("p2", retained, { included_for_evaluation:false })]) });
 	const listed = listRuns(createAnalysisContext(evaluatedRunDescriptors(runs)));
 	assert.deepEqual(listed[0]!.labels, { cohort:"pilot", evaluation_id:"eval-1", suite:"candidate-pilot-v1", case_id:"A", condition:"one", trial:1 });
+	assert.deepEqual(
+		{ diff_empty:listed[0]!.diff_empty, changed_files_count:listed[0]!.changed_files_count, verifier_status:listed[0]!.verifier_status, verifier_code:listed[0]!.verifier_code },
+		{ diff_empty:true, changed_files_count:0, verifier_status:"passed", verifier_code:null },
+	);
 	assert.equal(listed[1]!.outcome, "INFRA_FAILURE"); assert.equal(listed[1]!.includedForEvaluation, false); assert.equal(typeof listed[1]!.reason, "string");
 	const developmentRun = runFixture("listed-development");
 	const development: RunDescriptor = { runId:developmentRun.runId, root:developmentRun.root, labels:{cohort:"development"} };
