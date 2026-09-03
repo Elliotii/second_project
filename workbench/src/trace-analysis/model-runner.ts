@@ -20,6 +20,8 @@ export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analy
 6. Before saving a Finding, include at least one support Locator that you actually read. A kept Finding must link to its Agenda Item and fit that Item's checked_runs; counter_checked remains descriptive, not completion authority.
 7. Limit every conclusion, including root-cause, condition-effect, Skill-effect, and cross-Case attribution, to the Artifact Evidence actually read and the Finding's claim_scope. You may report bounded differences between labeled conditions in the provided runs, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
 
+export const ANALYSIS_THINKING_LEVEL = "max" as const;
+
 export function emptyAnalysisState(runIds: string[]): AnalysisState {
 	return { covered_runs: [...runIds], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
 }
@@ -103,7 +105,7 @@ export async function runAnalysisInvocation(options: {
 	const repo = new JsonlSessionRepo({ fs: new NodeExecutionEnv({ cwd: outputDirectory, shellEnv: {} }), sessionsRoot: resolve(outputDirectory, "sessions", options.mode) });
 	const session = await repo.create({ cwd: outputDirectory, id: sessionId, metadata: { mode: options.mode, state_path: statePath } });
 	const sessionMetadata = await session.getMetadata();
-	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: ANALYSIS_SYSTEM_PROMPT, thinkingLevel: "off", streamOptions: { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 } });
+	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: ANALYSIS_SYSTEM_PROMPT, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 } });
 	const startedMs = Date.now();
 	const startedAt = new Date(startedMs).toISOString();
 	let providerRequests = 0;
