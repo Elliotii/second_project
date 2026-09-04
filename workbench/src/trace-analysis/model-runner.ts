@@ -28,7 +28,11 @@ export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analy
 4. Keep Observation separate from Interpretation and Limitation. Use only Artifact content actually read through the provided tools; State records task progress while Artifacts record facts. Absence of an observed action or transition does not establish failure: report not observed, unclear, or insufficient evidence without filling missing facts. You may localize observable divergence, but localization does not establish root cause or causation, and a Finding need not supply a causal explanation.
 5. If evidence is insufficient, narrow the final Finding wording and claim_scope, and state a specific Limitation when a real evidence boundary matters; deprioritize low-value Agenda Items with a reason. When closing an Item, use closure_reason to record what was checked, what was and was not supported, and why investigation can stop. A mixed, counter, or insufficient result may close without a kept Finding. Do not manufacture a Finding merely to fill the workflow.
 6. Before saving a Finding, include at least one support Locator that you actually read. A kept Finding must link to its Agenda Item and fit that Item's checked_runs; counter_checked remains descriptive, not completion authority.
-7. Limit every effect, causal, root-cause, condition, and cross-Case attribution claim to the Artifact Evidence actually read, the Finding's claim_scope, and current phase permissions. You may report bounded differences between labeled conditions in the provided runs, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
+7. Limit every effect, causal, root-cause, condition, and cross-Case attribution claim to the Artifact Evidence actually read, the Finding's claim_scope, and current phase permissions. You may report bounded differences between labeled conditions in the provided runs, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.
+8. Outcome-neutral is not process-irrelevant. Once an observable, task-relevant process difference is identified, the fact that associated Runs all PASS may limit benefit, outcome, efficiency, and causal claims, but may not by itself justify deprioritizing or closing the process question. Before closure, use available natural replication such as same-case sibling trials, condition counterparts, or other directly comparable Runs to determine whether the signal is isolated, mixed, or repeated; do not default to scanning the full Matrix when the bounded question needs less.
+9. Recurrence may be directionally consistent or semantically equivalent rather than literally identical in tool name, error, text, or operation count. Group process proxies only when observable evidence, task relevance, defensible scope, directional comparability, and a counter or contrast basis support the grouping. A repeated process difference remains only a Behavior Difference: it does not establish Benefit, Efficiency Improvement, or Causation.
+10. Keep expansion hypothesis-bound. State the Agenda Item, investigation question, claim scope, and settle condition served by each expansion; inspect natural sibling or counter evidence, expand further only when remaining ambiguity materially affects that claim, preserve counters and limitations, and stop when the active question is sufficiently resolved as isolated, mixed, or repeated. Do not perform a hypothesis-free exhaustive audit, and do not stop merely to save Tool calls or tokens before reasonable evidence resolution.
+11. Describe terminal evidence as observed state, not inferred intent. Analysis-side settled status, absence of timeout or further Tool calls, empty final assistant text, or another observed terminal state does not alone prove a deliberate decision, intentional stop, choice not to implement, or the reason the Coding Agent stopped.`;
 
 export const ANALYSIS_THINKING_LEVEL = "max" as const;
 
@@ -53,6 +57,10 @@ export function resumeAnalysisPrompt(state: AnalysisState): string {
 		loaded_evidence: state.loaded_evidence,
 	};
 	return `${BLIND_ANALYSIS_PHASE_INSTRUCTIONS}\n\nResume one bounded development analysis in a new Session. No prior chat or Evidence content is available. Follow the saved next_action and current Agenda. Use Required and Open Runs for the current Item and persist explicit checked_runs progress. Required Runs completion is mechanical coverage, not proof of the claim, semantic satisfaction of settle_condition, or automatic closure. Settle or deprioritize only after judging the actual evidence against settle_condition, with a closure_reason that records what was checked, what was and was not supported, and why investigation can stop; closing without a kept Finding is valid. Narrow a final Finding claim_scope when evidence supports less than the initial scope. Local completion does not imply Global Completion; retain an open Agenda or next_action while work remains. Call update_state once and stop.\n\nSaved State summary:\n${JSON.stringify(summary, null, 2)}`;
+}
+
+export function blindAnalysisModelContext(mode: "fresh" | "resume", state: AnalysisState): { systemPrompt: string; userPrompt: string } {
+	return { systemPrompt: ANALYSIS_SYSTEM_PROMPT, userPrompt: mode === "fresh" ? freshAnalysisPrompt() : resumeAnalysisPrompt(state) };
 }
 
 function locatorKey(locator: EvidenceLocator): string {
@@ -139,7 +147,7 @@ export async function runAnalysisInvocation(options: {
 			return { stage: "controlled_unblind", mode: "resume", model: null, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "" };
 		}
 		if (!options.evaluationAuthority) throw new Error("Controlled unblind requires Batch Freeze and Thin Evaluation Mapping authority");
-		const context = await buildControlledUnblindContext({ state: initialState, batchPath: options.evaluationAuthority.batchPath, mappingPath: options.evaluationAuthority.mappingPath });
+		const context = await buildControlledUnblindContext({ state: initialState, descriptors: options.descriptors, batchPath: options.evaluationAuthority.batchPath, mappingPath: options.evaluationAuthority.mappingPath });
 		const systemPrompt = CONTROLLED_UNBLIND_SYSTEM_PROMPT;
 		const userPrompt = controlledUnblindPrompt(context);
 		let completion: AlignmentCompletionResult;
@@ -163,7 +171,7 @@ export async function runAnalysisInvocation(options: {
 		return { stage: "controlled_unblind", mode: "resume", model: completion.model, usage: { provider_requests: 1, ...completion.usage, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: true, tool_names: [], assistant_text: completion.text };
 	}
 	if (options.mode === "resume" && initialState.phase !== "blind_analysis") throw new Error(`${initialState.phase} State cannot resume Blind Analysis`);
-	const prompt = options.mode === "fresh" ? freshAnalysisPrompt() : resumeAnalysisPrompt(initialState);
+	const modelContext = blindAnalysisModelContext(options.mode, initialState);
 	const profile = createAnalysisTools({ analysis, statePath, initialState });
 	const expectedNames = ["list_runs", "process_view", "search_trace", "read_evidence", "update_state"];
 	if (JSON.stringify(profile.tools.map((tool) => tool.name)) !== JSON.stringify(expectedNames)) throw new Error("Analysis Tool allowlist drifted");
@@ -180,7 +188,7 @@ export async function runAnalysisInvocation(options: {
 	const repo = new JsonlSessionRepo({ fs: new NodeExecutionEnv({ cwd: outputDirectory, shellEnv: {} }), sessionsRoot: resolve(outputDirectory, "sessions", options.mode) });
 	const session = await repo.create({ cwd: outputDirectory, id: sessionId, metadata: { mode: options.mode, state_path: statePath } });
 	const sessionMetadata = await session.getMetadata();
-	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: ANALYSIS_SYSTEM_PROMPT, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 } });
+	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: modelContext.systemPrompt, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 } });
 	const startedMs = Date.now();
 	const startedAt = new Date(startedMs).toISOString();
 	let providerRequests = 0;
@@ -201,7 +209,7 @@ export async function runAnalysisInvocation(options: {
 		}
 	});
 	try {
-		await harness.prompt(prompt);
+		await harness.prompt(modelContext.userPrompt);
 		await harness.waitForIdle();
 	} finally {
 		unsubscribe();

@@ -6,7 +6,7 @@ import test from "node:test";
 import { createAnalysisContext } from "../src/trace-analysis/analysis.ts";
 import type { AnalysisState, RunDescriptor } from "../src/trace-analysis/contracts.ts";
 import { createAnalysisTools } from "../src/trace-analysis/model-tools.ts";
-import { ANALYSIS_SYSTEM_PROMPT, emptyAnalysisState, freshAnalysisPrompt, resumeAnalysisPrompt } from "../src/trace-analysis/model-runner.ts";
+import { ANALYSIS_SYSTEM_PROMPT, blindAnalysisModelContext, emptyAnalysisState, freshAnalysisPrompt, resumeAnalysisPrompt } from "../src/trace-analysis/model-runner.ts";
 import { loadAnalysisState } from "../src/trace-analysis/state.ts";
 
 function temporary(label: string): string { return mkdtempSync(resolve(tmpdir(), `trace-analysis-model-${label}-`)); }
@@ -131,7 +131,7 @@ test("resume Prompt contains only the saved State summary, not prior chat or Evi
 });
 
 test("System Prompt carries the claim-scoped workflow disciplines", () => {
-	assert.equal(ANALYSIS_SYSTEM_PROMPT.split("\n").filter((line) => /^\d\./.test(line)).length, 7);
+	assert.equal(ANALYSIS_SYSTEM_PROMPT.split("\n").filter((line) => /^\d+\./.test(line)).length, 11);
 	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","Global Matrix Triage","Claim Scope","observable anomaly or contrast","rather than a generic todo","Required Runs","run_observation requires only its anchor Run","necessary inspection scope","retain, narrow, reject, or stop","does not establish that a claim is supported","semantically satisfy settle_condition","automatically close an Item","evidence-based semantic decision","Local Item closure is not Global Completion","Observation","Interpretation","Limitation","narrow the final Finding wording and claim_scope","deprioritize","what was checked","what was and was not supported","why investigation can stop","without a kept Finding","Do not manufacture a Finding","State records task progress while Artifacts record facts","counter_checked remains descriptive, not completion authority","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /local process facts, but must not .* reclassify the run-level Outcome/);
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /Absence of an observed action or transition does not establish failure.*localization does not establish root cause or causation.*need not supply a causal explanation/s);
@@ -139,4 +139,11 @@ test("System Prompt carries the claim-scoped workflow disciplines", () => {
 	assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, /Skill-effect/);
 	for (const forbidden of ["18 runs","9 pairs","\\bCase A\\b","\\bCase B\\b","\\bCase C\\b","\\bt1\\b","\\bt2\\b","\\bt3\\b","Arm X","Arm Y","blind condition alias","no_skill","with_skill","tool friction","first mutation","termination difference"]) assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, new RegExp(forbidden, "i"));
 	for (const forbidden of ["Planner","Critic","confidence","expected Finding"]) assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, new RegExp(forbidden, "i"));
+});
+
+test("actual Blind model construction carries recurrence, bounded-expansion, claim, stop, and terminal-intent disciplines", () => {
+	const state = emptyAnalysisState(["run-a"]); const context = blindAnalysisModelContext("fresh",state);
+	assert.equal(context.systemPrompt,ANALYSIS_SYSTEM_PROMPT); assert.equal(context.userPrompt,freshAnalysisPrompt());
+	for (const required of ["Outcome-neutral is not process-irrelevant","all PASS","natural replication","same-case sibling trials","isolated, mixed, or repeated","semantically equivalent","directionally consistent","hypothesis-bound","remaining ambiguity materially affects that claim","stop when the active question is sufficiently resolved","does not establish Benefit, Efficiency Improvement, or Causation","does not alone prove a deliberate decision","reason the Coding Agent stopped"]) assert.match(context.systemPrompt,new RegExp(required));
+	for (const forbidden of ["Case B","Case C","A/t3","inspection count","Tool Error","P1 Reference Finding"]) assert.doesNotMatch(context.systemPrompt,new RegExp(forbidden,"i"));
 });

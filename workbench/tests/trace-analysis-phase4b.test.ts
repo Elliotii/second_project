@@ -4,14 +4,16 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
 import { fileSha256 } from "../src/hash.ts";
-import { finalizeAnalysisHandoff } from "../src/trace-analysis/analysis.ts";
+import { createAnalysisContext, finalizeAnalysisHandoff } from "../src/trace-analysis/analysis.ts";
 import {
 	buildControlledUnblindContext,
 	completeControlledUnblindState,
+	controlledUnblindPrompt,
 	parseControlledUnblindResult,
 	validateControlledUnblindResult,
 } from "../src/trace-analysis/controlled-unblind.ts";
 import type { AnalysisState, ControlledUnblindResult, FindingDraft, RunDescriptor } from "../src/trace-analysis/contracts.ts";
+import { createBlindSensitivePathProjection } from "../src/trace-analysis/model-tools.ts";
 import { runAnalysisInvocation, type AlignmentCompletionResult } from "../src/trace-analysis/model-runner.ts";
 import { loadAnalysisState, saveAnalysisState } from "../src/trace-analysis/state.ts";
 
@@ -62,16 +64,33 @@ function completion(result:unknown):AlignmentCompletionResult {
 test("alignment_ready uses one zero-tool closed-evidence completion and persists human_review_ready", async()=>{
 	const env=environment("success"); const before=structuredClone(env.state.finding_drafts); let calls=0; let credentialResolved=false;
 	const result=await runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialResolved=true;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:async(input)=>{
-		calls++; assert.match(input.systemPrompt,/quoted intervention evidence/); assert.match(input.userPrompt,/Arm X/); assert.match(input.userPrompt,/"real_condition": "alpha"/); assert.match(input.userPrompt,/9: 1\. Inspect the registry/); assert.doesNotMatch(input.userPrompt,/RAW_TRACE_/); return completion(validResult(env.sha256));
+		calls++; assert.match(input.systemPrompt,/quoted intervention evidence/); assert.match(input.systemPrompt,/Mechanical origin.*does not establish why.*not Candidate-content evidence/s); assert.match(input.userPrompt,/Arm X/); assert.match(input.userPrompt,/"real_condition": "alpha"/); assert.match(input.userPrompt,/9: 1\. Inspect the registry/); assert.doesNotMatch(input.userPrompt,/RAW_TRACE_/); return completion(validResult(env.sha256));
 	}});
 	assert.equal(result.stage,"controlled_unblind"); assert.equal(result.model_invoked,true); assert.deepEqual(result.tool_names,[]); assert.equal(calls,1); assert.equal(credentialResolved,false);
 	const saved=loadAnalysisState(resolve(env.output,"analysis-state.json")); assert.equal(saved.phase,"human_review_ready"); assert.deepEqual(saved.finding_drafts,before); assert.deepEqual(saved.controlled_unblind_result,validResult(env.sha256));
 });
 
 test("condition aliases and outcome projection are dynamically recovered from Formal artifacts",async()=>{
-	const env=environment("mapping"); const context=await buildControlledUnblindContext({state:env.state,batchPath:env.batchPath,mappingPath:env.mappingPath});
+	const env=environment("mapping"); const context=await buildControlledUnblindContext({state:env.state,descriptors:env.descriptors,batchPath:env.batchPath,mappingPath:env.mappingPath});
 	assert.deepEqual(context.condition_mapping,[{blind_alias:"Arm X",real_condition:"alpha"},{blind_alias:"Arm Y",real_condition:"zeta"}]);
 	assert.deepEqual(context.finding_scoped_outcomes[0]!.runs.map((run)=>[run.run_id,run.real_condition,run.outcome]),[["run-zeta","zeta","PASS"],["run-alpha","alpha","PASS"]]);
+});
+
+test("controlled unblind receives only finding-scoped safe projection provenance after seal",async()=>{
+	const env=environment("projection-provenance");
+	const projection=createBlindSensitivePathProjection(createAnalysisContext(env.descriptors));
+	const alias=projection.project(env.skillPath); assert.equal(typeof alias,"string");
+	const state=structuredClone(env.state); state.finding_drafts[0]!.observation=`The observed target was ${alias}.`;
+	const sealedBefore=structuredClone(state.finding_drafts);
+	const context=await buildControlledUnblindContext({state,descriptors:env.descriptors,batchPath:env.batchPath,mappingPath:env.mappingPath});
+	assert.deepEqual(context.finding_scoped_projection_provenance,[{behavior_finding_id:"finding-1",projections:[{projected_value:alias,projection_placeholder:true,raw_literal:false,origin_category:"skill_delivery"}]}]);
+	const prompt=controlledUnblindPrompt(context);
+	assert.match(prompt,/"projection_placeholder": true/); assert.match(prompt,/"raw_literal": false/); assert.match(prompt,/"origin_category": "skill_delivery"/);
+	assert.doesNotMatch(prompt,new RegExp(env.skillPath.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))); assert.doesNotMatch(prompt,/RAW_TRACE_/);
+	assert.deepEqual(state.finding_drafts,sealedBefore); assert.equal("finding_scoped_projection_provenance" in state,false);
+	const unrelated=structuredClone(env.state); unrelated.finding_drafts[0]!.observation="No projected value appears.";
+	const unrelatedContext=await buildControlledUnblindContext({state:unrelated,descriptors:env.descriptors,batchPath:env.batchPath,mappingPath:env.mappingPath});
+	assert.deepEqual(unrelatedContext.finding_scoped_projection_provenance,[]);
 });
 
 test("Candidate authority mismatch fails before model completion and leaves State unchanged",async()=>{
@@ -82,7 +101,7 @@ test("Candidate authority mismatch fails before model completion and leaves Stat
 });
 
 test("mechanical validation rejects coverage, enums, and illegal Skill refs without persisting",async()=>{
-	const env=environment("validation"); const context=await buildControlledUnblindContext({state:env.state,batchPath:env.batchPath,mappingPath:env.mappingPath}); const base=validResult(env.sha256);
+	const env=environment("validation"); const context=await buildControlledUnblindContext({state:env.state,descriptors:env.descriptors,batchPath:env.batchPath,mappingPath:env.mappingPath}); const base=validResult(env.sha256);
 	for(const [label,value,pattern] of [
 		["missing",{...base,alignments:[]},/exactly cover/],
 		["unknown",{...base,alignments:[{...base.alignments[0]!,behavior_finding_id:"unknown"}]},/exactly cover/],
@@ -118,7 +137,7 @@ test("zero-Finding deterministically skips Candidate, Credential, and model and 
 });
 
 test("human_review_ready cannot execute A or B and compatibility State may omit B result before that phase",async()=>{
-	const env=environment("terminal"); const context=await buildControlledUnblindContext({state:env.state,batchPath:env.batchPath,mappingPath:env.mappingPath}); const terminal=completeControlledUnblindState(env.state,env.descriptors,validResult(env.sha256),context.frozen_candidate_skill); saveAnalysisState(env.output,terminal);
+	const env=environment("terminal"); const context=await buildControlledUnblindContext({state:env.state,descriptors:env.descriptors,batchPath:env.batchPath,mappingPath:env.mappingPath}); const terminal=completeControlledUnblindState(env.state,env.descriptors,validResult(env.sha256),context.frozen_candidate_skill); saveAnalysisState(env.output,terminal);
 	let credentialCalls=0; let completionCalls=0;
 	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialCalls++;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:async()=>{completionCalls++;return completion({});}}),/cannot run Analysis again/);
 	assert.equal(credentialCalls,0); assert.equal(completionCalls,0);
@@ -133,7 +152,7 @@ test("persisted human_review_ready requires a mechanically valid completed B res
 		["coverage",{...validResult("a".repeat(64)),alignments:[]},/exactly cover/],
 		["skill-ref",validResult("b".repeat(64)),/wrong Candidate SHA/],
 	] as const){
-		const env=environment(`persisted-${label}`); const context=await buildControlledUnblindContext({state:env.state,batchPath:env.batchPath,mappingPath:env.mappingPath});
+		const env=environment(`persisted-${label}`); const context=await buildControlledUnblindContext({state:env.state,descriptors:env.descriptors,batchPath:env.batchPath,mappingPath:env.mappingPath});
 		const terminal=completeControlledUnblindState(env.state,env.descriptors,validResult(env.sha256),context.frozen_candidate_skill);
 		saveAnalysisState(env.output,{...terminal,controlled_unblind_result:result} as unknown as AnalysisState);
 		await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>"unused"},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath}}),pattern,label);

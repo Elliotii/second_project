@@ -72,7 +72,8 @@ test("process_view is registered, fail-closed, defaults to overview, and bounds 
 	assert.doesNotMatch(JSON.stringify(overview), /frozen-candidate|SKILL\.md/);
 	const timeline = JSON.parse(resultText(await execute(profile, "process_view", {run_id:runId,detail:"timeline",max_events:2})));
 	assert.deepEqual({total:timeline.timeline.total_operations,returned:timeline.timeline.returned_operations,truncated:timeline.timeline.truncated},{total:3,returned:2,truncated:true});
-	assert.equal(timeline.timeline.operations[0].target, "[blind-skill-path]");
+	assert.match(timeline.timeline.operations[0].target, /^\[redacted-path-\d+\]$/);
+	assert.doesNotMatch(timeline.timeline.operations[0].target, /skill|candidate|condition/i);
 	assert.equal(timeline.timeline.operations[0].result_locator.sequence, 2);
 	assert.equal(timeline.timeline.operations[2], undefined);
 	assert.equal(timeline.timeline.operations[1].validation_result, null);
@@ -94,6 +95,20 @@ test("Blind Tool projection hides real conditions, Skill metadata, known Skill p
 	const manifestText = resultText(await execute(profile, "read_evidence", {artifact:"manifest",run_id:candidateId}));
 	assert.doesNotMatch(manifestText, /frozen-candidate|SKILL\.md|actual_sha256|SECRET_CANDIDATE/);
 	assert.equal(JSON.parse(JSON.parse(manifestText).content).skill, undefined);
+});
+
+test("neutral path aliases preserve replay-local equivalence without collapsing distinct sensitive values", async () => {
+	const profile = setup("neutral-alias"); const candidateId = profile.descriptors[1]!.runId;
+	await execute(profile, "list_runs", {});
+	const overview = JSON.parse(resultText(await execute(profile, "process_view", {run_id:candidateId}))) as {overview:{unique_targets_by_kind:{inspection:string[]}}};
+	const trace = JSON.parse(resultText(await execute(profile, "read_evidence", {artifact:"trace",run_id:candidateId,sequence:2}))) as {content:string};
+	const aliases = JSON.stringify({overview,trace}).match(/\[redacted-path-\d+\]/g) ?? [];
+	assert.ok(aliases.length >= 2); assert.equal(new Set(aliases).size,1);
+	for (const alias of aliases) assert.doesNotMatch(alias,/skill|candidate|condition/i);
+	assert.doesNotMatch(JSON.stringify({overview,trace}),/blind-skill-path/i);
+	const fullPathTrace = profile.analysis.runs.get(candidateId)!.trace; (fullPathTrace.events[0] as Record<string,unknown>).path=SKILL_PATH;
+	const projected = JSON.parse(resultText(await execute(profile, "process_view", {run_id:candidateId,detail:"timeline",max_events:2}))) as {timeline:{operations:Array<{target:string}>}};
+	assert.notEqual(projected.timeline.operations[0]!.target, overview.overview.unique_targets_by_kind.inspection[0]);
 });
 
 test("deterministic blind aliases survive fresh State persistence and resume projection", async () => {

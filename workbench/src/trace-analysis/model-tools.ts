@@ -123,29 +123,37 @@ function blindConditionAliases(context: AnalysisContext): Map<string, string> {
 	return deriveBlindConditionAliases(conditions);
 }
 
-function knownSkillPathValues(context: AnalysisContext): string[] {
-	const values = new Set<string>();
+export interface BlindSensitivePathProjection {
+	project(value: unknown): unknown;
+	placeholders: Array<{ projected_value: string; origin_category: "skill_delivery" }>;
+}
+
+export function createBlindSensitivePathProjection(context: AnalysisContext): BlindSensitivePathProjection {
+	const canonicalValues = new Set<string>();
 	for (const loaded of context.runs.values()) {
 		const path = loaded.manifest.skill?.path;
 		if (typeof path !== "string" || path.length === 0) continue;
-		for (const value of [path, dirname(path), dirname(dirname(path))]) {
-			values.add(value);
-			values.add(value.replaceAll("\\", "/"));
-			values.add(value.replaceAll("/", "\\"));
-		}
+		for (const value of [path, dirname(path), dirname(dirname(path))]) canonicalValues.add(value.replaceAll("\\", "/"));
 	}
-	return [...values].filter((value) => value.length > 0).sort((left, right) => right.length - left.length);
-}
-
-function blindKnownSkillPaths(value: unknown, context: AnalysisContext): unknown {
-	const knownPaths = knownSkillPathValues(context);
+	const aliases = [...canonicalValues].filter((value) => value.length > 0).sort().map((canonical, index) => ({
+		canonical,
+		projected_value: `[redacted-path-${index + 1}]`,
+		origin_category: "skill_delivery" as const,
+	}));
+	const replacements = aliases.flatMap((entry) => [entry.canonical, entry.canonical.replaceAll("/", "\\")].map((raw) => ({ raw, projected: entry.projected_value })))
+		.filter((entry, index, entries) => entries.findIndex((candidate) => candidate.raw === entry.raw) === index)
+		.sort((left, right) => right.raw.length - left.raw.length || left.raw.localeCompare(right.raw));
 	const project = (input: unknown): unknown => {
-		if (typeof input === "string") return knownPaths.reduce((text, path) => text.replaceAll(path, "[blind-skill-path]"), input);
+		if (typeof input === "string") return replacements.reduce((text, entry) => text.replaceAll(entry.raw, entry.projected), input);
 		if (Array.isArray(input)) return input.map(project);
 		if (input !== null && typeof input === "object") return Object.fromEntries(Object.entries(input).map(([key, entry]) => [key, project(entry)]));
 		return input;
 	};
-	return project(value);
+	return { project, placeholders: aliases.map(({ projected_value, origin_category }) => ({ projected_value, origin_category })) };
+}
+
+function blindKnownSkillPaths(value: unknown, context: AnalysisContext): unknown {
+	return createBlindSensitivePathProjection(context).project(value);
 }
 
 function blindListRuns(context: AnalysisContext): Array<Record<string, unknown>> {
