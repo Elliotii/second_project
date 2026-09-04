@@ -86,7 +86,7 @@ function eventSequence(event: JsonObject, label: string): number {
 	return event.sequence as number;
 }
 
-function pairedEndEvents(events: JsonObject[]): Map<string, JsonObject> {
+export function pairedEndEvents(events: JsonObject[]): Map<string, JsonObject> {
 	const ends = new Map<string, JsonObject>();
 	for (const [index, event] of events.entries()) {
 		if (event.phase !== "end") continue;
@@ -97,13 +97,13 @@ function pairedEndEvents(events: JsonObject[]): Map<string, JsonObject> {
 	return ends;
 }
 
-function operationStatus(event: JsonObject, toolCallId: string): "success" | "failure" {
+export function operationStatus(event: JsonObject, toolCallId: string): "success" | "failure" {
 	if (event.status === "ok") return "success";
 	if (event.status === "error") return "failure";
 	throw new Error(`trace end event for tool_call_id ${toolCallId} has no explicit status`);
 }
 
-function sourceTarget(event: JsonObject): string | undefined {
+export function sourceTarget(event: JsonObject): string | undefined {
 	for (const field of ["target", "path", "command_id"] as const) {
 		if (typeof event[field] === "string") return event[field] as string;
 	}
