@@ -95,6 +95,21 @@ test("model cannot promote lifecycle and alignment_ready cannot re-enter Blind u
 	assert.equal(resolved,false);
 });
 
+test("legacy State stays readable but cannot enter Blind Resume, while explicit current Blind identity passes the guard", async () => {
+	const descriptors = [fixture("x-legacy","x",1),fixture("y-legacy","y",1)];
+	const legacyOutput = temporary("legacy-resume");
+	json(resolve(legacyOutput,"analysis-state.json"),{covered_runs:descriptors.map((entry)=>entry.runId),matrix_triage_complete:false,investigation_agenda:[],notes:["historical"],open_questions:[],next_action:"continue",loaded_evidence:[],finding_drafts:[]});
+	assert.equal(loadAnalysisState(resolve(legacyOutput,"analysis-state.json")).phase,"blind_analysis");
+	let legacyCredentialResolved = false;
+	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors,outputDirectory:legacyOutput,credentialResolver:{resolve:async()=>{legacyCredentialResolved=true;return "unused";}}}),/requires an explicit persisted phase/);
+	assert.equal(legacyCredentialResolved,false);
+
+	const currentOutput = temporary("current-blind-resume"); saveAnalysisState(currentOutput,state(descriptors,{matrix_triage_complete:false,investigation_agenda:[],finding_drafts:[],loaded_evidence:[],next_action:"continue"}));
+	let currentCredentialResolved = false;
+	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors,outputDirectory:currentOutput,credentialResolver:{resolve:async()=>{currentCredentialResolved=true;return "";}}}),/Credential resolution failed/);
+	assert.equal(currentCredentialResolved,true);
+});
+
 test("repeated-support provenance must remain auditable when explicitly supplied", () => {
 	const descriptors = [fixture("x6","x",1),fixture("y6","y",1)]; const invalid = state(descriptors); invalid.finding_drafts[0]!.support = invalid.finding_drafts[0]!.support.slice(1);
 	assert.throws(() => validateAnalysisWorkflow(invalid,descriptors),/no supporting Evidence Locator/);

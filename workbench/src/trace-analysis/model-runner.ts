@@ -88,9 +88,9 @@ export async function runAnalysisInvocation(options: {
 	const analysis = createAnalysisContext(options.descriptors);
 	const initialState = options.mode === "fresh"
 		? emptyAnalysisState(analysis.coveredRuns)
-		: loadAnalysisState(statePath);
+		: loadAnalysisState(statePath, { requireExplicitPhase: true });
 	if (options.mode === "fresh" && analysisStateWasSaved(statePath)) throw new Error("fresh Analysis requires an output directory without analysis-state.json");
-	if (options.mode === "resume" && initialState.phase === "alignment_ready") throw new Error("alignment_ready State cannot resume Blind Analysis");
+	if (options.mode === "resume" && initialState.phase !== "blind_analysis") throw new Error(`${initialState.phase} State cannot resume Blind Analysis`);
 	const prompt = options.mode === "fresh" ? freshAnalysisPrompt() : resumeAnalysisPrompt(initialState);
 	const profile = createAnalysisTools({ analysis, statePath, initialState });
 	const expectedNames = ["list_runs", "process_view", "search_trace", "read_evidence", "update_state"];

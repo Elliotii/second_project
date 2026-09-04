@@ -9,8 +9,9 @@ export function saveAnalysisState(outputDirectory: string, state: AnalysisState)
 	return path;
 }
 
-export function loadAnalysisState(path: string): AnalysisState {
+export function loadAnalysisState(path: string, options: { requireExplicitPhase?: boolean } = {}): AnalysisState {
 	const parsed = JSON.parse(readFileSync(resolve(path), "utf8")) as Partial<AnalysisState>;
+	if (options.requireExplicitPhase && !Object.prototype.hasOwnProperty.call(parsed, "phase")) throw new Error("Blind Analysis resume requires an explicit persisted phase");
 	const value = {
 		...parsed,
 		phase: parsed.phase ?? "blind_analysis",
