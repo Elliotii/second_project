@@ -224,6 +224,7 @@ export function deriveOpenRuns(item: InvestigationAgendaItem, descriptors: RunDe
 
 export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunDescriptor[]): void {
 	const formalIds = new Set(formalDescriptors(descriptors).map((entry) => entry.runId));
+	const processResolutions = new Set(["bounded_contrast", "evidence_backed_irrelevance", "explicit_confound", "not_repeated_after_check"]);
 	const agenda = new Map<string, InvestigationAgendaItem>();
 	for (const item of state.investigation_agenda) {
 		if (item.id.length === 0 || agenda.has(item.id)) throw new Error(`Agenda Item ID is empty or duplicate: ${item.id}`);
@@ -231,7 +232,11 @@ export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunD
 		if (!["open", "settled", "deprioritized"].includes(item.status)) throw new Error(`Agenda Item ${item.id} status is invalid`);
 		agenda.set(item.id, item);
 		for (const runId of item.checked_runs) if (!formalIds.has(runId)) throw new Error(`checked Run ${runId} is not in the formal Evaluation`);
+		if (typeof item.process_investigation_required !== "boolean") throw new Error(`Agenda Item ${item.id} process_investigation_required is invalid`);
+		if (item.process_investigation_resolution !== null && !processResolutions.has(item.process_investigation_resolution)) throw new Error(`Agenda Item ${item.id} process_investigation_resolution is invalid`);
+		if (!item.process_investigation_required && item.process_investigation_resolution !== null) throw new Error(`Agenda Item ${item.id} has a process investigation resolution without an active obligation`);
 		if ((item.status === "settled" || item.status === "deprioritized") && item.closure_reason.trim().length === 0) throw new Error(`Agenda Item ${item.id} closure_reason is required`);
+		if ((item.status === "settled" || item.status === "deprioritized") && item.process_investigation_required && item.process_investigation_resolution === null) throw new Error(`Agenda Item ${item.id} cannot close with an unresolved process investigation obligation`);
 		if (item.status === "settled" && deriveOpenRuns(item, descriptors).length > 0) throw new Error(`Agenda Item ${item.id} is settled before all required Runs were checked`);
 	}
 	for (const finding of state.finding_drafts) {

@@ -39,11 +39,12 @@ async function execute(profile: ReturnType<typeof setup>, name: string, args: Re
 }
 
 const draft = (runId: string) => ({ id:"f1", observation:"synthetic observation", interpretation:"bounded interpretation", limitation:"one fixture", applicable_runs:[runId], support:[{artifact:"trace" as const,run_id:runId,sequence:1}], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" });
-const workflow = (runId: string) => ({ matrix_triage_complete:true, investigation_agenda:[{ id:"i1", question:"What happened in this Run?", trigger:"Matrix signal", claim_scope:"run_observation" as const, anchor_run_ids:[runId], relevant_case_ids:[], checked_runs:[runId], settle_condition:"inspect the anchor Run", status:"open" as const, closure_reason:"" }] });
+const workflow = (runId: string) => ({ matrix_triage_complete:true, investigation_agenda:[{ id:"i1", question:"What happened in this Run?", trigger:"Matrix signal", claim_scope:"run_observation" as const, anchor_run_ids:[runId], relevant_case_ids:[], checked_runs:[runId], settle_condition:"inspect the anchor Run", process_investigation_required:false, process_investigation_resolution:null, status:"open" as const, closure_reason:"" }] });
 
-test("Analysis model receives exactly the four frozen tools", () => {
+test("Analysis model receives the five bounded evidence and State tools", () => {
 	const profile = setup("allowlist");
-	assert.deepEqual(profile.tools.map((tool) => tool.name), ["list_runs", "search_trace", "read_evidence", "update_state"]);
+	assert.deepEqual(profile.tools.map((tool) => tool.name), ["list_runs", "process_view", "search_trace", "read_evidence", "update_state"]);
+	assert.equal((profile.tools.find((tool) => tool.name === "process_view")!.parameters as { type?: string }).type, "object");
 	assert.equal((profile.tools.find((tool) => tool.name === "read_evidence")!.parameters as { type?: string }).type, "object");
 	const updateDescription = profile.tools.find((tool) => tool.name === "update_state")!.description;
 	for (const required of ["observable Matrix anomaly or contrast", "not a generic todo", "necessary checks", "evidence state", "completing required_runs does not establish support", "semantically satisfy settle_condition", "automatically close", "what was checked", "what was and was not supported", "why investigation can stop", "without a kept Finding"]) assert.match(updateDescription, new RegExp(required));
@@ -124,6 +125,9 @@ test("resume Prompt contains only the saved State summary, not prior chat or Evi
 	assert.doesNotMatch(freshAnalysisPrompt(), /value\.trim|sequence 9|sequence 11|coding-task-/);
 	assert.match(freshAnalysisPrompt(), /triggers preserve the observable Matrix anomalies or contrasts.*settle_condition.*necessary checks and the evidence state/s);
 	assert.match(prompt, /mechanical coverage, not proof of the claim.*not supported.*closing without a kept Finding is valid/s);
+	for (const phasePrompt of [freshAnalysisPrompt(), prompt]) {
+		for (const required of ["Blind Behavior Investigation", "repeated and potentially task-relevant", "Skill-behavior correspondence", "Skill effect", "Skill benefit", "Skill causation"]) assert.match(phasePrompt, new RegExp(required));
+	}
 });
 
 test("System Prompt carries the claim-scoped workflow disciplines", () => {
@@ -131,6 +135,8 @@ test("System Prompt carries the claim-scoped workflow disciplines", () => {
 	for (const required of ["outcome, evaluable status, selection status, and reason","External Verifier artifact","Global Matrix Triage","Claim Scope","observable anomaly or contrast","rather than a generic todo","Required Runs","run_observation requires only its anchor Run","necessary inspection scope","retain, narrow, reject, or stop","does not establish that a claim is supported","semantically satisfy settle_condition","automatically close an Item","evidence-based semantic decision","Local Item closure is not Global Completion","Observation","Interpretation","Limitation","narrow the final Finding wording and claim_scope","deprioritize","what was checked","what was and was not supported","why investigation can stop","without a kept Finding","Do not manufacture a Finding","State records task progress while Artifacts record facts","counter_checked remains descriptive, not completion authority","bounded differences between labeled conditions","general causality","statistical reliability","final adoption decisions","update_state"]) assert.match(ANALYSIS_SYSTEM_PROMPT, new RegExp(required));
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /local process facts, but must not .* reclassify the run-level Outcome/);
 	assert.match(ANALYSIS_SYSTEM_PROMPT, /Absence of an observed action or transition does not establish failure.*localization does not establish root cause or causation.*need not supply a causal explanation/s);
-	assert.match(ANALYSIS_SYSTEM_PROMPT, /root-cause, condition-effect, Skill-effect, and cross-Case attribution.*Artifact Evidence actually read and the Finding's claim_scope/);
+	assert.match(ANALYSIS_SYSTEM_PROMPT, /effect, causal, root-cause, condition, and cross-Case attribution claim.*Artifact Evidence actually read.*current phase permissions/);
+	assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, /Skill-effect/);
+	for (const forbidden of ["18 runs","9 pairs","\\bCase A\\b","\\bCase B\\b","\\bCase C\\b","\\bt1\\b","\\bt2\\b","\\bt3\\b","Arm X","Arm Y","blind condition alias","no_skill","with_skill","tool friction","first mutation","termination difference"]) assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, new RegExp(forbidden, "i"));
 	for (const forbidden of ["Planner","Critic","confidence","expected Finding"]) assert.doesNotMatch(ANALYSIS_SYSTEM_PROMPT, new RegExp(forbidden, "i"));
 });

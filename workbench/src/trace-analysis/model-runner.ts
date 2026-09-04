@@ -18,7 +18,7 @@ export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analy
 4. Keep Observation separate from Interpretation and Limitation. Use only Artifact content actually read through the provided tools; State records task progress while Artifacts record facts. Absence of an observed action or transition does not establish failure: report not observed, unclear, or insufficient evidence without filling missing facts. You may localize observable divergence, but localization does not establish root cause or causation, and a Finding need not supply a causal explanation.
 5. If evidence is insufficient, narrow the final Finding wording and claim_scope, and state a specific Limitation when a real evidence boundary matters; deprioritize low-value Agenda Items with a reason. When closing an Item, use closure_reason to record what was checked, what was and was not supported, and why investigation can stop. A mixed, counter, or insufficient result may close without a kept Finding. Do not manufacture a Finding merely to fill the workflow.
 6. Before saving a Finding, include at least one support Locator that you actually read. A kept Finding must link to its Agenda Item and fit that Item's checked_runs; counter_checked remains descriptive, not completion authority.
-7. Limit every conclusion, including root-cause, condition-effect, Skill-effect, and cross-Case attribution, to the Artifact Evidence actually read and the Finding's claim_scope. You may report bounded differences between labeled conditions in the provided runs, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
+7. Limit every effect, causal, root-cause, condition, and cross-Case attribution claim to the Artifact Evidence actually read, the Finding's claim_scope, and current phase permissions. You may report bounded differences between labeled conditions in the provided runs, but do not infer general causality, statistical reliability, or final adoption decisions. Save all progress through update_state.`;
 
 export const ANALYSIS_THINKING_LEVEL = "max" as const;
 
@@ -26,8 +26,10 @@ export function emptyAnalysisState(runIds: string[]): AnalysisState {
 	return { covered_runs: [...runIds], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
 }
 
+const BLIND_ANALYSIS_PHASE_INSTRUCTIONS = `This Invocation is Blind Behavior Investigation. Analyze what happened, whether an observed signal is repeated and potentially task-relevant, bounded contrasts and counters, mixed or unstable evidence, and the supported scope boundary. Do not seek or infer real condition identities, Candidate Skill content, metadata, path, intended mechanism, or expected improvement. Do not analyze Skill-behavior correspondence, Skill effect, Skill benefit, or Skill causation. If you judge a process signal to be repeated and potentially task-relevant, set process_investigation_required=true. Such an Item may not be settled or deprioritized until process_investigation_resolution records one bounded resolution: bounded_contrast, evidence_backed_irrelevance, explicit_confound, or not_repeated_after_check. The Harness enforces only that mechanical obligation; you remain responsible for the semantic judgment.`;
+
 export function freshAnalysisPrompt(): string {
-	return `Start one bounded development analysis from the empty State. Call list_runs and perform Global Matrix Triage before Deep Investigation. Save matrix_triage_complete=true and a small structured Investigation Agenda whose triggers preserve the observable Matrix anomalies or contrasts that made each Item worth starting; the Agenda may be empty when no investigation is warranted. You may continue naturally into the first high-value Item. Derive its Required and Open Runs from claim_scope, record only explicitly completed checks in checked_runs, and write a settle_condition that states both the necessary checks and the evidence state permitting retain, narrow, reject, or stop. Do not manufacture a Finding. If Global Completion is still false, save a non-empty next_action. Call update_state once and stop.`;
+	return `${BLIND_ANALYSIS_PHASE_INSTRUCTIONS}\n\nStart one bounded development analysis from the empty State. Call list_runs and perform Global Matrix Triage before Deep Investigation. Save matrix_triage_complete=true and a small structured Investigation Agenda whose triggers preserve the observable Matrix anomalies or contrasts that made each Item worth starting; the Agenda may be empty when no investigation is warranted. You may continue naturally into the first high-value Item. Derive its Required and Open Runs from claim_scope, record only explicitly completed checks in checked_runs, and write a settle_condition that states both the necessary checks and the evidence state permitting retain, narrow, reject, or stop. Do not manufacture a Finding. If Global Completion is still false, save a non-empty next_action. Call update_state once and stop.`;
 }
 
 export function resumeAnalysisPrompt(state: AnalysisState): string {
@@ -40,7 +42,7 @@ export function resumeAnalysisPrompt(state: AnalysisState): string {
 		finding_drafts: state.finding_drafts,
 		loaded_evidence: state.loaded_evidence,
 	};
-	return `Resume one bounded development analysis in a new Session. No prior chat or Evidence content is available. Follow the saved next_action and current Agenda. Use Required and Open Runs for the current Item and persist explicit checked_runs progress. Required Runs completion is mechanical coverage, not proof of the claim, semantic satisfaction of settle_condition, or automatic closure. Settle or deprioritize only after judging the actual evidence against settle_condition, with a closure_reason that records what was checked, what was and was not supported, and why investigation can stop; closing without a kept Finding is valid. Narrow a final Finding claim_scope when evidence supports less than the initial scope. Local completion does not imply Global Completion; retain an open Agenda or next_action while work remains. Call update_state once and stop.\n\nSaved State summary:\n${JSON.stringify(summary, null, 2)}`;
+	return `${BLIND_ANALYSIS_PHASE_INSTRUCTIONS}\n\nResume one bounded development analysis in a new Session. No prior chat or Evidence content is available. Follow the saved next_action and current Agenda. Use Required and Open Runs for the current Item and persist explicit checked_runs progress. Required Runs completion is mechanical coverage, not proof of the claim, semantic satisfaction of settle_condition, or automatic closure. Settle or deprioritize only after judging the actual evidence against settle_condition, with a closure_reason that records what was checked, what was and was not supported, and why investigation can stop; closing without a kept Finding is valid. Narrow a final Finding claim_scope when evidence supports less than the initial scope. Local completion does not imply Global Completion; retain an open Agenda or next_action while work remains. Call update_state once and stop.\n\nSaved State summary:\n${JSON.stringify(summary, null, 2)}`;
 }
 
 function locatorKey(locator: EvidenceLocator): string {
@@ -90,7 +92,7 @@ export async function runAnalysisInvocation(options: {
 	if (options.mode === "fresh" && analysisStateWasSaved(statePath)) throw new Error("fresh Analysis requires an output directory without analysis-state.json");
 	const prompt = options.mode === "fresh" ? freshAnalysisPrompt() : resumeAnalysisPrompt(initialState);
 	const profile = createAnalysisTools({ analysis, statePath, initialState });
-	const expectedNames = ["list_runs", "search_trace", "read_evidence", "update_state"];
+	const expectedNames = ["list_runs", "process_view", "search_trace", "read_evidence", "update_state"];
 	if (JSON.stringify(profile.tools.map((tool) => tool.name)) !== JSON.stringify(expectedNames)) throw new Error("Analysis Tool allowlist drifted");
 
 	const credential = await options.credentialResolver.resolve();
@@ -150,7 +152,7 @@ export async function runAnalysisInvocation(options: {
 		const initialRuns = new Set(initialLocators.map((locator) => locator.run_id));
 		const initialArtifacts = new Set(initialLocators.map((locator) => locator.artifact));
 		const inspected: Array<{ run_id: string; artifact: EvidenceLocator["artifact"] }> = profile.context.calls.flatMap((call) => {
-			if (call.name === "search_trace" && typeof call.input.run_id === "string") return [{ run_id: call.input.run_id, artifact: "trace" as const }];
+			if ((call.name === "process_view" || call.name === "search_trace") && typeof call.input.run_id === "string") return [{ run_id: call.input.run_id, artifact: "trace" as const }];
 			if (call.name === "read_evidence" && call.evidence) return [{ run_id: call.evidence.locator.run_id, artifact: call.evidence.locator.artifact }];
 			return [];
 		});

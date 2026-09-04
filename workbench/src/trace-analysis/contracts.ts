@@ -111,6 +111,12 @@ export interface FindingDraft {
 
 export type ClaimScope = "run_observation" | "cell_pattern" | "condition_comparison" | "cross_case";
 
+export type ProcessInvestigationResolution =
+	| "bounded_contrast"
+	| "evidence_backed_irrelevance"
+	| "explicit_confound"
+	| "not_repeated_after_check";
+
 export interface InvestigationAgendaItem {
 	id: string;
 	question: string;
@@ -120,6 +126,8 @@ export interface InvestigationAgendaItem {
 	relevant_case_ids: string[];
 	checked_runs: string[];
 	settle_condition: string;
+	process_investigation_required: boolean;
+	process_investigation_resolution: ProcessInvestigationResolution | null;
 	status: "open" | "settled" | "deprioritized";
 	closure_reason: string;
 }

@@ -196,7 +196,7 @@ test("Claim Scopes derive minimum formal Runs and reject invalid identities", ()
 });
 
 function agenda(overrides: Partial<InvestigationAgendaItem> = {}): InvestigationAgendaItem {
-	return { id:"i1", question:"Does the cell repeat?", trigger:"triage signal", claim_scope:"cell_pattern", anchor_run_ids:["A-No-Skill-1"], relevant_case_ids:[], checked_runs:[], settle_condition:"inspect all formal trials", status:"open", closure_reason:"", ...overrides };
+	return { id:"i1", question:"Does the cell repeat?", trigger:"triage signal", claim_scope:"cell_pattern", anchor_run_ids:["A-No-Skill-1"], relevant_case_ids:[], checked_runs:[], settle_condition:"inspect all formal trials", process_investigation_required:false, process_investigation_resolution:null, status:"open", closure_reason:"", ...overrides };
 }
 
 function workflowState(itemList: InvestigationAgendaItem[], finding_drafts: AnalysisState["finding_drafts"] = []): AnalysisState {
@@ -219,6 +219,18 @@ test("Local and Global Completion use required subset checks, not counter_checke
 	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ status:"open", checked_runs:["A-No-Skill-1"] })], [kept]), descriptors), /exceeds its Agenda Item checked Runs/);
 	const narrowed = { ...kept, claim_scope:"run_observation" as const };
 	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized", closure_reason:"narrowed", checked_runs:["A-No-Skill-1"] })], [narrowed]), descriptors), true);
+});
+
+test("process investigation obligation blocks unresolved closure and accepts only the four bounded resolutions", () => {
+	const descriptors = matrixDescriptors();
+	for (const status of ["settled", "deprioritized"] as const) {
+		assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ process_investigation_required:true, status, closure_reason:"checked", checked_runs:status === "settled" ? ["A-No-Skill-1","A-No-Skill-2","A-No-Skill-3"] : [] })]), descriptors), /unresolved process investigation obligation/);
+	}
+	for (const resolution of ["bounded_contrast", "evidence_backed_irrelevance", "explicit_confound", "not_repeated_after_check"] as const) {
+		assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ process_investigation_required:true, process_investigation_resolution:resolution, status:"deprioritized", closure_reason:"bounded resolution" })]), descriptors), true);
+	}
+	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ process_investigation_resolution:"bounded_contrast" })]), descriptors), /without an active obligation/);
+	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized", closure_reason:"ordinary outcome anomaly" })]), descriptors), true);
 });
 
 test("v2 State round-trips persisted workflow fields and legacy Day 3 State still loads", () => {

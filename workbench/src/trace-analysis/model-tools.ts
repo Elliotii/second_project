@@ -1,13 +1,15 @@
 import { existsSync } from "node:fs";
+import { dirname } from "node:path";
 import type { AgentHarnessTool } from "@earendil-works/pi-agent-core";
 import { Type, type TSchema } from "@earendil-works/pi-ai";
 import { listRuns, readEvidence, searchTrace, validateAnalysisWorkflow } from "./analysis.ts";
-import type { AnalysisContext, AnalysisState, EvidenceLocator, EvidenceReadRecord, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
+import type { AnalysisContext, AnalysisState, EvidenceLocator, EvidenceRead, EvidenceReadRecord, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
+import { buildProcessView, type ProcessKind, type ProcessView } from "./process-view.ts";
 import { saveAnalysisState } from "./state.ts";
 
 export interface AnalysisToolCall {
 	sequence: number;
-	name: "list_runs" | "search_trace" | "read_evidence" | "update_state";
+	name: "list_runs" | "process_view" | "search_trace" | "read_evidence" | "update_state";
 	input: Record<string, unknown>;
 	evidence?: { locator: EvidenceLocator; characterCount: number };
 }
@@ -60,11 +62,23 @@ const agendaItemSchema = Type.Object({
 	relevant_case_ids: Type.Array(Type.String({ minLength: 1 })),
 	checked_runs: Type.Array(Type.String({ minLength: 1 })),
 	settle_condition: Type.String({ minLength: 1 }),
+	process_investigation_required: Type.Boolean(),
+	process_investigation_resolution: Type.Union([
+		Type.Literal("bounded_contrast"), Type.Literal("evidence_backed_irrelevance"), Type.Literal("explicit_confound"), Type.Literal("not_repeated_after_check"), Type.Null(),
+	]),
 	status: Type.Union([Type.Literal("open"), Type.Literal("settled"), Type.Literal("deprioritized")]),
 	closure_reason: Type.String(),
 }, { additionalProperties: false });
 
 const listRunsSchema = Type.Object({}, { additionalProperties: false });
+const processViewSchema = Type.Object({
+	run_id: Type.String({ minLength: 1 }),
+	detail: Type.Optional(Type.Union([Type.Literal("overview"), Type.Literal("timeline")])),
+	max_events: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 })),
+	operation_kinds: Type.Optional(Type.Array(Type.Union([
+		Type.Literal("inspection"), Type.Literal("mutation"), Type.Literal("validation"), Type.Literal("execution"), Type.Literal("other"),
+	]), { minItems: 1, maxItems: 5, uniqueItems: true })),
+}, { additionalProperties: false });
 const searchTraceSchema = Type.Object({
 	run_id: Type.String({ minLength: 1 }),
 	eventType: Type.Optional(Type.String()),
@@ -97,6 +111,86 @@ function cloneLocator(value: EvidenceLocator): EvidenceLocator {
 
 function locatorKey(locator: EvidenceLocator): string {
 	return JSON.stringify(locator);
+}
+
+function blindConditionAliases(context: AnalysisContext): Map<string, string> {
+	const conditions = [...new Set([...context.runs.values()].flatMap((loaded) => {
+		const condition = loaded.descriptor.labels.condition;
+		return typeof condition === "string" && condition.length > 0 ? [condition] : [];
+	}))].sort();
+	if (conditions.length > 2) throw new Error("Blind Analysis supports at most two condition identities");
+	return new Map(conditions.map((condition, index) => [condition, index === 0 ? "Arm X" : "Arm Y"]));
+}
+
+function knownSkillPathValues(context: AnalysisContext): string[] {
+	const values = new Set<string>();
+	for (const loaded of context.runs.values()) {
+		const path = loaded.manifest.skill?.path;
+		if (typeof path !== "string" || path.length === 0) continue;
+		for (const value of [path, dirname(path), dirname(dirname(path))]) {
+			values.add(value);
+			values.add(value.replaceAll("\\", "/"));
+			values.add(value.replaceAll("/", "\\"));
+		}
+	}
+	return [...values].filter((value) => value.length > 0).sort((left, right) => right.length - left.length);
+}
+
+function blindKnownSkillPaths(value: unknown, context: AnalysisContext): unknown {
+	const knownPaths = knownSkillPathValues(context);
+	const project = (input: unknown): unknown => {
+		if (typeof input === "string") return knownPaths.reduce((text, path) => text.replaceAll(path, "[blind-skill-path]"), input);
+		if (Array.isArray(input)) return input.map(project);
+		if (input !== null && typeof input === "object") return Object.fromEntries(Object.entries(input).map(([key, entry]) => [key, project(entry)]));
+		return input;
+	};
+	return project(value);
+}
+
+function blindListRuns(context: AnalysisContext): Array<Record<string, unknown>> {
+	const aliases = blindConditionAliases(context);
+	return listRuns(context).map((entry) => {
+		const { skill: _skill, ...visible } = entry;
+		const labels = visible.labels && typeof visible.labels === "object" && !Array.isArray(visible.labels)
+			? { ...(visible.labels as Record<string, unknown>) }
+			: undefined;
+		if (labels && typeof labels.condition === "string") labels.condition = aliases.get(labels.condition) ?? labels.condition;
+		return { ...visible, ...(labels ? { labels } : {}) };
+	});
+}
+
+function blindEvidence(evidence: EvidenceRead, context: AnalysisContext): EvidenceRead {
+	if (evidence.artifact === "diff" || evidence.artifact === "verifier") return evidence;
+	let parsed: unknown = JSON.parse(evidence.content);
+	if (evidence.artifact === "manifest" && parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+		const { skill: _skill, ...visible } = parsed as Record<string, unknown>;
+		parsed = visible;
+	}
+	const content = JSON.stringify(blindKnownSkillPaths(parsed, context), null, 2);
+	return { ...evidence, content };
+}
+
+function processViewInput(args: Record<string, unknown>): { runId: string; detail: "overview" | "timeline"; maxEvents: number; operationKinds?: ProcessKind[] } {
+	if (typeof args.run_id !== "string" || args.run_id.length === 0) throw new Error("process_view run_id must be a non-empty string");
+	const detail = args.detail ?? "overview";
+	if (detail !== "overview" && detail !== "timeline") throw new Error("process_view detail must be overview or timeline");
+	const maxEvents = args.max_events ?? 20;
+	if (!Number.isSafeInteger(maxEvents) || Number(maxEvents) < 1 || Number(maxEvents) > 50) throw new Error("process_view max_events must be an integer from 1 to 50");
+	const allowed = new Set<ProcessKind>(["inspection", "mutation", "validation", "execution", "other"]);
+	if (args.operation_kinds !== undefined && (!Array.isArray(args.operation_kinds) || args.operation_kinds.length < 1 || args.operation_kinds.length > 5 || new Set(args.operation_kinds).size !== args.operation_kinds.length || args.operation_kinds.some((kind) => !allowed.has(kind as ProcessKind)))) throw new Error("process_view operation_kinds is invalid");
+	return { runId: args.run_id, detail, maxEvents: Number(maxEvents), ...(args.operation_kinds ? { operationKinds: args.operation_kinds as ProcessKind[] } : {}) };
+}
+
+function visibleProcessView(view: ProcessView, detail: "overview" | "timeline", maxEvents: number, operationKinds: ProcessKind[] | undefined, context: AnalysisContext): unknown {
+	if (detail === "overview") return blindKnownSkillPaths({ run_id: view.run_id, agent_status: view.agent_status, agent_end_reason: view.agent_end_reason, overview: view.overview }, context);
+	const operations = operationKinds ? view.timeline.operations.filter((operation) => operationKinds.includes(operation.normalized_kind)) : view.timeline.operations;
+	const returned = operations.slice(0, maxEvents);
+	return blindKnownSkillPaths({
+		run_id: view.run_id,
+		agent_status: view.agent_status,
+		agent_end_reason: view.agent_end_reason,
+		timeline: { total_operations: operations.length, returned_operations: returned.length, truncated: returned.length < operations.length, operations: returned },
+	}, context);
 }
 
 function validateUpdate(value: SemanticStateUpdate): SemanticStateUpdate {
@@ -139,7 +233,21 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 			async execute(_id, args, _signal, _update, toolContext) {
 				toolContext.matrixListed = true;
 				record(toolContext, "list_runs", args as Record<string, unknown>);
-				return text(listRuns(toolContext.analysis));
+				return text(blindListRuns(toolContext.analysis));
+			},
+		},
+		{
+			name: "process_view", label: "process_view",
+			description: "Return a deterministic, compact, auditable operation-level Overview or bounded Timeline for one loaded Run, on demand for the current Investigation. The result contains Evidence Locators; use read_evidence when a Locator must support a Finding.",
+			parameters: processViewSchema,
+			async execute(_id, args, _signal, _update, toolContext) {
+				if (!toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("Global Matrix Triage through list_runs is required before Deep Investigation");
+				const input = args as Record<string, unknown>;
+				const parsed = processViewInput(input);
+				const loaded = toolContext.analysis.runs.get(parsed.runId);
+				if (!loaded) throw new Error(`Run ${parsed.runId} is not loaded`);
+				record(toolContext, "process_view", input);
+				return text(visibleProcessView(buildProcessView(loaded), parsed.detail, parsed.maxEvents, parsed.operationKinds, toolContext.analysis));
 			},
 		},
 		{
@@ -151,8 +259,9 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 				const input = args as Record<string, unknown>;
 				record(toolContext, "search_trace", input);
 				const results = searchTrace(toolContext.analysis, input.run_id as string, { eventType: input.eventType as string | undefined, toolName: input.toolName as string | undefined, keyword: input.keyword as string | undefined, limit: input.limit as number | undefined });
-				const toolResult = text(results);
-				for (const result of results) {
+				const visibleResults = blindKnownSkillPaths(results, toolContext.analysis) as typeof results;
+				const toolResult = text(visibleResults);
+				for (const result of visibleResults) {
 					toolContext.searchExposedEvidence.set(locatorKey(result.locator), { artifact: "trace", locator: structuredClone(result.locator), characterCount: JSON.stringify(result).length });
 				}
 				return toolResult;
@@ -167,12 +276,12 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 				const locator = cloneLocator(args as EvidenceLocator);
 				const evidence = readEvidence(toolContext.analysis, locator);
 				record(toolContext, "read_evidence", args as Record<string, unknown>, { locator, characterCount: evidence.characterCount });
-				return text(evidence);
+				return text(blindEvidence(evidence, toolContext.analysis));
 			},
 		},
 		{
 			name: "update_state", label: "update_state",
-			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. trigger records the observable Matrix anomaly or contrast that made an investigation worth starting, not a generic todo. settle_condition states both the necessary checks and the evidence state that would permit retain, narrow, reject, or stop. checked_runs records explicit question-specific workflow progress; completing required_runs does not establish support, semantically satisfy settle_condition, or automatically close an Item. For a settled or deprioritized Item, closure_reason records what was checked, what was and was not supported, and why investigation can stop; closure without a kept Finding is valid. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
+			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. trigger records the observable Matrix anomaly or contrast that made an investigation worth starting, not a generic todo. settle_condition states both the necessary checks and the evidence state that would permit retain, narrow, reject, or stop. The Agent sets process_investigation_required only after semantically judging a signal repeated and potentially task-relevant; a required obligation needs one allowed process_investigation_resolution before settled or deprioritized closure. checked_runs records explicit question-specific workflow progress; completing required_runs does not establish support, semantically satisfy settle_condition, or automatically close an Item. For a settled or deprioritized Item, closure_reason records what was checked, what was and was not supported, and why investigation can stop; closure without a kept Finding is valid. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
 			parameters: updateStateSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
 				const update = validateUpdate(args as SemanticStateUpdate);
