@@ -136,9 +136,10 @@ test("Analysis State round-trips and the renderer exposes the required developme
 	readEvidence(context, trace);
 	readEvidence(context, verifier);
 	const state: AnalysisState = {
+		phase: "blind_analysis",
 		covered_runs: [descriptor.runId], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: ["bounded evidence"], next_action: "stop",
 		loaded_evidence: structuredClone(context.loadedEvidence),
-		finding_drafts: [{ id: "f1", observation: "observed", interpretation: "interpreted", limitation: "limited", applicable_runs: [descriptor.runId], support: [trace], counter: [verifier], counter_checked: true, status: "draft" }],
+		finding_drafts: [{ id: "f1", observation: "observed", interpretation: "interpreted", limitation: "limited", applicable_runs: [descriptor.runId], repeated_support_run_ids: [], support: [trace], counter: [verifier], counter_checked: true, status: "draft", sealed: false }],
 	};
 	const statePath = saveAnalysisState(temporary("state-output"), state);
 	const reloaded = loadAnalysisState(statePath);
@@ -163,9 +164,10 @@ test("two real Smoke Runs complete the no-model vertical development chain", { s
 	const counter: EvidenceLocator[] = [passed[0]!.locator, { artifact: "verifier", run_id: descriptors[1]!.runId }];
 	resolveFindingLocators(context, [...support, ...counter]);
 	const state: AnalysisState = {
+		phase: "blind_analysis",
 		covered_runs: [...context.coveredRuns], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: ["no general causal claim"], next_action: "stop after Day 1-A",
 		loaded_evidence: structuredClone(context.loadedEvidence),
-		finding_drafts: [{ id: "f1", observation: "The write paths differ consistently with the two Verifier outcomes.", interpretation: "The failed path trims input while the passing path preserves it.", limitation: "Two Runs only.", applicable_runs: descriptors.map((entry) => entry.runId), support, counter, counter_checked: true, status: "draft" }],
+		finding_drafts: [{ id: "f1", observation: "The write paths differ consistently with the two Verifier outcomes.", interpretation: "The failed path trims input while the passing path preserves it.", limitation: "Two Runs only.", applicable_runs: descriptors.map((entry) => entry.runId), repeated_support_run_ids: [], support, counter, counter_checked: true, status: "draft", sealed: false }],
 	};
 	const reloaded = loadAnalysisState(saveAnalysisState(temporary("real-smoke"), state));
 	assert.deepEqual(reloaded, state);
@@ -200,7 +202,7 @@ function agenda(overrides: Partial<InvestigationAgendaItem> = {}): Investigation
 }
 
 function workflowState(itemList: InvestigationAgendaItem[], finding_drafts: AnalysisState["finding_drafts"] = []): AnalysisState {
-	return { covered_runs:matrixDescriptors().map((entry) => entry.runId), matrix_triage_complete:true, investigation_agenda:itemList, notes:[], open_questions:[], next_action:"continue", loaded_evidence:[], finding_drafts };
+	return { phase:"blind_analysis", covered_runs:matrixDescriptors().map((entry) => entry.runId), matrix_triage_complete:true, investigation_agenda:itemList, notes:[], open_questions:[], next_action:"continue", loaded_evidence:[], finding_drafts };
 }
 
 test("Local and Global Completion use required subset checks, not counter_checked", () => {
@@ -215,7 +217,7 @@ test("Local and Global Completion use required subset checks, not counter_checke
 	assert.equal(isAnalysisGloballyComplete(workflowState([]), descriptors), true);
 	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized" })]), descriptors), /closure_reason/);
 	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ checked_runs:["missing"] })]), descriptors), /checked Run missing/);
-	const kept = { id:"f-v2", observation:"one Run", interpretation:"bounded", limitation:"local", applicable_runs:["A-No-Skill-1"], support:[], counter:[], counter_checked:true, status:"kept" as const, claim_scope:"cell_pattern" as const, agenda_item_id:"i1" };
+	const kept = { id:"f-v2", observation:"one Run", interpretation:"bounded", limitation:"local", applicable_runs:["A-No-Skill-1"], repeated_support_run_ids:[], support:[], counter:[], counter_checked:true, status:"kept" as const, sealed:false, claim_scope:"cell_pattern" as const, agenda_item_id:"i1" };
 	assert.throws(() => isAnalysisGloballyComplete(workflowState([agenda({ status:"open", checked_runs:["A-No-Skill-1"] })], [kept]), descriptors), /exceeds its Agenda Item checked Runs/);
 	const narrowed = { ...kept, claim_scope:"run_observation" as const };
 	assert.equal(isAnalysisGloballyComplete(workflowState([agenda({ status:"deprioritized", closure_reason:"narrowed", checked_runs:["A-No-Skill-1"] })], [narrowed]), descriptors), true);
@@ -235,12 +237,13 @@ test("process investigation obligation blocks unresolved closure and accepts onl
 
 test("v2 State round-trips persisted workflow fields and legacy Day 3 State still loads", () => {
 	const item = agenda({ checked_runs:["A-No-Skill-1"], settle_condition:"check paired trials", status:"deprioritized", closure_reason:"weak signal" });
-	const finding = { id:"f-v2", observation:"observed", interpretation:"bounded", limitation:"one Run", applicable_runs:["A-No-Skill-1"], support:[], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" };
+	const finding = { id:"f-v2", observation:"observed", interpretation:"bounded", limitation:"one Run", applicable_runs:["A-No-Skill-1"], repeated_support_run_ids:[], support:[], counter:[], counter_checked:false, status:"draft" as const, sealed:false, claim_scope:"run_observation" as const, agenda_item_id:"i1" };
 	const state = { ...workflowState([item], [finding]), next_action:"inspect B" };
 	assert.deepEqual(loadAnalysisState(saveAnalysisState(temporary("v2-state"), state)), state);
 	const legacyPath = resolve(temporary("legacy-state"), "analysis-state.json");
 	json(legacyPath, { covered_runs:["old"], notes:[], open_questions:[], next_action:"resume", loaded_evidence:[], finding_drafts:[] });
 	const legacy = loadAnalysisState(legacyPath);
+	assert.equal(legacy.phase, "blind_analysis");
 	assert.equal(legacy.matrix_triage_complete, false);
 	assert.deepEqual(legacy.investigation_agenda, []);
 });

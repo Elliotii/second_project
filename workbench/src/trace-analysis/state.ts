@@ -13,8 +13,14 @@ export function loadAnalysisState(path: string): AnalysisState {
 	const parsed = JSON.parse(readFileSync(resolve(path), "utf8")) as Partial<AnalysisState>;
 	const value = {
 		...parsed,
+		phase: parsed.phase ?? "blind_analysis",
 		matrix_triage_complete: parsed.matrix_triage_complete ?? false,
 		investigation_agenda: parsed.investigation_agenda ?? [],
+		finding_drafts: parsed.finding_drafts?.map((finding) => ({
+			...finding,
+			repeated_support_run_ids: finding.repeated_support_run_ids ?? [],
+			sealed: finding.sealed ?? false,
+		})) ?? [],
 	} as AnalysisState;
 	if (!Array.isArray(value.covered_runs) || !Array.isArray(value.loaded_evidence) || !Array.isArray(value.finding_drafts)) {
 		throw new Error("analysis State is missing required arrays");

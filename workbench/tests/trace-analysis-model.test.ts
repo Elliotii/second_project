@@ -38,7 +38,7 @@ async function execute(profile: ReturnType<typeof setup>, name: string, args: Re
 	return tool.execute("test-call", args as never, undefined, undefined, profile.context);
 }
 
-const draft = (runId: string) => ({ id:"f1", observation:"synthetic observation", interpretation:"bounded interpretation", limitation:"one fixture", applicable_runs:[runId], support:[{artifact:"trace" as const,run_id:runId,sequence:1}], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" });
+const draft = (runId: string) => ({ id:"f1", observation:"synthetic observation", interpretation:"bounded interpretation", limitation:"one fixture", applicable_runs:[runId], repeated_support_run_ids:[], support:[{artifact:"trace" as const,run_id:runId,sequence:1}], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" });
 const workflow = (runId: string) => ({ matrix_triage_complete:true, investigation_agenda:[{ id:"i1", question:"What happened in this Run?", trigger:"Matrix signal", claim_scope:"run_observation" as const, anchor_run_ids:[runId], relevant_case_ids:[], checked_runs:[runId], settle_condition:"inspect the anchor Run", process_investigation_required:false, process_investigation_resolution:null, status:"open" as const, closure_reason:"" }] });
 
 test("Analysis model receives the five bounded evidence and State tools", () => {
@@ -118,7 +118,7 @@ test("semantic snapshots allow f1 draft to kept while rejecting duplicate IDs an
 });
 
 test("resume Prompt contains only the saved State summary, not prior chat or Evidence content", () => {
-	const state: AnalysisState = { covered_runs:["r1"], matrix_triage_complete:true, investigation_agenda:[], notes:["note"], open_questions:["question"], next_action:"inspect r2 verifier", loaded_evidence:[{artifact:"trace",locator:{artifact:"trace",run_id:"r1",sequence:4},characterCount:123}], finding_drafts:[draft("r1")] };
+	const state: AnalysisState = { phase:"blind_analysis", covered_runs:["r1"], matrix_triage_complete:true, investigation_agenda:[], notes:["note"], open_questions:["question"], next_action:"inspect r2 verifier", loaded_evidence:[{artifact:"trace",locator:{artifact:"trace",run_id:"r1",sequence:4},characterCount:123}], finding_drafts:[{...draft("r1"),sealed:false}] };
 	const prompt = resumeAnalysisPrompt(state);
 	for (const expected of ["inspect r2 verifier","synthetic observation","characterCount","sequence"]) assert.match(prompt, new RegExp(expected));
 	for (const forbidden of ["SECRET_EVIDENCE_CONTENT","prior assistant chat","value\\.trim\\(\\)","sequence 9","sequence 11"]) assert.doesNotMatch(prompt, new RegExp(forbidden));

@@ -6,10 +6,10 @@ import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { createModels, InMemoryCredentialStore, type AssistantMessage } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
-import { createAnalysisContext, isAnalysisGloballyComplete, resolveFindingLocators } from "./analysis.ts";
+import { createAnalysisContext, finalizeAnalysisHandoff, isAnalysisGloballyComplete, resolveFindingLocators } from "./analysis.ts";
 import type { AnalysisState, EvidenceLocator, RunDescriptor } from "./contracts.ts";
 import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } from "./model-tools.ts";
-import { loadAnalysisState, renderDevelopmentFinding } from "./state.ts";
+import { loadAnalysisState, renderDevelopmentFinding, saveAnalysisState } from "./state.ts";
 
 export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analyst.
 1. Treat the outcome, evaluable status, selection status, and reason returned by list_runs as authoritative for evaluation classification. Use the External Verifier artifact as the authority for task correctness. Trace interpretation may report evidence-backed local process facts, but must not override, recompute, or reclassify the run-level Outcome.
@@ -23,10 +23,10 @@ export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analy
 export const ANALYSIS_THINKING_LEVEL = "max" as const;
 
 export function emptyAnalysisState(runIds: string[]): AnalysisState {
-	return { covered_runs: [...runIds], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
+	return { phase: "blind_analysis", covered_runs: [...runIds], matrix_triage_complete: false, investigation_agenda: [], notes: [], open_questions: [], next_action: "", loaded_evidence: [], finding_drafts: [] };
 }
 
-const BLIND_ANALYSIS_PHASE_INSTRUCTIONS = `This Invocation is Blind Behavior Investigation. Analyze what happened, whether an observed signal is repeated and potentially task-relevant, bounded contrasts and counters, mixed or unstable evidence, and the supported scope boundary. Do not seek or infer real condition identities, Candidate Skill content, metadata, path, intended mechanism, or expected improvement. Do not analyze Skill-behavior correspondence, Skill effect, Skill benefit, or Skill causation. If you judge a process signal to be repeated and potentially task-relevant, set process_investigation_required=true. Such an Item may not be settled or deprioritized until process_investigation_resolution records one bounded resolution: bounded_contrast, evidence_backed_irrelevance, explicit_confound, or not_repeated_after_check. The Harness enforces only that mechanical obligation; you remain responsible for the semantic judgment.`;
+const BLIND_ANALYSIS_PHASE_INSTRUCTIONS = `This Invocation is Blind Behavior Investigation. Analyze what happened, whether an observed signal is repeated and potentially task-relevant, bounded contrasts and counters, mixed or unstable evidence, and the supported scope boundary. Do not seek or infer real condition identities, Candidate Skill content, metadata, path, intended mechanism, or expected improvement. Do not analyze Skill-behavior correspondence, Skill effect, Skill benefit, or Skill causation. If you judge a process signal to be repeated and potentially task-relevant, set process_investigation_required=true. Such an Item may not be settled or deprioritized until process_investigation_resolution records one bounded resolution: bounded_contrast, evidence_backed_irrelevance, explicit_confound, or not_repeated_after_check. When a kept Finding explicitly claims a repeated pattern, record the independent supporting Run identities in repeated_support_run_ids; use an empty array for a non-repeated or single-Run Finding. The Harness does not infer recurrence. The Harness enforces only mechanical obligations; you remain responsible for semantic judgment.`;
 
 export function freshAnalysisPrompt(): string {
 	return `${BLIND_ANALYSIS_PHASE_INSTRUCTIONS}\n\nStart one bounded development analysis from the empty State. Call list_runs and perform Global Matrix Triage before Deep Investigation. Save matrix_triage_complete=true and a small structured Investigation Agenda whose triggers preserve the observable Matrix anomalies or contrasts that made each Item worth starting; the Agenda may be empty when no investigation is warranted. You may continue naturally into the first high-value Item. Derive its Required and Open Runs from claim_scope, record only explicitly completed checks in checked_runs, and write a settle_condition that states both the necessary checks and the evidence state permitting retain, narrow, reject, or stop. Do not manufacture a Finding. If Global Completion is still false, save a non-empty next_action. Call update_state once and stop.`;
@@ -90,6 +90,7 @@ export async function runAnalysisInvocation(options: {
 		? emptyAnalysisState(analysis.coveredRuns)
 		: loadAnalysisState(statePath);
 	if (options.mode === "fresh" && analysisStateWasSaved(statePath)) throw new Error("fresh Analysis requires an output directory without analysis-state.json");
+	if (options.mode === "resume" && initialState.phase === "alignment_ready") throw new Error("alignment_ready State cannot resume Blind Analysis");
 	const prompt = options.mode === "fresh" ? freshAnalysisPrompt() : resumeAnalysisPrompt(initialState);
 	const profile = createAnalysisTools({ analysis, statePath, initialState });
 	const expectedNames = ["list_runs", "process_view", "search_trace", "read_evidence", "update_state"];
@@ -136,7 +137,7 @@ export async function runAnalysisInvocation(options: {
 	}
 	if (settled !== 1) throw new Error(`Analysis Invocation must settle exactly once; observed ${settled}`);
 	if (!analysisStateWasSaved(statePath)) throw new Error("Analysis model did not persist State through update_state");
-	const state = loadAnalysisState(statePath);
+	let state = loadAnalysisState(statePath);
 	const globalComplete = isAnalysisGloballyComplete(state, options.descriptors);
 	const locators = state.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter]);
 	const resolved = resolveFindingLocators(analysis, locators).map((entry) => ({ locator: entry.locator, characterCount: entry.characterCount }));
@@ -145,6 +146,10 @@ export async function runAnalysisInvocation(options: {
 	if (!allLoaded) throw new Error("Finding uses a Locator absent from loaded_evidence");
 	if (options.mode === "fresh" && !state.matrix_triage_complete) throw new Error("fresh Invocation did not complete Global Matrix Triage");
 	if (!globalComplete && state.next_action.trim().length === 0) throw new Error("globally incomplete Analysis State requires next_action");
+	if (globalComplete) {
+		state = finalizeAnalysisHandoff(state, options.descriptors);
+		saveAnalysisState(outputDirectory, state);
+	}
 
 	let resumeDirection: AnalysisInvocationResult["resume_direction"];
 	if (options.mode === "resume") {

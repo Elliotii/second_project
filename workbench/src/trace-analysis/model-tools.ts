@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import type { AgentHarnessTool } from "@earendil-works/pi-agent-core";
 import { Type, type TSchema } from "@earendil-works/pi-ai";
-import { listRuns, readEvidence, searchTrace, validateAnalysisWorkflow } from "./analysis.ts";
+import { listRuns, readEvidence, searchTrace, validateAnalysisWorkflow, validateSealedHandoffImmutability } from "./analysis.ts";
 import type { AnalysisContext, AnalysisState, EvidenceLocator, EvidenceRead, EvidenceReadRecord, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
 import { buildProcessView, type ProcessKind, type ProcessView } from "./process-view.ts";
 import { saveAnalysisState } from "./state.ts";
@@ -20,7 +20,7 @@ export interface SemanticStateUpdate {
 	notes: string[];
 	open_questions: string[];
 	next_action: string;
-	finding_drafts: FindingDraft[];
+	finding_drafts: Array<Omit<FindingDraft, "sealed">>;
 }
 
 interface AnalysisToolContext {
@@ -46,6 +46,7 @@ const findingSchema = Type.Object({
 	interpretation: Type.String(),
 	limitation: Type.String(),
 	applicable_runs: Type.Array(Type.String()),
+	repeated_support_run_ids: Type.Array(Type.String({ minLength: 1 }), { uniqueItems: true }),
 	support: Type.Array(locatorSchema),
 	counter: Type.Array(locatorSchema),
 	counter_checked: Type.Boolean(),
@@ -194,6 +195,7 @@ function visibleProcessView(view: ProcessView, detail: "overview" | "timeline", 
 }
 
 function validateUpdate(value: SemanticStateUpdate): SemanticStateUpdate {
+	if ("phase" in (value as SemanticStateUpdate & { phase?: unknown })) throw new Error("Analysis phase is Harness-owned");
 	if (typeof value.matrix_triage_complete !== "boolean" || !Array.isArray(value.investigation_agenda) ||
 		!Array.isArray(value.notes) || value.notes.some((entry) => typeof entry !== "string") ||
 		!Array.isArray(value.open_questions) || value.open_questions.some((entry) => typeof entry !== "string") ||
@@ -201,6 +203,8 @@ function validateUpdate(value: SemanticStateUpdate): SemanticStateUpdate {
 	const ids = new Set<string>();
 	for (const finding of value.finding_drafts) {
 		if (!finding || typeof finding !== "object" || typeof finding.id !== "string" || finding.id.length === 0) throw new Error("Finding ID is invalid");
+		if ("sealed" in finding) throw new Error(`Finding ${finding.id} seal lifecycle is Harness-owned`);
+		if (!Array.isArray(finding.repeated_support_run_ids) || finding.repeated_support_run_ids.some((runId) => typeof runId !== "string" || runId.length === 0)) throw new Error(`Finding ${finding.id} repeated_support_run_ids is invalid`);
 		if (ids.has(finding.id)) throw new Error(`duplicate Finding ID in semantic snapshot: ${finding.id}`);
 		ids.add(finding.id);
 		if (finding.status !== "draft" && finding.status !== "kept" && finding.status !== "dropped") throw new Error(`Finding ${finding.id} status is invalid`);
@@ -281,9 +285,10 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		},
 		{
 			name: "update_state", label: "update_state",
-			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. trigger records the observable Matrix anomaly or contrast that made an investigation worth starting, not a generic todo. settle_condition states both the necessary checks and the evidence state that would permit retain, narrow, reject, or stop. The Agent sets process_investigation_required only after semantically judging a signal repeated and potentially task-relevant; a required obligation needs one allowed process_investigation_resolution before settled or deprioritized closure. checked_runs records explicit question-specific workflow progress; completing required_runs does not establish support, semantically satisfy settle_condition, or automatically close an Item. For a settled or deprioritized Item, closure_reason records what was checked, what was and was not supported, and why investigation can stop; closure without a kept Finding is valid. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
+			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. trigger records the observable Matrix anomaly or contrast that made an investigation worth starting, not a generic todo. settle_condition states both the necessary checks and the evidence state that would permit retain, narrow, reject, or stop. The Agent sets process_investigation_required only after semantically judging a signal repeated and potentially task-relevant; a required obligation needs one allowed process_investigation_resolution before settled or deprioritized closure. For a kept Finding that explicitly claims recurrence, repeated_support_run_ids records the independent supporting Runs; it stays empty for non-repeated or single-Run Findings and is never inferred by the Harness. checked_runs records explicit question-specific workflow progress; completing required_runs does not establish support, semantically satisfy settle_condition, or automatically close an Item. For a settled or deprioritized Item, closure_reason records what was checked, what was and was not supported, and why investigation can stop; closure without a kept Finding is valid. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed phase, Finding seal lifecycle, covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
 			parameters: updateStateSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
+				if (toolContext.initialState.phase === "alignment_ready") throw new Error("alignment_ready State cannot be modified through Blind Analysis update_state");
 				const update = validateUpdate(args as SemanticStateUpdate);
 				if (update.matrix_triage_complete && !toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("matrix_triage_complete requires list_runs exposure in this Invocation");
 				const priorFindingIds = new Set(toolContext.initialState.finding_drafts.map((finding) => finding.id));
@@ -291,6 +296,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 					if (!priorFindingIds.has(finding.id) && (finding.claim_scope === undefined || finding.agenda_item_id === undefined)) throw new Error(`new Finding ${finding.id} requires claim_scope and agenda_item_id`);
 				}
 				const next: AnalysisState = {
+					phase: toolContext.initialState.phase,
 					covered_runs: [...toolContext.analysis.coveredRuns],
 					matrix_triage_complete: toolContext.initialState.matrix_triage_complete || update.matrix_triage_complete,
 					investigation_agenda: update.investigation_agenda,
@@ -298,7 +304,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 					open_questions: update.open_questions,
 					next_action: update.next_action,
 					loaded_evidence: [...toolContext.initialState.loaded_evidence, ...structuredClone(toolContext.analysis.loadedEvidence)],
-					finding_drafts: update.finding_drafts,
+					finding_drafts: update.finding_drafts.map((finding) => ({ ...finding, sealed: false })),
 				};
 				const loadedKeys = new Set(next.loaded_evidence.map((entry) => locatorKey(entry.locator)));
 				for (const locator of next.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter])) {
@@ -311,6 +317,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 				}
 				if (!next.matrix_triage_complete && (next.investigation_agenda.length > 0 || next.finding_drafts.some((finding) => finding.claim_scope !== undefined))) throw new Error("v2 Agenda and Findings require completed Global Matrix Triage");
 				validateAnalysisWorkflow(next, [...toolContext.analysis.runs.values()].map((loaded) => loaded.descriptor));
+				validateSealedHandoffImmutability(toolContext.initialState, next);
 				toolContext.currentState = next;
 				saveAnalysisState(toolContext.statePath.replace(/[\\/]analysis-state\.json$/, ""), next);
 				record(toolContext, "update_state", args as Record<string, unknown>);

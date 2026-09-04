@@ -101,13 +101,17 @@ export interface FindingDraft {
 	interpretation: string;
 	limitation: string;
 	applicable_runs: string[];
+	repeated_support_run_ids: string[];
 	support: EvidenceLocator[];
 	counter: EvidenceLocator[];
 	counter_checked: boolean;
 	status: "draft" | "kept" | "dropped";
+	sealed: boolean;
 	claim_scope?: ClaimScope;
 	agenda_item_id?: string;
 }
+
+export type AnalysisPhase = "blind_analysis" | "alignment_ready";
 
 export type ClaimScope = "run_observation" | "cell_pattern" | "condition_comparison" | "cross_case";
 
@@ -133,6 +137,7 @@ export interface InvestigationAgendaItem {
 }
 
 export interface AnalysisState {
+	phase: AnalysisPhase;
 	covered_runs: string[];
 	matrix_triage_complete: boolean;
 	investigation_agenda: InvestigationAgendaItem[];

@@ -8,6 +8,7 @@ import type {
 	ClaimScope,
 	EvidenceLocator,
 	EvidenceRead,
+	FindingDraft,
 	LoadedRun,
 	OutcomeResult,
 	RunDescriptor,
@@ -223,6 +224,7 @@ export function deriveOpenRuns(item: InvestigationAgendaItem, descriptors: RunDe
 }
 
 export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunDescriptor[]): void {
+	if (state.phase !== "blind_analysis" && state.phase !== "alignment_ready") throw new Error("Analysis phase is invalid");
 	const formalIds = new Set(formalDescriptors(descriptors).map((entry) => entry.runId));
 	const processResolutions = new Set(["bounded_contrast", "evidence_backed_irrelevance", "explicit_confound", "not_repeated_after_check"]);
 	const agenda = new Map<string, InvestigationAgendaItem>();
@@ -240,6 +242,18 @@ export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunD
 		if (item.status === "settled" && deriveOpenRuns(item, descriptors).length > 0) throw new Error(`Agenda Item ${item.id} is settled before all required Runs were checked`);
 	}
 	for (const finding of state.finding_drafts) {
+		if (!Array.isArray(finding.repeated_support_run_ids)) throw new Error(`Finding ${finding.id} repeated_support_run_ids is invalid`);
+		if (new Set(finding.repeated_support_run_ids).size !== finding.repeated_support_run_ids.length) throw new Error(`Finding ${finding.id} has duplicate repeated-support Run IDs`);
+		const applicable = new Set(finding.applicable_runs);
+		const supported = new Set(finding.support.map((locator) => locator.run_id));
+		for (const runId of finding.repeated_support_run_ids) {
+			if (!formalIds.has(runId)) throw new Error(`Finding ${finding.id} repeated-support Run ${runId} is not in the formal Evaluation`);
+			if (!applicable.has(runId)) throw new Error(`Finding ${finding.id} repeated-support Run ${runId} is not an applicable Run`);
+			if (!supported.has(runId)) throw new Error(`Finding ${finding.id} repeated-support Run ${runId} has no supporting Evidence Locator`);
+		}
+		if (finding.sealed && finding.status !== "kept") throw new Error(`Finding ${finding.id} cannot seal a non-kept disposition`);
+		if (state.phase === "blind_analysis" && finding.sealed) throw new Error(`Finding ${finding.id} cannot be sealed during blind_analysis`);
+		if (state.phase === "alignment_ready" && finding.status === "kept" && !finding.sealed) throw new Error(`Finding ${finding.id} must be sealed in alignment_ready`);
 		if (finding.claim_scope === undefined && finding.agenda_item_id === undefined) continue;
 		if (finding.claim_scope === undefined || !finding.agenda_item_id) throw new Error(`Finding ${finding.id} must provide claim_scope and agenda_item_id together`);
 		const item = agenda.get(finding.agenda_item_id);
@@ -250,11 +264,53 @@ export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunD
 			if (required.some((runId) => !checked.has(runId))) throw new Error(`kept Finding ${finding.id} exceeds its Agenda Item checked Runs`);
 		}
 	}
+	if (state.phase === "alignment_ready" && (!state.matrix_triage_complete || state.investigation_agenda.some((item) => item.status === "open"))) throw new Error("alignment_ready requires Global Completion");
 }
 
 export function isAnalysisGloballyComplete(state: AnalysisState, descriptors: RunDescriptor[]): boolean {
 	validateAnalysisWorkflow(state, descriptors);
 	return state.matrix_triage_complete && state.investigation_agenda.every((item) => item.status === "settled" || item.status === "deprioritized");
+}
+
+const sealedPayload = (finding: FindingDraft): unknown => ({
+	id: finding.id,
+	agenda_item_id: finding.agenda_item_id,
+	claim_scope: finding.claim_scope,
+	applicable_runs: finding.applicable_runs,
+	observation: finding.observation,
+	interpretation: finding.interpretation,
+	limitation: finding.limitation,
+	repeated_support_run_ids: finding.repeated_support_run_ids,
+	support: finding.support,
+	counter: finding.counter,
+	counter_checked: finding.counter_checked,
+	status: finding.status,
+});
+
+export function validateSealedHandoffImmutability(previous: AnalysisState, next: AnalysisState): void {
+	if (previous.phase === "alignment_ready" && next.phase !== "alignment_ready") throw new Error("Analysis phase cannot regress from alignment_ready");
+	const nextById = new Map(next.finding_drafts.map((finding) => [finding.id, finding]));
+	for (const finding of previous.finding_drafts.filter((candidate) => candidate.sealed)) {
+		const candidate = nextById.get(finding.id);
+		if (!candidate) throw new Error(`sealed Finding ${finding.id} cannot be deleted or have its ID replaced`);
+		if (!candidate.sealed || JSON.stringify(sealedPayload(candidate)) !== JSON.stringify(sealedPayload(finding))) throw new Error(`sealed Finding ${finding.id} A-owned payload is immutable`);
+	}
+}
+
+export function finalizeAnalysisHandoff(state: AnalysisState, descriptors: RunDescriptor[]): AnalysisState {
+	if (state.phase === "alignment_ready") {
+		validateAnalysisWorkflow(state, descriptors);
+		return structuredClone(state);
+	}
+	if (!isAnalysisGloballyComplete(state, descriptors)) throw new Error("Analysis cannot seal before Global Completion");
+	const next: AnalysisState = {
+		...structuredClone(state),
+		phase: "alignment_ready",
+		finding_drafts: state.finding_drafts.map((finding) => ({ ...structuredClone(finding), sealed: finding.status === "kept" })),
+	};
+	validateSealedHandoffImmutability(state, next);
+	validateAnalysisWorkflow(next, descriptors);
+	return next;
 }
 
 function visibleFields(event: TraceEvent): Record<string, string | number | boolean> {

@@ -57,6 +57,7 @@ const evidence = [
 	readEvidence(context, passedVerifier),
 ];
 const state: AnalysisState = {
+	phase: "blind_analysis",
 	covered_runs: [...context.coveredRuns],
 	matrix_triage_complete: false,
 	investigation_agenda: [],
@@ -70,10 +71,12 @@ const state: AnalysisState = {
 		interpretation: "The implementation-path difference is consistent with the frozen Verifier's explicit requirement to reject leading or trailing whitespace.",
 		limitation: "This is a bounded two-Run development Finding. It does not establish general causality, model quality, or Skill effectiveness; Diff and Verifier Locators are whole-artifact Locators.",
 		applicable_runs: [failed.runId, passed.runId],
+		repeated_support_run_ids: [],
 		support: [failedTrace, failedDiff, failedVerifier],
 		counter: [passedTrace, passedVerifier],
 		counter_checked: true,
 		status: "draft",
+		sealed: false,
 	}],
 };
 const statePath = saveAnalysisState(input.output, state);
