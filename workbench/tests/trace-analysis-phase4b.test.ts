@@ -113,12 +113,29 @@ test("zero-Finding deterministically skips Candidate, Credential, and model and 
 	let completionCalls=0; let credentialCalls=0;
 	const result=await runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialCalls++;return "unused";}},alignmentCompletion:async()=>{completionCalls++;return completion({});}});
 	assert.equal(result.stage,"controlled_unblind"); assert.equal(result.model_invoked,false); assert.equal(completionCalls,0); assert.equal(credentialCalls,0); assert.equal(result.state.phase,"human_review_ready"); assert.deepEqual(result.state.controlled_unblind_result,{alignments:[],follow_up_observations:[]}); assert.deepEqual(result.state.finding_drafts,[]);
+	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialCalls++;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath}}),/cannot run Analysis again/);
+	assert.equal(credentialCalls,0);
 });
 
 test("human_review_ready cannot execute A or B and compatibility State may omit B result before that phase",async()=>{
 	const env=environment("terminal"); const context=await buildControlledUnblindContext({state:env.state,batchPath:env.batchPath,mappingPath:env.mappingPath}); const terminal=completeControlledUnblindState(env.state,env.descriptors,validResult(env.sha256),context.frozen_candidate_skill); saveAnalysisState(env.output,terminal);
 	let credentialCalls=0; let completionCalls=0;
-	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialCalls++;return "unused";}},alignmentCompletion:async()=>{completionCalls++;return completion({});}}),/cannot run Analysis again/);
+	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialCalls++;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:async()=>{completionCalls++;return completion({});}}),/cannot run Analysis again/);
 	assert.equal(credentialCalls,0); assert.equal(completionCalls,0);
 	const compatible={...env.state}; delete compatible.controlled_unblind_result; saveAnalysisState(env.output,compatible); assert.equal(loadAnalysisState(resolve(env.output,"analysis-state.json")).phase,"alignment_ready");
+	const blindCompatible:AnalysisState={...compatible,phase:"blind_analysis",finding_drafts:compatible.finding_drafts.map((finding)=>({...finding,sealed:false}))}; saveAnalysisState(env.output,blindCompatible); assert.equal(loadAnalysisState(resolve(env.output,"analysis-state.json")).phase,"blind_analysis");
+});
+
+test("persisted human_review_ready requires a mechanically valid completed B result",async()=>{
+	for(const [label,result,pattern] of [
+		["missing",undefined,/requires a completed controlled-unblind result/],
+		["enum",{...validResult("a".repeat(64)),alignments:[{...validResult("a".repeat(64)).alignments[0]!,causation:"SUPPORTED"}]},/causation is invalid/],
+		["coverage",{...validResult("a".repeat(64)),alignments:[]},/exactly cover/],
+		["skill-ref",validResult("b".repeat(64)),/wrong Candidate SHA/],
+	] as const){
+		const env=environment(`persisted-${label}`); const context=await buildControlledUnblindContext({state:env.state,batchPath:env.batchPath,mappingPath:env.mappingPath});
+		const terminal=completeControlledUnblindState(env.state,env.descriptors,validResult(env.sha256),context.frozen_candidate_skill);
+		saveAnalysisState(env.output,{...terminal,controlled_unblind_result:result} as unknown as AnalysisState);
+		await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>"unused"},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath}}),pattern,label);
+	}
 });

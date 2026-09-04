@@ -6,7 +6,7 @@ import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import { contentText, createModels, InMemoryCredentialStore, type AssistantMessage } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
-import { createAnalysisContext, finalizeAnalysisHandoff, isAnalysisGloballyComplete, resolveFindingLocators } from "./analysis.ts";
+import { createAnalysisContext, finalizeAnalysisHandoff, isAnalysisGloballyComplete, resolveFindingLocators, validateAnalysisWorkflow } from "./analysis.ts";
 import type { AnalysisState, EvidenceLocator, RunDescriptor } from "./contracts.ts";
 import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } from "./model-tools.ts";
 import { loadAnalysisState, renderDevelopmentFinding, saveAnalysisState } from "./state.ts";
@@ -16,7 +16,9 @@ import {
 	completeZeroFindingControlledUnblindState,
 	CONTROLLED_UNBLIND_SYSTEM_PROMPT,
 	controlledUnblindPrompt,
+	loadFrozenSkillEvidenceFromEvaluation,
 	parseControlledUnblindResult,
+	validateControlledUnblindResult,
 } from "./controlled-unblind.ts";
 
 export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analyst.
@@ -121,7 +123,13 @@ export async function runAnalysisInvocation(options: {
 		? emptyAnalysisState(analysis.coveredRuns)
 		: loadAnalysisState(statePath, { requireExplicitPhase: true });
 	if (options.mode === "fresh" && analysisStateWasSaved(statePath)) throw new Error("fresh Analysis requires an output directory without analysis-state.json");
-	if (options.mode === "resume" && initialState.phase === "human_review_ready") throw new Error("human_review_ready State cannot run Analysis again");
+	if (options.mode === "resume" && initialState.phase === "human_review_ready") {
+		validateAnalysisWorkflow(initialState, options.descriptors);
+		if (!options.evaluationAuthority) throw new Error("human_review_ready eligibility requires Batch Freeze authority");
+		const frozenSkill = await loadFrozenSkillEvidenceFromEvaluation(options.evaluationAuthority.batchPath);
+		validateControlledUnblindResult(initialState, initialState.controlled_unblind_result, frozenSkill);
+		throw new Error("human_review_ready State cannot run Analysis again");
+	}
 	if (options.mode === "resume" && initialState.phase === "alignment_ready") {
 		const startedMs = Date.now();
 		const sealedFindings = initialState.finding_drafts.filter((finding) => finding.status === "kept" && finding.sealed);

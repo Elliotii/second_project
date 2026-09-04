@@ -88,6 +88,11 @@ async function loadFrozenSkill(buildRef: string, expectedSha256: string): Promis
 	};
 }
 
+export async function loadFrozenSkillEvidenceFromEvaluation(batchPath: string): Promise<FrozenSkillEvidence> {
+	const batch = readBatchFreezeRecord(batchPath);
+	return loadFrozenSkill(batch.candidate_build_ref, batch.candidate_expected_sha256);
+}
+
 function referencedRunIds(finding: ControlledUnblindContext["sealed_findings"][number]): string[] {
 	return [...new Set([
 		...finding.applicable_runs,
@@ -179,14 +184,19 @@ function followUp(value: unknown, index: number): FollowUpObservation {
 	return { observation: nonEmpty(input.observation, `${label}.observation`) };
 }
 
-export function parseControlledUnblindResult(text: string): ControlledUnblindResult {
-	const input = object(JSON.parse(text) as unknown, "controlled-unblind model output");
-	exact(input, ["alignments", "follow_up_observations"], "controlled-unblind model output");
+function structuredControlledUnblindResult(value: unknown): ControlledUnblindResult {
+	const input = object(value, "controlled-unblind result");
+	exact(input, ["alignments", "follow_up_observations"], "controlled-unblind result");
 	if (!Array.isArray(input.alignments) || !Array.isArray(input.follow_up_observations)) throw new Error("controlled-unblind result arrays are invalid");
 	return { alignments: input.alignments.map(alignment), follow_up_observations: input.follow_up_observations.map(followUp) };
 }
 
-export function validateControlledUnblindResult(state: AnalysisState, result: ControlledUnblindResult, skill: FrozenSkillEvidence): void {
+export function parseControlledUnblindResult(text: string): ControlledUnblindResult {
+	return structuredControlledUnblindResult(JSON.parse(text) as unknown);
+}
+
+export function validateControlledUnblindResult(state: AnalysisState, value: unknown, skill: FrozenSkillEvidence): ControlledUnblindResult {
+	const result = structuredControlledUnblindResult(value);
 	const expected = state.finding_drafts.filter((finding) => finding.status === "kept" && finding.sealed).map((finding) => finding.id);
 	const actual = result.alignments.map((entry) => entry.behavior_finding_id);
 	if (new Set(actual).size !== actual.length) throw new Error("controlled-unblind result has duplicate Finding IDs");
@@ -199,12 +209,13 @@ export function validateControlledUnblindResult(state: AnalysisState, result: Co
 			if (skill.source_lines.slice(ref.start_line - 1, ref.end_line).join("\n").trim().length === 0) throw new Error(`Skill Evidence Ref ${index} for Finding ${entry.behavior_finding_id} resolves to empty text`);
 		}
 	}
+	return result;
 }
 
 export function completeControlledUnblindState(state: AnalysisState, descriptors: RunDescriptor[], result: ControlledUnblindResult, skill: FrozenSkillEvidence): AnalysisState {
 	if (state.phase !== "alignment_ready") throw new Error("Controlled unblind completion requires alignment_ready State");
-	validateControlledUnblindResult(state, result, skill);
-	const next: AnalysisState = { ...structuredClone(state), phase: "human_review_ready", controlled_unblind_result: structuredClone(result) };
+	const validatedResult = validateControlledUnblindResult(state, result, skill);
+	const next: AnalysisState = { ...structuredClone(state), phase: "human_review_ready", controlled_unblind_result: structuredClone(validatedResult) };
 	validateSealedHandoffImmutability(state, next);
 	validateAnalysisWorkflow(next, descriptors);
 	return next;
