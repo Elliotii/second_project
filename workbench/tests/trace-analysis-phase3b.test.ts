@@ -83,7 +83,7 @@ test("sealed A-owned payload rejects deletion, ID replacement, representative ed
 	reject([{...original,repeated_support_run_ids:[]}]); reject([{...original,support:original.support.slice(1)}]); reject([{...original,counter:[]}]); reject(sealed.finding_drafts,"blind_analysis");
 });
 
-test("model cannot promote lifecycle and alignment_ready cannot re-enter Blind update or resume", async () => {
+test("model cannot promote lifecycle and alignment_ready cannot re-enter Blind update", async () => {
 	const descriptors = [fixture("x5","x",1),fixture("y5","y",1)]; const analysis = createAnalysisContext(descriptors); const output = temporary("guard"); const sealed = finalizeAnalysisHandoff(state(descriptors),descriptors);
 	const blindProfile = createAnalysisTools({analysis,statePath:resolve(output,"blind-analysis-state.json"),initialState:state(descriptors)});
 	await assert.rejects(execute(blindProfile,{phase:"alignment_ready",matrix_triage_complete:true,investigation_agenda:[],notes:[],open_questions:[],next_action:"",finding_drafts:[]}),/phase is Harness-owned/);
@@ -91,7 +91,7 @@ test("model cannot promote lifecycle and alignment_ready cannot re-enter Blind u
 	const sealedProfile = createAnalysisTools({analysis,statePath:resolve(output,"sealed-analysis-state.json"),initialState:sealed});
 	await assert.rejects(execute(sealedProfile,{matrix_triage_complete:true,investigation_agenda:[],notes:[],open_questions:[],next_action:"",finding_drafts:[]}),/cannot be modified through Blind Analysis/);
 	saveAnalysisState(output,sealed); let resolved = false;
-	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors,outputDirectory:output,credentialResolver:{resolve:async()=>{resolved=true;return "unused";}}}),/cannot resume Blind Analysis/);
+	await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors,outputDirectory:output,credentialResolver:{resolve:async()=>{resolved=true;return "unused";}}}),/Controlled unblind requires Batch Freeze/);
 	assert.equal(resolved,false);
 });
 

@@ -224,7 +224,7 @@ export function deriveOpenRuns(item: InvestigationAgendaItem, descriptors: RunDe
 }
 
 export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunDescriptor[]): void {
-	if (state.phase !== "blind_analysis" && state.phase !== "alignment_ready") throw new Error("Analysis phase is invalid");
+	if (state.phase !== "blind_analysis" && state.phase !== "alignment_ready" && state.phase !== "human_review_ready") throw new Error("Analysis phase is invalid");
 	const formalIds = new Set(formalDescriptors(descriptors).map((entry) => entry.runId));
 	const processResolutions = new Set(["bounded_contrast", "evidence_backed_irrelevance", "explicit_confound", "not_repeated_after_check"]);
 	const agenda = new Map<string, InvestigationAgendaItem>();
@@ -253,7 +253,7 @@ export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunD
 		}
 		if (finding.sealed && finding.status !== "kept") throw new Error(`Finding ${finding.id} cannot seal a non-kept disposition`);
 		if (state.phase === "blind_analysis" && finding.sealed) throw new Error(`Finding ${finding.id} cannot be sealed during blind_analysis`);
-		if (state.phase === "alignment_ready" && finding.status === "kept" && !finding.sealed) throw new Error(`Finding ${finding.id} must be sealed in alignment_ready`);
+		if ((state.phase === "alignment_ready" || state.phase === "human_review_ready") && finding.status === "kept" && !finding.sealed) throw new Error(`Finding ${finding.id} must be sealed after blind_analysis`);
 		if (finding.claim_scope === undefined && finding.agenda_item_id === undefined) continue;
 		if (finding.claim_scope === undefined || !finding.agenda_item_id) throw new Error(`Finding ${finding.id} must provide claim_scope and agenda_item_id together`);
 		const item = agenda.get(finding.agenda_item_id);
@@ -264,7 +264,8 @@ export function validateAnalysisWorkflow(state: AnalysisState, descriptors: RunD
 			if (required.some((runId) => !checked.has(runId))) throw new Error(`kept Finding ${finding.id} exceeds its Agenda Item checked Runs`);
 		}
 	}
-	if (state.phase === "alignment_ready" && (!state.matrix_triage_complete || state.investigation_agenda.some((item) => item.status === "open"))) throw new Error("alignment_ready requires Global Completion");
+	if ((state.phase === "alignment_ready" || state.phase === "human_review_ready") && (!state.matrix_triage_complete || state.investigation_agenda.some((item) => item.status === "open"))) throw new Error(`${state.phase} requires Global Completion`);
+	if (state.phase === "human_review_ready" && state.controlled_unblind_result === undefined) throw new Error("human_review_ready requires a completed controlled-unblind result");
 }
 
 export function isAnalysisGloballyComplete(state: AnalysisState, descriptors: RunDescriptor[]): boolean {
@@ -288,7 +289,8 @@ const sealedPayload = (finding: FindingDraft): unknown => ({
 });
 
 export function validateSealedHandoffImmutability(previous: AnalysisState, next: AnalysisState): void {
-	if (previous.phase === "alignment_ready" && next.phase !== "alignment_ready") throw new Error("Analysis phase cannot regress from alignment_ready");
+	if (previous.phase === "alignment_ready" && next.phase === "blind_analysis") throw new Error("Analysis phase cannot regress from alignment_ready");
+	if (previous.phase === "human_review_ready" && next.phase !== "human_review_ready") throw new Error("Analysis phase cannot regress from human_review_ready");
 	const nextById = new Map(next.finding_drafts.map((finding) => [finding.id, finding]));
 	for (const finding of previous.finding_drafts.filter((candidate) => candidate.sealed)) {
 		const candidate = nextById.get(finding.id);

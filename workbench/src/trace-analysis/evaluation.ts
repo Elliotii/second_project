@@ -140,6 +140,12 @@ export function parseThinEvaluationMapping(value: unknown): ThinEvaluationMappin
 export function readBatchFreezeRecord(path: string): BatchFreezeRecord { return parseBatchFreezeRecord(readJson(path, "Batch Freeze Record")); }
 export function readThinEvaluationMapping(path: string): ThinEvaluationMapping { return parseThinEvaluationMapping(readJson(path, "Thin Evaluation Mapping")); }
 
+export function deriveBlindConditionAliases(conditions: string[]): Map<string, string> {
+	const unique = [...new Set(conditions)].sort();
+	if (unique.length > 2) throw new Error("Blind Analysis supports at most two condition identities");
+	return new Map(unique.map((condition, index) => [condition, index === 0 ? "Arm X" : "Arm Y"]));
+}
+
 function ordinaryFile(path: string): boolean {
 	if (!existsSync(path)) return false;
 	const stats = lstatSync(path);
@@ -251,10 +257,10 @@ export function prepareEvaluationAnalysis(options: { batchPath: string; mappingP
 export async function runEvaluationAnalysis(options: {
 	mode: "fresh" | "resume"; batchPath: string; mappingPath: string; outputDirectory: string; credentialResolver: OpaqueCredentialResolverV1;
 	resolveRunRoot?: (ref: EvaluationRunRef) => string | undefined;
-	invoke?: (options: { mode: "fresh" | "resume"; descriptors: RunDescriptor[]; outputDirectory: string; credentialResolver: OpaqueCredentialResolverV1 }) => Promise<AnalysisInvocationResult>;
+	invoke?: (options: { mode: "fresh" | "resume"; descriptors: RunDescriptor[]; outputDirectory: string; credentialResolver: OpaqueCredentialResolverV1; evaluationAuthority: { batchPath: string; mappingPath: string } }) => Promise<AnalysisInvocationResult>;
 }): Promise<AnalysisInvocationResult> {
 	const prepared = prepareEvaluationAnalysis(options);
 	if (!prepared.comparison.has_analyzable_group) throw new Error("Evaluation has no complete evaluable comparison group; Analysis Invocation was not started");
 	const invoke = options.invoke ?? (await import("./model-runner.ts")).runAnalysisInvocation;
-	return invoke({ mode: options.mode, descriptors: prepared.descriptors, outputDirectory: options.outputDirectory, credentialResolver: options.credentialResolver });
+	return invoke({ mode: options.mode, descriptors: prepared.descriptors, outputDirectory: options.outputDirectory, credentialResolver: options.credentialResolver, evaluationAuthority: { batchPath: options.batchPath, mappingPath: options.mappingPath } });
 }

@@ -5,6 +5,7 @@ import { Type, type TSchema } from "@earendil-works/pi-ai";
 import { listRuns, readEvidence, searchTrace, validateAnalysisWorkflow, validateSealedHandoffImmutability } from "./analysis.ts";
 import type { AnalysisContext, AnalysisState, EvidenceLocator, EvidenceRead, EvidenceReadRecord, FindingDraft, InvestigationAgendaItem } from "./contracts.ts";
 import { buildProcessView, type ProcessKind, type ProcessView } from "./process-view.ts";
+import { deriveBlindConditionAliases } from "./evaluation.ts";
 import { saveAnalysisState } from "./state.ts";
 
 export interface AnalysisToolCall {
@@ -115,12 +116,11 @@ function locatorKey(locator: EvidenceLocator): string {
 }
 
 function blindConditionAliases(context: AnalysisContext): Map<string, string> {
-	const conditions = [...new Set([...context.runs.values()].flatMap((loaded) => {
+	const conditions = [...context.runs.values()].flatMap((loaded) => {
 		const condition = loaded.descriptor.labels.condition;
 		return typeof condition === "string" && condition.length > 0 ? [condition] : [];
-	}))].sort();
-	if (conditions.length > 2) throw new Error("Blind Analysis supports at most two condition identities");
-	return new Map(conditions.map((condition, index) => [condition, index === 0 ? "Arm X" : "Arm Y"]));
+	});
+	return deriveBlindConditionAliases(conditions);
 }
 
 function knownSkillPathValues(context: AnalysisContext): string[] {

@@ -3,13 +3,21 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { AgentHarness, JsonlSessionRepo, type AgentHarnessEvent } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
-import { createModels, InMemoryCredentialStore, type AssistantMessage } from "@earendil-works/pi-ai";
+import { contentText, createModels, InMemoryCredentialStore, type AssistantMessage } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
 import { createAnalysisContext, finalizeAnalysisHandoff, isAnalysisGloballyComplete, resolveFindingLocators } from "./analysis.ts";
 import type { AnalysisState, EvidenceLocator, RunDescriptor } from "./contracts.ts";
 import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } from "./model-tools.ts";
 import { loadAnalysisState, renderDevelopmentFinding, saveAnalysisState } from "./state.ts";
+import {
+	buildControlledUnblindContext,
+	completeControlledUnblindState,
+	completeZeroFindingControlledUnblindState,
+	CONTROLLED_UNBLIND_SYSTEM_PROMPT,
+	controlledUnblindPrompt,
+	parseControlledUnblindResult,
+} from "./controlled-unblind.ts";
 
 export const ANALYSIS_SYSTEM_PROMPT = `You are a bounded development Trace analyst.
 1. Treat the outcome, evaluable status, selection status, and reason returned by list_runs as authoritative for evaluation classification. Use the External Verifier artifact as the authority for task correctness. Trace interpretation may report evidence-backed local process facts, but must not override, recompute, or reclassify the run-level Outcome.
@@ -53,7 +61,8 @@ function assistantText(message: AssistantMessage): string {
 	return message.content.flatMap((part) => part.type === "text" ? [part.text] : []).join("\n");
 }
 
-export interface AnalysisInvocationResult {
+export interface BlindAnalysisInvocationResult {
+	stage: "blind_analysis";
 	mode: "fresh" | "resume";
 	started_at: string;
 	finished_at: string;
@@ -74,12 +83,34 @@ export interface AnalysisInvocationResult {
 	assistant_text: string;
 }
 
+export interface ControlledUnblindInvocationResult {
+	stage: "controlled_unblind";
+	mode: "resume";
+	model: { provider: string; id: string } | null;
+	usage: { provider_requests: number; input_tokens: number; output_tokens: number; cost_usd: number; wall_time_ms: number };
+	state_path: string;
+	state: AnalysisState;
+	model_invoked: boolean;
+	tool_names: [];
+	assistant_text: string;
+}
+
+export type AnalysisInvocationResult = BlindAnalysisInvocationResult | ControlledUnblindInvocationResult;
+
+export interface AlignmentCompletionResult {
+	text: string;
+	model: { provider: string; id: string };
+	usage: { input_tokens: number; output_tokens: number; cost_usd: number };
+}
+
 export async function runAnalysisInvocation(options: {
 	mode: "fresh" | "resume";
 	descriptors: RunDescriptor[];
 	outputDirectory: string;
 	credentialResolver: OpaqueCredentialResolverV1;
 	timeoutMs?: number;
+	evaluationAuthority?: { batchPath: string; mappingPath: string };
+	alignmentCompletion?: (input: { systemPrompt: string; userPrompt: string }) => Promise<AlignmentCompletionResult>;
 }): Promise<AnalysisInvocationResult> {
 	if (!options.credentialResolver || typeof options.credentialResolver.resolve !== "function") throw new Error("opaque Credential resolver is required for Analysis Runner");
 	const outputDirectory = resolve(options.outputDirectory);
@@ -90,6 +121,39 @@ export async function runAnalysisInvocation(options: {
 		? emptyAnalysisState(analysis.coveredRuns)
 		: loadAnalysisState(statePath, { requireExplicitPhase: true });
 	if (options.mode === "fresh" && analysisStateWasSaved(statePath)) throw new Error("fresh Analysis requires an output directory without analysis-state.json");
+	if (options.mode === "resume" && initialState.phase === "human_review_ready") throw new Error("human_review_ready State cannot run Analysis again");
+	if (options.mode === "resume" && initialState.phase === "alignment_ready") {
+		const startedMs = Date.now();
+		const sealedFindings = initialState.finding_drafts.filter((finding) => finding.status === "kept" && finding.sealed);
+		if (sealedFindings.length === 0) {
+			const state = completeZeroFindingControlledUnblindState(initialState, options.descriptors);
+			saveAnalysisState(outputDirectory, state);
+			return { stage: "controlled_unblind", mode: "resume", model: null, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "" };
+		}
+		if (!options.evaluationAuthority) throw new Error("Controlled unblind requires Batch Freeze and Thin Evaluation Mapping authority");
+		const context = await buildControlledUnblindContext({ state: initialState, batchPath: options.evaluationAuthority.batchPath, mappingPath: options.evaluationAuthority.mappingPath });
+		const systemPrompt = CONTROLLED_UNBLIND_SYSTEM_PROMPT;
+		const userPrompt = controlledUnblindPrompt(context);
+		let completion: AlignmentCompletionResult;
+		if (options.alignmentCompletion) completion = await options.alignmentCompletion({ systemPrompt, userPrompt });
+		else {
+			const credential = await options.credentialResolver.resolve();
+			if (typeof credential !== "string" || credential.length === 0) throw new Error("opaque Analysis Credential resolution failed");
+			const credentials = new InMemoryCredentialStore();
+			await credentials.modify("deepseek", async () => ({ type: "api_key", key: credential }));
+			const models = createModels({ credentials });
+			models.setProvider(deepseekProvider());
+			const model = models.getModel("deepseek", "deepseek-v4-flash");
+			if (!model) throw new Error("fixed DeepSeek Analysis model is unavailable");
+			const message = await models.completeSimple(model, { systemPrompt, messages: [{ role: "user", content: userPrompt, timestamp: Date.now() }] }, { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 });
+			if (message.stopReason === "error" || message.stopReason === "aborted") throw new Error(message.errorMessage ?? `controlled-unblind model stopped with ${message.stopReason}`);
+			completion = { text: contentText(message.content), model: { provider: message.provider, id: message.model }, usage: { input_tokens: message.usage.input + message.usage.cacheRead + message.usage.cacheWrite, output_tokens: message.usage.output, cost_usd: message.usage.cost.total } };
+		}
+		const result = parseControlledUnblindResult(completion.text);
+		const state = completeControlledUnblindState(initialState, options.descriptors, result, context.frozen_candidate_skill);
+		saveAnalysisState(outputDirectory, state);
+		return { stage: "controlled_unblind", mode: "resume", model: completion.model, usage: { provider_requests: 1, ...completion.usage, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: true, tool_names: [], assistant_text: completion.text };
+	}
 	if (options.mode === "resume" && initialState.phase !== "blind_analysis") throw new Error(`${initialState.phase} State cannot resume Blind Analysis`);
 	const prompt = options.mode === "fresh" ? freshAnalysisPrompt() : resumeAnalysisPrompt(initialState);
 	const profile = createAnalysisTools({ analysis, statePath, initialState });
@@ -151,7 +215,7 @@ export async function runAnalysisInvocation(options: {
 		saveAnalysisState(outputDirectory, state);
 	}
 
-	let resumeDirection: AnalysisInvocationResult["resume_direction"];
+	let resumeDirection: BlindAnalysisInvocationResult["resume_direction"];
 	if (options.mode === "resume") {
 		const initialLocators = initialState.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter]);
 		const initialRuns = new Set(initialLocators.map((locator) => locator.run_id));
@@ -164,8 +228,8 @@ export async function runAnalysisInvocation(options: {
 		resumeDirection = { queried_different_run: inspected.some((entry) => !initialRuns.has(entry.run_id)), queried_different_artifact: inspected.some((entry) => !initialArtifacts.has(entry.artifact)) };
 		if (!resumeDirection.queried_different_run && !resumeDirection.queried_different_artifact) throw new Error("resume Invocation did not inspect another Run or Evidence kind");
 	}
-	const result: AnalysisInvocationResult = {
-		mode: options.mode, started_at: startedAt, finished_at: new Date().toISOString(), model: { provider: model.provider, id: model.id },
+	const result: BlindAnalysisInvocationResult = {
+		stage: "blind_analysis", mode: options.mode, started_at: startedAt, finished_at: new Date().toISOString(), model: { provider: model.provider, id: model.id },
 		usage: { provider_requests: providerRequests, input_tokens: inputTokens, output_tokens: outputTokens, cost_usd: costUsd, tool_calls: profile.context.calls.length, wall_time_ms: Date.now() - startedMs },
 		session_id: sessionMetadata.id, session_path: sessionMetadata.path, state_path: statePath, loaded_state_path: options.mode === "resume" ? statePath : null,
 		loaded_prior_session: false, tool_names: profile.tools.map((tool) => tool.name), tool_calls: structuredClone(profile.context.calls), prior_next_action: initialState.next_action,

@@ -111,7 +111,43 @@ export interface FindingDraft {
 	agenda_item_id?: string;
 }
 
-export type AnalysisPhase = "blind_analysis" | "alignment_ready";
+export type ContentCorrespondence = "DIRECT" | "PLAUSIBLE" | "NONE" | "CONTRADICTED" | "NOT_ASSESSABLE";
+export type DifferentiationStatus = "REPEATED" | "MIXED" | "NO_CLEAR_DIFFERENCE" | "INSUFFICIENT";
+export type AlignmentBenefit = "SUPPORTED" | "UNPROVEN" | "CONTRADICTED";
+export type AlignmentCausation = "UNPROVEN" | "UNSUPPORTED";
+export type SkillRecommendation = "NO_CHANGE_JUSTIFIED" | "HUMAN_REVIEW_FOR_NARROW_CHANGE" | "HUMAN_REVIEW_FOR_REVISION";
+export type EvidenceDisposition = "CLOSE" | "RETAIN_OBSERVATION" | "SEEK_MORE_EVIDENCE" | "ESCALATE_FOR_SKILL_REVIEW";
+
+export interface SkillEvidenceRef {
+	candidate_sha256: string;
+	start_line: number;
+	end_line: number;
+}
+
+export interface SkillBehaviorAlignment {
+	behavior_finding_id: string;
+	content_correspondence: ContentCorrespondence;
+	skill_evidence_refs: SkillEvidenceRef[];
+	differentiation_status: DifferentiationStatus;
+	condition_contrast: string;
+	counter_and_claim_boundary: string;
+	benefit: AlignmentBenefit;
+	causation: AlignmentCausation;
+	max_supported_claim: string;
+	skill_recommendation: SkillRecommendation;
+	evidence_disposition: EvidenceDisposition;
+}
+
+export interface FollowUpObservation {
+	observation: string;
+}
+
+export interface ControlledUnblindResult {
+	alignments: SkillBehaviorAlignment[];
+	follow_up_observations: FollowUpObservation[];
+}
+
+export type AnalysisPhase = "blind_analysis" | "alignment_ready" | "human_review_ready";
 
 export type ClaimScope = "run_observation" | "cell_pattern" | "condition_comparison" | "cross_case";
 
@@ -146,4 +182,5 @@ export interface AnalysisState {
 	next_action: string;
 	loaded_evidence: EvidenceReadRecord[];
 	finding_drafts: FindingDraft[];
+	controlled_unblind_result?: ControlledUnblindResult;
 }
