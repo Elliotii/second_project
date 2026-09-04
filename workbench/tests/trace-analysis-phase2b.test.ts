@@ -97,6 +97,23 @@ test("Blind Tool projection hides real conditions, Skill metadata, known Skill p
 	assert.equal(JSON.parse(JSON.parse(manifestText).content).skill, undefined);
 });
 
+test("Diff and Verifier content reuse neutral sensitive-path projection while preserving ordinary content", async () => {
+	const profile = setup("diff-verifier"); const candidateId = profile.descriptors[1]!.runId; const loaded = profile.analysis.runs.get(candidateId)!;
+	loaded.diffText = `diff --git a/src/a.ts b/src/a.ts\n ordinary src/a.ts\n sensitive ${SKILL_PATH}\n`;
+	loaded.verifierResult = {status:"passed",exit_code:0,diagnostic:`loaded ${SKILL_PATH}`,ordinary_path:"tests/a.test.ts"};
+	loaded.verifierOutputText = `checked ${SKILL_PATH}; kept src/a.ts`;
+	await execute(profile,"list_runs",{});
+	const diff = JSON.parse(resultText(await execute(profile,"read_evidence",{artifact:"diff",run_id:candidateId}))) as {content:string};
+	const verifier = JSON.parse(resultText(await execute(profile,"read_evidence",{artifact:"verifier",run_id:candidateId}))) as {content:string};
+	for (const content of [diff.content,verifier.content]) {
+		assert.doesNotMatch(content,new RegExp(SKILL_PATH.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
+		assert.match(content,/\[redacted-path-\d+\]/);
+	}
+	assert.match(diff.content,/diff --git a\/src\/a\.ts b\/src\/a\.ts/); assert.match(diff.content,/ordinary src\/a\.ts/);
+	assert.match(verifier.content,/tests\/a\.test\.ts/); assert.match(verifier.content,/kept src\/a\.ts/);
+	assert.equal(diff.content.match(/\[redacted-path-\d+\]/)![0],verifier.content.match(/\[redacted-path-\d+\]/)![0]);
+});
+
 test("neutral path aliases preserve replay-local equivalence without collapsing distinct sensitive values", async () => {
 	const profile = setup("neutral-alias"); const candidateId = profile.descriptors[1]!.runId;
 	await execute(profile, "list_runs", {});

@@ -169,7 +169,7 @@ function blindListRuns(context: AnalysisContext): Array<Record<string, unknown>>
 }
 
 function blindEvidence(evidence: EvidenceRead, context: AnalysisContext): EvidenceRead {
-	if (evidence.artifact === "diff" || evidence.artifact === "verifier") return evidence;
+	if (evidence.artifact === "diff" || evidence.artifact === "verifier") return { ...evidence, content: blindKnownSkillPaths(evidence.content, context) as string };
 	let parsed: unknown = JSON.parse(evidence.content);
 	if (evidence.artifact === "manifest" && parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
 		const { skill: _skill, ...visible } = parsed as Record<string, unknown>;
