@@ -142,8 +142,10 @@ test("System Prompt carries the claim-scoped workflow disciplines", () => {
 });
 
 test("actual Blind model construction carries recurrence, bounded-expansion, claim, stop, and terminal-intent disciplines", () => {
-	const state = emptyAnalysisState(["run-a"]); const context = blindAnalysisModelContext("fresh",state);
+	const state = emptyAnalysisState(["run-a"]); const context = blindAnalysisModelContext("fresh",state); const resumeContext = blindAnalysisModelContext("resume",state);
 	assert.equal(context.systemPrompt,ANALYSIS_SYSTEM_PROMPT); assert.equal(context.userPrompt,freshAnalysisPrompt());
+	assert.equal(resumeContext.systemPrompt,ANALYSIS_SYSTEM_PROMPT); assert.equal(resumeContext.userPrompt,resumeAnalysisPrompt(state));
 	for (const required of ["Outcome-neutral is not process-irrelevant","all PASS","natural replication","same-case sibling trials","isolated, mixed, or repeated","semantically equivalent","directionally consistent","hypothesis-bound","remaining ambiguity materially affects that claim","stop when the active question is sufficiently resolved","does not establish Benefit, Efficiency Improvement, or Causation","does not alone prove a deliberate decision","reason the Coding Agent stopped"]) assert.match(context.systemPrompt,new RegExp(required));
+	for (const required of [/Simplified Chinese \(zh-CN\)/, /human-readable analytical prose stored in Analysis State/, /canonical enum values/, /technical or evidence literals/, /do not translate or localize them/, /previously persisted prose/, /newly generated or substantively updated analytical prose/]) assert.match(context.systemPrompt,required);
 	for (const forbidden of ["Case B","Case C","A/t3","inspection count","Tool Error","P1 Reference Finding"]) assert.doesNotMatch(context.systemPrompt,new RegExp(forbidden,"i"));
 });

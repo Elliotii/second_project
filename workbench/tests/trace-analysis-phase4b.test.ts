@@ -8,6 +8,7 @@ import { createAnalysisContext, finalizeAnalysisHandoff } from "../src/trace-ana
 import {
 	buildControlledUnblindContext,
 	completeControlledUnblindState,
+	CONTROLLED_UNBLIND_SYSTEM_PROMPT,
 	controlledUnblindPrompt,
 	parseControlledUnblindResult,
 	validateControlledUnblindResult,
@@ -64,7 +65,7 @@ function completion(result:unknown):AlignmentCompletionResult {
 test("alignment_ready uses one zero-tool closed-evidence completion and persists human_review_ready", async()=>{
 	const env=environment("success"); const before=structuredClone(env.state.finding_drafts); let calls=0; let credentialResolved=false;
 	const result=await runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialResolved=true;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:async(input)=>{
-		calls++; assert.match(input.systemPrompt,/quoted intervention evidence/); assert.match(input.systemPrompt,/Mechanical origin.*does not establish why.*not Candidate-content evidence/s); assert.match(input.userPrompt,/Arm X/); assert.match(input.userPrompt,/"real_condition": "alpha"/); assert.match(input.userPrompt,/9: 1\. Inspect the registry/); assert.doesNotMatch(input.userPrompt,/RAW_TRACE_/); return completion(validResult(env.sha256));
+		calls++; assert.equal(input.systemPrompt,CONTROLLED_UNBLIND_SYSTEM_PROMPT); assert.match(input.systemPrompt,/quoted intervention evidence/); assert.match(input.systemPrompt,/Mechanical origin.*does not establish why.*not Candidate-content evidence/s); for (const required of [/Simplified Chinese \(zh-CN\)/,/human-readable analytical prose stored in Analysis State/,/canonical enum values/,/IDs, Run IDs/,/technical or evidence literals/,/do not translate or localize them/]) assert.match(input.systemPrompt,required); assert.match(input.userPrompt,/Arm X/); assert.match(input.userPrompt,/"real_condition": "alpha"/); assert.match(input.userPrompt,/9: 1\. Inspect the registry/); assert.doesNotMatch(input.userPrompt,/RAW_TRACE_/); return completion(validResult(env.sha256));
 	}});
 	assert.equal(result.stage,"controlled_unblind"); assert.equal(result.model_invoked,true); assert.deepEqual(result.tool_names,[]); assert.equal(calls,1); assert.equal(credentialResolved,false);
 	const saved=loadAnalysisState(resolve(env.output,"analysis-state.json")); assert.equal(saved.phase,"human_review_ready"); assert.deepEqual(saved.finding_drafts,before); assert.deepEqual(saved.controlled_unblind_result,validResult(env.sha256));
