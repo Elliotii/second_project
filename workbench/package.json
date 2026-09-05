@@ -7,6 +7,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "evaluation:evaluate": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/evaluate-evaluation.ts",
     "evaluation:review": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/review-evaluation.ts",
     "coding-task:run": "node --experimental-loader ./scripts/coding-task-public-pi-loader.mjs scripts/run-coding-task.ts",
     "commit2b:test": "node --test tests/skill-build.test.ts",
