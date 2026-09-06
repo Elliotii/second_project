@@ -25,6 +25,11 @@ export interface NormalizedTask {
 export interface NormalizedCodingRun {
 	runId: string;
 	task: NormalizedTask;
+	outcome: {
+		executionStatus: "completed" | "timeout" | "aborted" | "infrastructure_failed";
+		verificationStatus: "passed" | "failed" | "not_run";
+		failureReason: string | null;
+	};
 	operations: Array<{
 		tool: string;
 		action?: string;
@@ -226,11 +231,19 @@ export function normalizeCodingRun(input: SourceRunInput, outputDirectory: strin
 	const traceFile = nonEmptyString(artifacts.trace, "run-manifest.json.artifacts.trace").replaceAll("\\", "/");
 	const trace = object(readJsonArtifact(runRoot, traceFile), traceFile);
 	const projected = extractTrace(trace, traceFile);
+	const executionStatus = manifest.execution_status;
+	if (executionStatus !== "completed" && executionStatus !== "timeout" && executionStatus !== "aborted" && executionStatus !== "infrastructure_failed") throw new Error("run-manifest.json.execution_status is invalid");
+	const verificationStatus = manifest.verification_status;
+	if (verificationStatus !== "passed" && verificationStatus !== "failed" && verificationStatus !== "not_run") throw new Error("run-manifest.json.verification_status is invalid");
+	if (!(manifest.failure_reason === null || typeof manifest.failure_reason === "string")) throw new Error("run-manifest.json.failure_reason is invalid");
+	const verifier = extractVerifier(runRoot, manifest);
+	if (verificationStatus !== verifier.status) throw new Error("Run Manifest and Verifier outcome disagree");
 	const normalized: NormalizedCodingRun = {
 		runId,
 		...projected,
+		outcome: { executionStatus, verificationStatus, failureReason: manifest.failure_reason },
 		changes: extractChanges(runRoot, manifest),
-		verifier: extractVerifier(runRoot, manifest),
+		verifier,
 	};
 	for (const entry of [...normalized.operations, ...normalized.tests]) resolveSourceLocation(runRoot, entry.source);
 	writeJson(resolve(outputDirectory, `${runId}.json`), normalized);

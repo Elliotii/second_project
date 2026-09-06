@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workbench Orchestration"
+  short_description: "Route and govern Coding Agent Workbench workflows"
+  default_prompt: "Use $workbench-orchestration to choose and safely run the appropriate Workbench workflow for my coding-agent task."

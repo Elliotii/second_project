@@ -14,10 +14,11 @@ import { validateCandidateSpec, validateSourceAbV1FixedLiterals } from "../src/s
 const RUN_A = "coding-task-source-a";
 const RUN_B = "coding-task-source-b";
 
-function normalized(runId: string, action: string, verifier: "passed" | "failed" = "passed"): NormalizedCodingRun {
+function normalized(runId: string, action: string, verifier: "passed" | "failed" | "not_run" = "passed"): NormalizedCodingRun {
 	return {
 		runId,
 		task: { taskId: `task-${action}`, prompt: `Add the repository action \`${action}\` and verify it with \`npm test\`.`, sourceRevision: "a".repeat(40), existingTreeDigest: null, writablePaths: ["src/**", "test/**"], protectedPaths: ["package.json"] },
+		outcome: { executionStatus: "completed", verificationStatus: verifier, failureReason: null },
 		operations: [
 			{ tool: "workspace_read", target: "src/action-registry.ts", status: "success", source: { file: "trace.json", record: 1 } },
 			{ tool: "workspace_edit", target: "src/action-registry.ts", status: "success", source: { file: "trace.json", record: 2 } },
@@ -29,19 +30,19 @@ function normalized(runId: string, action: string, verifier: "passed" | "failed"
 	};
 }
 
-function fixture(options: { duplicate?: boolean; failedVerifier?: boolean; taskFamily?: string } = {}): { root: string; setPath: string } {
+function fixture(options: { duplicate?: boolean; verifier?: "passed" | "failed" | "not_run"; taskFamily?: string; single?: boolean } = {}): { root: string; setPath: string } {
 	const root = mkdtempSync(resolve(tmpdir(), "commit2b-source-"));
 	const taskFamily = options.taskFamily ?? "source-family-v1";
 	const a = normalized(RUN_A, "action_one");
-	const b = normalized(options.duplicate ? RUN_A : RUN_B, "action_two", options.failedVerifier ? "failed" : "passed");
+	const b = normalized(options.duplicate ? RUN_A : RUN_B, "action_two", options.verifier ?? "passed");
 	writeFileSync(resolve(root, "a.json"), `${JSON.stringify(a, null, 2)}\n`);
 	writeFileSync(resolve(root, "b.json"), `${JSON.stringify(b, null, 2)}\n`);
 	const set = {
 		taskFamily,
 		sourceRuns: [
 			{ sourceRunId: RUN_A, taskFamily, sourceRunPath: "unused-a", normalizedRunPath: "a.json", historicalVerifierStatus: "passed" },
-			{ sourceRunId: options.duplicate ? RUN_A : RUN_B, taskFamily, sourceRunPath: "unused-b", normalizedRunPath: "b.json", historicalVerifierStatus: "passed" },
-		],
+			{ sourceRunId: options.duplicate ? RUN_A : RUN_B, taskFamily, sourceRunPath: "unused-b", normalizedRunPath: "b.json", historicalVerifierStatus: options.verifier ?? "passed" },
+		].slice(0, options.single ? 1 : 2),
 	};
 	const setPath = resolve(root, "source-run-set.json");
 	writeFileSync(setPath, `${JSON.stringify(set, null, 2)}\n`);
@@ -81,9 +82,12 @@ test("loads an ordered valid SourceRunSet through normalizedRunPath", () => {
 	assert.equal(loaded.runs[1]?.verifier.status, "passed");
 });
 
-test("rejects duplicate Run IDs and a non-passed normalized Verifier", () => {
+test("accepts evidence-valid failed outcomes and rejects not_run or duplicate identities", () => {
 	assert.throws(() => loadSourceRunSet(fixture({ duplicate: true }).setPath), /unique/);
-	assert.throws(() => loadSourceRunSet(fixture({ failedVerifier: true }).setPath), /normalized Verifier status is not passed/);
+	assert.equal(loadSourceRunSet(fixture({ verifier: "failed" }).setPath).runs[1]?.outcome.verificationStatus, "failed");
+	assert.throws(() => loadSourceRunSet(fixture({ verifier: "not_run" }).setPath), /not learning-eligible|not valid learning evidence/);
+	assert.equal(loadSourceRunSet(fixture({ single: true }).setPath).runs.length, 1);
+	assert.throws(() => loadSourceRunSet(fixture({ single: true, taskFamily: "source-ab-v1" }).setPath), /at least two/);
 });
 
 test("the model Draft omits task_family and the host fills it from SourceRunSet", async () => {
@@ -113,7 +117,17 @@ test("the v2 Prompt calibrates repository-role abstraction without source answer
 	}
 	assert.match(INDUCTION_SYSTEM_PROMPT, /Generic coding practices such as reading code, editing a target file, adding tests, fixing failures, or running tests are not sufficient by themselves/);
 	assert.match(INDUCTION_SYSTEM_PROMPT, /Do not introduce a parameter schema, placeholder language, template variables/);
-	assert.match(INDUCTION_SYSTEM_PROMPT, /For insufficient_evidence, the rationale must briefly identify the shared repository structures or operations that were considered/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /failed-task evidence may support.*failure-derived lesson/i);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /If Runs conflict, distinguish their outcomes and omit the disputed claim/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /Run-level outcome as context.*never as a blanket positive or negative label/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /Do not treat every behavior in a passed Run as correct/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /do not treat every behavior in a failed Run as incorrect/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /failed Run may support a positive local procedure/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /passed Run may support an avoidance or negative lesson/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /Never recommend a behavior merely because it appears in a passed Run/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /never reject a behavior merely because it appears in a failed Run/);
+	assert.match(INDUCTION_SYSTEM_PROMPT, /If evidence conflicts or is insufficient for a claim, omit that claim or return insufficient_evidence rather than forcing synthesis/);
+	assert.doesNotMatch(INDUCTION_SYSTEM_PROMPT, /both runs/i);
 	for (const forbidden of ["pause_job", "disable_worker", "job.paused", "worker.disabled", "pause-job.ts", "disable-worker.ts", "action handler", "central registry", "no side effects", "one audit event", "unified action tests"]) {
 		assert.doesNotMatch(INDUCTION_SYSTEM_PROMPT, new RegExp(forbidden.replace(".", "\\."), "i"));
 	}
@@ -125,9 +139,11 @@ test("the v2 Prompt calibrates repository-role abstraction without source answer
 	});
 });
 
-test("the generic Validator requires formal support but does not derive source-content bans", () => {
+test("the generic Validator accepts one real lineage while source-ab-v1 retains two-Run support", () => {
 	const source = loadSourceRunSet(fixture().setPath);
-	assert.equal(validateCandidateSpec(candidate([RUN_A]), source).passed, false);
+	assert.equal(validateCandidateSpec(candidate([RUN_A]), source).passed, true);
+	const specialized = loadSourceRunSet(fixture({ taskFamily: "source-ab-v1" }).setPath);
+	assert.equal(validateCandidateSpec(candidate([RUN_A], "source-ab-v1"), specialized).passed, false);
 	const ordinary = candidate();
 	ordinary.steps[0]!.instruction += " Inspect README.md while handling running, paused, jobId, action_one, and trace.json conventions.";
 	assert.equal(validateCandidateSpec(ordinary, source).passed, true);
@@ -164,9 +180,9 @@ test("built artifacts have a correct Skill SHA and pass the existing Loader pref
 
 test("mechanically invalid Candidate remains invalid rather than insufficient_evidence", async () => {
 	const source = fixture();
-	const result = await buildSkillCandidate({ buildId: "invalid-build", sourceRunSetPath: source.setPath, outputDirectory: resolve(source.root, "invalid-build"), model: "deepseek/deepseek-v4-flash" }, { runtime: runtime([decision(candidate([RUN_A]))]) });
+	const result = await buildSkillCandidate({ buildId: "invalid-build", sourceRunSetPath: source.setPath, outputDirectory: resolve(source.root, "invalid-build"), model: "deepseek/deepseek-v4-flash" }, { runtime: runtime([decision(candidate(["unknown-run"]))]) });
 	assert.equal(result.status, "invalid");
-	assert.match(result.error?.message ?? "", /insufficient_step_support/);
+	assert.match(result.error?.message ?? "", /unknown_support_run/);
 	const build = JSON.parse(readFileSync(result.buildPath, "utf8")) as { status: string; raw_response_text: string | null; parsed_candidate: CandidateSpec | null };
 	assert.equal(build.status, "invalid");
 	assert.ok(build.raw_response_text);

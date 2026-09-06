@@ -35,10 +35,14 @@ function source(value: unknown, label: string): NormalizedCodingRun["operations"
 export function parseNormalizedCodingRun(value: unknown, label: string): NormalizedCodingRun {
 	const raw = object(value, label);
 	const task = object(raw.task, `${label}.task`);
+	const outcome = object(raw.outcome, `${label}.outcome`);
 	const changes = object(raw.changes, `${label}.changes`);
 	const verifier = object(raw.verifier, `${label}.verifier`);
 	if (!Array.isArray(raw.operations) || !Array.isArray(raw.tests)) throw new Error(`${label} operations/tests must be arrays`);
 	if (verifier.status !== "passed" && verifier.status !== "failed" && verifier.status !== "not_run") throw new Error(`${label}.verifier.status is invalid`);
+	if (!["completed", "timeout", "aborted", "infrastructure_failed"].includes(String(outcome.executionStatus))) throw new Error(`${label}.outcome.executionStatus is invalid`);
+	if (!["passed", "failed", "not_run"].includes(String(outcome.verificationStatus))) throw new Error(`${label}.outcome.verificationStatus is invalid`);
+	if (!(outcome.failureReason === null || typeof outcome.failureReason === "string")) throw new Error(`${label}.outcome.failureReason is invalid`);
 	const operations = raw.operations.map((entry, index) => {
 		const operation = object(entry, `${label}.operations[${index}]`);
 		if (operation.status !== "success" && operation.status !== "failure") throw new Error(`${label}.operations[${index}].status is invalid`);
@@ -65,6 +69,7 @@ export function parseNormalizedCodingRun(value: unknown, label: string): Normali
 			writablePaths: strings(task.writablePaths, `${label}.task.writablePaths`),
 			protectedPaths: strings(task.protectedPaths, `${label}.task.protectedPaths`),
 		},
+		outcome: { executionStatus: outcome.executionStatus as NormalizedCodingRun["outcome"]["executionStatus"], verificationStatus: outcome.verificationStatus as NormalizedCodingRun["outcome"]["verificationStatus"], failureReason: outcome.failureReason as string | null },
 		operations,
 		tests,
 		changes: {
@@ -82,19 +87,20 @@ export function loadSourceRunSet(path: string): LoadedSourceRunSet {
 	const root = dirname(absolutePath);
 	const raw = object(JSON.parse(readFileSync(absolutePath, "utf8")) as unknown, "SourceRunSet");
 	const taskFamily = string(raw.taskFamily, "SourceRunSet.taskFamily");
-	if (!Array.isArray(raw.sourceRuns) || raw.sourceRuns.length < 2) throw new Error("SourceRunSet must contain at least two source Runs");
+	if (!Array.isArray(raw.sourceRuns) || raw.sourceRuns.length < 1) throw new Error("SourceRunSet must contain at least one source Run");
+	if (taskFamily === "source-ab-v1" && raw.sourceRuns.length < 2) throw new Error("source-ab-v1 SourceRunSet must contain at least two source Runs");
 	const sourceRunIds: string[] = [];
 	const runs: NormalizedCodingRun[] = [];
 	for (const [index, entry] of raw.sourceRuns.entries()) {
 		const ref = object(entry, `SourceRunSet.sourceRuns[${index}]`);
 		const sourceRunId = string(ref.sourceRunId, `SourceRunSet.sourceRuns[${index}].sourceRunId`);
 		if (string(ref.taskFamily, `SourceRunSet.sourceRuns[${index}].taskFamily`) !== taskFamily) throw new Error(`source Run ${sourceRunId} task family mismatch`);
-		if (ref.historicalVerifierStatus !== "passed") throw new Error(`source Run ${sourceRunId} historical Verifier status is not passed`);
+		if (ref.historicalVerifierStatus !== "passed" && ref.historicalVerifierStatus !== "failed") throw new Error(`source Run ${sourceRunId} historical Verifier status is not learning-eligible`);
 		const normalizedPath = resolve(root, string(ref.normalizedRunPath, `SourceRunSet.sourceRuns[${index}].normalizedRunPath`));
 		if (!contained(root, normalizedPath)) throw new Error(`source Run ${sourceRunId} normalizedRunPath escapes SourceRunSet directory`);
 		const run = parseNormalizedCodingRun(JSON.parse(readFileSync(normalizedPath, "utf8")) as unknown, `NormalizedCodingRun ${sourceRunId}`);
 		if (run.runId !== sourceRunId) throw new Error(`source Run ${sourceRunId} normalized identity mismatch`);
-		if (run.verifier.status !== "passed") throw new Error(`source Run ${sourceRunId} normalized Verifier status is not passed`);
+		if (run.outcome.executionStatus !== "completed" || (run.verifier.status !== "passed" && run.verifier.status !== "failed") || run.outcome.verificationStatus !== run.verifier.status || ref.historicalVerifierStatus !== run.verifier.status) throw new Error(`source Run ${sourceRunId} normalized outcome is not valid learning evidence`);
 		sourceRunIds.push(sourceRunId);
 		runs.push(run);
 	}

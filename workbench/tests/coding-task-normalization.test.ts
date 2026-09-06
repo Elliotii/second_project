@@ -34,6 +34,7 @@ test("a complete raw Run fixture produces the minimal NormalizedCodingRun", () =
 		writablePaths: ["src/**"],
 		protectedPaths: ["test/**"],
 	});
+	assert.deepEqual(normalized.outcome, { executionStatus: "completed", verificationStatus: "passed", failureReason: null });
 	assert.deepEqual(normalized.operations.map(({ tool, target, status, source }) => ({ tool, target, status, source })), [
 		{ tool: "workspace_read", target: "src/subject.ts", status: "success", source: { file: "trace.json", record: 10 } },
 		{ tool: "run_command", target: "public_test", status: "success", source: { file: "trace.json", record: 20 } },
@@ -92,7 +93,7 @@ test("missing Manifest, Trace, or referenced Verifier result fails explicitly", 
 	assert.throws(() => normalizeCodingRun({ sourceRunPath: missingVerifier }, temp("missing-verifier-output")));
 });
 
-test("SourceRunSet accepts passed Runs and rejects a non-passed historical Verifier", () => {
+test("SourceRunSet accepts evidence-valid passed and failed Runs but rejects not_run", () => {
 	const sourceSetOutput = temp("source-set");
 	const sourceSet = prepareSourceRunSet({ taskFamily: "fixture-family", runs: [{ sourceRunPath: FIXTURE }] }, sourceSetOutput);
 	assert.deepEqual(sourceSet, {
@@ -111,10 +112,16 @@ test("SourceRunSet accepts passed Runs and rejects a non-passed historical Verif
 	const verifier = json(resolve(failedRun, "verifier", "result.json"));
 	verifier.status = "failed";
 	writeFileSync(resolve(failedRun, "verifier", "result.json"), `${JSON.stringify(verifier)}\n`);
+	const failedManifest = json(resolve(failedRun, "run-manifest.json")); failedManifest.verification_status = "failed";
+	writeFileSync(resolve(failedRun, "run-manifest.json"), `${JSON.stringify(failedManifest)}\n`);
 	const failedOutput = temp("failed-source-set");
-	assert.throws(() => prepareSourceRunSet({ taskFamily: "fixture-family", runs: [{ sourceRunPath: failedRun }] }, failedOutput), /not passed/);
-	assert.equal(existsSync(resolve(failedOutput, "source-runs.json")), false);
+	assert.equal(prepareSourceRunSet({ taskFamily: "fixture-family", runs: [{ sourceRunPath: failedRun }] }, failedOutput).sourceRuns[0]?.historicalVerifierStatus, "failed");
+	assert.equal(existsSync(resolve(failedOutput, "source-runs.json")), true);
 	assert.equal(existsSync(resolve(failedOutput, "normalized-runs", "fixture-run-001.json")), true);
+	const notRun = copiedRun("not-run-source-set"); const notRunVerifier = json(resolve(notRun, "verifier", "result.json")); notRunVerifier.status = "not_run";
+	writeFileSync(resolve(notRun, "verifier", "result.json"), `${JSON.stringify(notRunVerifier)}\n`); const notRunManifest = json(resolve(notRun, "run-manifest.json")); notRunManifest.verification_status = "not_run";
+	writeFileSync(resolve(notRun, "run-manifest.json"), `${JSON.stringify(notRunManifest)}\n`);
+	assert.throws(() => prepareSourceRunSet({ taskFamily: "fixture-family", runs: [{ sourceRunPath: notRun }] }, temp("not-run-set")), /not valid learning evidence/);
 });
 
 test("the single-Run normalizer preserves failed and explicit not_run Verifier states", () => {
@@ -123,6 +130,8 @@ test("the single-Run normalizer preserves failed and explicit not_run Verifier s
 		const verifier = json(resolve(run, "verifier", "result.json"));
 		verifier.status = status;
 		writeFileSync(resolve(run, "verifier", "result.json"), `${JSON.stringify(verifier)}\n`);
+		const manifest = json(resolve(run, "run-manifest.json")); manifest.verification_status = status;
+		writeFileSync(resolve(run, "run-manifest.json"), `${JSON.stringify(manifest)}\n`);
 		assert.equal(normalizeCodingRun({ sourceRunPath: run }, temp(`${status}-output`)).verifier.status, status);
 	}
 });

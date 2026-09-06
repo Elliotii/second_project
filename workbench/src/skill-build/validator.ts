@@ -32,7 +32,8 @@ export function validateCandidateSpec(spec: CandidateSpec, sourceRunSet: LoadedS
 	const allowed = new Set(sourceRunSet.sourceRunIds);
 	for (const [index, step] of (Array.isArray(spec.steps) ? spec.steps : []).entries()) {
 		if (!step || typeof step !== "object" || typeof step.instruction !== "string" || step.instruction.trim().length === 0) { add("invalid_step", `Step ${index + 1} instruction must be non-empty`); continue; }
-		if (!Array.isArray(step.support_run_ids) || new Set(step.support_run_ids).size < 2) add("insufficient_step_support", `Step ${index + 1} must cite two distinct source Runs`);
+		const requiredSupport = sourceRunSet.taskFamily === "source-ab-v1" ? 2 : 1;
+		if (!Array.isArray(step.support_run_ids) || new Set(step.support_run_ids).size < requiredSupport) add("insufficient_step_support", `Step ${index + 1} must cite ${requiredSupport} distinct source Run${requiredSupport === 1 ? "" : "s"}`);
 		else for (const runId of step.support_run_ids) if (typeof runId !== "string" || !allowed.has(runId)) add("unknown_support_run", `Step ${index + 1} cites an unknown source Run`);
 	}
 	return { passed: issues.length === 0, issues };

@@ -3,10 +3,15 @@
   "version": "0.0.0-v0",
   "private": true,
   "type": "module",
+  "bin": {
+    "workbench": "./scripts/workbench.mjs"
+  },
   "engines": {
     "node": ">=22.19.0"
   },
   "scripts": {
+    "workbench": "node ./scripts/workbench.mjs",
+    "skill:build-from-runs": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/build-skill-from-runs.ts",
     "evaluation:evaluate": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/evaluate-evaluation.ts",
     "evaluation:review": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/review-evaluation.ts",
     "coding-task:run": "node --experimental-loader ./scripts/coding-task-public-pi-loader.mjs scripts/run-coding-task.ts",

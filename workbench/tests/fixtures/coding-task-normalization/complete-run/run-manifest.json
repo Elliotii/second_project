@@ -4,6 +4,9 @@
   "task_id": "fixture-task",
   "source_revision": null,
   "existing_tree_digest": "fixture-tree-digest",
+  "execution_status": "completed",
+  "verification_status": "passed",
+  "failure_reason": null,
   "changes": {
     "added": ["src/new.ts"],
     "modified": ["src/subject.ts"],

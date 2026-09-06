@@ -62,6 +62,9 @@ Optional:
   --dry-run
   --json
   --help
+
+Output:
+  Analysis State and Markdown/HTML/PDF reports; --dry-run performs preflight without Analysis model execution.
 `;
 
 export function parseReviewArguments(argv: string[]): ReviewCliOptions | { help: true; json: boolean } {
@@ -217,7 +220,7 @@ async function main(): Promise<void> {
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		if (jsonMode) process.stdout.write(`${JSON.stringify({ status: "error", stage, message })}\n`);
-		else process.stderr.write(`Evaluation review failed (${stage}): ${message}\n`);
+		process.stderr.write(`Evaluation review failed (${stage}): ${message}\n`);
 		process.exitCode = 1;
 	}
 }

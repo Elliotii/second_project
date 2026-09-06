@@ -58,6 +58,9 @@ Required:
 Optional:
   --json
   --help
+
+Output:
+  Runs, Thin Evaluation Mapping, Analysis State, and Markdown/HTML/PDF review reports under the new output root.
 `;
 
 export function parseEvaluateArguments(argv: string[]): EvaluateCliOptions | { help: true; json: boolean } {
@@ -281,7 +284,7 @@ async function main(): Promise<void> {
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		if (jsonMode) process.stdout.write(`${JSON.stringify({ status: "error", stage, message })}\n`);
-		else process.stderr.write(`Evaluation failed (${stage}): ${message}\n`);
+		process.stderr.write(`Evaluation failed (${stage}): ${message}\n`);
 		process.exitCode = 1;
 	}
 }

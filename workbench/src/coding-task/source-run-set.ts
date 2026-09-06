@@ -12,7 +12,7 @@ export interface SourceRunRef {
 	taskFamily: string;
 	sourceRunPath: string;
 	normalizedRunPath: string;
-	historicalVerifierStatus: "passed";
+	historicalVerifierStatus: "passed" | "failed";
 }
 
 export interface SourceRunSet {
@@ -29,13 +29,14 @@ export function prepareSourceRunSet(input: SourceRunSetInput, outputDirectory: s
 	const sourceRuns: SourceRunRef[] = [];
 	for (const run of input.runs) {
 		const normalized = normalizeCodingRun(run, normalizedDirectory);
-		if (normalized.verifier.status !== "passed") throw new Error(`source Run ${normalized.runId} historical Verifier status is not passed`);
+		const verifierStatus = normalized.verifier.status;
+		if (normalized.outcome.executionStatus !== "completed" || (verifierStatus !== "passed" && verifierStatus !== "failed") || normalized.outcome.verificationStatus !== verifierStatus) throw new Error(`source Run ${normalized.runId} is not valid learning evidence`);
 		sourceRuns.push({
 			sourceRunId: normalized.runId,
 			taskFamily: input.taskFamily,
 			sourceRunPath: run.sourceRunPath,
 			normalizedRunPath: portableArtifactPath(outputDirectory, resolve(normalizedDirectory, `${normalized.runId}.json`)),
-			historicalVerifierStatus: "passed",
+			historicalVerifierStatus: verifierStatus,
 		});
 	}
 	const result: SourceRunSet = { taskFamily: input.taskFamily, sourceRuns };
