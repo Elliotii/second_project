@@ -1,116 +1,133 @@
-# Adaptive Coding Agent Harness Workbench
+# Agent Eval & Skill Optimization Workbench
 
-这是一个基于公共 Pi `AgentHarness` 的可靠性优先 Coding Agent Workbench。项目不重新实现 Agent Loop，而是在 Pi 外部负责 Workspace、Session/Run、环境 Verifier、Trace/Evidence、有界恢复、可版本化 Harness State、持久化检查界面，以及 V3.6 的受控 Docker 执行与 Change Handoff。
+一个基于 public Direct Pi `AgentHarness` 的 artifact-first Coding Agent 评测与 Skill 改进工作台。
+
+它把 Coding Run 固化为可核查的 Session、Trace、Diff、External Verifier 和 Manifest；从显式选择的有效 Run 证据构建 Candidate Skill；再通过冻结的对照评测、盲态过程分析、受控揭盲和人工审阅边界判断是否存在足够的改进证据。
 
 ```yaml
-latest_version: V3.6
-status: closed_accepted
-active_goal: null
+release: Analysis Agent v2.1
+product_commit: 09681da3e80728f91adfd54c8bc5c2c2abf75345
+runtime: Node.js >=22.19.0 / TypeScript
 pi_commit: 027a5847901b5dde30270abaa1041046cd2b4b55
 pi_core_patches: 0
+swe_bench_external_evaluation: not_included
 ```
 
-## 当前能力
+## 核心工作流
+
+```mermaid
+flowchart LR
+    R["Coding Runs"] --> E["Experience collection"]
+    E --> B["Evidence-grounded Skill build"]
+    B --> F["Frozen evaluation plan"]
+    F --> A["Blind process analysis"]
+    A --> U["Controlled unblind"]
+    U --> H["Human review"]
+```
+
+Canonical CLI 提供五个稳定入口：
 
 ```text
-Browser / local product entry
-  -> loopback-only Workbench API and safe projections
-  -> Host-minted Run Authority and pinned persistent Session
-  -> public Direct Pi AgentHarness
-  -> managed_session_copy
-  -> registered commands in one bounded Docker backend
-  -> immutable Trace / Verifier / ChangeSet
-  -> user-reviewed Host Apply All / Discard / Export
+workbench task run
+workbench experience run
+workbench skill build
+workbench evaluation run
+workbench evaluation review
 ```
 
-Pi 负责公共 Agent、消息、Tool 和 Session Runtime。Workbench 负责模型不能拥有的权威：Project/Workspace、预算、Verifier、Outcome、Evidence、Harness State、Docker profile、ChangeSet 和 registered Source Apply。
+- `task run`：运行一个隔离 Coding Task，保存完整 artifact 并执行外部 Verifier。
+- `experience run`：按调用者给定顺序收集多个 Run；合法 task failure 保留为证据，不自动重试。
+- `skill build`：仅从显式选择的、证据有效的 passed/failed Runs 构建一个 Candidate Skill；证据不足是合法终态。
+- `evaluation run`：执行已冻结的 Evaluation Plan，不在运行中改写实验设计。
+- `evaluation review`：不重跑 Coding Agent，只使用既有 Evaluation artifacts 重新分析。
 
-V3.6 已完成：
+Agent-facing 操作纪律位于 [`skills/workbench-orchestration/`](skills/workbench-orchestration/)。CLI 是执行权威，artifact 是结果权威，Skill 不构成第二套执行面。
 
-- 开放任务入口只接受窄的浏览器 schema；Host 生成并持久化不可变 Authority；
-- Session 固定 Project、Source snapshot、Harness State、capability、provider policy 和 execution backend identity；
-- 只允许注册命令 ID，Host 将其解析为固定 argv；
-- 项目命令只在固定 Docker Desktop WSL2/Linux backend 中运行，容器网络为 `none`，无 Host fallback；
-- Agent 只修改 `managed_session_copy`，不能直接修改 registered Source；
-- settled Workspace 形成不可变 ChangeSet，Host 在完整 preflight 后执行 Apply All、Discard 或 Export；
-- 一个真实 DeepSeek V4 Flash 两 Turn Journey 在同一持久 Session 中完成，Verifier 通过并由 Host Apply 一个文件；
-- 中英文 WebUI 继续只展示安全派生信息，不拥有 Credential、Docker、Verifier、State 或 Source mutation authority。
+## 快速开始
 
-## 版本路线结果
+### 前置条件
 
-| Version | 核心问题 | 已接受结果 |
-|---|---|---|
-| V0 | 能否运行、控制、追踪并从环境验证 Coding Task？ | 最小可用 Workbench 闭环 |
-| V1 | Baseline、Skill-only、Skill + Runtime Control 如何比较？ | 有界描述性证据，无通用赢家 |
-| V2 | 失败轨迹能否形成少量替代路径并由环境选择？ | 机制成立；真实 Negative 证据不完整 |
-| V3 | Evidence 能否转化为可验证、晋级、拒绝、回滚和选择性绑定的 Harness State？ | Prompt/Skill State 生命周期与一条真实 Prompt 路径 |
-| V3.5 | 系统能否持久化、检查和演示？ | settled Session reopen/continue、Read Model、WebUI 和一个有效 Skill Pair |
-| V3.6 | 开放交互如何获得受控执行和用户审阅的 Source handoff？ | Host Authority、固定 Docker backend、不可变 ChangeSet 和一个真实两 Turn产品闭环 |
+- Git
+- Node.js `>=22.19.0`
+- npm
+- 可访问固定的 Pi 上游仓库
 
-## 本地体验
-
-从 `workbench/` 运行零真实调用的 V3.6 控制平面：
+安装步骤不会读取模型 Credential，也不会执行真实模型请求。
 
 ```powershell
-npm.cmd run v36g1:demo
+cd workbench
+npm run setup
+$env:PI_RUNTIME_ROOT = (Resolve-Path ../.runs/v0-a/pi).Path
+npm run setup:check
+npm run workbench -- --help
 ```
 
-打开 `http://127.0.0.1:43136`。该界面可创建/继续 Session、查看固定上下文、Workspace、Changes、Diff 和 handoff 状态。普通自由任务仍默认为 `unverified`，Agent 自称完成不等于正式 PASS。
+POSIX shell：
 
-确定性 Goal 2 回归：
+```bash
+cd workbench
+npm run setup
+export PI_RUNTIME_ROOT="$(cd ../.runs/v0-a/pi && pwd)"
+npm run setup:check
+npm run workbench -- --help
+```
+
+`npm run setup` 会把 Pi 源码精确固定在 `027a5847901b5dde30270abaa1041046cd2b4b55`，通过独立 lockfile 和禁用 lifecycle scripts 的 `npm ci` 安装最小 runtime dependencies，校验并展开与该版本对应的 immutable npm `0.82.1` Pi AI/Agent 发布产物，再安装 Workbench 依赖。生成内容位于被 Git 忽略的 `.runs/`。
+
+查看各命令的输入和输出合同：
 
 ```powershell
-$env:V36_DOCKER_EXECUTABLE = 'C:/Users/HUAWEI/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe'
-npm.cmd run v36g2:test
+npm run workbench -- task run --help
+npm run workbench -- experience run --help
+npm run workbench -- skill build --help
+npm run workbench -- evaluation run --help
+npm run workbench -- evaluation review --help
 ```
 
-真实 `v36g2:product` 是受治理的固定验收入口，不是随意消耗 Credential 的日常命令。精确用法、预算和证据边界见 [Workbench README](./workbench/README.md) 与 [V3.6 Closeout](./docs/reports/V3_6_CLOSEOUT.md)。
+真实 Coding/Build/Analysis 命令需要调用者自行提供 DeepSeek Credential，可能产生外部请求和费用。不要把 Credential、`.env`、`.runs/` 或原始 Session 数据提交到 Git。
 
-## 关键证据
+## 已验证证据
 
-- Pi：`027a5847901b5dde30270abaa1041046cd2b4b55`，clean，零 Core patch；
-- V3.6 Goal 1 implementation：`81bc7c8b5667efaa0c10df507a7a0d2a59827e1e`；
-- V3.6 Goal 2 corrected implementation：`5ec7d2b0e81e54e2c8a73200e39f45ba631b244f`；
-- Goal 2 Execution Baseline：`781e95211e7cc6beb572c50ec18e36e0a952b1f9`；
-- 真实 Journey：1 Session、2 Runs、11 Provider requests、10 Tool calls、53,597 tokens、USD `0.0025941608`；
-- Verifier：3/3 passed；Host Apply：成功；Docker leftovers：0；
-- 最终零真实调用回归：strict TypeScript + 79/79 tests。
+最终冻结实验包含一个 Candidate、三个 Case、两个 condition、每个 condition 三次 trial，共 18 Runs：
 
-## Claims 与边界
+- 17 `PASS`
+- 1 `TASK_FAILURE`
+- 0 `INFRA_FAILURE`
+- 0 `INVALID_TRIAL`
+- `no_skill` 为 8/9 PASS，`with_skill` 为 9/9 PASS
 
-项目可以声称：公共 Pi 上的 Host-minted open-task authority、固定持久 Session、环境 Verifier、受控 Docker registered-command execution、不可变 Evidence/ChangeSet、用户审阅的 Host Apply，以及可解释的 Prompt/Skill Harness State 生命周期。
+这个小样本结果不证明 Skill 有效或具有因果改善。最终 Analysis 的两条 Finding 均为 `benefit=UNPROVEN`、`causation=UNSUPPORTED`、`NO_CHANGE_JUSTIFIED`，流程停在 `human_review_ready`。项目强调的是证据治理和拒绝不充分结论，而不是把一次结果包装为自动自进化。
 
-项目不声称：任意不可信代码的完备安全、生产级 sandbox、多租户隔离、in-flight crash recovery、exactly-once Tool effects、多文件事务、自动 rollback、任意项目兼容、统计显著的模型/Skill 提升、自动持续自进化、完整 IDE 或 Pi feature parity。
+发布事实、范围和验证入口见 [Analysis Agent v2.1 Release](docs/releases/ANALYSIS_AGENT_V2_1.md)。历史架构与逐阶段 Closeout 保留在 [`docs/`](docs/)。
 
-## 阅读路径
+## 边界与非声明
 
-1. [Current State](./CURRENT_STATE.md)
-2. [V3.6 Closeout](./docs/reports/V3_6_CLOSEOUT.md)
-3. [V3.6 Architecture and Interview Guide](./docs/V3_6_ARCHITECTURE_AND_INTERVIEW_GUIDE.md)
-4. [V3.6 Goal 2 Closeout](./docs/reports/V3_6_G2_CLOSEOUT.md)
-5. [Workbench README](./workbench/README.md)
+本发布可以声明：
 
-`.upstream/pi/`、`.runs/` 和 `reference/` 分别是固定上游、生成证据和用户控制参考资料，不进入项目实现提交。
+- public Direct Pi `AgentHarness` 集成，Pi Core 零 patch；
+- 隔离 Workspace、External Verifier、可追踪 Run artifacts；
+- 显式 Source Run 选择和 evidence-grounded Candidate construction；
+- Frozen Plan、Thin Mapping、blind/sealed/controlled-unblind Analysis；
+- canonical CLI 与 Agent-facing orchestration Skill；
+- 一个冻结 18-Run fixture 的完整工程证据。
 
-## V3.6 日常产品入口（Post-Closeout Polish）
+本发布不声明：
 
-正式 V3.6 Closeout 事实保持不变。收尾产品化只把已经接受的 persistent Session、
-Direct Pi、Docker registered commands、managed copy、ChangeSet 和 Host handoff 薄装配为
-一个用户驱动入口；它不再自动运行冻结 Prompt，也不会自动 Apply。
+- 通用或统计显著的 Skill 提升；
+- autonomous self-improvement；
+- production sandbox、多租户或分布式 Eval 平台；
+- 任意仓库、模型或 Provider 的普适兼容；
+- SWE-bench 支持。
 
-先复制 `workbench/config/v36-product.example.json` 为被 Git 忽略的
-`workbench/config/v36-product.local.json`，填写已登记项目的绝对 Source 路径、可写/保护路径、
-注册命令及 Harness State digest，然后从 `workbench/` 运行：
+SWE-bench external-evaluation adapter 位于后续独立实验分支，尚未完成，因此没有进入本发布。
 
-```powershell
-npm.cmd run v36:product -- `
-  --profile-file ./config/v36-product.local.json `
-  --credential-file ../.env `
-  --docker-executable "$env:LOCALAPPDATA/Programs/DockerDesktop/resources/bin/docker.exe"
-```
+## 仓库卫生
 
-打开 `http://127.0.0.1:43136`。自由 Coding Task 仍为 `unverified`：Agent 只修改
-managed Workspace；用户在 Changes / Diff 中明确选择 Apply All、Discard 或 Export。
-Apply 成功后旧 Session 不得继续，页面提供“从更新后的 Source 新建 Session”。详细边界见
-[Workbench README](./workbench/README.md) 与
-[Post-Closeout Productization Polish Report](./docs/reports/POST_V3_6_PRODUCTIZATION_POLISH_REPORT.md)。
+以下内容不会进入版本控制：
+
+- `.runs/`：生成的运行、runtime 和证据；
+- `.upstream/`：本地上游 checkout；
+- `.env*`：Credential 和本地配置，只有 `.env.example` 被跟踪；
+- `node_modules/`、构建输出和覆盖率文件。
+
+安全问题请遵循 [SECURITY.md](SECURITY.md)。项目所有者尚未选择开源许可证；在加入明确 LICENSE 前，本仓库不授予复制、修改或再分发许可。

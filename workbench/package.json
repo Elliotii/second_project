@@ -10,13 +10,15 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "setup": "node ./scripts/bootstrap-pi-runtime.mjs",
+    "setup:check": "node ./scripts/bootstrap-pi-runtime.mjs --check",
     "workbench": "node ./scripts/workbench.mjs",
     "skill:build-from-runs": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/build-skill-from-runs.ts",
     "evaluation:evaluate": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/evaluate-evaluation.ts",
     "evaluation:review": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/review-evaluation.ts",
     "coding-task:run": "node --experimental-loader ./scripts/coding-task-public-pi-loader.mjs scripts/run-coding-task.ts",
     "commit2b:test": "node --test tests/skill-build.test.ts",
-    "typecheck": "node ../.runs/v0-a/pi/node_modules/typescript/bin/tsc -p tsconfig.json",
+    "typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test test",
     "v0b:deterministic": "node scripts/run-v0b-deterministic-suite.mjs",
     "v0c:deterministic": "node scripts/run-v0c-deterministic-suite.mjs",
@@ -33,9 +35,9 @@
     "v3g2:test": "node --experimental-loader ../.runs/v3-g2/runtime/public-pi-loader.mjs --test tests/v3g2-validate-promote-reject-rollback.test.ts",
     "v3g3:test": "node --experimental-loader ../.runs/v3-g3/runtime/public-pi-loader.mjs --test tests/v3g3-admission.test.ts tests/v3g3-selective-reuse.test.ts",
     "v35g1:test": "node --experimental-loader ../.runs/v3-5-g1/runtime/public-pi-loader.mjs --test tests/v35-persistent-session.test.ts",
-    "v35g2:typecheck": "node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit",
+    "v35g2:typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit",
     "v35g2:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v35g2-real-adaptive-skill.test.ts",
-    "v35g25:typecheck": "node D:/AI/AI_Projects/project2/.runs/g006/pi/node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit",
+    "v35g25:typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.v35g2.json --noEmit",
     "v35g25:test": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs --test --test-concurrency=1 tests/v35g25-termination-safe.test.ts",
     "v35g25:real-pair": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/v35g25-real-pair.ts",
     "v35g3:demo": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/start-v35g3-demo.ts",
@@ -52,5 +54,9 @@
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",
     "@earendil-works/pi-ai": "file:../.runs/v0-a/pi/packages/ai"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "typescript": "5.9.3"
   }
 }
