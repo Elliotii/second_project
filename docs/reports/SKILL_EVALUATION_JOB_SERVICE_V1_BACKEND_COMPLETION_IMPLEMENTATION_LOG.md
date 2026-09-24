@@ -191,3 +191,41 @@ Blind Analysis 现场：
 - 未修改服务、Analysis、Pi 或 Evaluation 语义；只更新了获批 SPEC 与本实施记录。
 - 临时 API/Worker 已停止；Redis 在保存 RDB 后停止并由 `--rm` 移除。Job/Session/Mapping/失败 terminal 与控制日志均保留。
 - 当前停止等待审核，不自动修复、不重试、不推进后续阶段。
+
+## 2026-09-24：方案 A 修复与双真实 Job 复测
+
+**状态：** `STAGE_1_RETEST_FAILED / BLOCKED`
+**聚焦报告：** `docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_DUAL_JOB_RETEST_2026-09-24.md`
+
+### Git 与 Spec 身份
+
+- 修复前本地基线：commit `a75d7aef777c932d8380120c8ff2da3831d15780`，tree `3d83d1f509b58e2805623b7a5a33d6dcd550b638`。
+- 方案 A 修复：commit `75b41881d6266ea77a3e7b0ef4f27da9433f55a4`，tree `6c76207e5e32f765cb295bd42f0e115e01f0223f`。
+- 新 Spec：`.runs/evaluation-service-specs/small-real-v5-diag-20260924/specs.json`，绑定上述修复 commit/tree 与 21 个 executor file digest；Frozen Plan SHA-256 `66c02d14ad0c85cfed84001b1baa350248961b4f424a62e032acba49a6a07af9`。
+- 零模型 preflight：`ready_at_execution_boundary`，0 model call，0 Credential read；Analysis request timeout 300,000 ms，Job timeout 2,400,000 ms。
+
+### 已实施和已回归
+
+- 在 Workbench 层新增安全、有界的 Analysis Provider request 生命周期诊断，不修改 pinned Pi/SDK，不记录 Prompt、response/thinking 正文、Tool arguments、Credential 或任意 headers。
+- 成功/失败 Job 均可通过现有内容摘要 Artifact 路由发布 `analysis-provider-requests.json`。
+- TypeScript PASS；Evaluation Service 11/11 PASS；Analysis/Review 聚焦测试 23/23 PASS；Faux 正式闭环单独 1/1 PASS。
+
+### 本轮唯一真实双 Job 尝试
+
+- Job A：`847ddb20060c3490a1587a223c6046483f6e17fa51fdcd19821c40a18bcedd08`
+- Job B：`76e23bd1460739352cb1d497400dc3c3743b900761d132ede5e6d5b9f550ef03`
+- 两个独立 Worker，各 concurrency=1；BullMQ global concurrency=2；无第三个 Job、无 retry。
+- evaluator 重叠约 115 秒；两对 Coding Run 重叠 6.372 秒/3.547 秒；Blind Analysis 重叠 99.416 秒；13 对跨 Job Provider request 重叠，最长 30.654 秒。
+- 四个 Coding Run 均 `completed/passed`；Mapping/run roots 无交叉。
+
+Job B 完整成功到 `human_review_ready`，正式 State、controlled-unblind 和 Markdown/HTML/PDF 报告齐全；15/15 HTTP Artifact 的 status、bytes、SHA-256 和响应摘要头全部匹配。
+
+Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-unblind 请求为 headers observed、HTTP 200、normal stop，但模型在 root JSON 中提前多闭合一个 `}`，使最后 29 字符的必需 `follow_up_observations` 字段脱离 root。严格 parser 正确拒绝，服务终态为 `execution_failed`；8/8 失败 Artifact 完整可查。该错误不是本轮 Provider termination 或 timeout。
+
+### 安全、清理与停止
+
+- Credential 精确值：97 个 Job/control 文件 0 命中；Redis 7 个 key dump 0 命中。
+- 四个 runner/evaluator PID 均退出，两条 terminal 均 `cleanup_confirmed=true`。
+- Redis RDB 保存在 `D:\AI\ejc2-control-20260924-02\redis-dump.rdb`，SHA-256 `ee2845c2274d2ed5658bc6fab37feccdb5284230dea19f07d7f7d6d098e80e19`。
+- API、两个 Worker、Redis 容器均已停止；Job roots、control logs、RDB 和原历史现场均保留。
+- Stage 1 因一成一败仍为 `FAILED / BLOCKED`。Stage 2/3/4 未开始；未自行修复、未发起第二次真实尝试、未 merge/push。等待用户与 Web GPT 审核。
