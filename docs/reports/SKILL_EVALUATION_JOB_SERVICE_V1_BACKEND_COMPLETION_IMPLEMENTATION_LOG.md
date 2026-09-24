@@ -345,3 +345,14 @@ Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-un
 - 原有 Evaluation CLI、Pi、Verifier、Mapping、Analysis State/报告合同未改变；新增的是异步服务使用入口和定向后端回归。
 - controlled-unblind JSON Mode 修复和单次 Canary 成功已保留；B 类降级/自动重试未实现且不属于本轮。
 - 真实 HTTP 双 Job 的并发、Coding、Mapping 与隔离已经证明；直连双 Analysis-only 成功；两个全新 HTTP Job 同一轮均完整到报告仍未验证，不能宣称通过。
+
+## 2026-09-25：完整双 HTTP 验收重新开放
+
+状态：`AUTHORIZED / PREPARING_NEW_CONTRACT_IDENTITY`
+
+- 用户明确授权一组、且仅一组两个全新真实 HTTP Evaluation Job。
+- 继续使用同一小型正式 Evaluation 合同、两个不同 idempotency key、两个独立 Worker（各 concurrency=1）和 global concurrency=2。
+- 执行前先提交原 SPEC 的重新开放条款，再刷新匹配新 commit/tree 的注册 Spec并完成零模型 preflight。
+- 使用已验证的直连 Provider 路径；不修改服务代理、不降低模型/Token/thinking/工具/任务预算。
+- 不启用 B 降级，不在 dispatch 后自动重试，不提交第三个 Job。
+- 无论成功或失败，固定两 Job 收敛、证据核验和本记录更新后停止。

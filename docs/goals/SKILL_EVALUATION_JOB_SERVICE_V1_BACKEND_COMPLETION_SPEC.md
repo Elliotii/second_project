@@ -176,6 +176,20 @@ HTTP 状态会组合文件系统 terminal 与可获得的 BullMQ 状态。正式
 
 **User decision / accepted implementation route：** 不再为本轮 Stage 2–4 追加真实模型复测，也不实现 controlled-unblind 的 B 类降级/自动重试。Stage 1 的调度并发与隔离证据保留为有效工程证据；“完整双 HTTP E2E”保留为明确未验证边界。部署说明应提示长流 Provider 路径需要单独验证，但产品代码不切换系统代理、不把直连写死为业务规则。
 
+### 3.4 2026-09-25 完整双 HTTP 验收重新开放
+
+**User authorization：** 用户在 Stage 2–4 完成后，明确授权重新开放一次完整双 HTTP Job 验收。该授权只包含同一合法小型 Spec 下的一组、两个新 Job；不包含第三个 Job、失败后的真实重试、B 类降级、真实并发 4/8、merge 或 push。
+
+本次重新开放继续完整复用第 4 节 Stage 1 的入口、并发、重叠、隔离、成功标准和异常暂停合同，并补充以下约束：
+
+1. 先把本修订形成新的本地合同 commit，再重新生成绑定该 commit/tree 和 executor digests 的合法 Spec并通过零模型 preflight；不得套用旧源码身份。
+2. 使用此前对照中已验证的直连 Provider 网络路径。服务代码不得操作系统代理、静默切换路由或加入自动 Provider 重试。
+3. 使用薄 HTTP CLI 对同一 Spec提交两个不同 idempotency key；两个 Job 都必须是新的 Job/Attempt/output identity。
+4. 任一 Job dispatch 后发生失败，不提交新 Job、不自动重跑 Analysis、不启用 B 降级；另一条合法运行中的 Job按既有生命周期收敛，随后同时核验两条现场。
+5. 无论两个 Job最终成功或失败，本次固定双 Job收敛、证据核验和实施记录完成后均停止，等待用户审核。
+
+成功仍严格要求两个新 HTTP Job 在各自独立身份下同时满足 `reason=completed`、正式 result 为 `human_review_ready`，并分别具备两 Run、Verifier、Mapping、正式 Analysis State、必要的 controlled-unblind、Markdown/HTML/PDF 报告和可读取的内容寻址 Artifact。Analysis-only、历史 Job或跨尝试产物不得拼接为本次成功。
+
 **Fact：** 初次调查时服务测试源码有 11 个 `test()` 定义；历史 Closeout 的 10/10 统计早于后续 timeout 用例。Stage 2/3 完成后，当前完整 `evaluation-service-*.test.ts` 套件为 18/18 通过，包含 5 个薄客户端测试、真实 loopback API 客户端闭环和两 fake Job 并发隔离回归。
 
 ## 4. 四阶段实施计划
@@ -383,7 +397,7 @@ evaluation-service:client artifact --job <id> --name <name> --output <fresh-path
 
 用户明确批准本 SPEC 并授权开始实施后，原则上按阶段 1 → 2 → 3 → 4 连续推进。Stage 1 的后续处置采用第 3.3 节的明确用户决定：不追认完整双 HTTP 成功，但允许在保留该限制的前提下进入 Stage 2。Stage 2–4 任一阶段全部必要验收通过后，可进入下一阶段，无需重复请求许可。
 
-Stage 1 包含两个真实小型 Evaluation 的 Provider 调用；它只有在用户明确批准实施时才获得授权。本次编写 SPEC 的回合不包含该授权。
+Stage 1 包含两个真实小型 Evaluation 的 Provider 调用；2026-09-25 的唯一一组重新开放授权记录在第 3.4 节。该授权在两个新 Job dispatch 后即视为已消费，不因失败而自动产生替代或重试额度。
 
 ### 6.2 异常暂停
 
