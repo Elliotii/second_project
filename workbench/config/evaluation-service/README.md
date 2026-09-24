@@ -156,3 +156,18 @@ can be reclaimed. Once dispatch or side effects may have occurred, a missing ter
 is finalized as `uncertain_requires_review`; the Worker does not blindly spawn a second
 Evaluation. V1 does not claim exactly-once effects, cross-host scheduling, automatic
 cross-restart recovery, or automatic Analysis retries.
+
+## Verified V1 delivery scope
+
+The V1 backend completion acceptance used two independent Worker processes with local
+concurrency one and BullMQ global concurrency two. Two new formal HTTP Jobs overlapped
+in evaluator, Coding Run, and Blind Analysis intervals; both completed through Verifier,
+Mapping, formal Analysis State, and Markdown/HTML/PDF report generation. The focused
+zero-model suite also covers idempotency conflicts, stalled redelivery protection,
+timeout cleanup, Redis-degraded reads, Artifact tamper rejection, Credential isolation,
+and two-fake-Job concurrent path isolation.
+
+This is evidence for one Windows host, real concurrency two, and the validated direct
+Provider network path. It is not evidence of production high availability, exactly-once
+side effects, arbitrary crash recovery, cross-machine scheduling, real concurrency four
+or eight, or reliability on every proxy/TUN path.

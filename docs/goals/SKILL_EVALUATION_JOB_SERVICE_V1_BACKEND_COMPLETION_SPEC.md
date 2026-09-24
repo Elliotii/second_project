@@ -174,7 +174,7 @@ HTTP 状态会组合文件系统 terminal 与可获得的 BullMQ 状态。正式
 - JSON Mode 修复后的单次 controlled-unblind Canary 首次成功，证明已确认的 B 类 root JSON 结构问题已被定向修复；该修复不处理 Blind Analysis 传输终止。
 - 绕过 Clash/TUN 的直连双 Analysis-only Review 均完整生成 State 和 Markdown/HTML/PDF 报告。这提高了代理/TUN 路径是故障贡献因素的可信度，但不能替代两个新 HTTP Job 的完整成功证据。
 
-**User decision / accepted implementation route：** 不再为本轮 Stage 2–4 追加真实模型复测，也不实现 controlled-unblind 的 B 类降级/自动重试。Stage 1 的调度并发与隔离证据保留为有效工程证据；“完整双 HTTP E2E”保留为明确未验证边界。部署说明应提示长流 Provider 路径需要单独验证，但产品代码不切换系统代理、不把直连写死为业务规则。
+**Historical decision as of 2026-09-24：** 当时不再为 Stage 2–4 追加真实模型复测，也不实现 controlled-unblind 的 B 类降级/自动重试；因此当时“完整双 HTTP E2E”仍是明确未验证边界。该历史处置没有删除或改写失败现场。随后用户以第 3.4 节的新合同重新开放唯一一组双 HTTP 验收，并由第 3.5 节的正式成功证据取代“当前未验证”状态。部署说明仍须提示长流 Provider 路径需要单独验证，产品代码不切换系统代理、不把直连写死为业务规则。
 
 ### 3.4 2026-09-25 完整双 HTTP 验收重新开放
 

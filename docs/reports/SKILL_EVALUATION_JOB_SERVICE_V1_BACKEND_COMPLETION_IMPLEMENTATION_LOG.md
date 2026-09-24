@@ -3,15 +3,16 @@
 **分支：** `codex/skill-evaluation-job-service`  
 **开始日期：** 2026-09-24  
 **实施合同：** `docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_BACKEND_COMPLETION_SPEC.md`  
-**状态：** Stage 2/3 passed / Stage 4 source and tests ready for local commit; strict full-dual-HTTP claim remains deferred
+**状态：** Stage 1/2/3/4 PASSED；完整双 HTTP 验收为 `PASS_FULL_DUAL_HTTP_EVALUATION_ACCEPTANCE`
 
 ## 身份基线
 
 - 便携发布基线 commit：`603207f20436b1c31f67c3234936a9636f1d5c13`
 - 便携发布基线 tree：`edc44fc90b52f7ea2ff4ef20b384e0bd8404f7a3`
-- 当前工作树：包含未提交的 Skill Evaluation Job Service V1、Analysis 定向修复、测试和报告；不是上述 tree 的同义词。
-- Stage 1 执行身份：待 preflight 后记录注册 Spec、Plan/config 摘要和 executor 逐文件 SHA-256。
-- 最终交付身份：待 Stage 4 本地 commit 后记录最终 commit/tree；随后重新生成 Spec 并零模型 preflight。
+- 后端源码与统一 HTTP CLI commit：`943061502ce77bf252dd05b05f1ba84fb787a5ba`。
+- 完整双 HTTP 验收合同/执行 commit：`b72df11ae0f1d1cdafd8be0486cd7618f62960a5`；tree：`81a82b9ef04b5f6c4b237c9c97aaccb2f8ee8303`。
+- 完整双 HTTP 验收结果记录 commit：`77b081d971b05aa468eeb5a190b28551315e159c`。
+- 最终 Stage 4 tracked delivery commit/tree 由包含本段的收口提交产生，无法在自身内容中自引用；精确身份、21 个 executor digest 和 post-commit preflight 结果记录在忽略的 delivery evidence 及最终交接中。
 
 ## 授权与固定边界
 
@@ -318,7 +319,7 @@ Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-un
 
 ## 2026-09-25：Stage 4 Git 与可复现交付
 
-状态：`SOURCE_AND_TESTS_READY_FOR_LOCAL_COMMIT`
+状态：`PASSED`
 
 ### 提交前核验
 
@@ -328,6 +329,7 @@ Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-un
 - 候选源码、测试、文档和三份聚焦复测报告对 `.env.g005` 中实际 Credential 值的精确扫描：0 命中；扫描过程没有输出 Credential 内容。
 - `.env.*` 与 `.runs/` 继续受既有 ignore 保护；新增 `/tmp/` ignore，保留但不提交临时 Canary 脚本和 PDF 渲染文件。
 - 临时 Redis 容器已停止并删除；没有遗留测试 API/Worker。
+- 2026-09-25 最终聚焦复跑：`npm run typecheck` PASS；`npm run evaluation-service:test` 18/18 PASS；临时 `redis:7.4.7-alpine` 仅绑定 `127.0.0.1:6389`，随后已删除且端口关闭。
 
 ### 最终交付内容
 
@@ -337,14 +339,14 @@ Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-un
 - 原 SPEC 的 Stage 1 有限处置修订、本持续实施记录以及三份后续真实复测报告；
 - `CURRENT_STATE.md` 的 additive service override 更新。
 
-最终本地 commit/tree 由本记录冻结后的 Git 操作产生，避免文档自引用改变 commit；精确身份与 post-commit Spec/preflight 将记录在最终交接。未经用户确认不 merge、不 push。
+最终本地 commit/tree 由本记录冻结后的 Git 操作产生，避免文档自引用改变 commit；精确身份、最终 Spec、Frozen Plan、21 个 executor digest 和 post-commit preflight 记录在忽略的 delivery evidence 及最终交接。未经用户确认不 merge、不 push。
 
 ## 当前最终边界
 
-- Stage 2 和 Stage 3 已完成且通过零模型回归；Stage 4 等待本地 commit 与 post-commit Spec/preflight。
+- Stage 1 已由 2026-09-25 唯一一组两个新 HTTP Job 完整通过；Stage 2 统一 HTTP CLI、Stage 3 可靠性定向巩固均已通过；Stage 4 的 tracked 交付内容与最终零模型回归已完成，精确 post-commit 身份由忽略的 delivery evidence 闭环。
 - 原有 Evaluation CLI、Pi、Verifier、Mapping、Analysis State/报告合同未改变；新增的是异步服务使用入口和定向后端回归。
 - controlled-unblind JSON Mode 修复和单次 Canary 成功已保留；B 类降级/自动重试未实现且不属于本轮。
-- 真实 HTTP 双 Job 的并发、Coding、Mapping 与隔离已经证明；直连双 Analysis-only 成功；两个全新 HTTP Job 同一轮均完整到报告仍未验证，不能宣称通过。
+- 历史 Provider termination、B JSON 错误及其失败 Job/Session/Trace 保持原样；它们是历史诊断，不是当前阻塞。最新两个全新 HTTP Job 在同一轮均完整到正式 State 和报告，严格结论为 `PASS_FULL_DUAL_HTTP_EVALUATION_ACCEPTANCE`。
 
 ## 2026-09-25：完整双 HTTP 验收重新开放
 
