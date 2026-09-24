@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "specs": [
+    {
+      "schema_version": 1,
+      "id": "fake-fast-success",
+      "kind": "formal_skill_evaluation",
+      "enabled": true,
+      "job_timeout_ms": 30000,
+      "log_limit_bytes": 262144,
+      "executor": { "kind": "fake", "behavior": "success", "delay_ms": 10, "credential_profile_id": null, "stdout_bytes": 128 }
+    },
+    {
+      "schema_version": 1,
+      "id": "fake-task-failure",
+      "kind": "formal_skill_evaluation",
+      "enabled": true,
+      "job_timeout_ms": 30000,
+      "log_limit_bytes": 262144,
+      "executor": { "kind": "fake", "behavior": "task_failure", "delay_ms": 10, "credential_profile_id": null, "stdout_bytes": 128 }
+    },
+    {
+      "schema_version": 1,
+      "id": "fake-execution-failure",
+      "kind": "formal_skill_evaluation",
+      "enabled": true,
+      "job_timeout_ms": 30000,
+      "log_limit_bytes": 262144,
+      "executor": { "kind": "fake", "behavior": "execution_failure", "delay_ms": 10, "credential_profile_id": null, "stdout_bytes": 128 }
+    },
+    {
+      "schema_version": 1,
+      "id": "fake-delay-100ms",
+      "kind": "formal_skill_evaluation",
+      "enabled": true,
+      "job_timeout_ms": 30000,
+      "log_limit_bytes": 262144,
+      "executor": { "kind": "fake", "behavior": "success", "delay_ms": 100, "credential_profile_id": null, "stdout_bytes": 128 }
+    },
+    {
+      "schema_version": 1,
+      "id": "fake-timeout",
+      "kind": "formal_skill_evaluation",
+      "enabled": true,
+      "job_timeout_ms": 500,
+      "log_limit_bytes": 262144,
+      "executor": { "kind": "fake", "behavior": "timeout", "delay_ms": 0, "credential_profile_id": null, "stdout_bytes": 128 }
+    },
+    {
+      "schema_version": 1,
+      "id": "fake-nested-timeout",
+      "kind": "formal_skill_evaluation",
+      "enabled": true,
+      "job_timeout_ms": 750,
+      "log_limit_bytes": 262144,
+      "executor": { "kind": "fake", "behavior": "nested_timeout", "delay_ms": 0, "credential_profile_id": null, "stdout_bytes": 128 }
+    }
+  ]
+}

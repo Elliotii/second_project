@@ -1,6 +1,40 @@
 # Current State
 
-> Updated: 2026-08-21
+> Updated: 2026-09-25
+
+## Analysis Agent v2.1 Service Goal Override (2026-09-22)
+
+This section is the live authority for the additive post-v2.1 service Goal and
+supersedes older V3.7/current-goal prose only for this worktree. Historical
+version evidence and all closed-run restrictions remain unchanged.
+
+```yaml
+release_baseline: Analysis Agent v2.1 portable release
+control_baseline_commit: 603207f20436b1c31f67c3234936a9636f1d5c13
+control_baseline_tree: edc44fc90b52f7ea2ff4ef20b384e0bd8404f7a3
+active_goal: null
+status: skill_evaluation_job_service_v1_backend_completion_stages_1_through_4_passed
+contract: docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_GOAL_CONTRACT.md
+backend_completion_spec: docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_BACKEND_COMPLETION_SPEC.md
+backend_completion_log: docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_BACKEND_COMPLETION_IMPLEMENTATION_LOG.md
+closeout: docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_CLOSEOUT.md
+technical_handoff: docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_TECHNICAL_HANDOFF.md
+implementation_owner: current_Codex_task_by_explicit_user_direction
+implementation_worktree: D:/AI/AI_Projects/project2-worktrees/skill-evaluation-job-service
+implementation_branch: codex/skill-evaluation-job-service
+real_model_execution: completed_under_explicit_user_authorization
+real_execution_disposition: one_full_HTTP_Job_success_preserved;_full_dual_HTTP_Evaluation_acceptance_passed;_direct_dual_analysis_only_human_review_ready
+backend_completion_scope: thin_HTTP_client_and_zero_model_reliability_hardening_complete;_B_fallback_deferred
+backend_completion_stages: stage_1_passed;_stage_2_passed;_stage_3_passed;_stage_4_passed
+final_delivery_identity_record: ignored_post_commit_delivery_evidence_and_final_handoff
+full_dual_http_execution_commit: b72df11ae0f1d1cdafd8be0486cd7618f62960a5
+full_dual_http_execution_tree: 81a82b9ef04b5f6c4b237c9c97aaccb2f8ee8303
+full_dual_http_spec_sha256: e6a7e52b8aec5ad00c09bf4c3fc49d2a8f69742a331eca6fdcc6e2fcf31c1720
+full_dual_http_job_a: 8fd08a5e1c79f16f36275125a6bc49c9194f422049d9fce7c50774d4135b4479
+full_dual_http_job_b: 06651f5449ae31d75e9df105e8149ba4361af0f5311ac3bdcfd002c717d81d12
+full_dual_http_disposition: PASS_FULL_DUAL_HTTP_EVALUATION_ACCEPTANCE
+swe_bench_dependency: false
+```
 
 ```yaml
 project:

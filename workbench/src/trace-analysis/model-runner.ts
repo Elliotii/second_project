@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { AgentHarness, JsonlSessionRepo, type AgentHarnessEvent } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
@@ -8,7 +8,8 @@ import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
 import { createAnalysisContext, finalizeAnalysisHandoff, isAnalysisGloballyComplete, resolveFindingLocators, validateAnalysisWorkflow } from "./analysis.ts";
 import type { AnalysisState, EvidenceLocator, RunDescriptor } from "./contracts.ts";
-import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } from "./model-tools.ts";
+import { analysisStateWasSaved, createAnalysisTools, type AnalysisStateUpdateFailure, type AnalysisToolCall } from "./model-tools.ts";
+import { resolveAnalysisRequestTimeoutMs } from "./runtime-config.ts";
 import { loadAnalysisState, renderDevelopmentFinding, saveAnalysisState } from "./state.ts";
 import {
 	buildControlledUnblindContext,
@@ -73,12 +74,454 @@ function assistantText(message: AssistantMessage): string {
 	return message.content.flatMap((part) => part.type === "text" ? [part.text] : []).join("\n");
 }
 
+export type AnalysisInvocationErrorCode =
+	| "analysis_provider_error"
+	| "analysis_runtime_error"
+	| "analysis_aborted"
+	| "analysis_lifecycle_error"
+	| "analysis_update_state_not_called"
+	| "analysis_state_validation_failed"
+	| "analysis_state_persistence_failed";
+
+export class AnalysisInvocationError extends Error {
+	readonly code: AnalysisInvocationErrorCode;
+	readonly analysisStage = "blind_analysis" as const;
+	readonly mode: "fresh" | "resume";
+
+	constructor(code: AnalysisInvocationErrorCode, mode: "fresh" | "resume", message: string, cause?: unknown) {
+		super(message, cause === undefined ? undefined : { cause });
+		this.name = "AnalysisInvocationError";
+		this.code = code;
+		this.mode = mode;
+	}
+}
+
+export function analysisInvocationErrorCode(error: unknown): AnalysisInvocationErrorCode | undefined {
+	return error instanceof AnalysisInvocationError ? error.code : undefined;
+}
+
+function errorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+export const ANALYSIS_PROVIDER_DIAGNOSTICS_FILE = "analysis-provider-requests.json";
+
+type ProviderRequestClassification =
+	| "in_progress"
+	| "normal"
+	| "stream_error_after_headers"
+	| "provider_error_headers_unobserved"
+	| "aborted_after_headers"
+	| "aborted_headers_unobserved"
+	| "runtime_error_after_headers"
+	| "runtime_error_headers_unobserved";
+
+type ProviderInvocationTerminal =
+	| "in_progress"
+	| "state_accepted"
+	| "provider_error"
+	| "aborted"
+	| "runtime_error"
+	| "analysis_contract_error";
+
+interface ProviderRequestDiagnostic {
+	ordinal: number;
+	request_model: { provider: string; id: string } | null;
+	dispatch_at: string | null;
+	dispatch_observation: "observed" | "not_observed";
+	response_headers_at: string | null;
+	headers_observation: "observed" | "not_observed";
+	http_status: number | null;
+	provider_request_id: string | null;
+	provider_request_id_header: string | null;
+	message_end_at: string | null;
+	classification: ProviderRequestClassification;
+	response: {
+		id: string | null;
+		model: string | null;
+		stop_reason: AssistantMessage["stopReason"] | null;
+		error_message: string | null;
+	};
+	usage: null | {
+		input_tokens: number;
+		output_tokens: number;
+		cache_read_tokens: number;
+		cache_write_tokens: number;
+		reasoning_tokens: number | null;
+		total_tokens: number;
+		cost_usd: number;
+	};
+	content: {
+		block_count: number;
+		text_blocks: number;
+		thinking_blocks: number;
+		tool_call_blocks: number;
+		text_bytes: number;
+		thinking_bytes: number;
+		tool_call_names: string[];
+		tool_arguments_recorded: false;
+	};
+	update_state: {
+		emitted: number;
+		execution_started: number;
+		execution_completed: number;
+		execution_errors: number;
+		state_persisted: boolean;
+		state_accepted: boolean;
+	};
+}
+
+interface ProviderInvocationDiagnostic {
+	invocation_id: string;
+	stage: "blind_analysis" | "controlled_unblind";
+	review_mode: "fresh" | "resume";
+	session_id: string | null;
+	started_at: string;
+	finished_at: string | null;
+	terminal: ProviderInvocationTerminal;
+	safe_error: string | null;
+	completion_source: "agent_harness" | "provider" | "injected" | "none";
+	request_timeout_ms: number;
+	requests: ProviderRequestDiagnostic[];
+	dropped_request_count: number;
+	persistence: { attempts: number; failures: number; last_status: "ok" | "failed" };
+}
+
+export interface AnalysisProviderDiagnosticsDocument {
+	schema_version: 1;
+	kind: "analysis_provider_request_diagnostics";
+	created_at: string;
+	updated_at: string;
+	privacy: {
+		prompts_recorded: false;
+		response_text_recorded: false;
+		thinking_recorded: false;
+		tool_arguments_recorded: false;
+		credentials_recorded: false;
+		response_headers_allowlisted: true;
+	};
+	invocations: ProviderInvocationDiagnostic[];
+}
+
+const MAX_DIAGNOSTIC_INVOCATIONS = 64;
+const MAX_DIAGNOSTIC_REQUESTS_PER_INVOCATION = 128;
+const REQUEST_ID_HEADERS = ["x-request-id", "request-id", "x-requestid", "x-deepseek-request-id"] as const;
+
+function safeDiagnosticError(value: string | undefined): string | null {
+	if (!value) return null;
+	const normalized = value.trim().replace(/\s+/g, " ");
+	if (normalized.length === 0) return null;
+	if (/authorization|bearer|api[_-]?key|credential|password|https?:\/\/|sk-[A-Za-z0-9_-]{8,}|[{}\[\]<>\\]/i.test(normalized)) return "provider error details redacted";
+	if (!/^[\p{L}\p{N} .,:;_()=+\-]{1,256}$/u.test(normalized)) return "provider error details redacted";
+	return normalized;
+}
+
+function requestIdFromHeaders(headers: Record<string, string>): { header: string; value: string } | null {
+	const normalized = new Map(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]));
+	for (const header of REQUEST_ID_HEADERS) {
+		const value = normalized.get(header)?.trim();
+		if (value && /^[A-Za-z0-9._:-]{1,256}$/.test(value)) return { header, value };
+	}
+	return null;
+}
+
+function safeDiagnosticIdentifier(value: string | undefined, allowSlash = false): string | null {
+	if (!value) return null;
+	const expression = allowSlash ? /^[A-Za-z0-9._:/-]{1,256}$/ : /^[A-Za-z0-9._:-]{1,256}$/;
+	return expression.test(value) ? value : null;
+}
+
+function emptyContentDiagnostic(): ProviderRequestDiagnostic["content"] {
+	return { block_count: 0, text_blocks: 0, thinking_blocks: 0, tool_call_blocks: 0, text_bytes: 0, thinking_bytes: 0, tool_call_names: [], tool_arguments_recorded: false };
+}
+
+function summarizeAssistantContent(message: AssistantMessage): ProviderRequestDiagnostic["content"] {
+	const summary = emptyContentDiagnostic();
+	summary.block_count = message.content.length;
+	for (const block of message.content) {
+		if (block.type === "text") {
+			summary.text_blocks++;
+			summary.text_bytes += Buffer.byteLength(block.text, "utf8");
+		} else if (block.type === "thinking") {
+			summary.thinking_blocks++;
+			summary.thinking_bytes += Buffer.byteLength(block.thinking, "utf8");
+		} else if (block.type === "toolCall") {
+			summary.tool_call_blocks++;
+			if (summary.tool_call_names.length < 32) summary.tool_call_names.push(block.name);
+		}
+	}
+	return summary;
+}
+
+function newRequest(ordinal: number): ProviderRequestDiagnostic {
+	return {
+		ordinal,
+		request_model: null,
+		dispatch_at: null,
+		dispatch_observation: "not_observed",
+		response_headers_at: null,
+		headers_observation: "not_observed",
+		http_status: null,
+		provider_request_id: null,
+		provider_request_id_header: null,
+		message_end_at: null,
+		classification: "in_progress",
+		response: { id: null, model: null, stop_reason: null, error_message: null },
+		usage: null,
+		content: emptyContentDiagnostic(),
+		update_state: { emitted: 0, execution_started: 0, execution_completed: 0, execution_errors: 0, state_persisted: false, state_accepted: false },
+	};
+}
+
+function isDiagnosticsDocument(value: unknown): value is AnalysisProviderDiagnosticsDocument {
+	if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+	const record = value as Partial<AnalysisProviderDiagnosticsDocument>;
+	return record.schema_version === 1 && record.kind === "analysis_provider_request_diagnostics" && Array.isArray(record.invocations);
+}
+
+/**
+ * Persists an allowlisted, content-free view of Analysis Provider request lifecycle events.
+ * Diagnostic persistence is best-effort and never changes formal Analysis acceptance.
+ */
+export class AnalysisProviderDiagnosticsRecorder {
+	readonly path: string;
+	private readonly document: AnalysisProviderDiagnosticsDocument;
+	private readonly invocation: ProviderInvocationDiagnostic;
+	private readonly now: () => string;
+	private readonly toolRequestOrdinals = new Map<string, number>();
+	private activeRequestOrdinal: number | null = null;
+	private persistenceDisabled = false;
+
+	constructor(options: {
+		outputDirectory: string;
+		stage: "blind_analysis" | "controlled_unblind";
+		mode: "fresh" | "resume";
+		sessionId: string | null;
+		requestTimeoutMs: number;
+		completionSource: ProviderInvocationDiagnostic["completion_source"];
+		invocationId?: string;
+		now?: () => string;
+	}) {
+		this.now = options.now ?? (() => new Date().toISOString());
+		this.path = resolve(options.outputDirectory, ANALYSIS_PROVIDER_DIAGNOSTICS_FILE);
+		let document: AnalysisProviderDiagnosticsDocument | null = null;
+		if (existsSync(this.path)) {
+			try {
+				const parsed = JSON.parse(readFileSync(this.path, "utf8")) as unknown;
+				if (isDiagnosticsDocument(parsed)) document = parsed;
+			} catch { /* a corrupt diagnostic must not change Analysis semantics */ }
+		}
+		const createdAt = this.now();
+		this.document = document ?? {
+			schema_version: 1,
+			kind: "analysis_provider_request_diagnostics",
+			created_at: createdAt,
+			updated_at: createdAt,
+			privacy: { prompts_recorded: false, response_text_recorded: false, thinking_recorded: false, tool_arguments_recorded: false, credentials_recorded: false, response_headers_allowlisted: true },
+			invocations: [],
+		};
+		this.invocation = {
+			invocation_id: options.invocationId ?? randomUUID(),
+			stage: options.stage,
+			review_mode: options.mode,
+			session_id: options.sessionId,
+			started_at: createdAt,
+			finished_at: null,
+			terminal: "in_progress",
+			safe_error: null,
+			completion_source: options.completionSource,
+			request_timeout_ms: options.requestTimeoutMs,
+			requests: [],
+			dropped_request_count: 0,
+			persistence: { attempts: 0, failures: 0, last_status: "ok" },
+		};
+		if (document === null && existsSync(this.path)) this.persistenceDisabled = true;
+		if (this.document.invocations.length >= MAX_DIAGNOSTIC_INVOCATIONS) this.persistenceDisabled = true;
+		if (!this.persistenceDisabled) {
+			this.document.invocations.push(this.invocation);
+			this.persist();
+		}
+	}
+
+	private request(allowSynthetic = true): ProviderRequestDiagnostic | null {
+		if (this.activeRequestOrdinal !== null) return this.invocation.requests.find((entry) => entry.ordinal === this.activeRequestOrdinal) ?? null;
+		if (!allowSynthetic || this.invocation.requests.length >= MAX_DIAGNOSTIC_REQUESTS_PER_INVOCATION) return null;
+		const request = newRequest(this.invocation.requests.length + 1);
+		this.invocation.requests.push(request);
+		this.activeRequestOrdinal = request.ordinal;
+		return request;
+	}
+
+	private persist(): void {
+		if (this.persistenceDisabled) return;
+		this.invocation.persistence.attempts++;
+		this.invocation.persistence.last_status = "ok";
+		this.document.updated_at = this.now();
+		try {
+			writeFileSync(this.path, `${JSON.stringify(this.document, null, 2)}\n`, "utf8");
+		} catch {
+			this.invocation.persistence.failures++;
+			this.invocation.persistence.last_status = "failed";
+		}
+	}
+
+	beforeProviderRequest(model: { provider: string; id: string }): void {
+		if (this.invocation.requests.length >= MAX_DIAGNOSTIC_REQUESTS_PER_INVOCATION) {
+			this.invocation.dropped_request_count++;
+			this.activeRequestOrdinal = null;
+			this.persist();
+			return;
+		}
+		const request = newRequest(this.invocation.requests.length + 1);
+		request.request_model = { provider: model.provider, id: model.id };
+		request.dispatch_at = this.now();
+		request.dispatch_observation = "observed";
+		this.invocation.requests.push(request);
+		this.activeRequestOrdinal = request.ordinal;
+		this.persist();
+	}
+
+	afterProviderResponse(status: number, headers: Record<string, string>): void {
+		const request = this.request();
+		if (!request) return;
+		request.response_headers_at = this.now();
+		request.headers_observation = "observed";
+		request.http_status = Number.isSafeInteger(status) ? status : null;
+		const providerRequestId = requestIdFromHeaders(headers);
+		request.provider_request_id = providerRequestId?.value ?? null;
+		request.provider_request_id_header = providerRequestId?.header ?? null;
+		this.persist();
+	}
+
+	messageEnd(message: AssistantMessage): void {
+		const request = this.request();
+		if (!request) return;
+		request.message_end_at = this.now();
+		request.response = {
+			id: safeDiagnosticIdentifier(message.responseId),
+			model: safeDiagnosticIdentifier(message.responseModel ?? message.model, true),
+			stop_reason: message.stopReason,
+			error_message: safeDiagnosticError(message.errorMessage),
+		};
+		request.usage = {
+			input_tokens: message.usage.input,
+			output_tokens: message.usage.output,
+			cache_read_tokens: message.usage.cacheRead,
+			cache_write_tokens: message.usage.cacheWrite,
+			reasoning_tokens: message.usage.reasoning ?? null,
+			total_tokens: message.usage.totalTokens,
+			cost_usd: message.usage.cost.total,
+		};
+		request.content = summarizeAssistantContent(message);
+		for (const block of message.content) {
+			if (block.type === "toolCall" && block.name === "update_state") {
+				request.update_state.emitted++;
+				this.toolRequestOrdinals.set(block.id, request.ordinal);
+			}
+		}
+		request.classification = message.stopReason === "error"
+			? request.headers_observation === "observed" ? "stream_error_after_headers" : "provider_error_headers_unobserved"
+			: message.stopReason === "aborted"
+				? request.headers_observation === "observed" ? "aborted_after_headers" : "aborted_headers_unobserved"
+				: "normal";
+		this.activeRequestOrdinal = null;
+		this.persist();
+	}
+
+	toolExecutionStart(toolCallId: string, toolName: string): void {
+		if (toolName !== "update_state") return;
+		const ordinal = this.toolRequestOrdinals.get(toolCallId);
+		const request = ordinal === undefined ? null : this.invocation.requests.find((entry) => entry.ordinal === ordinal) ?? null;
+		if (!request) return;
+		request.update_state.execution_started++;
+		this.persist();
+	}
+
+	toolExecutionEnd(toolCallId: string, toolName: string, isError: boolean, statePersisted: boolean): void {
+		if (toolName !== "update_state") return;
+		const ordinal = this.toolRequestOrdinals.get(toolCallId);
+		const request = ordinal === undefined ? null : this.invocation.requests.find((entry) => entry.ordinal === ordinal) ?? null;
+		if (!request) return;
+		request.update_state.execution_completed++;
+		if (isError) request.update_state.execution_errors++;
+		if (!isError && statePersisted) request.update_state.state_persisted = true;
+		this.persist();
+	}
+
+	markStateAccepted(): void {
+		const request = [...this.invocation.requests].reverse().find((entry) => entry.update_state.emitted > 0);
+		if (request) request.update_state.state_accepted = true;
+		this.persist();
+	}
+
+	finish(terminal: Exclude<ProviderInvocationTerminal, "in_progress">, error?: unknown): void {
+		if (this.invocation.terminal !== "in_progress") return;
+		this.invocation.finished_at = this.now();
+		this.invocation.terminal = terminal;
+		this.invocation.safe_error = safeDiagnosticError(error === undefined ? undefined : errorMessage(error));
+		const request = this.activeRequestOrdinal === null ? null : this.request(false);
+		if (request?.classification === "in_progress" && terminal === "runtime_error") {
+			request.classification = request.headers_observation === "observed" ? "runtime_error_after_headers" : "runtime_error_headers_unobserved";
+		}
+		this.activeRequestOrdinal = null;
+		this.persist();
+	}
+
+	snapshot(): AnalysisProviderDiagnosticsDocument {
+		return structuredClone(this.document);
+	}
+}
+
+function diagnosticTerminal(error: unknown): Exclude<ProviderInvocationTerminal, "in_progress" | "state_accepted"> {
+	if (error instanceof AnalysisInvocationError) {
+		if (error.code === "analysis_provider_error") return "provider_error";
+		if (error.code === "analysis_aborted") return "aborted";
+		if (error.code === "analysis_runtime_error") return "runtime_error";
+	}
+	return "analysis_contract_error";
+}
+
+export function assertBlindAnalysisTerminal(options: {
+	mode: "fresh" | "resume";
+	settled: number;
+	finalAssistantMessage: Pick<AssistantMessage, "stopReason" | "errorMessage"> | null;
+	stateSaved: boolean;
+	updateStateAttempts: number;
+	lastUpdateStateFailure: AnalysisStateUpdateFailure | null;
+}): void {
+	const { finalAssistantMessage: message } = options;
+	if (message?.stopReason === "error") {
+		throw new AnalysisInvocationError("analysis_provider_error", options.mode, `Blind Analysis ${options.mode} Provider error before accepted State: ${message.errorMessage ?? "Provider returned stopReason=error"}`);
+	}
+	if (message?.stopReason === "aborted") {
+		throw new AnalysisInvocationError("analysis_aborted", options.mode, `Blind Analysis ${options.mode} was aborted before accepted State: ${message.errorMessage ?? "Assistant stopped with stopReason=aborted"}`);
+	}
+	if (options.settled !== 1) {
+		throw new AnalysisInvocationError("analysis_lifecycle_error", options.mode, `Blind Analysis Invocation must settle exactly once; observed ${options.settled}`);
+	}
+	if (!message) {
+		throw new AnalysisInvocationError("analysis_runtime_error", options.mode, "Blind Analysis settled without an Assistant terminal message");
+	}
+	if (options.stateSaved) return;
+	if (options.lastUpdateStateFailure?.kind === "validation") {
+		throw new AnalysisInvocationError("analysis_state_validation_failed", options.mode, `Blind Analysis update_state validation failed: ${options.lastUpdateStateFailure.message}`);
+	}
+	if (options.lastUpdateStateFailure?.kind === "persistence") {
+		throw new AnalysisInvocationError("analysis_state_persistence_failed", options.mode, `Blind Analysis update_state persistence failed: ${options.lastUpdateStateFailure.message}`);
+	}
+	if (options.updateStateAttempts > 0) {
+		throw new AnalysisInvocationError("analysis_state_persistence_failed", options.mode, "Blind Analysis attempted update_state but no accepted State was persisted");
+	}
+	throw new AnalysisInvocationError("analysis_update_state_not_called", options.mode, "Blind Analysis ended normally without calling update_state");
+}
+
 export interface BlindAnalysisInvocationResult {
 	stage: "blind_analysis";
 	mode: "fresh" | "resume";
 	started_at: string;
 	finished_at: string;
 	model: { provider: string; id: string };
+	request_timeout_ms: number;
 	usage: { provider_requests: number; input_tokens: number; output_tokens: number; cost_usd: number; tool_calls: number; wall_time_ms: number };
 	session_id: string;
 	session_path: string;
@@ -99,6 +542,7 @@ export interface ControlledUnblindInvocationResult {
 	stage: "controlled_unblind";
 	mode: "resume";
 	model: { provider: string; id: string } | null;
+	request_timeout_ms: number;
 	usage: { provider_requests: number; input_tokens: number; output_tokens: number; cost_usd: number; wall_time_ms: number };
 	state_path: string;
 	state: AnalysisState;
@@ -125,6 +569,7 @@ export async function runAnalysisInvocation(options: {
 	alignmentCompletion?: (input: { systemPrompt: string; userPrompt: string }) => Promise<AlignmentCompletionResult>;
 }): Promise<AnalysisInvocationResult> {
 	if (!options.credentialResolver || typeof options.credentialResolver.resolve !== "function") throw new Error("opaque Credential resolver is required for Analysis Runner");
+	const requestTimeoutMs = resolveAnalysisRequestTimeoutMs(options.timeoutMs);
 	const outputDirectory = resolve(options.outputDirectory);
 	const statePath = resolve(outputDirectory, "analysis-state.json");
 	mkdirSync(outputDirectory, { recursive: true });
@@ -142,35 +587,86 @@ export async function runAnalysisInvocation(options: {
 	}
 	if (options.mode === "resume" && initialState.phase === "alignment_ready") {
 		const startedMs = Date.now();
+		const invocationPath = resolve(outputDirectory, "controlled-unblind-invocation.json");
+		if (existsSync(invocationPath)) throw new Error("controlled-unblind invocation evidence already exists; use a new Review output root for another attempt");
 		const sealedFindings = initialState.finding_drafts.filter((finding) => finding.status === "kept" && finding.sealed);
-		if (sealedFindings.length === 0) {
-			const state = completeZeroFindingControlledUnblindState(initialState, options.descriptors);
+		const diagnostics = new AnalysisProviderDiagnosticsRecorder({
+			outputDirectory,
+			stage: "controlled_unblind",
+			mode: "resume",
+			sessionId: null,
+			requestTimeoutMs,
+			completionSource: sealedFindings.length === 0 ? "none" : options.alignmentCompletion ? "injected" : "provider",
+		});
+		let providerRequestPending = false;
+		try {
+			if (sealedFindings.length === 0) {
+				const state = completeZeroFindingControlledUnblindState(initialState, options.descriptors);
+				saveAnalysisState(outputDirectory, state);
+				diagnostics.markStateAccepted();
+				diagnostics.finish("state_accepted");
+				return { stage: "controlled_unblind", mode: "resume", model: null, request_timeout_ms: requestTimeoutMs, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "" };
+			}
+			if (!options.evaluationAuthority) throw new Error("Controlled unblind requires Batch Freeze and Thin Evaluation Mapping authority");
+			const context = await buildControlledUnblindContext({ state: initialState, descriptors: options.descriptors, batchPath: options.evaluationAuthority.batchPath, mappingPath: options.evaluationAuthority.mappingPath });
+			const systemPrompt = CONTROLLED_UNBLIND_SYSTEM_PROMPT;
+			const userPrompt = controlledUnblindPrompt(context);
+			let completion: AlignmentCompletionResult;
+			if (options.alignmentCompletion) completion = await options.alignmentCompletion({ systemPrompt, userPrompt });
+			else {
+				const credential = await options.credentialResolver.resolve();
+				if (typeof credential !== "string" || credential.length === 0) throw new Error("opaque Analysis Credential resolution failed");
+				const credentials = new InMemoryCredentialStore();
+				await credentials.modify("deepseek", async () => ({ type: "api_key", key: credential }));
+				const models = createModels({ credentials });
+				models.setProvider(deepseekProvider());
+				const model = models.getModel("deepseek", "deepseek-v4-flash");
+				if (!model) throw new Error("fixed DeepSeek Analysis model is unavailable");
+				diagnostics.beforeProviderRequest({ provider: model.provider, id: model.id });
+				providerRequestPending = true;
+				const message = await models.completeSimple(
+					model,
+					{ systemPrompt, messages: [{ role: "user", content: userPrompt, timestamp: Date.now() }] },
+					{
+						maxRetries: 0,
+						timeoutMs: requestTimeoutMs,
+						onPayload: (payload) => {
+							if (payload === null || typeof payload !== "object" || Array.isArray(payload)) throw new Error("controlled-unblind provider payload must be an object");
+							return { ...payload, response_format: { type: "json_object" } };
+						},
+						onResponse: (response) => diagnostics.afterProviderResponse(response.status, { ...(response.headers as Record<string, string>) }),
+					},
+				);
+				providerRequestPending = false;
+				diagnostics.messageEnd(message);
+				if (message.stopReason === "error" || message.stopReason === "aborted") {
+					diagnostics.finish(message.stopReason === "error" ? "provider_error" : "aborted", new Error(message.errorMessage ?? `controlled-unblind model stopped with ${message.stopReason}`));
+					throw new Error(message.errorMessage ?? `controlled-unblind model stopped with ${message.stopReason}`);
+				}
+				completion = { text: contentText(message.content), model: { provider: message.provider, id: message.model }, usage: { input_tokens: message.usage.input + message.usage.cacheRead + message.usage.cacheWrite, output_tokens: message.usage.output, cost_usd: message.usage.cost.total } };
+			}
+			const finishedAt = new Date().toISOString();
+			const usage = { provider_requests: 1, ...completion.usage, wall_time_ms: Date.now() - startedMs };
+			writeFileSync(invocationPath, `${JSON.stringify({
+				schema_version: 1,
+				stage: "controlled_unblind",
+				started_at: new Date(startedMs).toISOString(),
+				finished_at: finishedAt,
+				model: completion.model,
+				request_timeout_ms: requestTimeoutMs,
+				usage,
+				assistant_text: completion.text,
+			}, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
+			const result = parseControlledUnblindResult(completion.text);
+			const state = completeControlledUnblindState(initialState, options.descriptors, result, context.frozen_candidate_skill);
 			saveAnalysisState(outputDirectory, state);
-			return { stage: "controlled_unblind", mode: "resume", model: null, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "" };
+			diagnostics.markStateAccepted();
+			diagnostics.finish("state_accepted");
+			return { stage: "controlled_unblind", mode: "resume", model: completion.model, request_timeout_ms: requestTimeoutMs, usage, state_path: statePath, state, model_invoked: true, tool_names: [], assistant_text: completion.text };
+		} catch (error) {
+			diagnostics.finish(providerRequestPending ? "runtime_error" : "analysis_contract_error", error);
+			throw error;
 		}
-		if (!options.evaluationAuthority) throw new Error("Controlled unblind requires Batch Freeze and Thin Evaluation Mapping authority");
-		const context = await buildControlledUnblindContext({ state: initialState, descriptors: options.descriptors, batchPath: options.evaluationAuthority.batchPath, mappingPath: options.evaluationAuthority.mappingPath });
-		const systemPrompt = CONTROLLED_UNBLIND_SYSTEM_PROMPT;
-		const userPrompt = controlledUnblindPrompt(context);
-		let completion: AlignmentCompletionResult;
-		if (options.alignmentCompletion) completion = await options.alignmentCompletion({ systemPrompt, userPrompt });
-		else {
-			const credential = await options.credentialResolver.resolve();
-			if (typeof credential !== "string" || credential.length === 0) throw new Error("opaque Analysis Credential resolution failed");
-			const credentials = new InMemoryCredentialStore();
-			await credentials.modify("deepseek", async () => ({ type: "api_key", key: credential }));
-			const models = createModels({ credentials });
-			models.setProvider(deepseekProvider());
-			const model = models.getModel("deepseek", "deepseek-v4-flash");
-			if (!model) throw new Error("fixed DeepSeek Analysis model is unavailable");
-			const message = await models.completeSimple(model, { systemPrompt, messages: [{ role: "user", content: userPrompt, timestamp: Date.now() }] }, { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 });
-			if (message.stopReason === "error" || message.stopReason === "aborted") throw new Error(message.errorMessage ?? `controlled-unblind model stopped with ${message.stopReason}`);
-			completion = { text: contentText(message.content), model: { provider: message.provider, id: message.model }, usage: { input_tokens: message.usage.input + message.usage.cacheRead + message.usage.cacheWrite, output_tokens: message.usage.output, cost_usd: message.usage.cost.total } };
-		}
-		const result = parseControlledUnblindResult(completion.text);
-		const state = completeControlledUnblindState(initialState, options.descriptors, result, context.frozen_candidate_skill);
-		saveAnalysisState(outputDirectory, state);
-		return { stage: "controlled_unblind", mode: "resume", model: completion.model, usage: { provider_requests: 1, ...completion.usage, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: true, tool_names: [], assistant_text: completion.text };
 	}
 	if (options.mode === "resume" && initialState.phase !== "blind_analysis") throw new Error(`${initialState.phase} State cannot resume Blind Analysis`);
 	const modelContext = blindAnalysisModelContext(options.mode, initialState);
@@ -188,9 +684,10 @@ export async function runAnalysisInvocation(options: {
 	if (!model) throw new Error("fixed DeepSeek Analysis model is unavailable");
 	const sessionId = `trace-analysis-${options.mode}-${randomUUID()}`;
 	const repo = new JsonlSessionRepo({ fs: new NodeExecutionEnv({ cwd: outputDirectory, shellEnv: {} }), sessionsRoot: resolve(outputDirectory, "sessions", options.mode) });
-	const session = await repo.create({ cwd: outputDirectory, id: sessionId, metadata: { mode: options.mode, state_path: statePath } });
+	const session = await repo.create({ cwd: outputDirectory, id: sessionId, metadata: { mode: options.mode, state_path: statePath, request_timeout_ms: requestTimeoutMs } });
 	const sessionMetadata = await session.getMetadata();
-	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: modelContext.systemPrompt, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 } });
+	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: modelContext.systemPrompt, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: requestTimeoutMs } });
+	const diagnostics = new AnalysisProviderDiagnosticsRecorder({ outputDirectory, stage: "blind_analysis", mode: options.mode, sessionId: sessionMetadata.id, requestTimeoutMs, completionSource: "agent_harness" });
 	const startedMs = Date.now();
 	const startedAt = new Date(startedMs).toISOString();
 	let providerRequests = 0;
@@ -199,10 +696,28 @@ export async function runAnalysisInvocation(options: {
 	let costUsd = 0;
 	let settled = 0;
 	let finalText = "";
+	let finalAssistantMessage: AssistantMessage | null = null;
+	let observedUpdateStateAttempts = 0;
+	let observedUpdateStateFailure: AnalysisStateUpdateFailure | null = null;
+	const unsubscribeBeforeProvider = harness.on("before_provider_request", (event) => {
+		diagnostics.beforeProviderRequest({ provider: event.model.provider, id: event.model.id });
+		return undefined;
+	});
 	const unsubscribe = harness.subscribe((event: AgentHarnessEvent) => {
 		if (event.type === "settled") settled++;
+		if (event.type === "after_provider_response") diagnostics.afterProviderResponse(event.status, event.headers);
+		if (event.type === "tool_execution_start" && event.toolName === "update_state") {
+			observedUpdateStateAttempts++;
+			diagnostics.toolExecutionStart(event.toolCallId, event.toolName);
+		}
+		if (event.type === "tool_execution_end" && event.toolName === "update_state" && event.isError && profile.context.lastUpdateStateFailure === null) {
+			observedUpdateStateFailure = { kind: "validation", message: "update_state tool arguments were rejected before State persistence" };
+		}
+		if (event.type === "tool_execution_end" && event.toolName === "update_state") diagnostics.toolExecutionEnd(event.toolCallId, event.toolName, event.isError, analysisStateWasSaved(statePath));
 		if (event.type === "message_end" && event.message.role === "assistant") {
 			const message = event.message as AssistantMessage;
+			diagnostics.messageEnd(message);
+			finalAssistantMessage = message;
 			providerRequests++;
 			inputTokens += message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
 			outputTokens += message.usage.output;
@@ -210,27 +725,76 @@ export async function runAnalysisInvocation(options: {
 			finalText = assistantText(message);
 		}
 	});
+	let runtimeFailure: unknown;
 	try {
 		await harness.prompt(modelContext.userPrompt);
 		await harness.waitForIdle();
+	} catch (error) {
+		runtimeFailure = error;
 	} finally {
 		unsubscribe();
-		await harness.abort();
+		unsubscribeBeforeProvider();
+		try {
+			await harness.abort();
+		} catch (error) {
+			runtimeFailure ??= error;
+		}
 	}
-	if (settled !== 1) throw new Error(`Analysis Invocation must settle exactly once; observed ${settled}`);
-	if (!analysisStateWasSaved(statePath)) throw new Error("Analysis model did not persist State through update_state");
-	let state = loadAnalysisState(statePath);
+	if (runtimeFailure !== undefined) {
+		const error = new AnalysisInvocationError("analysis_runtime_error", options.mode, `Blind Analysis ${options.mode} runtime failed before accepted State: ${errorMessage(runtimeFailure)}`, runtimeFailure);
+		diagnostics.finish("runtime_error", error);
+		throw error;
+	}
+	try {
+		assertBlindAnalysisTerminal({
+			mode: options.mode,
+			settled,
+			finalAssistantMessage,
+			stateSaved: analysisStateWasSaved(statePath),
+			updateStateAttempts: Math.max(observedUpdateStateAttempts, profile.context.updateStateAttempts),
+			lastUpdateStateFailure: profile.context.lastUpdateStateFailure ?? observedUpdateStateFailure,
+		});
+	} catch (error) {
+		diagnostics.finish(diagnosticTerminal(error), error);
+		throw error;
+	}
+	let state: AnalysisState;
+	try {
+		state = loadAnalysisState(statePath);
+	} catch (error) {
+		const failure = new AnalysisInvocationError("analysis_state_validation_failed", options.mode, `Persisted Blind Analysis State could not be loaded or validated: ${errorMessage(error)}`, error);
+		diagnostics.finish("analysis_contract_error", failure);
+		throw failure;
+	}
 	const globalComplete = isAnalysisGloballyComplete(state, options.descriptors);
 	const locators = state.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter]);
 	const resolved = resolveFindingLocators(analysis, locators).map((entry) => ({ locator: entry.locator, characterCount: entry.characterCount }));
 	const loadedKeys = new Set(state.loaded_evidence.map((entry) => locatorKey(entry.locator)));
 	const allLoaded = locators.every((locator) => loadedKeys.has(locatorKey(locator)));
-	if (!allLoaded) throw new Error("Finding uses a Locator absent from loaded_evidence");
-	if (options.mode === "fresh" && !state.matrix_triage_complete) throw new Error("fresh Invocation did not complete Global Matrix Triage");
-	if (!globalComplete && state.next_action.trim().length === 0) throw new Error("globally incomplete Analysis State requires next_action");
+	if (!allLoaded) {
+		const error = new Error("Finding uses a Locator absent from loaded_evidence");
+		diagnostics.finish("analysis_contract_error", error);
+		throw error;
+	}
+	if (options.mode === "fresh" && !state.matrix_triage_complete) {
+		const error = new Error("fresh Invocation did not complete Global Matrix Triage");
+		diagnostics.finish("analysis_contract_error", error);
+		throw error;
+	}
+	if (!globalComplete && state.next_action.trim().length === 0) {
+		const error = new Error("globally incomplete Analysis State requires next_action");
+		diagnostics.finish("analysis_contract_error", error);
+		throw error;
+	}
 	if (globalComplete) {
 		state = finalizeAnalysisHandoff(state, options.descriptors);
-		saveAnalysisState(outputDirectory, state);
+		try {
+			saveAnalysisState(outputDirectory, state);
+		} catch (error) {
+			const failure = new AnalysisInvocationError("analysis_state_persistence_failed", options.mode, `Final Blind Analysis State persistence failed: ${errorMessage(error)}`, error);
+			diagnostics.finish("analysis_contract_error", failure);
+			throw failure;
+		}
 	}
 
 	let resumeDirection: BlindAnalysisInvocationResult["resume_direction"];
@@ -244,10 +808,14 @@ export async function runAnalysisInvocation(options: {
 			return [];
 		});
 		resumeDirection = { queried_different_run: inspected.some((entry) => !initialRuns.has(entry.run_id)), queried_different_artifact: inspected.some((entry) => !initialArtifacts.has(entry.artifact)) };
-		if (!resumeDirection.queried_different_run && !resumeDirection.queried_different_artifact) throw new Error("resume Invocation did not inspect another Run or Evidence kind");
+		if (!resumeDirection.queried_different_run && !resumeDirection.queried_different_artifact) {
+			const error = new Error("resume Invocation did not inspect another Run or Evidence kind");
+			diagnostics.finish("analysis_contract_error", error);
+			throw error;
+		}
 	}
 	const result: BlindAnalysisInvocationResult = {
-		stage: "blind_analysis", mode: options.mode, started_at: startedAt, finished_at: new Date().toISOString(), model: { provider: model.provider, id: model.id },
+		stage: "blind_analysis", mode: options.mode, started_at: startedAt, finished_at: new Date().toISOString(), model: { provider: model.provider, id: model.id }, request_timeout_ms: requestTimeoutMs,
 		usage: { provider_requests: providerRequests, input_tokens: inputTokens, output_tokens: outputTokens, cost_usd: costUsd, tool_calls: profile.context.calls.length, wall_time_ms: Date.now() - startedMs },
 		session_id: sessionMetadata.id, session_path: sessionMetadata.path, state_path: statePath, loaded_state_path: options.mode === "resume" ? statePath : null,
 		loaded_prior_session: false, tool_names: profile.tools.map((tool) => tool.name), tool_calls: structuredClone(profile.context.calls), prior_next_action: initialState.next_action,
@@ -257,5 +825,7 @@ export async function runAnalysisInvocation(options: {
 	if (options.mode === "resume" && state.finding_drafts.length > 0) {
 		writeFileSync(resolve(outputDirectory, "development-finding.md"), renderDevelopmentFinding(state, state.finding_drafts.find((finding) => finding.status === "kept")?.id ?? state.finding_drafts[0]!.id), "utf8");
 	}
+	diagnostics.markStateAccepted();
+	diagnostics.finish("state_accepted");
 	return result;
 }

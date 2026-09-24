@@ -16,6 +16,13 @@
     "skill:build-from-runs": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/build-skill-from-runs.ts",
     "evaluation:evaluate": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/evaluate-evaluation.ts",
     "evaluation:review": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/review-evaluation.ts",
+    "evaluation-service:api": "node --experimental-strip-types src/evaluation-service/api.ts",
+    "evaluation-service:worker": "node --experimental-strip-types src/evaluation-service/worker.ts",
+    "evaluation-service:client": "node --experimental-strip-types scripts/evaluation-service-client.ts",
+    "evaluation-service:test": "node --experimental-strip-types --test --test-concurrency=1 tests/evaluation-service-*.test.ts",
+    "evaluation-service:capacity": "node --experimental-strip-types scripts/run-evaluation-service-capacity.ts",
+    "evaluation-service:prepare-small-real": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/prepare-evaluation-service-small-spec.ts",
+    "evaluation-service:preflight-spec": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/preflight-evaluation-service-spec.ts",
     "coding-task:run": "node --experimental-loader ./scripts/coding-task-public-pi-loader.mjs scripts/run-coding-task.ts",
     "commit2b:test": "node --test tests/skill-build.test.ts",
     "typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.json",
@@ -53,7 +60,9 @@
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "file:../.runs/v0-a/pi/packages/agent",
-    "@earendil-works/pi-ai": "file:../.runs/v0-a/pi/packages/ai"
+    "@earendil-works/pi-ai": "file:../.runs/v0-a/pi/packages/ai",
+    "bullmq": "5.81.5",
+    "ioredis": "5.11.1"
   },
   "devDependencies": {
     "@types/node": "22.19.19",

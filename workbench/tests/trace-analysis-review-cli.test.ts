@@ -72,13 +72,17 @@ function state(phase: AnalysisState["phase"]): AnalysisState {
 }
 
 function invocation(phase: AnalysisState["phase"]): AnalysisInvocationResult {
-	if (phase === "human_review_ready") return { stage: "controlled_unblind", mode: "resume", model: null, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: 1 }, state_path: "analysis-state.json", state: state(phase), model_invoked: false, tool_names: [], assistant_text: "" };
+	if (phase === "human_review_ready") return { stage: "controlled_unblind", mode: "resume", model: null, request_timeout_ms: 300_000, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: 1 }, state_path: "analysis-state.json", state: state(phase), model_invoked: false, tool_names: [], assistant_text: "" };
 	return { stage: "blind_analysis", mode: phase === "blind_analysis" ? "fresh" : "resume", state_path: "analysis-state.json", state: state(phase) } as AnalysisInvocationResult;
 }
 
 test("arguments expose help and reject missing required paths", () => {
 	assert.deepEqual(parseReviewArguments(["--help"]), { help: true, json: false });
 	assert.throws(() => parseReviewArguments(["--plan", "plan.json"]), /missing required arguments/);
+	const parsed = parseReviewArguments(["--plan", "plan", "--mapping", "mapping", "--credential-file", "credential", "--output", "output", "--analysis-request-timeout-ms", "300000"]);
+	assert.ok(!("help" in parsed));
+	assert.equal(parsed.analysisRequestTimeoutMs, 300_000);
+	assert.throws(() => parseReviewArguments(["--plan", "plan", "--mapping", "mapping", "--credential-file", "credential", "--output", "output", "--analysis-request-timeout-ms", "999"]), />= 1000/);
 });
 
 test("valid JSON dry-run computes the frozen bound without reading credential content or writing output", async () => {
@@ -87,6 +91,7 @@ test("valid JSON dry-run computes the frozen bound without reading credential co
 		const result = await reviewEvaluation({ plan: value.plan, mapping: value.mapping, credentialFile: value.credential, output: value.output, dryRun: true, json: true });
 		assert.equal(result.status, "ready");
 		assert.equal(result.provider_requests, 0);
+		assert.equal(result.analysis_request_timeout_ms, 120_000);
 		assert.ok(result.total_process_view_bytes > 0);
 		assert.equal(result.base_a_invocations, Math.ceil(result.total_process_view_bytes / 75_000));
 		assert.equal(result.max_a_invocations, result.base_a_invocations + 1);
@@ -121,19 +126,21 @@ test("CLI --json --dry-run keeps stdout as one parseable document", () => {
 	} finally { rmSync(value.root, { recursive: true, force: true }); }
 });
 
-test("human output reports the terminal status and authoritative artifact paths", () => {
-	const text = formatHumanResult({ status: "human_review_ready", evaluation_id: "eval-cli", output: "out", analysis_state: "state.json", report_markdown: "report.md", report_html: "report.html", report_pdf: "brief.pdf", total_process_view_bytes: 1, base_a_invocations: 1, max_a_invocations: 2, a_invocations: 1 });
-	for (const expected of ["human_review_ready", "state.json", "report.md", "report.html", "brief.pdf"]) assert.match(text, new RegExp(expected));
+test("human output reports the terminal status, effective timeout, and authoritative artifact paths", () => {
+	const text = formatHumanResult({ status: "human_review_ready", evaluation_id: "eval-cli", output: "out", analysis_state: "state.json", report_markdown: "report.md", report_html: "report.html", report_pdf: "brief.pdf", total_process_view_bytes: 1, base_a_invocations: 1, max_a_invocations: 2, analysis_request_timeout_ms: 300_000, a_invocations: 1 });
+	for (const expected of ["human_review_ready", "300000 ms", "state.json", "report.md", "report.html", "brief.pdf"]) assert.match(text, new RegExp(expected));
 });
 
 test("bounded lifecycle performs A fresh/resume then exactly one controlled-unblind transition", async () => {
 	const modes: string[] = [];
+	const timeouts: Array<number | undefined> = [];
 	const results = [invocation("blind_analysis"), invocation("alignment_ready"), invocation("human_review_ready")];
 	const output = await runBoundedAnalysis({
-		plan: "plan", mapping: "mapping", output: "output", credentialResolver: { resolve: async () => "unused" }, maxAInvocations: 3,
-		invoke: async (options) => { modes.push(options.mode); return results.shift()!; },
+		plan: "plan", mapping: "mapping", output: "output", credentialResolver: { resolve: async () => "unused" }, maxAInvocations: 3, analysisRequestTimeoutMs: 300_000,
+		invoke: async (options) => { modes.push(options.mode); timeouts.push(options.timeoutMs); return results.shift()!; },
 	});
 	assert.deepEqual(modes, ["fresh", "resume", "resume"]);
+	assert.deepEqual(timeouts, [300_000, 300_000, 300_000]);
 	assert.equal(output.aInvocations, 2);
 	assert.equal(output.result.state.phase, "human_review_ready");
 });
