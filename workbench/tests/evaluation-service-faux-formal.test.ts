@@ -109,7 +109,15 @@ test("HTTP-triggered fixed two-Run Faux Evaluation traverses Pi, tools, Verifier
 		const outcomes = evaluation.run_outcomes as Array<Record<string, unknown>>;
 		assert.deepEqual(outcomes.map((entry) => entry.verification_status), ["passed", "passed"]);
 		const artifactNames = (result.artifacts as Array<Record<string, unknown>>).map((entry) => entry.name);
-		for (const name of ["mapping", "analysis_state", "report_markdown", "report_html", "report_pdf", "run_manifest_1", "run_manifest_2", "faux_execution_metadata"]) assert.ok(artifactNames.includes(name), name);
+		for (const name of ["mapping", "analysis_state", "report_markdown", "report_html", "report_pdf", "run_manifest_1", "run_manifest_2", "faux_execution_metadata", "analysis_provider_requests"]) assert.ok(artifactNames.includes(name), name);
+		const providerDiagnostic = (result.artifacts as Array<Record<string, unknown>>).find((entry) => entry.name === "analysis_provider_requests")!;
+		const providerDiagnosticResponse = await fetch(`http://${address.host}:${address.port}${String(providerDiagnostic.url)}`);
+		assert.equal(providerDiagnosticResponse.status, 200);
+		assert.equal(providerDiagnosticResponse.headers.get("x-content-sha256"), providerDiagnostic.sha256);
+		const providerDiagnosticJson = await providerDiagnosticResponse.json() as Record<string, unknown>;
+		assert.equal(providerDiagnosticJson.kind, "analysis_provider_request_diagnostics");
+		assert.ok((providerDiagnosticJson.invocations as unknown[]).length >= 1);
+		assert.deepEqual(providerDiagnosticJson.privacy, { prompts_recorded:false, response_text_recorded:false, thinking_recorded:false, tool_arguments_recorded:false, credentials_recorded:false, response_headers_allowlisted:true });
 	} finally {
 		await worker.close(true);
 		await api.close();

@@ -40,11 +40,12 @@ function baseArtifacts(store: EvaluationJobStore, jobId: string): ArtifactRefere
 	];
 }
 
-function diagnosticArtifacts(store: EvaluationJobStore, jobId: string, launchRoot: string): ArtifactReference[] {
+export function diagnosticArtifacts(store: EvaluationJobStore, jobId: string, launchRoot: string): ArtifactReference[] {
 	const names: Array<[string, string]> = [
 		["stdout", "stdout.log"],
 		["stderr", "stderr.log"],
 		["log_metadata", "log-metadata.json"],
+		["analysis_provider_requests", "evaluation-output/review/analysis-provider-requests.json"],
 		["controlled_unblind_invocation", "evaluation-output/review/controlled-unblind-invocation.json"],
 	];
 	return names.flatMap(([name, file]) => existsSync(resolve(launchRoot, file)) ? [store.artifact(jobId, name, resolve(launchRoot, file))] : []);

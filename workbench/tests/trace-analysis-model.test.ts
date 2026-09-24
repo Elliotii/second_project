@@ -3,10 +3,11 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
+import type { AssistantMessage } from "@earendil-works/pi-ai";
 import { createAnalysisContext } from "../src/trace-analysis/analysis.ts";
 import type { AnalysisState, RunDescriptor } from "../src/trace-analysis/contracts.ts";
 import { createAnalysisTools } from "../src/trace-analysis/model-tools.ts";
-import { ANALYSIS_SYSTEM_PROMPT, AnalysisInvocationError, assertBlindAnalysisTerminal, blindAnalysisModelContext, emptyAnalysisState, freshAnalysisPrompt, resumeAnalysisPrompt } from "../src/trace-analysis/model-runner.ts";
+import { ANALYSIS_PROVIDER_DIAGNOSTICS_FILE, ANALYSIS_SYSTEM_PROMPT, AnalysisInvocationError, AnalysisProviderDiagnosticsRecorder, assertBlindAnalysisTerminal, blindAnalysisModelContext, emptyAnalysisState, freshAnalysisPrompt, resumeAnalysisPrompt, type AnalysisProviderDiagnosticsDocument } from "../src/trace-analysis/model-runner.ts";
 import { loadAnalysisState } from "../src/trace-analysis/state.ts";
 
 function temporary(label: string): string { return mkdtempSync(resolve(tmpdir(), `trace-analysis-model-${label}-`)); }
@@ -40,6 +41,26 @@ async function execute(profile: ReturnType<typeof setup>, name: string, args: Re
 
 const draft = (runId: string) => ({ id:"f1", observation:"synthetic observation", interpretation:"bounded interpretation", limitation:"one fixture", applicable_runs:[runId], repeated_support_run_ids:[], support:[{artifact:"trace" as const,run_id:runId,sequence:1}], counter:[], counter_checked:false, status:"draft" as const, claim_scope:"run_observation" as const, agenda_item_id:"i1" });
 const workflow = (runId: string) => ({ matrix_triage_complete:true, investigation_agenda:[{ id:"i1", question:"What happened in this Run?", trigger:"Matrix signal", claim_scope:"run_observation" as const, anchor_run_ids:[runId], relevant_case_ids:[], checked_runs:[runId], settle_condition:"inspect the anchor Run", process_investigation_required:false, process_investigation_resolution:null, status:"open" as const, closure_reason:"" }] });
+
+function diagnosticMessage(overrides: Partial<AssistantMessage> = {}): AssistantMessage {
+	return {
+		role: "assistant",
+		content: [{ type: "text", text: "synthetic response" }],
+		api: "openai-completions",
+		provider: "deepseek",
+		model: "deepseek-v4-flash",
+		responseModel: "deepseek-flash",
+		responseId: "response-fixture",
+		usage: { input: 10, output: 20, cacheRead: 2, cacheWrite: 1, reasoning: 7, totalTokens: 33, cost: { input: 0.001, output: 0.002, cacheRead: 0, cacheWrite: 0, total: 0.003 } },
+		stopReason: "stop",
+		timestamp: Date.now(),
+		...overrides,
+	};
+}
+
+function diagnosticDocument(output: string): AnalysisProviderDiagnosticsDocument {
+	return JSON.parse(readFileSync(resolve(output, ANALYSIS_PROVIDER_DIAGNOSTICS_FILE), "utf8")) as AnalysisProviderDiagnosticsDocument;
+}
 
 test("Analysis model receives the five bounded evidence and State tools", () => {
 	const profile = setup("allowlist");
@@ -77,6 +98,74 @@ test("Blind Analysis terminal classification preserves Provider errors before mi
 	assert.throws(classify(), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_update_state_not_called");
 	assert.throws(classify({ updateStateAttempts: 1, lastUpdateStateFailure: { kind: "validation", message: "bad snapshot" } }), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_state_validation_failed");
 	assert.throws(classify({ updateStateAttempts: 1, lastUpdateStateFailure: { kind: "persistence", message: "disk full" } }), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_state_persistence_failed");
+});
+
+test("Analysis Provider diagnostics record only allowlisted lifecycle metadata and update_state phases", () => {
+	const output = temporary("provider-diagnostics-normal");
+	const recorder = new AnalysisProviderDiagnosticsRecorder({ outputDirectory: output, stage: "blind_analysis", mode: "fresh", sessionId: "session-fixture", requestTimeoutMs: 300_000, completionSource: "agent_harness", invocationId: "invocation-normal" });
+	recorder.beforeProviderRequest({ provider: "deepseek", id: "deepseek-v4-flash" });
+	recorder.afterProviderResponse(200, { "x-request-id": "request-safe-1", authorization: "Bearer PRIVATE_HEADER_VALUE", "x-private-header": "PRIVATE_HEADER_VALUE" });
+	recorder.messageEnd(diagnosticMessage({
+		content: [
+			{ type: "text", text: "PRIVATE_RESPONSE_TEXT" },
+			{ type: "thinking", thinking: "PRIVATE_THINKING_TEXT" },
+			{ type: "toolCall", id: "tool-update-1", name: "update_state", arguments: { private: "PRIVATE_TOOL_ARGUMENT" } },
+		],
+		stopReason: "toolUse",
+	}));
+	recorder.toolExecutionStart("tool-update-1", "update_state");
+	recorder.toolExecutionEnd("tool-update-1", "update_state", false, true);
+	recorder.markStateAccepted();
+	recorder.finish("state_accepted");
+
+	const document = diagnosticDocument(output);
+	assert.equal(document.schema_version, 1);
+	assert.deepEqual(document.privacy, { prompts_recorded:false, response_text_recorded:false, thinking_recorded:false, tool_arguments_recorded:false, credentials_recorded:false, response_headers_allowlisted:true });
+	const invocation = document.invocations[0]!;
+	assert.equal(invocation.terminal, "state_accepted");
+	assert.equal(invocation.session_id, "session-fixture");
+	const request = invocation.requests[0]!;
+	assert.equal(request.ordinal, 1);
+	assert.equal(request.dispatch_observation, "observed");
+	assert.equal(request.headers_observation, "observed");
+	assert.equal(request.http_status, 200);
+	assert.equal(request.provider_request_id, "request-safe-1");
+	assert.equal(request.classification, "normal");
+	assert.deepEqual(request.update_state, { emitted:1, execution_started:1, execution_completed:1, execution_errors:0, state_persisted:true, state_accepted:true });
+	assert.equal(request.content.text_bytes, Buffer.byteLength("PRIVATE_RESPONSE_TEXT"));
+	assert.equal(request.content.thinking_bytes, Buffer.byteLength("PRIVATE_THINKING_TEXT"));
+	const persisted = readFileSync(resolve(output, ANALYSIS_PROVIDER_DIAGNOSTICS_FILE), "utf8");
+	for (const forbidden of ["PRIVATE_RESPONSE_TEXT", "PRIVATE_THINKING_TEXT", "PRIVATE_TOOL_ARGUMENT", "PRIVATE_HEADER_VALUE", "authorization", "x-private-header"]) assert.equal(persisted.includes(forbidden), false);
+});
+
+test("Analysis Provider diagnostics distinguish observed post-header errors, unobserved headers, abort, and partial update_state", () => {
+	const scenarios = [
+		{ label:"no-observed-headers", headers:false, stopReason:"error" as const, expected:"provider_error_headers_unobserved", errorMessage:"api_key=PRIVATE_CREDENTIAL_VALUE" },
+		{ label:"post-header", headers:true, stopReason:"error" as const, expected:"stream_error_after_headers", errorMessage:"terminated" },
+		{ label:"abort", headers:true, stopReason:"aborted" as const, expected:"aborted_after_headers", errorMessage:"cancelled" },
+	];
+	for (const scenario of scenarios) {
+		const output = temporary(`provider-diagnostics-${scenario.label}`);
+		const recorder = new AnalysisProviderDiagnosticsRecorder({ outputDirectory: output, stage: "blind_analysis", mode: "fresh", sessionId: `session-${scenario.label}`, requestTimeoutMs: 300_000, completionSource: "agent_harness" });
+		recorder.beforeProviderRequest({ provider: "deepseek", id: "deepseek-v4-flash" });
+		if (scenario.headers) recorder.afterProviderResponse(200, { "x-request-id": `request-${scenario.label}` });
+		recorder.messageEnd(diagnosticMessage({ content:[{ type:"thinking", thinking:"PRIVATE_PARTIAL_THINKING" }, { type:"toolCall", id:`partial-${scenario.label}`, name:"update_state", arguments:{ private:"PRIVATE_PARTIAL_ARGUMENT" } }], stopReason:scenario.stopReason, errorMessage:scenario.errorMessage }));
+		recorder.finish(scenario.stopReason === "error" ? "provider_error" : "aborted", new Error(scenario.errorMessage));
+		const document = diagnosticDocument(output);
+		const request = document.invocations[0]!.requests[0]!;
+		assert.equal(request.classification, scenario.expected);
+		assert.equal(request.headers_observation, scenario.headers ? "observed" : "not_observed");
+		assert.deepEqual(request.update_state, { emitted:1, execution_started:0, execution_completed:0, execution_errors:0, state_persisted:false, state_accepted:false });
+		assert.equal(request.response.error_message, scenario.errorMessage === "terminated" || scenario.errorMessage === "cancelled" ? scenario.errorMessage : "provider error details redacted");
+		const persisted = readFileSync(resolve(output, ANALYSIS_PROVIDER_DIAGNOSTICS_FILE), "utf8");
+		for (const forbidden of ["PRIVATE_PARTIAL_THINKING", "PRIVATE_PARTIAL_ARGUMENT", "PRIVATE_CREDENTIAL_VALUE"]) assert.equal(persisted.includes(forbidden), false);
+	}
+
+	const runtimeOutput = temporary("provider-diagnostics-runtime");
+	const runtime = new AnalysisProviderDiagnosticsRecorder({ outputDirectory: runtimeOutput, stage:"blind_analysis", mode:"fresh", sessionId:"session-runtime", requestTimeoutMs:300_000, completionSource:"agent_harness" });
+	runtime.beforeProviderRequest({ provider:"deepseek", id:"deepseek-v4-flash" });
+	runtime.finish("runtime_error", new Error("transport failed"));
+	assert.equal(diagnosticDocument(runtimeOutput).invocations[0]!.requests[0]!.classification, "runtime_error_headers_unobserved");
 });
 
 test("update_state records failed validation attempts without weakening State acceptance", async () => {

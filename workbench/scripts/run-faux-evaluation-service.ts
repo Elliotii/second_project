@@ -6,7 +6,7 @@ import { runCodingTask } from "../src/coding-task/runner.ts";
 import type { AnalysisState } from "../src/trace-analysis/contracts.ts";
 import { completeZeroFindingControlledUnblindState } from "../src/trace-analysis/controlled-unblind.ts";
 import { runEvaluationAnalysis } from "../src/trace-analysis/evaluation.ts";
-import type { AnalysisInvocationResult } from "../src/trace-analysis/model-runner.ts";
+import { AnalysisProviderDiagnosticsRecorder, type AnalysisInvocationResult } from "../src/trace-analysis/model-runner.ts";
 import { resolveAnalysisRequestTimeoutMs } from "../src/trace-analysis/runtime-config.ts";
 import { saveAnalysisState } from "../src/trace-analysis/state.ts";
 import { evaluateEvaluation, parseEvaluateArguments } from "./evaluate-evaluation.ts";
@@ -31,38 +31,55 @@ async function fauxAnalysis(options: Parameters<typeof runEvaluationAnalysis>[0]
 		invoke: async (invocation) => {
 			const requestTimeoutMs = resolveAnalysisRequestTimeoutMs(invocation.timeoutMs);
 			const statePath = resolve(invocation.outputDirectory, "analysis-state.json");
-			if (invocation.mode === "fresh") {
-				const state: AnalysisState = {
-					phase: "alignment_ready",
-					covered_runs: invocation.descriptors.map((descriptor) => descriptor.runId),
-					matrix_triage_complete: true,
-					investigation_agenda: [],
-					notes: ["Deterministic/Faux service-adapter check; no semantic model analysis was performed."],
-					open_questions: [],
-					next_action: "",
-					loaded_evidence: [],
-					finding_drafts: [],
-				};
+			const diagnostics = new AnalysisProviderDiagnosticsRecorder({
+				outputDirectory: invocation.outputDirectory,
+				stage: invocation.mode === "fresh" ? "blind_analysis" : "controlled_unblind",
+				mode: invocation.mode,
+				sessionId: invocation.mode === "fresh" ? "faux-analysis-no-session" : null,
+				requestTimeoutMs,
+				completionSource: "injected",
+			});
+			try {
+				if (invocation.mode === "fresh") {
+					const state: AnalysisState = {
+						phase: "alignment_ready",
+						covered_runs: invocation.descriptors.map((descriptor) => descriptor.runId),
+						matrix_triage_complete: true,
+						investigation_agenda: [],
+						notes: ["Deterministic/Faux service-adapter check; no semantic model analysis was performed."],
+						open_questions: [],
+						next_action: "",
+						loaded_evidence: [],
+						finding_drafts: [],
+					};
+					saveAnalysisState(invocation.outputDirectory, state);
+					diagnostics.markStateAccepted();
+					diagnostics.finish("state_accepted");
+					const timestamp = new Date().toISOString();
+					return {
+						stage: "blind_analysis", mode: "fresh", started_at: timestamp, finished_at: timestamp,
+						model: { provider: "faux", id: "evaluation-service-analysis-fixture" },
+						request_timeout_ms: requestTimeoutMs,
+						usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, tool_calls: 0, wall_time_ms: 0 },
+						session_id: "faux-analysis-no-session", session_path: statePath, state_path: statePath, loaded_state_path: null,
+						loaded_prior_session: false, tool_names: [], tool_calls: [], prior_next_action: "", state,
+						resolved_locators: [], all_finding_locators_were_loaded: true, assistant_text: "",
+					};
+				}
+				const current = JSON.parse(readFileSync(statePath, "utf8")) as AnalysisState;
+				const state = completeZeroFindingControlledUnblindState(current, invocation.descriptors);
 				saveAnalysisState(invocation.outputDirectory, state);
-				const timestamp = new Date().toISOString();
+				diagnostics.markStateAccepted();
+				diagnostics.finish("state_accepted");
 				return {
-					stage: "blind_analysis", mode: "fresh", started_at: timestamp, finished_at: timestamp,
-					model: { provider: "faux", id: "evaluation-service-analysis-fixture" },
-					request_timeout_ms: requestTimeoutMs,
-					usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, tool_calls: 0, wall_time_ms: 0 },
-					session_id: "faux-analysis-no-session", session_path: statePath, state_path: statePath, loaded_state_path: null,
-					loaded_prior_session: false, tool_names: [], tool_calls: [], prior_next_action: "", state,
-					resolved_locators: [], all_finding_locators_were_loaded: true, assistant_text: "",
+					stage: "controlled_unblind", mode: "resume", model: null, request_timeout_ms: requestTimeoutMs,
+					usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: 0 },
+					state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "",
 				};
+			} catch (error) {
+				diagnostics.finish("analysis_contract_error", error);
+				throw error;
 			}
-			const current = JSON.parse(readFileSync(statePath, "utf8")) as AnalysisState;
-			const state = completeZeroFindingControlledUnblindState(current, invocation.descriptors);
-			saveAnalysisState(invocation.outputDirectory, state);
-			return {
-				stage: "controlled_unblind", mode: "resume", model: null, request_timeout_ms: requestTimeoutMs,
-				usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: 0 },
-				state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "",
-			};
 		},
 	});
 }

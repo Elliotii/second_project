@@ -88,6 +88,21 @@ These values do not alter the registered Evaluation's model, Token, tool, reques
 task budgets. Capacity must be chosen from host resources and Provider limits. HTTP
 request concurrency, active Evaluation Jobs and model request rate are separate limits.
 
+The Formal Spec's `analysis_request_timeout_ms` is passed to Pi/OpenAI SDK as the
+Provider request timeout. In the currently pinned SDK transport it covers `fetch()`
+until response headers are received; it is not a complete-SSE-body or Analysis wall-time
+deadline. The outer registered `job_timeout_ms` remains a separate evaluator-process
+deadline. Do not infer a full stream timeout from the Analysis request value.
+
+Each Analysis writes the content-free `review/analysis-provider-requests.json` diagnostic.
+It records request ordinals, observed dispatch/header/message-end timestamps, allowlisted
+request IDs, status/stop reason, numeric usage, content block counts/byte lengths, and the
+`update_state` emitted/executed/persisted/accepted lifecycle. It never records prompts,
+response or thinking text, Tool arguments, Credentials, or arbitrary response headers.
+Failure terminals publish this file through the same size/SHA-256 checked Artifact route
+when it exists. A missing header event is reported as unobserved evidence, not proof that
+the network never received response headers.
+
 ## Result and recovery boundary
 
 BullMQ may redeliver. A delivery that has not crossed the persisted dispatch boundary
