@@ -62,6 +62,10 @@ function completion(result:unknown):AlignmentCompletionResult {
 	return {text:JSON.stringify(result),model:{provider:"faux",id:"alignment"},usage:{input_tokens:10,output_tokens:20,cost_usd:0}};
 }
 
+function sse(chunks:unknown[]):Response {
+	return new Response(`${chunks.map((chunk)=>`data: ${JSON.stringify(chunk)}\n\n`).join("")}data: [DONE]\n\n`,{status:200,headers:{"content-type":"text/event-stream"}});
+}
+
 test("alignment_ready uses one zero-tool closed-evidence completion and persists human_review_ready", async()=>{
 	const env=environment("success"); const before=structuredClone(env.state.finding_drafts); let calls=0; let credentialResolved=false;
 	const result=await runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialResolved=true;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:async(input)=>{
@@ -70,6 +74,29 @@ test("alignment_ready uses one zero-tool closed-evidence completion and persists
 	assert.equal(result.stage,"controlled_unblind"); assert.equal(result.model_invoked,true); assert.deepEqual(result.tool_names,[]); assert.equal(calls,1); assert.equal(credentialResolved,false);
 	const saved=loadAnalysisState(resolve(env.output,"analysis-state.json")); assert.equal(saved.phase,"human_review_ready"); assert.deepEqual(saved.finding_drafts,before); assert.deepEqual(saved.controlled_unblind_result,validResult(env.sha256));
 	const invocation=JSON.parse(readFileSync(resolve(env.output,"controlled-unblind-invocation.json"),"utf8")) as Record<string,unknown>; assert.equal(invocation.stage,"controlled_unblind"); assert.equal(invocation.assistant_text,JSON.stringify(validResult(env.sha256))); assert.equal((invocation.usage as Record<string,unknown>).provider_requests,1);
+});
+
+test("controlled-unblind requests provider JSON mode without changing its fixed execution envelope",async()=>{
+	const env=environment("provider-json-mode"); const expected=JSON.stringify(validResult(env.sha256)); const payloads:Record<string,unknown>[]=[]; let providerRequests=0;
+	const originalFetch=globalThis.fetch;
+	globalThis.fetch=(async(_input,init)=>{
+		providerRequests++;
+		assert.equal(typeof init?.body,"string");
+		payloads.push(JSON.parse(init!.body as string) as Record<string,unknown>);
+		return sse([
+			{id:"chatcmpl-controlled-1",object:"chat.completion.chunk",created:1,model:"deepseek-flash",choices:[{index:0,delta:{role:"assistant",content:expected},finish_reason:null}]},
+			{id:"chatcmpl-controlled-1",object:"chat.completion.chunk",created:1,model:"deepseek-flash",choices:[{index:0,delta:{},finish_reason:"stop"}]},
+			{id:"chatcmpl-controlled-1",object:"chat.completion.chunk",created:1,model:"deepseek-flash",choices:[],usage:{prompt_tokens:10,completion_tokens:20,total_tokens:30,prompt_tokens_details:{cached_tokens:0}}},
+		]);
+	}) as typeof globalThis.fetch;
+	try {
+		const result=await runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>"synthetic-not-a-real-credential"},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath}});
+		assert.equal(result.state.phase,"human_review_ready"); assert.deepEqual(result.state.controlled_unblind_result,validResult(env.sha256));
+	} finally { globalThis.fetch=originalFetch; }
+	assert.equal(providerRequests,1); assert.equal(payloads.length,1); const payload=payloads[0]!;
+	assert.deepEqual(payload.response_format,{type:"json_object"});
+	assert.deepEqual(payload.thinking,{type:"disabled"});
+	assert.equal(payload.model,"deepseek-v4-flash"); assert.equal(payload.stream,true); assert.equal(Array.isArray(payload.messages),true); assert.equal(typeof payload.max_completion_tokens,"number");
 });
 
 test("condition aliases and outcome projection are dynamically recovered from Formal artifacts",async()=>{

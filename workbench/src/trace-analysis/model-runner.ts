@@ -630,6 +630,10 @@ export async function runAnalysisInvocation(options: {
 					{
 						maxRetries: 0,
 						timeoutMs: requestTimeoutMs,
+						onPayload: (payload) => {
+							if (payload === null || typeof payload !== "object" || Array.isArray(payload)) throw new Error("controlled-unblind provider payload must be an object");
+							return { ...payload, response_format: { type: "json_object" } };
+						},
 						onResponse: (response) => diagnostics.afterProviderResponse(response.status, { ...(response.headers as Record<string, string>) }),
 					},
 				);
