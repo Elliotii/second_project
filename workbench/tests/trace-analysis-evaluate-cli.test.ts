@@ -53,7 +53,7 @@ function fixture(): { root: string; options: EvaluateCliOptions; planIds: string
 	});
 	const credential = resolve(root, "credential.env");
 	writeFileSync(credential, "", "utf8");
-	return { root, planIds, options: { projectRoot: root, plan, bindings, credentialFile: credential, output: resolve(root, "evaluate-output"), json: true } };
+	return { root, planIds, options: { projectRoot: root, plan, bindings, credentialFile: credential, output: resolve(root, "evaluate-output"), analysisRequestTimeoutMs: 300_000, json: true } };
 }
 
 function manifest(runId: string, verificationStatus: "passed" | "failed"): CodingTaskRunManifest {
@@ -71,7 +71,7 @@ function reviewed(root: string): ReviewResult {
 	return {
 		status: "human_review_ready", evaluation_id: "eval-cli-2", output: resolve(root, "review"), analysis_state: resolve(root, "review", "analysis-state.json"),
 		report_markdown: resolve(root, "review", "report.md"), report_html: resolve(root, "review", "report.html"), report_pdf: resolve(root, "review", "brief.pdf"),
-		total_process_view_bytes: 1, base_a_invocations: 1, max_a_invocations: 2, a_invocations: 1,
+		total_process_view_bytes: 1, base_a_invocations: 1, max_a_invocations: 2, analysis_request_timeout_ms: 300_000, a_invocations: 1,
 	};
 }
 
@@ -106,12 +106,14 @@ test("success runs the frozen order, writes current Thin Mapping, and hands off 
 			review: async (options) => {
 				reviewCalls++;
 				assert.equal(existsSync(options.mapping), true);
+				assert.equal(options.analysisRequestTimeoutMs, 300_000);
 				return reviewed(value.options.output);
 			},
 		});
 		assert.deepEqual(order, value.planIds);
 		assert.equal(reviewCalls, 1);
 		assert.equal(result.completed_runs, 2);
+		assert.equal(result.analysis_request_timeout_ms, 300_000);
 		const mapping = JSON.parse(readFileSync(result.mapping, "utf8")) as { run_refs: Array<Record<string, unknown>> };
 		assert.deepEqual(mapping.run_refs.map((entry) => entry.plan_id), value.planIds);
 		assert.ok(mapping.run_refs.every((entry) => entry.attempt === 1 && entry.included_for_evaluation === true && entry.manual_invalid_reason === null));
@@ -165,7 +167,7 @@ test("JSON result is one parseable document containing Mapping, Analysis, and re
 		const result = {
 			status: "human_review_ready", evaluation_id: "eval-cli-2", planned_runs: 2, completed_runs: 2,
 			mapping: "mapping.json", review_phase: "human_review_ready", analysis_state: "analysis-state.json",
-			total_process_view_bytes: 1, base_a_invocations: 1, max_a_invocations: 2, a_invocations: 1,
+			total_process_view_bytes: 1, base_a_invocations: 1, max_a_invocations: 2, analysis_request_timeout_ms: 300_000, a_invocations: 1,
 			report_markdown: "report.md", report_html: "report.html", report_pdf: "brief.pdf",
 		} as const;
 		const parsed = JSON.parse(formatEvaluateResult(result, true)) as Record<string, unknown>;
@@ -175,7 +177,8 @@ test("JSON result is one parseable document containing Mapping, Analysis, and re
 
 test("argument parser accepts explicit repeated plan bindings and help", () => {
 	assert.deepEqual(parseEvaluateArguments(["--help"]), { help: true, json: false });
-	const parsed = parseEvaluateArguments(["--project-root", "root", "--plan", "plan", "--bind", "p1=a.json", "--bind", "p2=b.json", "--credential-file", "credential", "--output", "out", "--json"]);
+	const parsed = parseEvaluateArguments(["--project-root", "root", "--plan", "plan", "--bind", "p1=a.json", "--bind", "p2=b.json", "--credential-file", "credential", "--output", "out", "--analysis-request-timeout-ms", "300000", "--json"]);
 	assert.ok(!("help" in parsed));
 	assert.deepEqual(parsed.bindings, [{ planId: "p1", configPath: "a.json" }, { planId: "p2", configPath: "b.json" }]);
+	assert.equal(parsed.analysisRequestTimeoutMs, 300_000);
 });

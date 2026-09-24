@@ -6,9 +6,10 @@ import { createAnalysisContext } from "../src/trace-analysis/analysis.ts";
 import { generateAnalysisReports, type GeneratedAnalysisReportPaths } from "../src/trace-analysis/analysis-report-generate.ts";
 import { loadFrozenSkillEvidenceFromEvaluation } from "../src/trace-analysis/controlled-unblind.ts";
 import { prepareEvaluationAnalysis, runEvaluationAnalysis } from "../src/trace-analysis/evaluation.ts";
-import type { AnalysisInvocationResult } from "../src/trace-analysis/model-runner.ts";
+import { analysisInvocationErrorCode, type AnalysisInvocationResult } from "../src/trace-analysis/model-runner.ts";
 import { createBlindSensitivePathProjection } from "../src/trace-analysis/model-tools.ts";
 import { buildProcessView } from "../src/trace-analysis/process-view.ts";
+import { resolveAnalysisRequestTimeoutMs } from "../src/trace-analysis/runtime-config.ts";
 
 const PROCESS_VIEW_BYTES_PER_BASE_INVOCATION = 75_000;
 const SUPPORTED_CONDITIONS = new Set(["no_skill", "with_skill"]);
@@ -18,6 +19,7 @@ export interface ReviewCliOptions {
 	mapping: string;
 	credentialFile: string;
 	output: string;
+	analysisRequestTimeoutMs?: number;
 	dryRun: boolean;
 	json: boolean;
 }
@@ -40,6 +42,7 @@ export interface ReviewResult {
 	total_process_view_bytes: number;
 	base_a_invocations: number;
 	max_a_invocations: number;
+	analysis_request_timeout_ms: number;
 	a_invocations?: number;
 }
 
@@ -59,6 +62,7 @@ Required:
   --output <path>
 
 Optional:
+  --analysis-request-timeout-ms <milliseconds>
   --dry-run
   --json
   --help
@@ -70,7 +74,8 @@ Output:
 export function parseReviewArguments(argv: string[]): ReviewCliOptions | { help: true; json: boolean } {
 	const values = new Map<string, string>();
 	const flags = new Set<string>();
-	const valueNames = new Set(["--plan", "--mapping", "--credential-file", "--output"]);
+	const requiredValueNames = new Set(["--plan", "--mapping", "--credential-file", "--output"]);
+	const valueNames = new Set([...requiredValueNames, "--analysis-request-timeout-ms"]);
 	const flagNames = new Set(["--dry-run", "--json", "--help"]);
 	for (let index = 0; index < argv.length; index++) {
 		const argument = argv[index]!;
@@ -89,10 +94,11 @@ export function parseReviewArguments(argv: string[]): ReviewCliOptions | { help:
 		throw new Error(`unknown argument ${argument}`);
 	}
 	if (flags.has("--help")) return { help: true, json: flags.has("--json") };
-	const missing = [...valueNames].filter((name) => !values.has(name));
+	const missing = [...requiredValueNames].filter((name) => !values.has(name));
 	if (missing.length > 0) throw new Error(`missing required argument${missing.length === 1 ? "" : "s"}: ${missing.join(", ")}`);
 	return {
 		plan: values.get("--plan")!, mapping: values.get("--mapping")!, credentialFile: values.get("--credential-file")!, output: values.get("--output")!,
+		...(values.has("--analysis-request-timeout-ms") ? { analysisRequestTimeoutMs: resolveAnalysisRequestTimeoutMs(Number(values.get("--analysis-request-timeout-ms")), "--analysis-request-timeout-ms") } : {}),
 		dryRun: flags.has("--dry-run"), json: flags.has("--json"),
 	};
 }
@@ -145,15 +151,18 @@ export async function runBoundedAnalysis(options: {
 	output: string;
 	credentialResolver: CredentialResolver;
 	maxAInvocations: number;
+	analysisRequestTimeoutMs?: number;
 	invoke?: EvaluationInvocation;
 }): Promise<{ result: AnalysisInvocationResult; aInvocations: number }> {
 	if (!Number.isSafeInteger(options.maxAInvocations) || options.maxAInvocations < 1) throw new Error("max A invocations must be a positive safe integer");
 	const invoke = options.invoke ?? runEvaluationAnalysis;
+	const analysisRequestTimeoutMs = resolveAnalysisRequestTimeoutMs(options.analysisRequestTimeoutMs);
 	const common = {
 		batchPath: options.plan,
 		mappingPath: options.mapping,
 		outputDirectory: options.output,
 		credentialResolver: options.credentialResolver,
+		timeoutMs: analysisRequestTimeoutMs,
 	};
 	let result = await invoke({ mode: "fresh", ...common });
 	let aInvocations = 1;
@@ -186,24 +195,25 @@ export async function reviewEvaluation(options: ReviewCliOptions, dependencies: 
 	const credentialResolver = (dependencies.credentialResolverFactory ?? createDeferredCredentialFileResolverV35)(resolve(options.credentialFile));
 	const output = validateOutputRoot(options.output);
 	const workload = measureAnalysisWorkload(prepared);
+	const analysisRequestTimeoutMs = resolveAnalysisRequestTimeoutMs(options.analysisRequestTimeoutMs);
 	if (options.dryRun) {
-		return { status: "ready", evaluation_id: prepared.batch.evaluation_id, output, provider_requests: 0, ...workload };
+		return { status: "ready", evaluation_id: prepared.batch.evaluation_id, output, provider_requests: 0, analysis_request_timeout_ms: analysisRequestTimeoutMs, ...workload };
 	}
 	dependencies.onStage?.("analysis");
-	const analysis = await runBoundedAnalysis({ plan, mapping, output, credentialResolver, maxAInvocations: workload.max_a_invocations, ...(dependencies.invoke ? { invoke: dependencies.invoke } : {}) });
+	const analysis = await runBoundedAnalysis({ plan, mapping, output, credentialResolver, maxAInvocations: workload.max_a_invocations, analysisRequestTimeoutMs, ...(dependencies.invoke ? { invoke: dependencies.invoke } : {}) });
 	dependencies.onStage?.("report");
 	const generateReports = dependencies.generateReports ?? generateAnalysisReports;
 	const reports: GeneratedAnalysisReportPaths = await generateReports({ batchPath: plan, mappingPath: mapping, statePath: analysis.result.state_path });
 	return {
 		status: "human_review_ready", evaluation_id: prepared.batch.evaluation_id, output,
 		analysis_state: analysis.result.state_path, report_markdown: reports.markdown, report_html: reports.html, report_pdf: reports.pdfBrief,
-		...workload, a_invocations: analysis.aInvocations,
+		analysis_request_timeout_ms: analysisRequestTimeoutMs, ...workload, a_invocations: analysis.aInvocations,
 	};
 }
 
 export function formatHumanResult(result: ReviewResult): string {
-	if (result.status === "ready") return `Evaluation review preflight ready\n\nEvaluation: ${result.evaluation_id}\nStatus: ready\nOutput:\n${result.output}\n`;
-	return `Evaluation review complete\n\nEvaluation: ${result.evaluation_id}\nStatus: human_review_ready\n\nAnalysis State:\n${result.analysis_state}\n\nMarkdown:\n${result.report_markdown}\n\nHTML:\n${result.report_html}\n\nPDF:\n${result.report_pdf}\n`;
+	if (result.status === "ready") return `Evaluation review preflight ready\n\nEvaluation: ${result.evaluation_id}\nStatus: ready\nAnalysis request timeout: ${result.analysis_request_timeout_ms} ms\nOutput:\n${result.output}\n`;
+	return `Evaluation review complete\n\nEvaluation: ${result.evaluation_id}\nStatus: human_review_ready\nAnalysis request timeout: ${result.analysis_request_timeout_ms} ms\n\nAnalysis State:\n${result.analysis_state}\n\nMarkdown:\n${result.report_markdown}\n\nHTML:\n${result.report_html}\n\nPDF:\n${result.report_pdf}\n`;
 }
 
 async function main(): Promise<void> {
@@ -219,7 +229,8 @@ async function main(): Promise<void> {
 		process.stdout.write(parsed.json ? `${JSON.stringify(result)}\n` : formatHumanResult(result));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		if (jsonMode) process.stdout.write(`${JSON.stringify({ status: "error", stage, message })}\n`);
+		const code = analysisInvocationErrorCode(error);
+		if (jsonMode) process.stdout.write(`${JSON.stringify({ status: "error", stage, ...(code ? { code } : {}), message })}\n`);
 		process.stderr.write(`Evaluation review failed (${stage}): ${message}\n`);
 		process.exitCode = 1;
 	}

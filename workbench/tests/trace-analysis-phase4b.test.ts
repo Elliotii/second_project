@@ -65,10 +65,11 @@ function completion(result:unknown):AlignmentCompletionResult {
 test("alignment_ready uses one zero-tool closed-evidence completion and persists human_review_ready", async()=>{
 	const env=environment("success"); const before=structuredClone(env.state.finding_drafts); let calls=0; let credentialResolved=false;
 	const result=await runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>{credentialResolved=true;return "unused";}},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:async(input)=>{
-		calls++; assert.equal(input.systemPrompt,CONTROLLED_UNBLIND_SYSTEM_PROMPT); assert.match(input.systemPrompt,/quoted intervention evidence/); assert.match(input.systemPrompt,/Mechanical origin.*does not establish why.*not Candidate-content evidence/s); for (const required of [/Simplified Chinese \(zh-CN\)/,/human-readable analytical prose stored in Analysis State/,/canonical enum values/,/IDs, Run IDs/,/technical or evidence literals/,/do not translate or localize them/]) assert.match(input.systemPrompt,required); assert.match(input.userPrompt,/Arm X/); assert.match(input.userPrompt,/"real_condition": "alpha"/); assert.match(input.userPrompt,/9: 1\. Inspect the registry/); assert.doesNotMatch(input.userPrompt,/RAW_TRACE_/); return completion(validResult(env.sha256));
+		calls++; assert.equal(input.systemPrompt,CONTROLLED_UNBLIND_SYSTEM_PROMPT); assert.match(input.systemPrompt,/quoted intervention evidence/); assert.match(input.systemPrompt,/Mechanical origin.*does not establish why.*not Candidate-content evidence/s); assert.match(input.systemPrompt,/root object must contain exactly two keys/); for (const required of [/Simplified Chinese \(zh-CN\)/,/human-readable analytical prose stored in Analysis State/,/canonical enum values/,/IDs, Run IDs/,/technical or evidence literals/,/do not translate or localize them/]) assert.match(input.systemPrompt,required); assert.match(input.userPrompt,/Arm X/); assert.match(input.userPrompt,/"real_condition": "alpha"/); assert.match(input.userPrompt,/9: 1\. Inspect the registry/); assert.doesNotMatch(input.userPrompt,/RAW_TRACE_/); return completion(validResult(env.sha256));
 	}});
 	assert.equal(result.stage,"controlled_unblind"); assert.equal(result.model_invoked,true); assert.deepEqual(result.tool_names,[]); assert.equal(calls,1); assert.equal(credentialResolved,false);
 	const saved=loadAnalysisState(resolve(env.output,"analysis-state.json")); assert.equal(saved.phase,"human_review_ready"); assert.deepEqual(saved.finding_drafts,before); assert.deepEqual(saved.controlled_unblind_result,validResult(env.sha256));
+	const invocation=JSON.parse(readFileSync(resolve(env.output,"controlled-unblind-invocation.json"),"utf8")) as Record<string,unknown>; assert.equal(invocation.stage,"controlled_unblind"); assert.equal(invocation.assistant_text,JSON.stringify(validResult(env.sha256))); assert.equal((invocation.usage as Record<string,unknown>).provider_requests,1);
 });
 
 test("condition aliases and outcome projection are dynamically recovered from Formal artifacts",async()=>{
@@ -125,6 +126,7 @@ test("model failure and malformed output leave the complete alignment_ready Stat
 		const env=environment(label); const before=readFileSync(resolve(env.output,"analysis-state.json"),"utf8");
 		await assert.rejects(runAnalysisInvocation({mode:"resume",descriptors:env.descriptors,outputDirectory:env.output,credentialResolver:{resolve:async()=>"unused"},evaluationAuthority:{batchPath:env.batchPath,mappingPath:env.mappingPath},alignmentCompletion:complete}),pattern);
 		assert.equal(readFileSync(resolve(env.output,"analysis-state.json"),"utf8"),before); assert.equal(loadAnalysisState(resolve(env.output,"analysis-state.json")).phase,"alignment_ready");
+		if(label==="malformed") assert.equal((JSON.parse(readFileSync(resolve(env.output,"controlled-unblind-invocation.json"),"utf8")) as Record<string,unknown>).assistant_text,"not-json");
 	}
 });
 

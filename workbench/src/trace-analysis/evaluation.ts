@@ -256,11 +256,12 @@ export function prepareEvaluationAnalysis(options: { batchPath: string; mappingP
 
 export async function runEvaluationAnalysis(options: {
 	mode: "fresh" | "resume"; batchPath: string; mappingPath: string; outputDirectory: string; credentialResolver: OpaqueCredentialResolverV1;
+	timeoutMs?: number;
 	resolveRunRoot?: (ref: EvaluationRunRef) => string | undefined;
-	invoke?: (options: { mode: "fresh" | "resume"; descriptors: RunDescriptor[]; outputDirectory: string; credentialResolver: OpaqueCredentialResolverV1; evaluationAuthority: { batchPath: string; mappingPath: string } }) => Promise<AnalysisInvocationResult>;
+	invoke?: (options: { mode: "fresh" | "resume"; descriptors: RunDescriptor[]; outputDirectory: string; credentialResolver: OpaqueCredentialResolverV1; timeoutMs?: number; evaluationAuthority: { batchPath: string; mappingPath: string } }) => Promise<AnalysisInvocationResult>;
 }): Promise<AnalysisInvocationResult> {
 	const prepared = prepareEvaluationAnalysis(options);
 	if (!prepared.comparison.has_analyzable_group) throw new Error("Evaluation has no complete evaluable comparison group; Analysis Invocation was not started");
 	const invoke = options.invoke ?? (await import("./model-runner.ts")).runAnalysisInvocation;
-	return invoke({ mode: options.mode, descriptors: prepared.descriptors, outputDirectory: options.outputDirectory, credentialResolver: options.credentialResolver, evaluationAuthority: { batchPath: options.batchPath, mappingPath: options.mappingPath } });
+	return invoke({ mode: options.mode, descriptors: prepared.descriptors, outputDirectory: options.outputDirectory, credentialResolver: options.credentialResolver, ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }), evaluationAuthority: { batchPath: options.batchPath, mappingPath: options.mappingPath } });
 }

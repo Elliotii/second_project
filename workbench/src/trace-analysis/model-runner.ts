@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { AgentHarness, JsonlSessionRepo, type AgentHarnessEvent } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
@@ -8,7 +8,8 @@ import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import type { OpaqueCredentialResolverV1 } from "../provider/fixed-provider-v1.ts";
 import { createAnalysisContext, finalizeAnalysisHandoff, isAnalysisGloballyComplete, resolveFindingLocators, validateAnalysisWorkflow } from "./analysis.ts";
 import type { AnalysisState, EvidenceLocator, RunDescriptor } from "./contracts.ts";
-import { analysisStateWasSaved, createAnalysisTools, type AnalysisToolCall } from "./model-tools.ts";
+import { analysisStateWasSaved, createAnalysisTools, type AnalysisStateUpdateFailure, type AnalysisToolCall } from "./model-tools.ts";
+import { resolveAnalysisRequestTimeoutMs } from "./runtime-config.ts";
 import { loadAnalysisState, renderDevelopmentFinding, saveAnalysisState } from "./state.ts";
 import {
 	buildControlledUnblindContext,
@@ -73,12 +74,77 @@ function assistantText(message: AssistantMessage): string {
 	return message.content.flatMap((part) => part.type === "text" ? [part.text] : []).join("\n");
 }
 
+export type AnalysisInvocationErrorCode =
+	| "analysis_provider_error"
+	| "analysis_runtime_error"
+	| "analysis_aborted"
+	| "analysis_lifecycle_error"
+	| "analysis_update_state_not_called"
+	| "analysis_state_validation_failed"
+	| "analysis_state_persistence_failed";
+
+export class AnalysisInvocationError extends Error {
+	readonly code: AnalysisInvocationErrorCode;
+	readonly analysisStage = "blind_analysis" as const;
+	readonly mode: "fresh" | "resume";
+
+	constructor(code: AnalysisInvocationErrorCode, mode: "fresh" | "resume", message: string, cause?: unknown) {
+		super(message, cause === undefined ? undefined : { cause });
+		this.name = "AnalysisInvocationError";
+		this.code = code;
+		this.mode = mode;
+	}
+}
+
+export function analysisInvocationErrorCode(error: unknown): AnalysisInvocationErrorCode | undefined {
+	return error instanceof AnalysisInvocationError ? error.code : undefined;
+}
+
+function errorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+export function assertBlindAnalysisTerminal(options: {
+	mode: "fresh" | "resume";
+	settled: number;
+	finalAssistantMessage: Pick<AssistantMessage, "stopReason" | "errorMessage"> | null;
+	stateSaved: boolean;
+	updateStateAttempts: number;
+	lastUpdateStateFailure: AnalysisStateUpdateFailure | null;
+}): void {
+	const { finalAssistantMessage: message } = options;
+	if (message?.stopReason === "error") {
+		throw new AnalysisInvocationError("analysis_provider_error", options.mode, `Blind Analysis ${options.mode} Provider error before accepted State: ${message.errorMessage ?? "Provider returned stopReason=error"}`);
+	}
+	if (message?.stopReason === "aborted") {
+		throw new AnalysisInvocationError("analysis_aborted", options.mode, `Blind Analysis ${options.mode} was aborted before accepted State: ${message.errorMessage ?? "Assistant stopped with stopReason=aborted"}`);
+	}
+	if (options.settled !== 1) {
+		throw new AnalysisInvocationError("analysis_lifecycle_error", options.mode, `Blind Analysis Invocation must settle exactly once; observed ${options.settled}`);
+	}
+	if (!message) {
+		throw new AnalysisInvocationError("analysis_runtime_error", options.mode, "Blind Analysis settled without an Assistant terminal message");
+	}
+	if (options.stateSaved) return;
+	if (options.lastUpdateStateFailure?.kind === "validation") {
+		throw new AnalysisInvocationError("analysis_state_validation_failed", options.mode, `Blind Analysis update_state validation failed: ${options.lastUpdateStateFailure.message}`);
+	}
+	if (options.lastUpdateStateFailure?.kind === "persistence") {
+		throw new AnalysisInvocationError("analysis_state_persistence_failed", options.mode, `Blind Analysis update_state persistence failed: ${options.lastUpdateStateFailure.message}`);
+	}
+	if (options.updateStateAttempts > 0) {
+		throw new AnalysisInvocationError("analysis_state_persistence_failed", options.mode, "Blind Analysis attempted update_state but no accepted State was persisted");
+	}
+	throw new AnalysisInvocationError("analysis_update_state_not_called", options.mode, "Blind Analysis ended normally without calling update_state");
+}
+
 export interface BlindAnalysisInvocationResult {
 	stage: "blind_analysis";
 	mode: "fresh" | "resume";
 	started_at: string;
 	finished_at: string;
 	model: { provider: string; id: string };
+	request_timeout_ms: number;
 	usage: { provider_requests: number; input_tokens: number; output_tokens: number; cost_usd: number; tool_calls: number; wall_time_ms: number };
 	session_id: string;
 	session_path: string;
@@ -99,6 +165,7 @@ export interface ControlledUnblindInvocationResult {
 	stage: "controlled_unblind";
 	mode: "resume";
 	model: { provider: string; id: string } | null;
+	request_timeout_ms: number;
 	usage: { provider_requests: number; input_tokens: number; output_tokens: number; cost_usd: number; wall_time_ms: number };
 	state_path: string;
 	state: AnalysisState;
@@ -125,6 +192,7 @@ export async function runAnalysisInvocation(options: {
 	alignmentCompletion?: (input: { systemPrompt: string; userPrompt: string }) => Promise<AlignmentCompletionResult>;
 }): Promise<AnalysisInvocationResult> {
 	if (!options.credentialResolver || typeof options.credentialResolver.resolve !== "function") throw new Error("opaque Credential resolver is required for Analysis Runner");
+	const requestTimeoutMs = resolveAnalysisRequestTimeoutMs(options.timeoutMs);
 	const outputDirectory = resolve(options.outputDirectory);
 	const statePath = resolve(outputDirectory, "analysis-state.json");
 	mkdirSync(outputDirectory, { recursive: true });
@@ -142,11 +210,13 @@ export async function runAnalysisInvocation(options: {
 	}
 	if (options.mode === "resume" && initialState.phase === "alignment_ready") {
 		const startedMs = Date.now();
+		const invocationPath = resolve(outputDirectory, "controlled-unblind-invocation.json");
+		if (existsSync(invocationPath)) throw new Error("controlled-unblind invocation evidence already exists; use a new Review output root for another attempt");
 		const sealedFindings = initialState.finding_drafts.filter((finding) => finding.status === "kept" && finding.sealed);
 		if (sealedFindings.length === 0) {
 			const state = completeZeroFindingControlledUnblindState(initialState, options.descriptors);
 			saveAnalysisState(outputDirectory, state);
-			return { stage: "controlled_unblind", mode: "resume", model: null, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "" };
+			return { stage: "controlled_unblind", mode: "resume", model: null, request_timeout_ms: requestTimeoutMs, usage: { provider_requests: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: false, tool_names: [], assistant_text: "" };
 		}
 		if (!options.evaluationAuthority) throw new Error("Controlled unblind requires Batch Freeze and Thin Evaluation Mapping authority");
 		const context = await buildControlledUnblindContext({ state: initialState, descriptors: options.descriptors, batchPath: options.evaluationAuthority.batchPath, mappingPath: options.evaluationAuthority.mappingPath });
@@ -163,14 +233,26 @@ export async function runAnalysisInvocation(options: {
 			models.setProvider(deepseekProvider());
 			const model = models.getModel("deepseek", "deepseek-v4-flash");
 			if (!model) throw new Error("fixed DeepSeek Analysis model is unavailable");
-			const message = await models.completeSimple(model, { systemPrompt, messages: [{ role: "user", content: userPrompt, timestamp: Date.now() }] }, { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 });
+			const message = await models.completeSimple(model, { systemPrompt, messages: [{ role: "user", content: userPrompt, timestamp: Date.now() }] }, { maxRetries: 0, timeoutMs: requestTimeoutMs });
 			if (message.stopReason === "error" || message.stopReason === "aborted") throw new Error(message.errorMessage ?? `controlled-unblind model stopped with ${message.stopReason}`);
 			completion = { text: contentText(message.content), model: { provider: message.provider, id: message.model }, usage: { input_tokens: message.usage.input + message.usage.cacheRead + message.usage.cacheWrite, output_tokens: message.usage.output, cost_usd: message.usage.cost.total } };
 		}
+		const finishedAt = new Date().toISOString();
+		const usage = { provider_requests: 1, ...completion.usage, wall_time_ms: Date.now() - startedMs };
+		writeFileSync(invocationPath, `${JSON.stringify({
+			schema_version: 1,
+			stage: "controlled_unblind",
+			started_at: new Date(startedMs).toISOString(),
+			finished_at: finishedAt,
+			model: completion.model,
+			request_timeout_ms: requestTimeoutMs,
+			usage,
+			assistant_text: completion.text,
+		}, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
 		const result = parseControlledUnblindResult(completion.text);
 		const state = completeControlledUnblindState(initialState, options.descriptors, result, context.frozen_candidate_skill);
 		saveAnalysisState(outputDirectory, state);
-		return { stage: "controlled_unblind", mode: "resume", model: completion.model, usage: { provider_requests: 1, ...completion.usage, wall_time_ms: Date.now() - startedMs }, state_path: statePath, state, model_invoked: true, tool_names: [], assistant_text: completion.text };
+		return { stage: "controlled_unblind", mode: "resume", model: completion.model, request_timeout_ms: requestTimeoutMs, usage, state_path: statePath, state, model_invoked: true, tool_names: [], assistant_text: completion.text };
 	}
 	if (options.mode === "resume" && initialState.phase !== "blind_analysis") throw new Error(`${initialState.phase} State cannot resume Blind Analysis`);
 	const modelContext = blindAnalysisModelContext(options.mode, initialState);
@@ -188,9 +270,9 @@ export async function runAnalysisInvocation(options: {
 	if (!model) throw new Error("fixed DeepSeek Analysis model is unavailable");
 	const sessionId = `trace-analysis-${options.mode}-${randomUUID()}`;
 	const repo = new JsonlSessionRepo({ fs: new NodeExecutionEnv({ cwd: outputDirectory, shellEnv: {} }), sessionsRoot: resolve(outputDirectory, "sessions", options.mode) });
-	const session = await repo.create({ cwd: outputDirectory, id: sessionId, metadata: { mode: options.mode, state_path: statePath } });
+	const session = await repo.create({ cwd: outputDirectory, id: sessionId, metadata: { mode: options.mode, state_path: statePath, request_timeout_ms: requestTimeoutMs } });
 	const sessionMetadata = await session.getMetadata();
-	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: modelContext.systemPrompt, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: options.timeoutMs ?? 120_000 } });
+	const harness = new AgentHarness({ models, session, model, tools: profile.tools, toolContext: profile.context, systemPrompt: modelContext.systemPrompt, thinkingLevel: ANALYSIS_THINKING_LEVEL, streamOptions: { maxRetries: 0, timeoutMs: requestTimeoutMs } });
 	const startedMs = Date.now();
 	const startedAt = new Date(startedMs).toISOString();
 	let providerRequests = 0;
@@ -199,10 +281,18 @@ export async function runAnalysisInvocation(options: {
 	let costUsd = 0;
 	let settled = 0;
 	let finalText = "";
+	let finalAssistantMessage: AssistantMessage | null = null;
+	let observedUpdateStateAttempts = 0;
+	let observedUpdateStateFailure: AnalysisStateUpdateFailure | null = null;
 	const unsubscribe = harness.subscribe((event: AgentHarnessEvent) => {
 		if (event.type === "settled") settled++;
+		if (event.type === "tool_execution_start" && event.toolName === "update_state") observedUpdateStateAttempts++;
+		if (event.type === "tool_execution_end" && event.toolName === "update_state" && event.isError && profile.context.lastUpdateStateFailure === null) {
+			observedUpdateStateFailure = { kind: "validation", message: "update_state tool arguments were rejected before State persistence" };
+		}
 		if (event.type === "message_end" && event.message.role === "assistant") {
 			const message = event.message as AssistantMessage;
+			finalAssistantMessage = message;
 			providerRequests++;
 			inputTokens += message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
 			outputTokens += message.usage.output;
@@ -210,16 +300,35 @@ export async function runAnalysisInvocation(options: {
 			finalText = assistantText(message);
 		}
 	});
+	let runtimeFailure: unknown;
 	try {
 		await harness.prompt(modelContext.userPrompt);
 		await harness.waitForIdle();
+	} catch (error) {
+		runtimeFailure = error;
 	} finally {
 		unsubscribe();
-		await harness.abort();
+		try {
+			await harness.abort();
+		} catch (error) {
+			runtimeFailure ??= error;
+		}
 	}
-	if (settled !== 1) throw new Error(`Analysis Invocation must settle exactly once; observed ${settled}`);
-	if (!analysisStateWasSaved(statePath)) throw new Error("Analysis model did not persist State through update_state");
-	let state = loadAnalysisState(statePath);
+	if (runtimeFailure !== undefined) throw new AnalysisInvocationError("analysis_runtime_error", options.mode, `Blind Analysis ${options.mode} runtime failed before accepted State: ${errorMessage(runtimeFailure)}`, runtimeFailure);
+	assertBlindAnalysisTerminal({
+		mode: options.mode,
+		settled,
+		finalAssistantMessage,
+		stateSaved: analysisStateWasSaved(statePath),
+		updateStateAttempts: Math.max(observedUpdateStateAttempts, profile.context.updateStateAttempts),
+		lastUpdateStateFailure: profile.context.lastUpdateStateFailure ?? observedUpdateStateFailure,
+	});
+	let state: AnalysisState;
+	try {
+		state = loadAnalysisState(statePath);
+	} catch (error) {
+		throw new AnalysisInvocationError("analysis_state_validation_failed", options.mode, `Persisted Blind Analysis State could not be loaded or validated: ${errorMessage(error)}`, error);
+	}
 	const globalComplete = isAnalysisGloballyComplete(state, options.descriptors);
 	const locators = state.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter]);
 	const resolved = resolveFindingLocators(analysis, locators).map((entry) => ({ locator: entry.locator, characterCount: entry.characterCount }));
@@ -230,7 +339,11 @@ export async function runAnalysisInvocation(options: {
 	if (!globalComplete && state.next_action.trim().length === 0) throw new Error("globally incomplete Analysis State requires next_action");
 	if (globalComplete) {
 		state = finalizeAnalysisHandoff(state, options.descriptors);
-		saveAnalysisState(outputDirectory, state);
+		try {
+			saveAnalysisState(outputDirectory, state);
+		} catch (error) {
+			throw new AnalysisInvocationError("analysis_state_persistence_failed", options.mode, `Final Blind Analysis State persistence failed: ${errorMessage(error)}`, error);
+		}
 	}
 
 	let resumeDirection: BlindAnalysisInvocationResult["resume_direction"];
@@ -247,7 +360,7 @@ export async function runAnalysisInvocation(options: {
 		if (!resumeDirection.queried_different_run && !resumeDirection.queried_different_artifact) throw new Error("resume Invocation did not inspect another Run or Evidence kind");
 	}
 	const result: BlindAnalysisInvocationResult = {
-		stage: "blind_analysis", mode: options.mode, started_at: startedAt, finished_at: new Date().toISOString(), model: { provider: model.provider, id: model.id },
+		stage: "blind_analysis", mode: options.mode, started_at: startedAt, finished_at: new Date().toISOString(), model: { provider: model.provider, id: model.id }, request_timeout_ms: requestTimeoutMs,
 		usage: { provider_requests: providerRequests, input_tokens: inputTokens, output_tokens: outputTokens, cost_usd: costUsd, tool_calls: profile.context.calls.length, wall_time_ms: Date.now() - startedMs },
 		session_id: sessionMetadata.id, session_path: sessionMetadata.path, state_path: statePath, loaded_state_path: options.mode === "resume" ? statePath : null,
 		loaded_prior_session: false, tool_names: profile.tools.map((tool) => tool.name), tool_calls: structuredClone(profile.context.calls), prior_next_action: initialState.next_action,

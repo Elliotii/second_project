@@ -24,7 +24,12 @@ export interface SemanticStateUpdate {
 	finding_drafts: Array<Omit<FindingDraft, "sealed">>;
 }
 
-interface AnalysisToolContext {
+export interface AnalysisStateUpdateFailure {
+	kind: "validation" | "persistence";
+	message: string;
+}
+
+export interface AnalysisToolContext {
 	analysis: AnalysisContext;
 	statePath: string;
 	initialState: AnalysisState;
@@ -32,6 +37,8 @@ interface AnalysisToolContext {
 	currentState: AnalysisState;
 	matrixListed: boolean;
 	searchExposedEvidence: Map<string, EvidenceReadRecord>;
+	updateStateAttempts: number;
+	lastUpdateStateFailure: AnalysisStateUpdateFailure | null;
 }
 
 type AnyAnalysisTool = AgentHarnessTool<AnalysisToolContext, TSchema, unknown> & { name: AnalysisToolCall["name"] };
@@ -39,8 +46,15 @@ type AnyAnalysisTool = AgentHarnessTool<AnalysisToolContext, TSchema, unknown> &
 const locatorSchema = Type.Object({
 	artifact: Type.Union([Type.Literal("trace"), Type.Literal("diff"), Type.Literal("verifier"), Type.Literal("manifest")]),
 	run_id: Type.String({ minLength: 1 }),
-	sequence: Type.Optional(Type.Integer()),
-}, { additionalProperties: false });
+	sequence: Type.Optional(Type.Integer({ minimum: 1, description: "Exact positive Trace event sequence returned by search_trace or another explicit Trace locator. Do not infer it from process_view operation counts." })),
+}, {
+	additionalProperties: false,
+	description: "One exact Evidence locator. Trace requires a positive integer sequence; other artifacts do not accept sequence. process_view operation indexes and counts are not Trace sequences.",
+	anyOf: [
+		{ properties: { artifact: { const: "trace" } }, required: ["sequence"] },
+		{ properties: { artifact: { enum: ["diff", "verifier", "manifest"] } }, not: { required: ["sequence"] } },
+	],
+});
 const findingSchema = Type.Object({
 	id: Type.String({ minLength: 1 }),
 	observation: Type.String(),
@@ -104,7 +118,7 @@ function text(value: unknown, terminate = false) {
 function cloneLocator(value: EvidenceLocator): EvidenceLocator {
 	const input = value as EvidenceLocator & { sequence?: number };
 	if (input.artifact === "trace") {
-		if (!Number.isSafeInteger(input.sequence)) throw new Error("trace Evidence Locator requires an integer sequence");
+		if (!Number.isSafeInteger(input.sequence) || input.sequence! < 1) throw new Error("trace Evidence Locator requires a positive integer sequence");
 		return { artifact: "trace", run_id: input.run_id, sequence: input.sequence! };
 	}
 	if (input.sequence !== undefined) throw new Error(`${input.artifact} Evidence Locator must not include sequence`);
@@ -236,6 +250,8 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		calls: [],
 		matrixListed: false,
 		searchExposedEvidence: new Map(),
+		updateStateAttempts: 0,
+		lastUpdateStateFailure: null,
 	};
 	const tools: AnyAnalysisTool[] = [
 		{
@@ -281,7 +297,7 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 		},
 		{
 			name: "read_evidence", label: "read_evidence",
-			description: "Read one trace, diff, verifier, or manifest Locator. The Runner records the real Locator and character count. This tool does not persist Analysis State.",
+			description: "Read one exact trace, diff, verifier, or manifest Locator. A trace Locator must include the positive integer event sequence returned by search_trace or another explicit Trace locator; a process_view operation count or index does not establish that sequence. The Runner records the real Locator and character count. This tool does not persist Analysis State.",
 			parameters: locatorSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
 				if (!toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("Global Matrix Triage through list_runs is required before Deep Investigation");
@@ -296,40 +312,49 @@ export function createAnalysisTools(options: { analysis: AnalysisContext; stateP
 			description: "Persist Global Matrix Triage, the structured Investigation Agenda, and a complete semantic State snapshot. trigger records the observable Matrix anomaly or contrast that made an investigation worth starting, not a generic todo. settle_condition states both the necessary checks and the evidence state that would permit retain, narrow, reject, or stop. The Agent sets process_investigation_required only after semantically judging a signal repeated and potentially task-relevant; a required obligation needs one allowed process_investigation_resolution before settled or deprioritized closure. For a kept Finding that explicitly claims recurrence, repeated_support_run_ids records the independent supporting Runs; it stays empty for non-repeated or single-Run Findings and is never inferred by the Harness. checked_runs records explicit question-specific workflow progress; completing required_runs does not establish support, semantically satisfy settle_condition, or automatically close an Item. For a settled or deprioritized Item, closure_reason records what was checked, what was and was not supported, and why investigation can stop; closure without a kept Finding is valid. counter_checked remains descriptive compatibility data, not completion authority. Runner-managed phase, Finding seal lifecycle, covered_runs, loaded_evidence, Locators actually read, and characterCount cannot be supplied or replaced.",
 			parameters: updateStateSchema,
 			async execute(_id, args, _signal, _update, toolContext) {
-				if (toolContext.initialState.phase === "alignment_ready") throw new Error("alignment_ready State cannot be modified through Blind Analysis update_state");
-				const update = validateUpdate(args as SemanticStateUpdate);
-				if (update.matrix_triage_complete && !toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("matrix_triage_complete requires list_runs exposure in this Invocation");
-				const priorFindingIds = new Set(toolContext.initialState.finding_drafts.map((finding) => finding.id));
-				for (const finding of update.finding_drafts) {
-					if (!priorFindingIds.has(finding.id) && (finding.claim_scope === undefined || finding.agenda_item_id === undefined)) throw new Error(`new Finding ${finding.id} requires claim_scope and agenda_item_id`);
+				toolContext.updateStateAttempts++;
+				let failureKind: AnalysisStateUpdateFailure["kind"] = "validation";
+				try {
+					if (toolContext.initialState.phase === "alignment_ready") throw new Error("alignment_ready State cannot be modified through Blind Analysis update_state");
+					const update = validateUpdate(args as SemanticStateUpdate);
+					if (update.matrix_triage_complete && !toolContext.initialState.matrix_triage_complete && !toolContext.matrixListed) throw new Error("matrix_triage_complete requires list_runs exposure in this Invocation");
+					const priorFindingIds = new Set(toolContext.initialState.finding_drafts.map((finding) => finding.id));
+					for (const finding of update.finding_drafts) {
+						if (!priorFindingIds.has(finding.id) && (finding.claim_scope === undefined || finding.agenda_item_id === undefined)) throw new Error(`new Finding ${finding.id} requires claim_scope and agenda_item_id`);
+					}
+					const next: AnalysisState = {
+						phase: toolContext.initialState.phase,
+						covered_runs: [...toolContext.analysis.coveredRuns],
+						matrix_triage_complete: toolContext.initialState.matrix_triage_complete || update.matrix_triage_complete,
+						investigation_agenda: update.investigation_agenda,
+						notes: update.notes,
+						open_questions: update.open_questions,
+						next_action: update.next_action,
+						loaded_evidence: [...toolContext.initialState.loaded_evidence, ...structuredClone(toolContext.analysis.loadedEvidence)],
+						finding_drafts: update.finding_drafts.map((finding) => ({ ...finding, sealed: false })),
+					};
+					const loadedKeys = new Set(next.loaded_evidence.map((entry) => locatorKey(entry.locator)));
+					for (const locator of next.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter])) {
+						const key = locatorKey(locator);
+						if (loadedKeys.has(key)) continue;
+						const exposed = toolContext.searchExposedEvidence.get(key);
+						if (!exposed) throw new Error(`Finding uses a Locator not loaded or exposed by search_trace in this Invocation: ${key}`);
+						next.loaded_evidence.push(structuredClone(exposed));
+						loadedKeys.add(key);
+					}
+					if (!next.matrix_triage_complete && (next.investigation_agenda.length > 0 || next.finding_drafts.some((finding) => finding.claim_scope !== undefined))) throw new Error("v2 Agenda and Findings require completed Global Matrix Triage");
+					validateAnalysisWorkflow(next, [...toolContext.analysis.runs.values()].map((loaded) => loaded.descriptor));
+					validateSealedHandoffImmutability(toolContext.initialState, next);
+					toolContext.currentState = next;
+					failureKind = "persistence";
+					saveAnalysisState(toolContext.statePath.replace(/[\\/]analysis-state\.json$/, ""), next);
+					toolContext.lastUpdateStateFailure = null;
+					record(toolContext, "update_state", args as Record<string, unknown>);
+					return text({ saved: true, state_path: toolContext.statePath, covered_runs: next.covered_runs, loaded_evidence_count: next.loaded_evidence.length }, true);
+				} catch (error) {
+					toolContext.lastUpdateStateFailure = { kind: failureKind, message: error instanceof Error ? error.message : String(error) };
+					throw error;
 				}
-				const next: AnalysisState = {
-					phase: toolContext.initialState.phase,
-					covered_runs: [...toolContext.analysis.coveredRuns],
-					matrix_triage_complete: toolContext.initialState.matrix_triage_complete || update.matrix_triage_complete,
-					investigation_agenda: update.investigation_agenda,
-					notes: update.notes,
-					open_questions: update.open_questions,
-					next_action: update.next_action,
-					loaded_evidence: [...toolContext.initialState.loaded_evidence, ...structuredClone(toolContext.analysis.loadedEvidence)],
-					finding_drafts: update.finding_drafts.map((finding) => ({ ...finding, sealed: false })),
-				};
-				const loadedKeys = new Set(next.loaded_evidence.map((entry) => locatorKey(entry.locator)));
-				for (const locator of next.finding_drafts.flatMap((finding) => [...finding.support, ...finding.counter])) {
-					const key = locatorKey(locator);
-					if (loadedKeys.has(key)) continue;
-					const exposed = toolContext.searchExposedEvidence.get(key);
-					if (!exposed) throw new Error(`Finding uses a Locator not loaded or exposed by search_trace in this Invocation: ${key}`);
-					next.loaded_evidence.push(structuredClone(exposed));
-					loadedKeys.add(key);
-				}
-				if (!next.matrix_triage_complete && (next.investigation_agenda.length > 0 || next.finding_drafts.some((finding) => finding.claim_scope !== undefined))) throw new Error("v2 Agenda and Findings require completed Global Matrix Triage");
-				validateAnalysisWorkflow(next, [...toolContext.analysis.runs.values()].map((loaded) => loaded.descriptor));
-				validateSealedHandoffImmutability(toolContext.initialState, next);
-				toolContext.currentState = next;
-				saveAnalysisState(toolContext.statePath.replace(/[\\/]analysis-state\.json$/, ""), next);
-				record(toolContext, "update_state", args as Record<string, unknown>);
-				return text({ saved: true, state_path: toolContext.statePath, covered_runs: next.covered_runs, loaded_evidence_count: next.loaded_evidence.length }, true);
 			},
 		},
 	];

@@ -8,10 +8,13 @@ import { runCodingTask } from "../src/coding-task/runner.ts";
 import { snapshotWorkspace } from "../src/coding-task/workspace.ts";
 import { fileSha256 } from "../src/hash.ts";
 import { createDeepSeekCodingTaskRuntime, preflightPiRuntime } from "../src/runtime/pi-runtime.ts";
+import type { OpaqueCredentialResolverV1 } from "../src/provider/fixed-provider-v1.ts";
 import { createDeferredCredentialFileResolverV35 } from "../src/session/real-smoke-turn-v35.ts";
 import { loadAdaptiveSkillPathV3 } from "../src/skill/adapter-v3.ts";
 import { loadFrozenSkillEvidenceFromEvaluation } from "../src/trace-analysis/controlled-unblind.ts";
 import { parseThinEvaluationMapping, readBatchFreezeRecord, type PlannedRun, type ThinEvaluationMapping } from "../src/trace-analysis/evaluation.ts";
+import { analysisInvocationErrorCode } from "../src/trace-analysis/model-runner.ts";
+import { resolveAnalysisRequestTimeoutMs } from "../src/trace-analysis/runtime-config.ts";
 import { reviewEvaluation, type ReviewResult } from "./review-evaluation.ts";
 
 export interface EvaluateCliOptions {
@@ -20,6 +23,7 @@ export interface EvaluateCliOptions {
 	bindings: Array<{ planId: string; configPath: string }>;
 	credentialFile: string;
 	output: string;
+	analysisRequestTimeoutMs?: number;
 	json: boolean;
 }
 
@@ -35,6 +39,7 @@ export interface EvaluateResult {
 	base_a_invocations: number;
 	max_a_invocations: number;
 	a_invocations: number;
+	analysis_request_timeout_ms: number;
 	report_markdown: string;
 	report_html: string;
 	report_pdf: string;
@@ -56,6 +61,7 @@ Required:
   --output <new-path>
 
 Optional:
+  --analysis-request-timeout-ms <milliseconds>
   --json
   --help
 
@@ -68,7 +74,8 @@ export function parseEvaluateArguments(argv: string[]): EvaluateCliOptions | { h
 	const bindings: Array<{ planId: string; configPath: string }> = [];
 	let json = false;
 	let help = false;
-	const valueNames = new Set(["--project-root", "--plan", "--credential-file", "--output"]);
+	const requiredValueNames = new Set(["--project-root", "--plan", "--credential-file", "--output"]);
+	const valueNames = new Set([...requiredValueNames, "--analysis-request-timeout-ms"]);
 	for (let index = 0; index < argv.length; index++) {
 		const argument = argv[index]!;
 		if (valueNames.has(argument)) {
@@ -99,12 +106,14 @@ export function parseEvaluateArguments(argv: string[]): EvaluateCliOptions | { h
 		throw new Error(`unknown argument ${argument}`);
 	}
 	if (help) return { help: true, json };
-	const missing = [...valueNames].filter((name) => !values.has(name));
+	const missing = [...requiredValueNames].filter((name) => !values.has(name));
 	if (bindings.length === 0) missing.push("--bind");
 	if (missing.length > 0) throw new Error(`missing required argument${missing.length === 1 ? "" : "s"}: ${missing.join(", ")}`);
 	return {
 		projectRoot: values.get("--project-root")!, plan: values.get("--plan")!, bindings,
-		credentialFile: values.get("--credential-file")!, output: values.get("--output")!, json,
+		credentialFile: values.get("--credential-file")!, output: values.get("--output")!,
+		...(values.has("--analysis-request-timeout-ms") ? { analysisRequestTimeoutMs: resolveAnalysisRequestTimeoutMs(Number(values.get("--analysis-request-timeout-ms")), "--analysis-request-timeout-ms") } : {}),
+		json,
 	};
 }
 
@@ -208,6 +217,7 @@ export async function evaluateEvaluation(options: EvaluateCliOptions, dependenci
 	runTask?: RunTask;
 	review?: typeof reviewEvaluation;
 	runtimePreflight?: () => void;
+	credentialResolverFactory?: (path: string) => OpaqueCredentialResolverV1;
 	onStage?: (stage: "preflight" | "coding" | "mapping" | "review") => void;
 } = {}): Promise<EvaluateResult> {
 	dependencies.onStage?.("preflight");
@@ -221,7 +231,14 @@ export async function evaluateEvaluation(options: EvaluateCliOptions, dependenci
 	const plan = readBatchFreezeRecord(planPath);
 	const bindings = bindConfigs(plan.planned_runs, options.bindings);
 	await loadFrozenSkillEvidenceFromEvaluation(planPath);
-	createDeferredCredentialFileResolverV35(credentialFile);
+	const credentialSource = (dependencies.credentialResolverFactory ?? createDeferredCredentialFileResolverV35)(credentialFile);
+	let cachedCredential: Promise<string> | null = null;
+	const credentialResolver: OpaqueCredentialResolverV1 = {
+		resolve(): Promise<string> {
+			cachedCredential ??= credentialSource.resolve();
+			return cachedCredential;
+		},
+	};
 	const tasks = new Map<string, CodingTaskSpec>();
 	for (const planned of plan.planned_runs) {
 		if (planned.planned_skill !== null && (planned.planned_skill.build_ref !== plan.candidate_build_ref || planned.planned_skill.expected_sha256 !== plan.candidate_expected_sha256)) throw new Error(`plan_id ${planned.plan_id} planned Skill does not match the frozen Candidate identity`);
@@ -231,12 +248,12 @@ export async function evaluateEvaluation(options: EvaluateCliOptions, dependenci
 	}
 	if (!dependencies.runTask) {
 		(dependencies.runtimePreflight ?? (() => { preflightPiRuntime(); }))();
-		if (!process.env.DEEPSEEK_API_KEY) throw new Error("DEEPSEEK_API_KEY is required for Coding Runs");
+		await credentialResolver.resolve();
 	}
 	mkdirSync(runsRoot, { recursive: true });
 	const refs: ThinEvaluationMapping["run_refs"] = [];
 	const runTask: RunTask = dependencies.runTask ?? (async ({ task }) => {
-		const runtime = await createDeepSeekCodingTaskRuntime(process.env.DEEPSEEK_API_KEY ?? "");
+		const runtime = await createDeepSeekCodingTaskRuntime(await credentialResolver.resolve());
 		return runCodingTask({ task, runtime });
 	});
 	dependencies.onStage?.("coding");
@@ -253,21 +270,23 @@ export async function evaluateEvaluation(options: EvaluateCliOptions, dependenci
 	const mapping = parseThinEvaluationMapping({ evaluation_id: plan.evaluation_id, run_refs: refs });
 	writeJson(mappingPath, mapping);
 	dependencies.onStage?.("review");
-	const review = dependencies.review ?? reviewEvaluation;
-	const reviewed: ReviewResult = await review({ plan: planPath, mapping: mappingPath, credentialFile, output: reviewRoot, dryRun: false, json: options.json });
+	const reviewOptions = { plan: planPath, mapping: mappingPath, credentialFile, output: reviewRoot, analysisRequestTimeoutMs: resolveAnalysisRequestTimeoutMs(options.analysisRequestTimeoutMs), dryRun: false, json: options.json };
+	const reviewed: ReviewResult = dependencies.review
+		? await dependencies.review(reviewOptions)
+		: await reviewEvaluation(reviewOptions, { credentialResolverFactory: () => credentialResolver });
 	if (reviewed.status !== "human_review_ready" || reviewed.a_invocations === undefined || reviewed.analysis_state === undefined || reviewed.report_markdown === undefined || reviewed.report_html === undefined || reviewed.report_pdf === undefined) throw new Error("review did not return complete human_review_ready artifacts");
 	return {
 		status: "human_review_ready", evaluation_id: plan.evaluation_id, planned_runs: plan.planned_runs.length, completed_runs: refs.length,
 		mapping: mappingPath, review_phase: reviewed.status, analysis_state: reviewed.analysis_state,
 		total_process_view_bytes: reviewed.total_process_view_bytes, base_a_invocations: reviewed.base_a_invocations,
-		max_a_invocations: reviewed.max_a_invocations, a_invocations: reviewed.a_invocations,
+		max_a_invocations: reviewed.max_a_invocations, a_invocations: reviewed.a_invocations, analysis_request_timeout_ms: reviewed.analysis_request_timeout_ms,
 		report_markdown: reviewed.report_markdown, report_html: reviewed.report_html, report_pdf: reviewed.report_pdf,
 	};
 }
 
 export function formatEvaluateResult(result: EvaluateResult, json: boolean): string {
 	if (json) return `${JSON.stringify(result)}\n`;
-	return `Evaluation complete\n\nEvaluation: ${result.evaluation_id}\nRuns: ${result.completed_runs}/${result.planned_runs}\nStatus: ${result.review_phase}\n\nMapping:\n${result.mapping}\n\nAnalysis State:\n${result.analysis_state}\n\nMarkdown:\n${result.report_markdown}\n\nHTML:\n${result.report_html}\n\nPDF:\n${result.report_pdf}\n`;
+	return `Evaluation complete\n\nEvaluation: ${result.evaluation_id}\nRuns: ${result.completed_runs}/${result.planned_runs}\nStatus: ${result.review_phase}\nAnalysis request timeout: ${result.analysis_request_timeout_ms} ms\n\nMapping:\n${result.mapping}\n\nAnalysis State:\n${result.analysis_state}\n\nMarkdown:\n${result.report_markdown}\n\nHTML:\n${result.report_html}\n\nPDF:\n${result.report_pdf}\n`;
 }
 
 async function main(): Promise<void> {
@@ -283,7 +302,8 @@ async function main(): Promise<void> {
 		process.stdout.write(formatEvaluateResult(result, parsed.json));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		if (jsonMode) process.stdout.write(`${JSON.stringify({ status: "error", stage, message })}\n`);
+		const code = analysisInvocationErrorCode(error);
+		if (jsonMode) process.stdout.write(`${JSON.stringify({ status: "error", stage, ...(code ? { code } : {}), message })}\n`);
 		process.stderr.write(`Evaluation failed (${stage}): ${message}\n`);
 		process.exitCode = 1;
 	}

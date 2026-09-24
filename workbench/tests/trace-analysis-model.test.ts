@@ -6,7 +6,7 @@ import test from "node:test";
 import { createAnalysisContext } from "../src/trace-analysis/analysis.ts";
 import type { AnalysisState, RunDescriptor } from "../src/trace-analysis/contracts.ts";
 import { createAnalysisTools } from "../src/trace-analysis/model-tools.ts";
-import { ANALYSIS_SYSTEM_PROMPT, blindAnalysisModelContext, emptyAnalysisState, freshAnalysisPrompt, resumeAnalysisPrompt } from "../src/trace-analysis/model-runner.ts";
+import { ANALYSIS_SYSTEM_PROMPT, AnalysisInvocationError, assertBlindAnalysisTerminal, blindAnalysisModelContext, emptyAnalysisState, freshAnalysisPrompt, resumeAnalysisPrompt } from "../src/trace-analysis/model-runner.ts";
 import { loadAnalysisState } from "../src/trace-analysis/state.ts";
 
 function temporary(label: string): string { return mkdtempSync(resolve(tmpdir(), `trace-analysis-model-${label}-`)); }
@@ -45,10 +45,46 @@ test("Analysis model receives the five bounded evidence and State tools", () => 
 	const profile = setup("allowlist");
 	assert.deepEqual(profile.tools.map((tool) => tool.name), ["list_runs", "process_view", "search_trace", "read_evidence", "update_state"]);
 	assert.equal((profile.tools.find((tool) => tool.name === "process_view")!.parameters as { type?: string }).type, "object");
-	assert.equal((profile.tools.find((tool) => tool.name === "read_evidence")!.parameters as { type?: string }).type, "object");
+	const readEvidence = profile.tools.find((tool) => tool.name === "read_evidence")!;
+	const readEvidenceSchema = readEvidence.parameters as { type?: string; properties?: Record<string, { minimum?: number }>; anyOf?: Array<{ properties?: Record<string, { const?: string; minimum?: number }>; required?: string[] }> };
+	assert.equal(readEvidenceSchema.type, "object");
+	const locatorVariants = readEvidenceSchema.anyOf;
+	assert.equal(Array.isArray(locatorVariants), true);
+	const traceLocator = locatorVariants!.find((variant) => variant.properties?.artifact?.const === "trace");
+	assert.ok(traceLocator?.required?.includes("sequence"));
+	assert.equal(readEvidenceSchema.properties?.sequence?.minimum, 1);
+	assert.match(readEvidence.description, /positive integer event sequence.*process_view operation count or index does not establish/s);
 	const updateDescription = profile.tools.find((tool) => tool.name === "update_state")!.description;
 	for (const required of ["observable Matrix anomaly or contrast", "not a generic todo", "necessary checks", "evidence state", "completing required_runs does not establish support", "semantically satisfy settle_condition", "automatically close", "what was checked", "what was and was not supported", "why investigation can stop", "without a kept Finding"]) assert.match(updateDescription, new RegExp(required));
 	for (const forbidden of ["bash","git","workspace_read","workspace_write","run_command","skill"] ) assert.equal(profile.tools.some((tool) => tool.name === forbidden), false);
+});
+
+test("trace Locator contract requires an explicit positive sequence and never infers process_view counts", async () => {
+	const profile = setup("trace-locator-contract");
+	await execute(profile, "list_runs", {});
+	await assert.rejects(execute(profile, "read_evidence", { artifact:"trace", run_id:profile.descriptor.runId }), /positive integer sequence/);
+	await assert.rejects(execute(profile, "read_evidence", { artifact:"trace", run_id:profile.descriptor.runId, sequence:0 }), /positive integer sequence/);
+	await execute(profile, "read_evidence", { artifact:"trace", run_id:profile.descriptor.runId, sequence:1 });
+});
+
+test("Blind Analysis terminal classification preserves Provider errors before missing-State symptoms", () => {
+	const classify = (overrides: Partial<Parameters<typeof assertBlindAnalysisTerminal>[0]> = {}) => () => assertBlindAnalysisTerminal({
+		mode: "fresh", settled: 1, finalAssistantMessage: { stopReason: "stop", errorMessage: undefined }, stateSaved: false,
+		updateStateAttempts: 0, lastUpdateStateFailure: null, ...overrides,
+	});
+	assert.throws(classify({ finalAssistantMessage: { stopReason: "error", errorMessage: "terminated" } }), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_provider_error" && /terminated/.test(error.message));
+	assert.throws(classify({ finalAssistantMessage: { stopReason: "aborted", errorMessage: "cancelled" } }), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_aborted");
+	assert.throws(classify(), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_update_state_not_called");
+	assert.throws(classify({ updateStateAttempts: 1, lastUpdateStateFailure: { kind: "validation", message: "bad snapshot" } }), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_state_validation_failed");
+	assert.throws(classify({ updateStateAttempts: 1, lastUpdateStateFailure: { kind: "persistence", message: "disk full" } }), (error) => error instanceof AnalysisInvocationError && error.code === "analysis_state_persistence_failed");
+});
+
+test("update_state records failed validation attempts without weakening State acceptance", async () => {
+	const profile = setup("update-state-failure");
+	await assert.rejects(execute(profile, "update_state", { matrix_triage_complete:true, investigation_agenda:[], notes:[], open_questions:[], next_action:"", finding_drafts:[] }), /requires list_runs exposure/);
+	assert.equal(profile.context.updateStateAttempts, 1);
+	assert.deepEqual(profile.context.lastUpdateStateFailure, { kind:"validation", message:"matrix_triage_complete requires list_runs exposure in this Invocation" });
+	assert.equal(existsSync(profile.statePath), false);
 });
 
 test("matrix_triage_complete requires list_runs exposure in the current fresh Invocation", async () => {

@@ -1,6 +1,30 @@
 # Current State
 
-> Updated: 2026-08-21
+> Updated: 2026-09-23
+
+## Analysis Agent v2.1 Service Goal Override (2026-09-22)
+
+This section is the live authority for the additive post-v2.1 service Goal and
+supersedes older V3.7/current-goal prose only for this worktree. Historical
+version evidence and all closed-run restrictions remain unchanged.
+
+```yaml
+release_baseline: Analysis Agent v2.1 portable release
+control_baseline_commit: 603207f20436b1c31f67c3234936a9636f1d5c13
+control_baseline_tree: edc44fc90b52f7ea2ff4ef20b384e0bd8404f7a3
+active_goal: null
+status: implementation_complete_pending_user_review
+contract: docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_GOAL_CONTRACT.md
+closeout: docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_CLOSEOUT.md
+technical_handoff: docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_TECHNICAL_HANDOFF.md
+implementation_owner: current_Codex_task_by_explicit_user_direction
+implementation_worktree: D:/AI/AI_Projects/project2-worktrees/skill-evaluation-job-service
+implementation_branch: codex/skill-evaluation-job-service
+real_model_execution: completed_under_explicit_user_authorization
+real_execution_disposition: coding_runs_and_verifiers_and_mapping_passed_analysis_update_state_not_persisted_job_execution_failed_preserved
+real_execution_recorded_cost_usd: 0.0045762808
+swe_bench_dependency: false
+```
 
 ```yaml
 project:

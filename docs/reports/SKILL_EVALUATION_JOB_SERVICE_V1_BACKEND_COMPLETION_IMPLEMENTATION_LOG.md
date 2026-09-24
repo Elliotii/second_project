@@ -1,0 +1,193 @@
+# Skill Evaluation Job Service V1 Backend Completion Implementation Log
+
+**分支：** `codex/skill-evaluation-job-service`  
+**开始日期：** 2026-09-24  
+**实施合同：** `docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_BACKEND_COMPLETION_SPEC.md`  
+**状态：** BLOCKED at Stage 1 / unexpected real Provider-transport termination; awaiting user and Web GPT review
+
+## 身份基线
+
+- 便携发布基线 commit：`603207f20436b1c31f67c3234936a9636f1d5c13`
+- 便携发布基线 tree：`edc44fc90b52f7ea2ff4ef20b384e0bd8404f7a3`
+- 当前工作树：包含未提交的 Skill Evaluation Job Service V1、Analysis 定向修复、测试和报告；不是上述 tree 的同义词。
+- Stage 1 执行身份：待 preflight 后记录注册 Spec、Plan/config 摘要和 executor 逐文件 SHA-256。
+- 最终交付身份：待 Stage 4 本地 commit 后记录最终 commit/tree；随后重新生成 Spec 并零模型 preflight。
+
+## 授权与固定边界
+
+- 已授权两个、且仅两个真实小型 Evaluation Job；相同合法 Spec、不同 idempotency key。
+- 两个独立 Worker，各本地 concurrency=1；BullMQ 全局 concurrency=2。
+- 不降低单 Job 的模型、Token、thinking、工具、任务或 Analysis 预算。
+- 不执行真实并发 4/8，不 merge、不 push。
+- 任一非预期失败：停止新动作和付费重试；让另一合法 Job 按现有生命周期安全收敛，随后分别核验两条现场并停止。
+
+## Stage 0：SPEC 合同澄清
+
+### 已完成
+
+- 将 SPEC 状态改为 Approved。
+- 补充双 Job 中单条失败时的现场稳定与暂停规则。
+- 补充 CLI `wait` 超时不取消后台 Job 的合同。
+- 补充便携基线、dirty worktree executor identity、最终 commit/tree 和 post-commit Spec 四层身份区分。
+
+### 变更文件
+
+- `docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_BACKEND_COMPLETION_SPEC.md`
+- 本持续实施记录。
+
+## Stage 1：真实双 Job 并发
+
+### 配置与零模型 Preflight
+
+- Spec registry：`.runs/evaluation-service-specs/small-real-v4-e2e-20260923/specs.json`
+- Spec ID：`small-real-two-run-v2`
+- Frozen Plan SHA-256：`ee805b5fe2f9921e63be792b7224a6bf8bf18e957212d703d9af3e6cbf22b4d1`
+- executor files：21 个，Stage 1 preflight 时全部匹配。
+- Analysis Provider request timeout：`300000 ms`
+- Job timeout：`2400000 ms`
+- 零模型 preflight：`ready_at_execution_boundary`；`real_model_calls=0`；`credential_reads=0`。
+- Pi runtime：`.runs/v0-a/pi`，bootstrap check identity `027a5847901b5dde30270abaa1041046cd2b4b55`。
+- Redis：`redis:7.4.7-alpine`，`127.0.0.1:6390`，DB 15。
+- Queue：`skill-evaluation-jobs-v1-real-c2-20260924-01`。
+- API：`127.0.0.1:4321`，PID 18212。
+- Worker：PID 21940 与 7756；各 `concurrency=1`；全局并发 `2`。
+- Job root：`D:\AI\ejc2-20260924-01`。
+- Control/log root：`D:\AI\ejc2-control-20260924-01`。
+- Credential：Worker 使用注册的 `.env.g005` 文件；未把密钥放入 HTTP body 或 Redis Job Data。
+
+实时 `workbench evaluation run --help` 已确认正式命令仍要求 Frozen Plan、逐 plan-id binding、Credential file 和 fresh output，且不提供隐式 retry。第一次未设置 `PI_RUNTIME_ROOT` 的 help 检查在 loader preflight 失败；设置 bootstrap check 给出的 runtime 后，help 正常输出。这是提交前的机械设置纠正，没有模型或 Credential 读取。
+
+### 真实执行身份
+
+两个 POST 由同一 Node 进程使用 `Promise.all` 近同时提交，均返回 HTTP 202、`deduplicated=false`：
+
+| Key | Job ID | launch token | runner / evaluator PID |
+|---|---|---|---|
+| `backend-c2-20260924-a` | `88a7167ae2889be57aa2874ca63dfaa45257f10173055618bbdf6d786660955a` | `ac4a4e336d1a846c46bdf6f0bb108701b1356540edbc0a8de4861a14de84bd48` | 30760 / 6248 |
+| `backend-c2-20260924-b` | `134e3208e3d78294663b3ae1f287a54b7a56cf777f9ab1afefbb04709b98a810` | `3440cc3cee8ced62ddc808c4215ffebe416ec3d4cff422c90904ccfa843231ef` | 9992 / 27136 |
+
+两个 Job 都曾由 HTTP 报告为 `running` / BullMQ `active`；没有提交第三个 Job，也没有 retry。
+
+### 已取得的有效并发与隔离证据
+
+虽然最终验收失败，真实并发机制已经产生下列不可改写的有效观察：
+
+- evaluator 区间：
+  - Job A：dispatch `2026-09-23T19:39:08.643Z` → child terminal `19:42:19.009Z`
+  - Job B：dispatch `2026-09-23T19:39:08.660Z` → child terminal `19:42:19.043Z`
+  - 实际重叠：`190349 ms`
+- 第 1 对 Coding Run：重叠 `7326 ms`。
+- 第 2 对 Coding Run：重叠 `4203 ms`。
+- Blind Analysis Session：重叠 `176977 ms`。
+- 四个 Coding Run 都是 `execution_status=completed`、`verification_status=passed`；每个 Run 5 次 Provider request、6 次工具调用。
+- Job A Run ID：`coding-task-20260923193909745-1678059b`、`coding-task-20260923193917683-58e26dec`。
+- Job B Run ID：`coding-task-20260923193909746-0f7ad83b`、`coding-task-20260923193917079-6774c378`。
+- 两份 Thin Mapping 均存在，且只引用各自 Job root 下的两个 Run；Run ID、Workspace、Session、launch token、进程身份和目录没有交叉。
+- 四个 evaluator/runner PID 在终态后均不存在；两个 terminal 均记录 `cleanup_confirmed=true`。
+- 对 `.env.g005` 中的一个非空密钥值做了不输出内容的精确扫描：两个 Job/control root 为 0 命中；Redis DB 15 的 7 个 key 为 0 命中。
+
+### 失败现场
+
+两个 Job 都自然收敛，没有受控强杀：
+
+| Job | 服务终态 | 时间 | 消息 |
+|---|---|---|---|
+| A | `execution_failed` | `19:39:08.487Z` → `19:42:19.009Z` | `Blind Analysis fresh Provider error before accepted State: terminated` |
+| B | `execution_failed` | `19:39:08.496Z` → `19:42:19.043Z` | 同上 |
+
+权威现场：
+
+- Job A：`D:\AI\ejc2-20260924-01\jobs\88a7167ae2889be57aa2874ca63dfaa45257f10173055618bbdf6d786660955a\`
+- Job B：`D:\AI\ejc2-20260924-01\jobs\134e3208e3d78294663b3ae1f287a54b7a56cf777f9ab1afefbb04709b98a810\`
+- API/Worker 日志与 Redis 快照：`D:\AI\ejc2-control-20260924-01\`
+- Redis RDB SHA-256：`02aee41e400c86946f45b3062ea4b5905dfa2cf178ae3cf2ad6f3827ec151bfc`。
+
+每个失败 terminal 发布的 6 个 HTTP Artifact（request、Spec snapshot、queue receipt、stdout、stderr、log metadata）均 HTTP 200，12/12 的字节数与 SHA-256 匹配。历史文件没有覆盖或拼接。
+
+Blind Analysis 现场：
+
+- 固定模型均为 `deepseek/deepseek-v4-flash`，API 为 `openai-completions`，Session metadata 均记录 `request_timeout_ms=300000`。
+- Job A：10 个有 usage 的成功响应后，第 11 个 Assistant message 为 `stopReason=error` / `errorMessage=terminated`；15,571 input、21,047 output tokens、USD 0.0084146552、27 个已发出的工具调用；未发出 `update_state`。
+- Job B：6 个有 usage 的成功响应后，第 7 个 Assistant message 为同一错误；13,020 input、16,244 output tokens、USD 0.0065040864、23 个工具调用。错误 Assistant message 中流出了一个 `update_state` toolCall，但没有后续 tool result，也没有持久 State；现有证据不能证明工具真正开始执行，因此不能当作合法 State 提交。
+- Job A 最后一次请求从最后一组 tool result 到 error 约 73.389 秒；Job B 约 98.850 秒，均短于 300 秒 request timeout。
+- 两条 error message 的时间只相差约 29 ms；没有 429、余额不足、Job timeout、Worker crash、stalled redelivery 或 Credential 错误证据。
+- 两个 Job 都没有 `analysis-state.json`、controlled-unblind 或 Markdown/HTML/PDF 报告，所以不满足 `human_review_ready`。
+
+### 根因判断
+
+**Fact：** `model-runner.ts` 已把 Spec 的 300,000 ms 传入 `AgentHarness.streamOptions.timeoutMs`；Pinned Pi 的 `openai-completions.js` 又把它传入 OpenAI SDK request `timeout`。本次最终两个请求都在 300 秒之前以 Provider Assistant message `stopReason=error` / `terminated` 返回。
+
+**Fact：** 服务 Job deadline 为 2,400,000 ms，实际约 190.5 秒；Worker 没有走 timeout terminal，API/两个 Worker 在失败后仍存活。当前证据排除“服务 Job timeout 触发”和“300 秒本地 request timer 到期”作为直接终止器。
+
+**Fact：** Blind Analysis 的错误优先级修复按预期生效：真实 Provider 错误没有再被“未持久化 State”覆盖。Job B 中 errored message 携带的未执行 `update_state` 也没有被错误接纳。
+
+**Inference：** 两条独立 Analysis 在近乎相同绝对时刻得到 `terminated`，更符合共享 Provider/gateway/网络传输被关闭或某个当前不可见的共同上游边界，而不像两个不同长度的单请求各自命中 300 秒本地 timeout。
+
+**Unconfirmed：** 现有 Artifact 只保留 Pi Assistant message 的 `errorMessage=terminated`，没有 HTTP status、底层 undici/OpenAI error cause 或 Provider request ID；因此不能在本轮断言是 DeepSeek 并发额度、网关限制、宿主网络、SDK stream，还是其他上游传输原因。也没有证据支持把余额不足作为原因。
+
+**Unconfirmed：** Job B 的 partial `update_state` 是否已由 Provider 完整生成但在终止事件前未收到合法 finish event。正式合同正确地拒绝了它，不能据此恢复或伪造 State。
+
+### 拟议最小修复/验证方向（尚未实施）
+
+1. **先补安全诊断，不改评测语义：** 在 `src/trace-analysis/model-runner.ts` 的 Provider request 生命周期记录每次 request 的序号、开始/结束时间、stop reason、错误类别和可安全获得的 cause/status/request-id；禁止记录 Credential、完整 Prompt/response 或私人输入。若 Pi 当前不暴露底层 cause，则如实记录“不可获得”，不修改 `.upstream/pi`。
+2. 为上述诊断增加 Faux/确定性测试，证明并发 errored Assistant message、partial toolCall 和正常 response 的记录与错误优先级；不增加自动 retry，不接纳 error response 中的 `update_state`。
+3. 经审核后，优先用已完成的四个 Run/Mapping 做两个独立 Analysis-only 并发验证，减少重复 Coding 成本并区分“Analysis Provider 并发”与服务/Workspace 隔离；这是新的付费尝试，当前未授权。
+4. 只有新的诊断证据证明 Provider 不支持两个长 Analysis 并发时，才评估有界 Analysis admission/rate control；不能预先通过降低模型预算、串改 Frozen Plan 或静默重试来获得成功。
+5. 若 Analysis-only 定位并通过，完整 Stage 1 仍需两个新的合法 HTTP Job 才能最终验收；不得把本次失败 Job 与新 Analysis 产物拼接成成功。
+
+潜在影响：新增诊断若进入 executor source identity，必须刷新 Spec digest；任何重试使用新的 Job/Review 身份。建议回归 `trace-analysis-model.test.ts`、Analysis/Review CLI、evaluation-service core/Faux，并重新做零模型 Spec preflight。
+
+### Stage 1 验收结论与剩余工作
+
+**结论：FAILED / BLOCKED。** 实际并发与隔离的中间证据成立，但两个 Job 均缺失正式 Analysis State 和 Report，不能宣称真实双 Job E2E 通过。
+
+剩余工作：等待用户与 Web GPT 审核上述诊断/最小方向；获批后从诊断增强与确定性回归恢复，再由新的明确授权决定 Analysis-only 或两个新 HTTP Job。Stage 2、3、4 均未开始；没有本地 commit、merge 或 push。
+
+## 2026-09-24：双 Job Analysis termination 定向诊断（只读）
+
+状态：`DIAGNOSIS_COMPLETE / STAGE_1_REMAINS_BLOCKED`。
+
+聚焦报告：`docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_DUAL_JOB_TERMINATION_DIAGNOSIS_2026-09-24.md`。
+
+本轮只读取既有 Job/Attempt、Analysis Session、Run、Mapping、terminal、HTTP Artifact、当前源码、SDK/Pi 源码以及 Windows/Clash 可访问历史记录；没有修改功能代码，没有发起 Provider/真实模型调用或复测，没有 commit、merge、push，也没有覆盖原失败现场。
+
+### 对原 Stage 1 记录的两个证据澄清
+
+1. 先前记录的“最后一组 Tool result 到 error”的 73.389 秒（Job A）和 98.850 秒（Job B）只是 Session 中两个已持久化事件的间隔。现有 Session 没有下一请求的 dispatch、response-header 或逐 chunk 时间，不能把这两个间隔称为最后一次 HTTP 请求的真实持续时间，也不能据此断言命中某个 timeout。
+2. Job B 的 error AssistantMessage 确实带有一个 partial `update_state` ToolCall，但 pinned Pi agent loop 对 `stopReason=error` 会在 ToolCall 执行循环前返回。因而该 Tool **确认没有执行**；arguments 也缺少正式 Schema 的必需字段。它不是有效 State，不能恢复或接纳。
+
+### 新确认事实
+
+- 两个最终失败 response 都已经有 Provider response ID/model 和大量流式内容：Job A 有约 2,551 字节 thinking；Job B 有约 21,082 字节 thinking 及 partial ToolCall。故障属于 response headers/content 之后的流式阶段，不是连接前或 Credential 拒绝。
+- 错误时间分别为 `2026-09-23T19:42:18.987Z` 和 `2026-09-23T19:42:19.016Z`，相差 29 ms；两个 evaluator 位于不同进程，不共享 AgentHarness、OpenAI client 或 process-local 连接池。
+- 本机没有显式 HTTP(S) proxy 环境变量，WinHTTP direct、WinINET proxy disabled；但实际流量经过已启用的 Clash TUN。Clash 历史 service log 在两个 dispatch 后约 4.1 秒记录了两条到 `api.deepseek.com:443` 的 TUN/GLOBAL TCP 连接。
+- Clash/Windows 的现有历史日志没有连接关闭、reset、chunk 或 request ID 记录。网络切换、代理重连、远端关闭或流式空闲 timeout 均“无法追溯”，不能因未查到事件而排除。
+- 当前 OpenAI SDK `timeout=300000` 在 `fetch()` 返回 response headers 后即清除，不覆盖完整 SSE body；两次失败 response 已有 headers/content，因此该本地 timer 不是直接触发器。Job deadline 2,400,000 ms 也未命中。
+- Pi `openai-completions` 的异常归一化只保留 status/body/message；本次无 status/body 后只剩 `terminated`，丢弃了可能的 `name/cause/code/request-id`。进入 Workbench `model-runner.ts` 时原始 cause 已不可逆丢失。
+
+### 根因程度与拟议修复
+
+最受证据支持的推断是两个并发流遇到一个位于共同外部路径（Provider/gateway 或 Windows TUN/Clash/上游出口）的同一事件；尚不能归因到其中任何一个组件，也没有 429、余额不足、Credential、Worker crash 或 stalled redelivery 证据。
+
+待审核的最小修复是只在 Workbench 中记录有界、安全的 Analysis Provider request 生命周期：request ordinal、请求/headers/message-end 时间、status、allowlist request-id、stop reason、响应 ID/model、内容类型/字节数和 `update_state` emitted/executed/accepted 分层状态；禁止记录 Prompt、thinking/text 正文、Tool arguments、Credential 或完整 headers。失败 Job 通过现有 Artifact 完整性机制发布该安全文件。该方案能区分 headers 前失败和 headers 后流错误，但不能恢复 Pi 已丢弃的底层 socket cause。
+
+建议获批后的固定顺序为：敏感信息检查并建立本地修复前 Git 基线 → 实施最小诊断增强 → 零模型聚焦回归 → 刷新 executor identity/Spec 并 preflight → 可选但推荐的双 Analysis-only 并发验证 → 两个全新合法 HTTP Job 的最终 Stage 1 复测。无自动 retry，不调整正式预算，不放宽 State 合同；复测后无论成功或失败都停止供审核，不自动进入 Stage 2。
+
+## Stage 2：统一 HTTP 使用入口
+
+未开始。Stage 1 阻塞后按合同停止。
+
+## Stage 3：可靠性定向巩固
+
+未开始。Stage 1 阻塞后按合同停止。
+
+## Stage 4：Git 与可复现交付
+
+未开始。Stage 1 阻塞后按合同停止。
+
+## 最终边界
+
+- 本轮确认了真实双 evaluator、两组 Coding Run 和 Blind Analysis 的并发重叠，但没有取得完整双 Job 成功。
+- 未修改服务、Analysis、Pi 或 Evaluation 语义；只更新了获批 SPEC 与本实施记录。
+- 临时 API/Worker 已停止；Redis 在保存 RDB 后停止并由 `--rm` 移除。Job/Session/Mapping/失败 terminal 与控制日志均保留。
+- 当前停止等待审核，不自动修复、不重试、不推进后续阶段。
