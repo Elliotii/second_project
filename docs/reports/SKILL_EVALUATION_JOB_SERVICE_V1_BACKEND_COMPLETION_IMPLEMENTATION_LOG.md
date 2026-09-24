@@ -356,3 +356,66 @@ Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-un
 - 使用已验证的直连 Provider 路径；不修改服务代理、不降低模型/Token/thinking/工具/任务预算。
 - 不启用 B 降级，不在 dispatch 后自动重试，不提交第三个 Job。
 - 无论成功或失败，固定两 Job 收敛、证据核验和本记录更新后停止。
+
+### 执行身份与零模型边界
+
+- 合同/执行 commit：`b72df11ae0f1d1cdafd8be0486cd7618f62960a5`。
+- tree：`81a82b9ef04b5f6c4b237c9c97aaccb2f8ee8303`。
+- v9 registry：`.runs/evaluation-service-specs/small-real-v9-dual-http-b72df11/specs.json`。
+- Spec SHA-256：`e6a7e52b8aec5ad00c09bf4c3fc49d2a8f69742a331eca6fdcc6e2fcf31c1720`。
+- Frozen Plan SHA-256：`bbaea4ef68a6018a6b33cad95fa092fbed7a2a69ef94f911495bf4e2ce2f444a`。
+- executor files：21；Analysis request timeout `300000 ms`；Job timeout `2400000 ms`。
+- preflight：`ready_at_execution_boundary`，0 real model call，0 Credential read。
+
+### 网络与服务配置
+
+- Node 进程没有 HTTP(S)/ALL_PROXY 环境变量；WinHTTP direct；无 Clash/Meta/TUN adapter；到 DeepSeek 的 TCP source interface 为 WLAN，Credential-free Node HEAD 返回 401。
+- WinINET 桌面代理仍配置，但 Node 当前传输未读取该设置；本轮没有修改系统代理或服务代码。
+- Redis：`127.0.0.1:6391/15`；queue `skill-eval-real-dual-20260925-01`。
+- API：`127.0.0.1:4322`，PID 22996。
+- Worker：PID 4728 / 13264；各 concurrency=1；global concurrency=2。
+- Job root：`D:\AI\ejc2-20260925-final-01`；control root：`D:\AI\ejc2-control-20260925-final-01`。
+
+### 提交与终态
+
+同一薄 HTTP CLI 顺序调用两次既有 POST，均返回 HTTP 202、`deduplicated=false`：
+
+| Job | idempotency key | Job ID | terminal |
+|---|---|---|---|
+| A | `dual-http-final-20260925-a` | `8fd08a5e1c79f16f36275125a6bc49c9194f422049d9fce7c50774d4135b4479` | `completed / human_review_ready` |
+| B | `dual-http-final-20260925-b` | `06651f5449ae31d75e9df105e8149ba4361af0f5311ac3bdcfd002c717d81d12` | `completed / human_review_ready` |
+
+- Job A：`19:25:44.515Z → 19:28:29.317Z`，`cleanup_confirmed=true`。
+- Job B：`19:25:44.631Z → 19:30:55.925Z`，`cleanup_confirmed=true`。
+- evaluator 重叠：`164686 ms`。
+- 第 1 对 Coding Run 重叠：`5770 ms`；第 2 对：`3492 ms`。
+- Blind Analysis 重叠：`129654 ms`。
+
+### 正式 Evaluation 与 Analysis
+
+- 四个 Coding Run 均 `execution_status=completed`、`verification_status=passed`；每 Run 5 次 Provider request、6 次工具调用。
+- 两份 Mapping 各自只引用本 Job root 下的两条 Run；两个 Mapping 的 Run ID 不交叉。
+- 两份 State 均 `phase=human_review_ready`，`covered_runs` 与本 Job Mapping 精确一致。
+- Job A：Blind Analysis 9 次正常请求，保留 1 个 Finding；随后 JSON Mode controlled-unblind 1 次正常请求，1 个 alignment、1 个 follow-up observation。
+- Job B：Blind Analysis 10 次正常请求，保留 0 个 Finding；controlled 阶段 0 Provider request，无需生成 controlled-unblind invocation Artifact。
+- 两个 Job 均生成 Markdown、HTML、PDF；A 报告大小 `10289 / 14389 / 130504` bytes，B 为 `3606 / 6077 / 80227` bytes。
+
+### Provider usage
+
+- 固定模型：`deepseek/deepseek-v4-flash`；Analysis request timeout 实际为 `300000 ms`。
+- Job A：Coding 10 + Analysis 10 = 20 次 Provider request；总记录费用 USD `0.0126376600`。
+- Job B：Coding 10 + Analysis 10 = 20 次 Provider request；总记录费用 USD `0.0190392496`。
+- 合计：40 次 Provider request，USD `0.0316769096`。Analysis 诊断中 20/20 request classification 为 `normal`，没有 429、`terminated`、timeout 或 Credential 错误。
+
+### Artifact、安全与清理
+
+- HTTP 逐件读取并复核：Job A 15/15、Job B 14/14；status、bytes、SHA-256 与 `x-content-sha256` 全部一致，两份 PDF magic 为 `%PDF`。
+- 使用扩展 Windows path 扫描 Job/control/Redis RDB 共 98/98 个文件，对 `.env.g005` 实际 Credential 值为 0 命中；扫描未输出 Credential 内容。
+- Redis RDB：`D:\AI\ejc2-control-20260925-final-01\redis\dump.rdb`，SHA-256 `52f0b25b82d4b572a667e96f2805f8eaa1d93080833291797d5e349140690fc8`。
+- runner/evaluator PID 32044/33212/9716/31164 全部退出；API/Worker 停止；Redis 容器停止并由 `--rm` 删除；端口 4322/6391 均不再监听。
+
+### 验收结论
+
+`PASS_FULL_DUAL_HTTP_EVALUATION_ACCEPTANCE`。
+
+本次证明了两个全新合法 Job 在同一执行身份下经 HTTP → Redis/BullMQ → 两个 Worker → Coding Runs → Verifier → Mapping → Analysis State → Report 完整成功，并同时证明实际重叠和隔离。没有第三个 Job、重试、B 降级、预算降低、产物拼接、merge 或 push。结论只适用于当前单机 Windows、真实并发 2 和已验证直连网络路径。

@@ -158,13 +158,13 @@ HTTP 状态会组合文件系统 terminal 与可获得的 BullMQ 状态。正式
 
 | 缺口 | 类型 | 说明 |
 |---|---|---|
-| 两个真实 HTTP Evaluation 同时 active | **待验证** | fake overlap 不能替代真实 Coding/Analysis 负载 |
-| 两个真实 Job 的目录、进程、Run、Mapping、State、Report 互不串线 | **待验证** | 单 Job 成功不能证明并发隔离 |
-| 给用户和 Codex 共用的薄 HTTP CLI | **新增/修改** | 当前只有 README PowerShell 示例与测试中的内联 `fetch` |
-| Redis 断开后查询一个已完成 Job 的 status/result/artifact | **新增测试** | 当前测试主要确认 health 和 submit 降级；源码支持文件系统结果，但缺少聚焦证明 |
-| Artifact 被落盘篡改后的 HTTP 409/拒绝路径 | **新增测试** | 路由已有摘要复核分支，尚缺聚焦测试 |
+| 两个真实 HTTP Evaluation 同时 active | **2026-09-25 已验证** | 两个新 HTTP Job 的 evaluator、两对 Coding Run 和 Blind Analysis 均有严格大于 0 的重叠 |
+| 两个真实 Job 的目录、进程、Run、Mapping、State、Report 互不串线 | **2026-09-25 已验证** | 两个 Job 均完整到报告；Mapping、State covered Runs、Artifact 和根目录交叉核验通过 |
+| 给用户和 Codex 共用的薄 HTTP CLI | **Stage 2 已实现** | `specs/submit/status/wait/result/artifact` 均由同一 loopback HTTP 客户端提供 |
+| Redis 断开后查询一个已完成 Job 的 status/result/artifact | **Stage 3 已验证** | 文件系统正式结果保持可查，队列状态明确 degraded |
+| Artifact 被落盘篡改后的 HTTP 409/拒绝路径 | **Stage 3 已验证** | 摘要不符时拒绝并返回 409 |
 | 小规模两 fake Job 的并发隔离回归测试 | **Stage 3 已实现** | 常规回归证明两个延迟 fake Job 的执行区间重叠，且 launch token、Job root、terminal 与 Artifact 路径隔离 |
-| 当前全部未提交服务改动的可追溯本地 Git 身份 | **待交付** | 必须先完成前三阶段，再创建本地 commit |
+| 服务与客户端的可追溯本地 Git 身份 | **Stage 4 已交付** | 后端工具 commit `9430615...`；本次双 HTTP 验收合同/执行身份为 `b72df11...` |
 
 ### 3.3 Stage 1 后续证据与当前处置
 
@@ -189,6 +189,20 @@ HTTP 状态会组合文件系统 terminal 与可获得的 BullMQ 状态。正式
 5. 无论两个 Job最终成功或失败，本次固定双 Job收敛、证据核验和实施记录完成后均停止，等待用户审核。
 
 成功仍严格要求两个新 HTTP Job 在各自独立身份下同时满足 `reason=completed`、正式 result 为 `human_review_ready`，并分别具备两 Run、Verifier、Mapping、正式 Analysis State、必要的 controlled-unblind、Markdown/HTML/PDF 报告和可读取的内容寻址 Artifact。Analysis-only、历史 Job或跨尝试产物不得拼接为本次成功。
+
+### 3.5 2026-09-25 完整双 HTTP 验收结果
+
+**Disposition：`PASS_FULL_DUAL_HTTP_EVALUATION_ACCEPTANCE`。** 在合同 commit `b72df11ae0f1d1cdafd8be0486cd7618f62960a5`、tree `81a82b9ef04b5f6c4b237c9c97aaccb2f8ee8303` 和匹配的 v9 Spec 下，唯一一组两个新 HTTP Job 均经 HTTP → Redis/BullMQ → 两个 Worker → Evaluation CLI 完成两 Run、Verifier、Mapping、正式 Analysis State 和报告，并以 `reason=completed`、`human_review_ready` 收敛。
+
+- Job A：`8fd08a5e1c79f16f36275125a6bc49c9194f422049d9fce7c50774d4135b4479`。
+- Job B：`06651f5449ae31d75e9df105e8149ba4361af0f5311ac3bdcfd002c717d81d12`。
+- evaluator 重叠 `164686 ms`；两对 Coding Run 重叠 `5770 ms` / `3492 ms`；Blind Analysis 重叠 `129654 ms`。
+- 四个 Coding Run 均 `completed/passed`；两份 Mapping 仅引用本 Job 的 Run，State `covered_runs` 与 Mapping 一致。
+- Job A 保留 1 个 Finding并完成 1 次 controlled-unblind；Job B 保留 0 个 Finding，controlled 阶段为 0 Provider request。两者均合法到达 `human_review_ready`。
+- A 的 15 个、B 的 14 个 HTTP Artifact 均通过状态、字节数、SHA-256 和响应摘要复核；两份 PDF magic 合法。
+- 所有 runner/evaluator 退出，terminal `cleanup_confirmed=true`；Credential 精确值扫描 98/98 文件为 0 命中。
+
+该 PASS 证明当前 Windows/直连网络路径上的单机真实并发 2 和完整正式合同，不扩张为生产高可用、真实并发 4/8、exactly-once、跨机器调度或所有代理/Provider 网络条件均可靠。
 
 **Fact：** 初次调查时服务测试源码有 11 个 `test()` 定义；历史 Closeout 的 10/10 统计早于后续 timeout 用例。Stage 2/3 完成后，当前完整 `evaluation-service-*.test.ts` 套件为 18/18 通过，包含 5 个薄客户端测试、真实 loopback API 客户端闭环和两 fake Job 并发隔离回归。
 
