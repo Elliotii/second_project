@@ -12,6 +12,7 @@ import { processIsAlive } from "../src/evaluation-service/process-supervisor.ts"
 import { createProducerRedis } from "../src/evaluation-service/redis.ts";
 import { loadEvaluationSpecRegistry } from "../src/evaluation-service/registry.ts";
 import { diagnosticArtifacts, startEvaluationWorker } from "../src/evaluation-service/worker.ts";
+import { CLIENT_EXIT, runEvaluationServiceClient } from "../scripts/evaluation-service-client.ts";
 
 const REDIS_URL = process.env.EVALUATION_SERVICE_TEST_REDIS_URL ?? "redis://127.0.0.1:6389/15";
 const PROJECT_ROOT = resolve("..");
@@ -67,6 +68,12 @@ async function removeQueue(configValue: ServiceRuntimeConfig): Promise<void> {
 	connection.disconnect(false);
 }
 
+function clientCapture(): { stdout: string[]; stderr: string[]; io: { stdout(value: string): void; stderr(value: string): void } } {
+	const stdout: string[] = [];
+	const stderr: string[] = [];
+	return { stdout, stderr, io: { stdout: (value) => stdout.push(value), stderr: (value) => stderr.push(value) } };
+}
+
 test("HTTP, BullMQ, Worker, results, idempotency, legal TASK_FAILURE, failure, and timeout form one real Redis loop", async () => {
 	const root = mkdtempSync(resolve(tmpdir(), "eval-service-redis-"));
 	const configValue = config(root, `eval-service-test-${randomUUID()}`);
@@ -118,6 +125,87 @@ test("HTTP, BullMQ, Worker, results, idempotency, legal TASK_FAILURE, failure, a
 		const tree = readJsonFile(processTreePath) as { processes: Array<{ pid: number }> };
 		assert.ok(tree.processes.length >= 2);
 		assert.ok(tree.processes.every((entry) => !processIsAlive(entry.pid)));
+	} finally {
+		if (worker) await worker.close(true);
+		if (api) await api.close();
+		await removeQueue(configValue).catch(() => undefined);
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+test("two delayed fake Jobs overlap while keeping launch roots, terminals, and Artifacts isolated", async () => {
+	const root = mkdtempSync(resolve(tmpdir(), "eval-service-two-job-"));
+	const configValue = config(root, `eval-service-two-job-${randomUUID()}`);
+	let api: EvaluationApiHandle | null = null;
+	let worker: Awaited<ReturnType<typeof startEvaluationWorker>> | null = null;
+	try {
+		api = await startEvaluationApi(configValue, 0);
+		worker = await startEvaluationWorker(configValue);
+		const [left, right] = await Promise.all([
+			submit(api, "fake-delay-100ms", "two-job-left"),
+			submit(api, "fake-delay-100ms", "two-job-right"),
+		]);
+		assert.equal(left.status, 202);
+		assert.equal(right.status, 202);
+		assert.notEqual(left.jobId, right.jobId);
+		const [leftResult, rightResult] = await Promise.all([awaitResult(api, left.jobId), awaitResult(api, right.jobId)]);
+		assert.equal(leftResult.reason, "completed");
+		assert.equal(rightResult.reason, "completed");
+
+		const store = new EvaluationJobStore(root);
+		const launch = (jobId: string) => resolve(store.jobRoot(jobId), "attempt-1", "launch-0001");
+		const interval = (jobId: string) => {
+			const reservation = readJsonFile(resolve(launch(jobId), "launch-reservation.json")) as { job_id: string; launch_token: string; reserved_at: string };
+			const terminal = store.readTerminal(jobId);
+			assert.ok(terminal);
+			assert.equal(reservation.job_id, jobId);
+			return { token: reservation.launch_token, start: Date.parse(reservation.reserved_at), end: Date.parse(terminal.finished_at), artifacts: terminal.artifacts };
+		};
+		const leftInterval = interval(left.jobId);
+		const rightInterval = interval(right.jobId);
+		assert.notEqual(leftInterval.token, rightInterval.token);
+		assert.ok(Math.max(leftInterval.start, rightInterval.start) < Math.min(leftInterval.end, rightInterval.end), JSON.stringify({ leftInterval, rightInterval }));
+		assert.notEqual(store.jobRoot(left.jobId), store.jobRoot(right.jobId));
+		assert.ok(leftInterval.artifacts.length > 0 && rightInterval.artifacts.length > 0);
+		const leftPaths = leftInterval.artifacts.map((artifact) => store.resolvePublicArtifact(left.jobId, artifact.path));
+		const rightPaths = rightInterval.artifacts.map((artifact) => store.resolvePublicArtifact(right.jobId, artifact.path));
+		assert.ok(leftPaths.every((path) => path.startsWith(store.jobRoot(left.jobId)) && !path.includes(right.jobId)));
+		assert.ok(rightPaths.every((path) => path.startsWith(store.jobRoot(right.jobId)) && !path.includes(left.jobId)));
+		assert.notEqual(leftPaths[0], rightPaths[0]);
+	} finally {
+		if (worker) await worker.close(true);
+		if (api) await api.close();
+		await removeQueue(configValue).catch(() => undefined);
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+test("thin client drives the real loopback API through submit, wait, result, and Artifact download", async () => {
+	const root = mkdtempSync(resolve(tmpdir(), "eval-service-client-integration-"));
+	const configValue = config(resolve(root, "jobs"), `eval-service-client-${randomUUID()}`);
+	let api: EvaluationApiHandle | null = null;
+	let worker: Awaited<ReturnType<typeof startEvaluationWorker>> | null = null;
+	try {
+		api = await startEvaluationApi(configValue, 0);
+		worker = await startEvaluationWorker(configValue);
+		const baseUrl = `http://${api.address().host}:${api.address().port}`;
+		const submitted = clientCapture();
+		assert.equal(await runEvaluationServiceClient(["submit", "--base-url", baseUrl, "--spec", "fake-task-failure", "--idempotency-key", "client-integration"], submitted.io), CLIENT_EXIT.success);
+		const jobId = String(JSON.parse(submitted.stdout[0]!).results[0].job_id);
+		assert.match(jobId, /^[a-f0-9]{64}$/);
+
+		const waited = clientCapture();
+		assert.equal(await runEvaluationServiceClient(["wait", "--base-url", baseUrl, "--job", jobId, "--timeout-ms", "10000", "--poll-ms", "10"], waited.io), CLIENT_EXIT.success);
+		assert.equal(JSON.parse(waited.stdout[0]!).results[0].evaluation_result.task_outcome, "TASK_FAILURE");
+
+		const queried = clientCapture();
+		assert.equal(await runEvaluationServiceClient(["result", "--base-url", baseUrl, "--job", jobId], queried.io), CLIENT_EXIT.success);
+		assert.equal(JSON.parse(queried.stdout[0]!).results[0].reason, "completed");
+
+		const output = resolve(root, "downloaded-report.md");
+		const artifact = clientCapture();
+		assert.equal(await runEvaluationServiceClient(["artifact", "--base-url", baseUrl, "--job", jobId, "--name", "report_markdown", "--output", output], artifact.io), CLIENT_EXIT.success);
+		assert.match(readFileSync(output, "utf8"), /TASK_FAILURE/);
 	} finally {
 		if (worker) await worker.close(true);
 		if (api) await api.close();

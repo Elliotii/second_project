@@ -3,7 +3,7 @@
 **分支：** `codex/skill-evaluation-job-service`  
 **开始日期：** 2026-09-24  
 **实施合同：** `docs/goals/SKILL_EVALUATION_JOB_SERVICE_V1_BACKEND_COMPLETION_SPEC.md`  
-**状态：** BLOCKED at Stage 1 / unexpected real Provider-transport termination; awaiting user and Web GPT review
+**状态：** Stage 2/3 passed / Stage 4 source and tests ready for local commit; strict full-dual-HTTP claim remains deferred
 
 ## 身份基线
 
@@ -175,7 +175,17 @@ Blind Analysis 现场：
 
 ## Stage 2：统一 HTTP 使用入口
 
-未开始。Stage 1 阻塞后按合同停止。
+### 2026-09-24 Stage 1 处置与恢复点
+
+用户接受以下有限处置并授权继续 Stage 2 → 3 → 4：
+
+- 保留真实 HTTP 双 Job 的 evaluator/Coding/Analysis 重叠、四个通过的 Coding Run/Verifier、Mapping 与 Artifact 隔离证据；
+- 保留 JSON Mode controlled-unblind Canary 首次成功，以及直连双 Analysis-only Review 均到达 `human_review_ready` 的独立证据；
+- 不把 Analysis-only 结果拼接进失败 HTTP Job，不宣称完整双 HTTP E2E 已通过；该项明确延期；
+- 本轮不再进行真实模型调用，不实现 B 类降级/自动重试；
+- 后续只实施薄 HTTP CLI、零模型可靠性缺口和 Git/可复现交付。
+
+Stage 2 开始时源码身份为 commit `1662c6a5a761ac68189076bc895e95bb5d050f21`、tree `aae9a17f9e99ac24235399a466c66f648e233cf8`。
 
 ## Stage 3：可靠性定向巩固
 
@@ -229,3 +239,109 @@ Job A 的 Blind Analysis 已合法生成 `alignment_ready` State；controlled-un
 - Redis RDB 保存在 `D:\AI\ejc2-control-20260924-02\redis-dump.rdb`，SHA-256 `ee2845c2274d2ed5658bc6fab37feccdb5284230dea19f07d7f7d6d098e80e19`。
 - API、两个 Worker、Redis 容器均已停止；Job roots、control logs、RDB 和原历史现场均保留。
 - Stage 1 因一成一败仍为 `FAILED / BLOCKED`。Stage 2/3/4 未开始；未自行修复、未发起第二次真实尝试、未 merge/push。等待用户与 Web GPT 审核。
+
+## 2026-09-24：JSON Mode Canary 与最终双 Job 复测
+
+状态：`CONTROLLED_UNBLIND_CANARY_PASS / FINAL_DUAL_JOB_RETEST_FAILED / STOPPED_AS_AUTHORIZED`
+
+聚焦报告：`docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_JSON_MODE_CANARY_AND_FINAL_DUAL_JOB_RETEST_2026-09-24.md`
+
+- controlled-unblind JSON Mode 修复已提交为 `1662c6a5a761ac68189076bc895e95bb5d050f21`（tree `aae9a17f9e99ac24235399a466c66f648e233cf8`）；TypeScript 通过，聚焦测试 34/34 通过，刷新 Spec 后零模型 preflight ready。
+- 单次 B Canary 首次成功：恰好 1 次 Provider 请求，正式 State、controlled result 以及 Markdown/HTML/PDF 报告均合法；没有使用第二次 B 调整/重试额度。
+- 唯一一组新双 Job：`79cf319255ba6b41d6de4fe475a3c8a667a780adfcdf0577a935d956d140d0eb` 与 `be241c5f2c9b596e7d47b98e117fbd9fbd82d93b699b135aa7eafec7f52f0a1f`。两条均 HTTP 202、`deduplicated=false`，两个独立 Worker 各 concurrency=1、global concurrency=2。
+- 四个真实 Coding Run 均 `completed/passed`，两份 Mapping 无跨 Job 引用；14/14 失败 Artifact 经 HTTP 查询后 bytes/SHA-256 匹配；Credential 扫描 89 文件 0 命中；子进程清理确认。
+- 两个 Job 均在 Blind Analysis 最后流式响应中得到 HTTP 200 headers 后，以 `stream_error_after_headers / terminated` 在约 1 ms 内同时结束；没有正式 State 或报告。失败发生在进入 controlled-unblind 之前，和已修复的 B JSON 解析路径不同。
+- 双 Job Stage 1 仍为 FAILED/BLOCKED。没有第三个 Job、没有重试、没有进入 Stage 2/3/4。现场与 Redis RDB 已保存，API/Worker/Redis 已停止，等待用户审核。
+
+## 2026-09-24：TUIC 双 Analysis-only 诊断复测
+
+状态：`ONE_REVIEW_PASS / ONE_REVIEW_PROVIDER_TERMINATED / STOPPED_WITHOUT_RETRY`
+
+聚焦报告：`docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_TUIC_DUAL_ANALYSIS_ONLY_RETEST_2026-09-24.md`
+
+- Clash 本地 profile 显示 `GLOBAL` 选择链的叶子为 TUIC；运行时两条 DeepSeek 连接从 TUN 地址经 `GLOBAL` 建立。
+- 两份既有 Mapping 的 dry-run 均 ready；随后只并发执行两个全新 Analysis-only Review，没有 Coding Run 或 HTTP Job。
+- Review A 完整成功到 `human_review_ready`，Blind Analysis 8 次正常请求、JSON Mode controlled-unblind 1 次正常请求，State 和 Markdown/HTML/PDF 报告齐全。
+- Review B 前 8 次请求正常，第 9 次在 HTTP 200 headers 后约 178.609 秒以 `stream_error_after_headers / terminated` 结束；收到 92,181 thinking bytes，但没有 `update_state`、State 或报告。
+- 本轮没有复现两流同时终止，因此削弱但不能否定 gRPC 共享底层连接解释；TUIC 同样没有消除单条长流失败。14 个输出/control 文件 Credential 扫描 0 命中，相关进程均退出。
+- 按授权停止：不重试、不运行完整双 Job、不修改配置或代码、不进入后续阶段。
+
+## 2026-09-24：直连双 Analysis-only 对照
+
+状态：`TWO_REVIEWS_HUMAN_REVIEW_READY / DIRECT_PATH_CONFIRMED / STOPPED_AFTER_ONE_PAIR`
+
+聚焦报告：`docs/reports/SKILL_EVALUATION_JOB_SERVICE_V1_DIRECT_NETWORK_DUAL_ANALYSIS_ONLY_RETEST_2026-09-24.md`
+
+- 路由预检确认 Clash 为 Rule、TUN disabled、Meta adapter/default route 均不存在；无 Credential Node HEAD 直达 DeepSeek 返回 401，Clash 日志无新增 DeepSeek 记录。执行窗口内同样为 0 条 DeepSeek Clash 记录。
+- 相同 Plan、两份 Mapping、模型、预算与 300 秒 timeout 的 dry-run 均 ready；随后只并发执行一组两个 Analysis-only Review。
+- Review A：Blind 7 次 + controlled 1 次请求全部 normal，`human_review_ready`，State 与三种报告齐全；最大单请求 49.472 秒。
+- Review B：Blind 7 次 + controlled 1 次请求全部 normal，`human_review_ready`，State 与三种报告齐全；最大单请求 31.202 秒。
+- 本轮总费用 USD `0.0182699608`；20 个输出/control 文件 Credential 扫描 0 命中；相关进程均退出。
+- 该结果提高了代理/TUN 路径为故障贡献因素的可信度，但本轮没有产生接近 180 秒的直连流，不能证明单一根因；它仍不是完整 HTTP 双 Job E2E。按授权停止，等待下一步决定。
+
+## 2026-09-24：Stage 2 统一 HTTP 使用入口
+
+状态：`PASSED`
+
+### 实现
+
+- 新增 `workbench/scripts/evaluation-service-client.ts`，只调用既有 loopback HTTP API；没有复制 Evaluation CLI、队列或调度逻辑。
+- 命令面：`specs`、`submit`、`status`、`wait`、`result`、`artifact`。
+- `submit` 支持多个显式 idempotency key；`status`/`wait`/`result` 支持多个 Job ID。
+- `wait` 的本地 timeout 不发送 cancel/delete，也不改变后台 Job；Job ID 可继续查询。
+- 退出码区分参数错误、客户端等待超时、HTTP/服务错误、Job 基础设施失败和 Artifact 错误；completed 结果内的合法 `TASK_FAILURE` 退出 0。
+- Artifact 下载拒绝覆盖已有路径，并复核正式 result metadata、字节数、SHA-256 和响应摘要头。
+- base URL 仅允许 `http://127.0.0.1` 或 `http://localhost` origin，不扩大服务网络暴露面。
+- `workbench/package.json` 新增 `evaluation-service:client`；配置 README 增加命令和退出语义。
+
+### 验证
+
+- TypeScript：PASS。
+- 客户端聚焦测试：5/5 PASS，覆盖参数/loopback、多个 submit、409 冲突、合法 `TASK_FAILURE`、Job failure、wait timeout 不取消、Artifact 下载/拒绝覆盖和服务不可用。
+- 完整服务套件中的真实 loopback 集成：客户端经正式 API 完成 fake `submit → wait → result → artifact`；结果内 `TASK_FAILURE` 被正确视为合法 completed 业务结果。
+
+## 2026-09-24：Stage 3 可靠性定向巩固
+
+状态：`PASSED`
+
+### 缺口核对与新增回归
+
+- Redis 不可用时查询已完成 Job 的 `status/result/artifact`，以及 Artifact 落盘篡改后的 409 拒绝，已由方案 A 修复时加入 `evaluation-service-redis.test.ts`；本阶段复用并重跑，没有重复实现。
+- 新增两个 `fake-delay-100ms` Job 的聚焦回归：不同 Job ID/launch token/Job root，执行区间严格重叠，terminal 与所有公开 Artifact 均解析到各自 Job root，无交叉引用。
+- 没有修改 Queue、Worker、Process Supervisor、Evaluation 或 Analysis 正式语义；没有重跑 1/2/4/8 capacity、100 Job、Formal18、SWE-bench 或任何付费模型。
+
+### 最终零模型回归
+
+- `npm run typecheck`：PASS。
+- `npm run evaluation-service:test`：18/18 PASS，包含 client、core、crash/stalled redelivery、Credential、Faux 正式两 Run、Redis/idempotency/timeout/nested cleanup、Redis degraded query、Artifact tamper、双 fake 并发隔离和真实 loopback 客户端闭环。
+- 临时 Redis：`redis:7.4.7-alpine`，仅绑定 `127.0.0.1:6389`，测试后容器已停止并由 `--rm` 删除。
+
+## 2026-09-25：Stage 4 Git 与可复现交付
+
+状态：`SOURCE_AND_TESTS_READY_FOR_LOCAL_COMMIT`
+
+### 提交前核验
+
+- 最终 TypeScript：PASS。
+- 最终 `npm run evaluation-service:test`：18/18 PASS。
+- 受影响范围的 `git diff --check`：PASS。
+- 候选源码、测试、文档和三份聚焦复测报告对 `.env.g005` 中实际 Credential 值的精确扫描：0 命中；扫描过程没有输出 Credential 内容。
+- `.env.*` 与 `.runs/` 继续受既有 ignore 保护；新增 `/tmp/` ignore，保留但不提交临时 Canary 脚本和 PDF 渲染文件。
+- 临时 Redis 容器已停止并删除；没有遗留测试 API/Worker。
+
+### 最终交付内容
+
+- 统一薄 HTTP CLI、package script、聚焦与真实 loopback 集成测试；
+- 两 fake Job 并发隔离常规回归；
+- README 的 Redis/API/Worker/CLI 启动与使用、退出码、Artifact 校验和 Provider 长流网络限制；
+- 原 SPEC 的 Stage 1 有限处置修订、本持续实施记录以及三份后续真实复测报告；
+- `CURRENT_STATE.md` 的 additive service override 更新。
+
+最终本地 commit/tree 由本记录冻结后的 Git 操作产生，避免文档自引用改变 commit；精确身份与 post-commit Spec/preflight 将记录在最终交接。未经用户确认不 merge、不 push。
+
+## 当前最终边界
+
+- Stage 2 和 Stage 3 已完成且通过零模型回归；Stage 4 等待本地 commit 与 post-commit Spec/preflight。
+- 原有 Evaluation CLI、Pi、Verifier、Mapping、Analysis State/报告合同未改变；新增的是异步服务使用入口和定向后端回归。
+- controlled-unblind JSON Mode 修复和单次 Canary 成功已保留；B 类降级/自动重试未实现且不属于本轮。
+- 真实 HTTP 双 Job 的并发、Coding、Mapping 与隔离已经证明；直连双 Analysis-only 成功；两个全新 HTTP Job 同一轮均完整到报告仍未验证，不能宣称通过。

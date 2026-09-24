@@ -73,6 +73,45 @@ The result response supplies content-addressed Artifact URLs after terminalizati
 queue `completed` state is not enough by itself: the public terminal exists only after
 the Worker validates the Evaluation result and referenced files.
 
+## Thin HTTP client
+
+The client is only a scriptable caller for the HTTP API. It does not read Credentials,
+run an Evaluation directly, maintain queue state, or cancel Jobs.
+
+```powershell
+Set-Location "$env:EVALUATION_SERVICE_PROJECT_ROOT\workbench"
+$base = 'http://127.0.0.1:4317'
+
+npm run evaluation-service:client -- specs --base-url $base
+npm run evaluation-service:client -- submit --base-url $base --spec registered-spec-id `
+  --idempotency-key caller-stable-key-001
+npm run evaluation-service:client -- status --base-url $base --job '<64-hex-job-id>'
+npm run evaluation-service:client -- wait --base-url $base --job '<64-hex-job-id>' `
+  --timeout-ms 2700000 --poll-ms 1000
+npm run evaluation-service:client -- result --base-url $base --job '<64-hex-job-id>'
+npm run evaluation-service:client -- artifact --base-url $base --job '<64-hex-job-id>' `
+  --name report_markdown --output 'D:\fresh-output\evaluation-report.md'
+```
+
+Repeat `--idempotency-key` to submit multiple independent Jobs for one registered Spec,
+and repeat `--job` for `status`, `wait`, or `result`. Each independent submission must
+use its own stable key. Multi-key submission calls the existing POST route once per key;
+if a later call fails, the error preserves any earlier accepted Job IDs rather than
+pretending the sequence was atomic. The client prints one machine-readable JSON object
+to stdout on success and a bounded JSON error to stderr on failure.
+
+Exit codes are deliberately small and distinct: `0` means the requested operation
+succeeded (including a completed Evaluation whose Coding Run has a legal
+`TASK_FAILURE`); `2` is invalid client usage; `3` is only a local `wait` timeout; `4`
+is an HTTP/service failure; `5` is a terminal or inconsistent Job failure; and `6` is
+an Artifact lookup, integrity, or fresh-output failure. A `wait` timeout, terminal
+exit, or stopped Codex caller never sends cancellation and does not change the
+background Job. Keep the Job ID and query it later.
+
+Artifact download first reads formal result metadata, refuses to overwrite an existing
+path, and checks the downloaded byte count, SHA-256, and response digest before creating
+the output file.
+
 ## Runtime parameters
 
 | Variable | Initial default | Meaning |
@@ -93,6 +132,13 @@ Provider request timeout. In the currently pinned SDK transport it covers `fetch
 until response headers are received; it is not a complete-SSE-body or Analysis wall-time
 deadline. The outer registered `job_timeout_ms` remains a separate evaluator-process
 deadline. Do not infer a full stream timeout from the Analysis request value.
+
+Long streaming Provider requests must also be validated on the deployment network path.
+In one Windows validation series, concurrent Analysis succeeded when routed directly,
+while some Clash TUN/proxy paths returned a headers-after-stream `terminated` error. This
+is an observed deployment limitation, not proof of a single proxy or Provider root cause.
+The service does not switch system proxy settings, silently retry model requests, or
+hard-code direct routing.
 
 Each Analysis writes the content-free `review/analysis-provider-requests.json` diagnostic.
 It records request ordinals, observed dispatch/header/message-end timestamps, allowlisted

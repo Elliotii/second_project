@@ -9,6 +9,8 @@
 
 > 本文件原为下一阶段实施合同草案。用户与 Web GPT 已完成审核，用户于 2026-09-24 授权在补入三个合同澄清后，直接按阶段 1 → 2 → 3 → 4 实施。该授权包含阶段 1 固定的两个真实 Job 和阶段 4 本地 commit；不包含真实并发 4/8、merge 或 push。
 
+> **2026-09-24 Stage 1 处置修订：** 当前已提交源码身份为 commit `1662c6a5a761ac68189076bc895e95bb5d050f21`、tree `aae9a17f9e99ac24235399a466c66f648e233cf8`。真实 HTTP 双 Job 已证明 evaluator、Coding Run、Analysis 活跃区间重叠以及 Workspace/Mapping/Artifact 隔离；直连网络下复用各自既有 Run/Mapping 的双 Analysis-only Review 均到达 `human_review_ready`。但没有一组两个全新 HTTP Job 同时完整到达正式 State/Report，因此该项仍标记为 **未验证**，不得拼接跨尝试证据或宣称完整双 HTTP E2E 已通过。用户接受将其作为已披露的 Provider 长流网络路径限制延期处理，并授权继续 Stage 2 → 3 → 4；本修订不等于追认原失败 Job 成功。
+
 ## 1. 证据口径与范围
 
 本文按以下标签区分结论：
@@ -161,14 +163,24 @@ HTTP 状态会组合文件系统 terminal 与可获得的 BullMQ 状态。正式
 | 给用户和 Codex 共用的薄 HTTP CLI | **新增/修改** | 当前只有 README PowerShell 示例与测试中的内联 `fetch` |
 | Redis 断开后查询一个已完成 Job 的 status/result/artifact | **新增测试** | 当前测试主要确认 health 和 submit 降级；源码支持文件系统结果，但缺少聚焦证明 |
 | Artifact 被落盘篡改后的 HTTP 409/拒绝路径 | **新增测试** | 路由已有摘要复核分支，尚缺聚焦测试 |
-| 小规模两 fake Job 的并发隔离回归测试 | **新增测试** | capacity 脚本是实验资产，不是聚焦的常规回归 |
+| 小规模两 fake Job 的并发隔离回归测试 | **Stage 3 已实现** | 常规回归证明两个延迟 fake Job 的执行区间重叠，且 launch token、Job root、terminal 与 Artifact 路径隔离 |
 | 当前全部未提交服务改动的可追溯本地 Git 身份 | **待交付** | 必须先完成前三阶段，再创建本地 commit |
 
-**Fact：** 当前测试源码中有 11 个 service `test()` 定义；历史 Closeout 的 10/10 统计早于后续 timeout 用例。后续真实 E2E 报告记录了聚焦 7/7 和 Analysis 21/21，但本次只读调查没有重新运行当前完整测试集。
+### 3.3 Stage 1 后续证据与当前处置
+
+**Fact：** 三组后续证据需要分开解释：
+
+- 原真实 HTTP 双 Job 已取得约 190 秒 evaluator 重叠、两对跨 Job Coding Run 重叠、四个通过的 Verifier 和互不交叉的 Mapping，但两个 Blind Analysis 在同一绝对时刻附近发生 headers 后流终止。
+- JSON Mode 修复后的单次 controlled-unblind Canary 首次成功，证明已确认的 B 类 root JSON 结构问题已被定向修复；该修复不处理 Blind Analysis 传输终止。
+- 绕过 Clash/TUN 的直连双 Analysis-only Review 均完整生成 State 和 Markdown/HTML/PDF 报告。这提高了代理/TUN 路径是故障贡献因素的可信度，但不能替代两个新 HTTP Job 的完整成功证据。
+
+**User decision / accepted implementation route：** 不再为本轮 Stage 2–4 追加真实模型复测，也不实现 controlled-unblind 的 B 类降级/自动重试。Stage 1 的调度并发与隔离证据保留为有效工程证据；“完整双 HTTP E2E”保留为明确未验证边界。部署说明应提示长流 Provider 路径需要单独验证，但产品代码不切换系统代理、不把直连写死为业务规则。
+
+**Fact：** 初次调查时服务测试源码有 11 个 `test()` 定义；历史 Closeout 的 10/10 统计早于后续 timeout 用例。Stage 2/3 完成后，当前完整 `evaluation-service-*.test.ts` 套件为 18/18 通过，包含 5 个薄客户端测试、真实 loopback API 客户端闭环和两 fake Job 并发隔离回归。
 
 ## 4. 四阶段实施计划
 
-四阶段严格按 `1 → 2 → 3 → 4` 推进。每阶段的必要验收全部通过后，可继续下一阶段，不需要重新请示；第 7 节定义的任何异常则必须暂停。
+四阶段原计划按 `1 → 2 → 3 → 4` 推进。Stage 1 的首次严格验收未通过；经上述 2026-09-24 用户处置修订，其并发/隔离部分作为有效证据保留，完整双 HTTP 成功项延期且不得宣称已验证，现授权从 Stage 2 继续。Stage 2–4 仍须逐阶段满足各自验收；第 7 节定义的任何新异常必须暂停。
 
 ### 阶段 1：真实双 Job 并发
 
@@ -295,10 +307,10 @@ evaluation-service:client artifact --job <id> --name <name> --output <fresh-path
 | Worker crash/stalled/redelivery | 已有通过 | 若 Worker/queue 未改，只回归现有 crash 测试 |
 | Job timeout/后代清理 | 已有通过（当前 Windows） | 回归 timeout/nested 测试；不扩展通用跨平台 supervisor |
 | Redis 不可用提交 | 已有通过 | 回归现有 503/health 测试 |
-| Redis 不可用时查询已完成 Job | 确实缺失 | 新增确定性测试：断开 Redis 后 status/result/artifact 仍按文件系统合同读取；队列状态明确 degraded |
+| Redis 不可用时查询已完成 Job | 后续修复已覆盖 | 复用确定性测试：断开 Redis 后 status/result/artifact 仍按文件系统合同读取；队列状态明确 degraded |
 | Credential/日志/公开 Artifact | 已有通过 | 回归现有泄露测试；Stage 1 对两个真实根做无内容输出的命中统计 |
-| Artifact 落盘篡改 | 路由已有、测试缺失 | 新增确定性测试，确认摘要不符时拒绝/409 |
-| 多 Job 文件与状态一致性 | fake 回归缺失、真实缺失 | 新增 2 个可控等待 fake Job、全局并发 2 的隔离/overlap 测试；真实证据来自 Stage 1 |
+| Artifact 落盘篡改 | 后续修复已覆盖 | 复用确定性测试，确认摘要不符时拒绝/409 |
+| 多 Job 文件与状态一致性 | Stage 3 已补 fake 回归；真实隔离证据来自 Stage 1 | 2 个可控等待 fake Job、全局并发 2 的隔离/overlap 常规测试已实现 |
 | fake 1/2/4/8 与 100 Job | 已有实验通过 | 队列/Worker 调度源码未改则不重跑；修改后才按影响决定重跑 |
 | Faux 正式合同 | 已有通过 | 回归 Faux 两 Run 测试，零模型调用 |
 
@@ -369,7 +381,7 @@ evaluation-service:client artifact --job <id> --name <name> --output <fresh-path
 
 ### 6.1 成功推进
 
-用户明确批准本 SPEC 并授权开始实施后，按阶段 1 → 2 → 3 → 4 连续推进。一个阶段全部必要验收通过，即可进入下一阶段，无需重复请求许可。
+用户明确批准本 SPEC 并授权开始实施后，原则上按阶段 1 → 2 → 3 → 4 连续推进。Stage 1 的后续处置采用第 3.3 节的明确用户决定：不追认完整双 HTTP 成功，但允许在保留该限制的前提下进入 Stage 2。Stage 2–4 任一阶段全部必要验收通过后，可进入下一阶段，无需重复请求许可。
 
 Stage 1 包含两个真实小型 Evaluation 的 Provider 调用；它只有在用户明确批准实施时才获得授权。本次编写 SPEC 的回合不包含该授权。
 
@@ -382,7 +394,7 @@ Stage 1 包含两个真实小型 Evaluation 的 Provider 调用；它只有在�
 - Credential、Artifact、重复执行、进程清理或跨 Job 隔离出现风险；
 - 需要修改 Analysis/Evaluation 语义、增加新基础设施或明显超出已批准范围；
 - 真实 Provider 限流/传输异常，或需要新的付费重试；
-- Stage 1 未通过却准备跳到 Stage 2，或准备自行测试真实并发 4/8。
+- 未取得本文件第 3.3 节的明确处置修订却跳过 Stage 1，或准备自行测试真实并发 4/8。
 
 暂停前允许并要求完成必要的只读调查和上述五段故障交接，但不得自行实施非预期故障修复、不得自动发起新的付费模型尝试、不得跳过失败阶段。普通测试准备、无影响清理和按合同预期的负向测试不构成人为阻塞。
 

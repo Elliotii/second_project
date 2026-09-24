@@ -18,6 +18,7 @@
     "evaluation:review": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/review-evaluation.ts",
     "evaluation-service:api": "node --experimental-strip-types src/evaluation-service/api.ts",
     "evaluation-service:worker": "node --experimental-strip-types src/evaluation-service/worker.ts",
+    "evaluation-service:client": "node --experimental-strip-types scripts/evaluation-service-client.ts",
     "evaluation-service:test": "node --experimental-strip-types --test --test-concurrency=1 tests/evaluation-service-*.test.ts",
     "evaluation-service:capacity": "node --experimental-strip-types scripts/run-evaluation-service-capacity.ts",
     "evaluation-service:prepare-small-real": "node --experimental-loader ./scripts/v35g2-public-pi-loader.mjs scripts/prepare-evaluation-service-small-spec.ts",
